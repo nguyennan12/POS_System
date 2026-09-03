@@ -59,6 +59,7 @@ cũng tích điểm vào cùng 1 tài khoản. `MemberTiers` cũng global, nhấ
 với quyết định này.
 
 **Khởi tạo SQL Server**:
+
 - Mặc định sử dụng `DEFAULT NEWID()` (hoặc `NEWSEQUENTIALID()`) cho các cột `UNIQUEIDENTIFIER`.
 - Client chạy offline phải tự sinh GUID cho bản ghi của mình và gửi nguyên ID đó khi đồng bộ.
 
@@ -196,6 +197,7 @@ RolePermissions           -- N-N: role nào có quyền nào
 ```
 
 **Cách tính permission cuối cùng của 1 nhân viên**:
+
 ```
 Lấy toàn bộ permission từ role (qua RolePermissions theo role_id).
 Không có override theo từng user; nếu cần ngoại lệ thì tạo role riêng.
@@ -205,12 +207,12 @@ Không có override theo từng user; nếu cần ngoại lệ thì tạo role r
 `store_id = NULL`), permission gán theo đúng bảng phân quyền đã thống nhất
 trước đó (Owner > Admin > Manager > Cashier), ví dụ trích một phần:
 
-| Role | Permission code (ví dụ) |
-|---|---|
-| Owner | `stores:create`, `stores:update`, `reports:read` (toàn chuỗi), `config:override`, + toàn bộ quyền của Admin |
-| Admin | `employees:create`, `products:create`, `promotions:update`, `reports:read` (chi nhánh), `config:update`, + toàn bộ quyền của Manager |
-| Manager | `inventory:create`, `stocktakes:approve`, `orders:refund`, `orders:override`, `shifts:read` |
-| Cashier | `orders:create`, `payments:create`, `shifts:create` (mở/đóng ca của mình) |
+| Role    | Permission code (ví dụ)                                                                                                              |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Owner   | `stores:create`, `stores:update`, `reports:read` (toàn chuỗi), `config:override`, + toàn bộ quyền của Admin                          |
+| Admin   | `employees:create`, `products:create`, `promotions:update`, `reports:read` (chi nhánh), `config:update`, + toàn bộ quyền của Manager |
+| Manager | `inventory:create`, `stocktakes:approve`, `orders:refund`, `orders:override`, `shifts:read`                                          |
+| Cashier | `orders:create`, `payments:create`, `shifts:create` (mở/đóng ca của mình)                                                            |
 
 ### 3.3 PRODUCT
 
@@ -279,6 +281,7 @@ PriceLists
 ```
 
 **Quy tắc giá bán**:
+
 - `SKUs.sell_price` là giá bán mặc định hiện tại, dùng nhanh trên màn hình POS.
 - `PriceLists` chỉ dùng cho giá override có hiệu lực theo thời gian hoặc nhóm khách hàng.
 - Validate chồng lấn thời gian ở tầng Application layer trước khi insert.
@@ -568,21 +571,6 @@ OrderDiscounts
 
   CHECK ((promotion_id IS NOT NULL) OR (voucher_id IS NOT NULL))
 
-OrderReturns                -- trả hàng/đổi hàng TỪNG PHẦN
-  id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
-  order_id      UNIQUEIDENTIFIER NOT NULL REFERENCES Orders(id) ON DELETE NO ACTION
-  reason        NVARCHAR(300)
-  refund_amount DECIMAL(18,2) NOT NULL CHECK (refund_amount >= 0)
-  status        VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending','Approved','Rejected'))
-  processed_by  UNIQUEIDENTIFIER NOT NULL REFERENCES Employees(id) ON DELETE NO ACTION
-  created_at    DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
-
-OrderReturnItems
-  id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
-  return_id     UNIQUEIDENTIFIER NOT NULL REFERENCES OrderReturns(id) ON DELETE CASCADE
-  order_item_id UNIQUEIDENTIFIER NOT NULL REFERENCES OrderItems(id) ON DELETE NO ACTION
-  qty           DECIMAL(18,3) NOT NULL CHECK (qty > 0)
-  refund_amount DECIMAL(18,2) NOT NULL CHECK (refund_amount >= 0)
 
 Payments
   id                    UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
