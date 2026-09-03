@@ -18,24 +18,59 @@ Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Arc
 
 ---
 
-## 🚀 Các bước khởi chạy
+## 🚀 Khởi chạy dự án
 
-### 1. Build thử nghiệm (Local)
+### 1. Khởi chạy môi trường Development
+
+Mỗi môi trường đã có sẵn file cấu hình `.env` riêng biệt:
+
+- File mẫu: `deploy/dev/.env.example`
+- File cấu hình: `deploy/dev/.env`
+
+Chế độ này tự động mount source code từ máy vào container hỗ trợ hot reload:
 
 ```bash
-cd POS-System
-dotnet restore
-dotnet build
-```
-
-### 2. Khởi chạy toàn bộ hệ thống bằng Docker Compose
-
-```bash
-cd deploy
+cd deploy/dev
 docker compose up -d --build
 ```
 
-> **Lưu ý:** Cấu hình env theo format **env.sample** trong **/deploy** và không cần chạy lệnh tạo migration thủ công.
+**Xem log Hot Reload theo thời gian thực:**
+
+```bash
+docker logs -f dev-pos-api-1
+```
+
+**Dừng môi trường Dev:**
+
+```bash
+cd deploy/dev
+docker compose down
+```
+
+---
+
+### 2. Khởi chạy môi trường Production (Bản build đóng gói)
+
+- File mẫu: `deploy/production/.env.example`
+- File cấu hình: `deploy/production/.env`
+
+Chế độ này build toàn bộ source code thành image tối ưu cho production:
+
+```bash
+cd deploy/production
+docker compose up -d --build
+```
+
+**Dừng môi trường Production:**
+
+```bash
+cd deploy/production
+docker compose down
+```
+
+---
+
+> **Lưu ý:** Hệ thống đã tích hợp cơ chế tự động chạy Migration khi khởi động API, không cần chạy lệnh update database thủ công. Chỉ cần `--build` ở lần chạy đầu tiên. Các lần tiếp theo chỉ cần gõ: `docker compose up -d`
 
 ---
 
@@ -53,7 +88,7 @@ docker compose up -d --build
 
 ---
 
-## 🔑 Thông tin tài khoản & Kết nối mẫu
+## 🔑 Thông tin Kết nối
 
 ### 1. Kết nối SQL Server
 
@@ -72,7 +107,7 @@ docker compose up -d --build
 
 ---
 
-## 📦 Phát triển (Khi thay đổi Database Schema)
+## 📦Khi thay đổi Database Schema
 
 Khi thêm hoặc sửa các Domain Entity, tạo migration mới bằng lệnh:
 
@@ -84,11 +119,5 @@ dotnet ef migrations add <TenMigration> \
 ```
 
 Sau đó rebuild lại Docker:
-
-```bash
-cd deploy
-docker compose build pos-api
-docker compose up -d --no-deps pos-api
-```
 
 ---
