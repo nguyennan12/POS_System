@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>POS.WinUI</RootNamespace>
+    <AssemblyName>POS.WinUI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- DI & Hosting -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <!-- HTTP + Resilience -->
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="8.0.11" />
+    <!-- SignalR Client -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.7" />
+    <!-- UI -->
+    <PackageReference Include="MaterialSkin.2" Version="2.3.1" />
+    <!-- Local SQLite cache -->
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+    <!-- ESC/POS thermal print -->
+    <PackageReference Include="ESCPOS_NET" Version="3.0.0" />
+    <!-- QR generate -->
+    <PackageReference Include="ZXing.Net.Bindings.Windows.Compatibility" Version="0.16.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinForms chỉ phụ thuộc Contracts, KHÔNG phụ thuộc Application/Infrastructure -->
+    <ProjectReference Include="..\POS.Contracts\POS.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
