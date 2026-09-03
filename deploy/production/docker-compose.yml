@@ -30,12 +30,12 @@ services:
 
   pos-api:
     build:
-      context: ..
-      dockerfile: deploy/Dockerfile
+      context: ../..
+      dockerfile: deploy/production/Dockerfile
     ports:
       - "5000:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=${MSSQL_DB};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Redis__ConnectionString: "redis:6379,password=${REDIS_PASSWORD}"
       Jwt__Secret: ${JWT_SECRET}
@@ -58,7 +58,7 @@ services:
     image: prom/prometheus:v2.54.1
     ports: ["9090:9090"]
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
 
   grafana:
