@@ -31,17 +31,36 @@ services:
   pos-api:
     build:
       context: ../..
-      dockerfile: deploy/production/Dockerfile
+      dockerfile: docker/dev/Dockerfile
     ports:
       - "5000:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
       ConnectionStrings__Default: "Server=sqlserver,1433;Database=${MSSQL_DB};User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=False"
       Redis__ConnectionString: "redis:6379,password=${REDIS_PASSWORD}"
       Jwt__Secret: ${JWT_SECRET}
       Jwt__Issuer: pos-api
       Jwt__Audience: pos-clients
       Serilog__LokiUrl: "http://loki:3100"
+    volumes:
+      # Mount toàn bộ project từ máy host vào container
+      - ../..:/app
+      # Lưu cache nuget để không tải lại khi khởi động lại
+      - nuget-data:/root/.nuget/packages
+      # Anonymous volumes ngăn chặn xung đột file bin/obj giữa Windows host và Linux container
+      - /app/src/POS.Api/bin
+      - /app/src/POS.Api/obj
+      - /app/src/POS.Application/bin
+      - /app/src/POS.Application/obj
+      - /app/src/POS.Domain/bin
+      - /app/src/POS.Domain/obj
+      - /app/src/POS.Infrastructure/bin
+      - /app/src/POS.Infrastructure/obj
+      - /app/src/POS.Contracts/bin
+      - /app/src/POS.Contracts/obj
+      - /app/tests/POS.Application.Tests/bin
+      - /app/tests/POS.Application.Tests/obj
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -76,3 +95,4 @@ volumes:
   loki-data:
   prometheus-data:
   grafana-data:
+  nuget-data:

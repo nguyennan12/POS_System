@@ -24,13 +24,13 @@ Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Arc
 
 Mỗi môi trường đã có sẵn file cấu hình `.env` riêng biệt:
 
-- File mẫu: `deploy/dev/.env.example`
-- File cấu hình: `deploy/dev/.env`
+- File mẫu: `docker/dev/.env.example`
+- File cấu hình: `docker/dev/.env`
 
 Chế độ này tự động mount source code từ máy vào container hỗ trợ hot reload:
 
 ```bash
-cd deploy/dev
+cd docker/dev
 docker compose up -d --build
 ```
 
@@ -43,7 +43,7 @@ docker logs -f dev-pos-api-1
 **Dừng môi trường Dev:**
 
 ```bash
-cd deploy/dev
+cd docker/dev
 docker compose down
 ```
 
@@ -51,20 +51,20 @@ docker compose down
 
 ### 2. Khởi chạy môi trường Production (Bản build đóng gói)
 
-- File mẫu: `deploy/production/.env.example`
-- File cấu hình: `deploy/production/.env`
+- File mẫu: `docker/production/.env.example`
+- File cấu hình: `docker/production/.env`
 
 Chế độ này build toàn bộ source code thành image tối ưu cho production:
 
 ```bash
-cd deploy/production
+cd docker/production
 docker compose up -d --build
 ```
 
 **Dừng môi trường Production:**
 
 ```bash
-cd deploy/production
+cd docker/production
 docker compose down
 ```
 

@@ -672,27 +672,3 @@ CREATE UNIQUE INDEX UX_SystemConfigs_Store ON SystemConfigs(store_id, [key]) WHE
 ```
 
 ---
-
-## 6. Checklist Best Practice đã áp dụng trong bản thiết kế này
-
-- [x] Tiền tệ dùng `DECIMAL(18,2)`, không dùng float
-- [x] Thời gian dùng `DATETIMEOFFSET` (UTC, `SYSUTCDATETIME()`)
-- [x] Mọi FK có `ON DELETE` tường minh (`CASCADE`, `SET NULL`, `NO ACTION`)
-- [x] Không còn polymorphic FK (`StockTransactions` đã tách 3 cột riêng)
-- [x] `SKUs.barcode` UNIQUE thực thi được (denormalize `store_id`)
-- [x] `Customers` đã chốt scope global (không còn "hoặc shared" mập mờ)
-- [x] Atomic update chống oversell tồn kho (ghi rõ trong `StockEntries`)
-- [x] CHECK constraint cho các giá trị enum-like, kiểu số không âm và kiểm tra định dạng JSON (`ISJSON()`)
-- [x] UNIQUE composite và Filtered Unique Index chuẩn SQL Server cho các bảng cho phép NULL
-- [x] `created_at`/`updated_at` chuẩn hóa trên các bảng dữ liệu chủ
-- [x] Soft-delete (`is_active` dạng `BIT`) đồng bộ trên mọi bảng dữ liệu chủ
-- [x] `UNIQUEIDENTIFIER` xuyên suốt cho toàn bộ PK và FK
-- [x] RBAC động tách bạch Tenant Scope và Permission Scope
-- [x] Chống xử lý trùng webhook thanh toán (`UNIQUE(method, transaction_ref)`)
-
----
-
-## 7. Việc cần làm khi implement
-
-- Seed đầy đủ danh sách `Resources`/`Permissions` khớp với permission matrix cuối cùng của từng role trước khi bắt đầu code.
-- Áp dụng các cấu hình Entity qua EF Core Fluent API (`builder.HasIndex(...).HasFilter(...)` cho Filtered Index).
