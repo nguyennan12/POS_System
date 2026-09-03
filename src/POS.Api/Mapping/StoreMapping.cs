@@ -16,12 +16,18 @@ public static class StoreMapping
     store.IsActive);
   }
 
-  public static CreateStoreResponse ToResponse(
+  public static StoreDetailResponse ToResponse(
       this CreateStoreDto store)
   {
-    return new CreateStoreResponse(
+    return new StoreDetailResponse(
         store.Id,
-        store.Name);
+        store.Name,
+        store.Address,
+        store.IsActive,
+        store.Phone,
+        store.Timezone,
+        store.CurrencyCode
+      );
   }
 
 }

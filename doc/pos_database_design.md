@@ -45,7 +45,7 @@ INVENTORY       : StockEntries, StockBatches, StockTransactions, Suppliers,
                   SupplierPayments, StockInVouchers, StockInVoucherItems,
                   StockTakes, StockTakeItems
 CUSTOMER        : MemberTiers, Customers, LoyaltyAccounts, PointTransactions
-CHATBOT         : FaqEntries, ChatConversations, ChatMessages
+CHATBOT         : ChatConversations, ChatMessages
 PROMOTION       : Promotions, PromotionTargets, Vouchers, VoucherUsages
 ORDER           : Orders, OrderItems, OrderDiscounts, OrderReturns,
                   OrderReturnItems, Payments, Invoices
@@ -439,18 +439,6 @@ PointTransactions
 ### 3.6 CHATBOT
 
 ```sql
-FaqEntries
-  id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
-  store_id      UNIQUEIDENTIFIER NULL REFERENCES Stores(id) ON DELETE CASCADE
-                 -- NULL = dùng chung toàn chuỗi
-  category      NVARCHAR(100)
-  question      NVARCHAR(500) NOT NULL
-  answer        NVARCHAR(MAX) NOT NULL
-  keywords      NVARCHAR(500)
-  is_active     BIT NOT NULL DEFAULT 1
-  created_at    DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
-  updated_at    DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
-
 ChatConversations
   id              UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
   store_id        UNIQUEIDENTIFIER NOT NULL REFERENCES Stores(id) ON DELETE NO ACTION

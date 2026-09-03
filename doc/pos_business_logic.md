@@ -149,21 +149,13 @@ Hệ thống POS đa chức năng dành cho bán lẻ, gồm 11 module chính:
     cửa hàng), khách hỏi từ xa trên điện thoại cá nhân, không cần đến
     cửa hàng, không cần cài thêm app
 
--   AI tự động trả lời dựa trên kho kiến thức FAQ do Admin nhập sẵn
-    (giờ mở cửa, chính sách đổi trả, thông tin khuyến mãi đang chạy,
-    hướng dẫn sử dụng thẻ thành viên...) — **không tự suy diễn/bịa
-    thông tin ngoài phạm vi FAQ đã nhập**
-
--   Admin quản lý kho FAQ: thêm/sửa/xóa câu hỏi-đáp theo từng chủ đề,
-    bật/tắt từng mục
+-   AI tự động hỗ trợ khách hàng hỏi đáp thông tin cửa hàng, thông tin sản phẩm và chính sách chung
 
 -   Lưu lịch sử hội thoại theo phiên chat (session), có thể gắn với
     khách hàng nếu khách đã đăng nhập/định danh
 
--   Nếu AI không tìm được câu trả lời phù hợp trong kho FAQ → trả lời
-    mặc định lịch sự (vd: xin lỗi chưa có thông tin, gợi ý khách liên
-    hệ trực tiếp cửa hàng), **không cần chuyển tiếp nhân viên xử lý**
-    ở giai đoạn hiện tại (không làm live-chat)
+-   Nếu AI không thể trả lời → trả lời mặc định lịch sự (gợi ý khách liên
+    hệ trực tiếp cửa hàng), không làm live-chat ở giai đoạn hiện tại
 
 -   Giới hạn số tin nhắn mỗi phiên chat để kiểm soát chi phí gọi AI
 

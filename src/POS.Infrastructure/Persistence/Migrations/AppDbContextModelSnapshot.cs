@@ -168,64 +168,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("POS.Domain.Chatbot.FaqEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("NEWID()");
-
-                    b.Property<string>("Answer")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("answer");
-
-                    b.Property<string>("Category")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("category");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("created_at")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
-
-                    b.Property<string>("Keywords")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("keywords");
-
-                    b.Property<string>("Question")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
-                        .HasColumnName("question");
-
-                    b.Property<Guid?>("StoreId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("store_id");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updated_at")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StoreId");
-
-                    b.ToTable("faq_entries", (string)null);
-                });
-
             modelBuilder.Entity("POS.Domain.Configuration.SystemConfig", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2395,16 +2337,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Conversation");
-                });
-
-            modelBuilder.Entity("POS.Domain.Chatbot.FaqEntry", b =>
-                {
-                    b.HasOne("POS.Domain.Stores.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("POS.Domain.Configuration.SystemConfig", b =>

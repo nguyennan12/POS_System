@@ -33,7 +33,14 @@ public class CreateStoreCommandHandler : ICommandHandler<CreateStoreCommand, Cre
 
     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-    return new CreateStoreDto(store.Id, store.Name);
+    return new CreateStoreDto(
+      store.Id,
+      store.Name,
+      store.Address,
+      store.IsActive,
+      store.Phone,
+      store.Timezone,
+      store.CurrencyCode);
   }
 
 }

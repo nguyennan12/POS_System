@@ -106,3 +106,4 @@ E:\POS-System\tests\POS.Application.Tests\obj\Debug\net10.0\refint\POS.Applicati
 E:\POS-System\tests\POS.Application.Tests\obj\Debug\net10.0\POS.Application.Tests.pdb
 E:\POS-System\tests\POS.Application.Tests\obj\Debug\net10.0\POS.Application.Tests.genruntimeconfig.cache
 E:\POS-System\tests\POS.Application.Tests\obj\Debug\net10.0\ref\POS.Application.Tests.dll
+E:\POS-System\tests\POS.Application.Tests\obj\Debug\net10.0\POS.Application.Tests.sourcelink.json

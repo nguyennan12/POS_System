@@ -48,7 +48,7 @@ public class StoresController(ISender mediator) : ControllerBase
     return CreatedAtAction(
      nameof(GetById),
      new { id = result.Value!.Id },
-     ApiResponse<CreateStoreResponse>.Ok(
+     ApiResponse<StoreDetailResponse>.Ok(
          result.Value!.ToResponse()));
   }
 }

@@ -13,3 +13,4 @@ E:\POS-System\src\POS.Application\obj\Debug\net10.0\POS.Application.dll
 E:\POS-System\src\POS.Application\obj\Debug\net10.0\refint\POS.Application.dll
 E:\POS-System\src\POS.Application\obj\Debug\net10.0\POS.Application.pdb
 E:\POS-System\src\POS.Application\obj\Debug\net10.0\ref\POS.Application.dll
+E:\POS-System\src\POS.Application\obj\Debug\net10.0\POS.Application.sourcelink.json

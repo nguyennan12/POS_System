@@ -132,7 +132,6 @@ POS.sln
 │   │   ├── CustomersController.cs
 │   │   ├── FeedbacksController.cs
 │   │   ├── ChatbotController.cs
-│   │   ├── FaqController.cs
 │   │   ├── PromotionsController.cs
 │   │   ├── VouchersController.cs
 │   │   ├── ShiftsController.cs
@@ -163,7 +162,6 @@ POS.sln
 │   │   │   ├── IPromotionRepository.cs
 │   │   │   ├── ICustomerRepository.cs
 │   │   │   ├── IFeedbackRepository.cs
-│   │   │   ├── IFaqRepository.cs
 │   │   │   ├── IChatConversationRepository.cs
 │   │   │   ├── IEmployeeRepository.cs
 │   │   │   ├── IStoreRepository.cs
@@ -587,19 +585,11 @@ PUT    /member-tiers/{id}       { minSpending, pointRate, discountRate, displayC
 POST   /chatbot/sessions        { storeId }  → { sessionId }
                                   (khởi tạo phiên chat mới cho khách ẩn danh)
 POST   /chatbot/message         { sessionId, message }
-                                  → { reply, matchedFaqIds[] }
-                                  Luồng: FaqSearchService tìm FaqEntry liên
-                                  quan → IChatbotAiProvider sinh câu trả lời
-                                  dựa trên các FaqEntry đó → lưu ChatMessage
-                                  (Customer + Bot) → giới hạn số tin/phiên
+                                  → { reply }
+                                  Luồng: IChatbotAiProvider sinh câu trả lời
+                                  → lưu ChatMessage (Customer + Bot)
+                                  → giới hạn số tin/phiên
 GET    /chatbot/sessions/{sessionId}/history
-
-━━━ FAQ (quản lý bởi Admin) ━━━━━━━━━━━━━━━━━━━━━━
-GET    /faqs                    ?storeId=&category=&isActive=
-POST   /faqs                    { category, question, answer, keywords, storeId? }
-PUT    /faqs/{id}
-DELETE /faqs/{id}
-PUT    /faqs/{id}/toggle        { isActive }
 
 ━━━ PROMOTIONS & VOUCHERS ━━━━━━━━━━━━━━━━━━━━━━━
 GET    /promotions              ?storeId=&status=

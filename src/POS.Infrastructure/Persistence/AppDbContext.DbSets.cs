@@ -50,7 +50,6 @@ public partial class AppDbContext
   public DbSet<LoyaltyAccount> LoyaltyAccounts => Set<LoyaltyAccount>();
   public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
-  public DbSet<FaqEntry> FaqEntries => Set<FaqEntry>();
   public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
   public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 

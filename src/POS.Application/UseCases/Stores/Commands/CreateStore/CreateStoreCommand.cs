@@ -13,5 +13,10 @@ public record CreateStoreCommand(
 
 public record CreateStoreDto(
     Guid Id,
-    string Name
+    string Name,
+    string? Address,
+    bool IsActive,
+    string? Phone = null,
+    string Timezone = "Asia/Ho_Chi_Minh",
+    string CurrencyCode = "VND"
 );

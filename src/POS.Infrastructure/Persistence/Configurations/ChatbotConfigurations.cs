@@ -5,23 +5,6 @@ using POS.Domain.Chatbot.Enums;
 
 namespace POS.Infrastructure.Persistence.Configurations;
 
-public class FaqEntryConfiguration : IEntityTypeConfiguration<FaqEntry>
-{
-    public void Configure(EntityTypeBuilder<FaqEntry> builder)
-    {
-        builder.ToTable("faq_entries");
-        builder.ConfigureUuidPrimaryKey();
-        builder.Property(f => f.Category).HasMaxLength(100);
-        builder.Property(f => f.Question).IsRequired().HasMaxLength(500);
-        builder.Property(f => f.Answer).IsRequired();
-        builder.Property(f => f.Keywords).HasMaxLength(500);
-        builder.Property(f => f.IsActive).HasDefaultValue(true);
-        builder.Property(f => f.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(f => f.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.HasOne(f => f.Store).WithMany().HasForeignKey(f => f.StoreId).OnDelete(DeleteBehavior.Cascade);
-    }
-}
-
 public class ChatConversationConfiguration : IEntityTypeConfiguration<ChatConversation>
 {
     public void Configure(EntityTypeBuilder<ChatConversation> builder)

@@ -63,3 +63,4 @@ E:\POS-System\src\POS.Infrastructure\obj\Debug\net10.0\refint\POS.Infrastructure
 E:\POS-System\src\POS.Infrastructure\obj\Debug\net10.0\POS.Infrastructure.pdb
 E:\POS-System\src\POS.Infrastructure\obj\Debug\net10.0\POS.Infrastructure.genruntimeconfig.cache
 E:\POS-System\src\POS.Infrastructure\obj\Debug\net10.0\ref\POS.Infrastructure.dll
+E:\POS-System\src\POS.Infrastructure\obj\Debug\net10.0\POS.Infrastructure.sourcelink.json
