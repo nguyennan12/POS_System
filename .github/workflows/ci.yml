@@ -1,0 +1,92 @@
+name: POS Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  BUILD_CONFIG: Release
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  ci:
+    name: Build & Test (Backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: |
+          dotnet restore src/POS.Api/POS.Api.csproj --verbosity minimal
+          dotnet restore tests/POS.Domain.Tests/POS.Domain.Tests.csproj --verbosity minimal
+          dotnet restore tests/POS.Application.Tests/POS.Application.Tests.csproj --verbosity minimal
+          dotnet restore tests/POS.Infrastructure.Tests/POS.Infrastructure.Tests.csproj --verbosity minimal
+          dotnet restore tests/POS.Api.Tests/POS.Api.Tests.csproj --verbosity minimal
+
+      - name: Build — Source
+        run: |
+          dotnet build src/POS.Api/POS.Api.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-restore --verbosity minimal
+
+      - name: Build — Test projects
+        run: |
+          dotnet build tests/POS.Domain.Tests/POS.Domain.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-restore --verbosity minimal
+
+          dotnet build tests/POS.Application.Tests/POS.Application.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-restore --verbosity minimal
+
+          dotnet build tests/POS.Infrastructure.Tests/POS.Infrastructure.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-restore --verbosity minimal
+
+          dotnet build tests/POS.Api.Tests/POS.Api.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-restore --verbosity minimal
+
+      - name: Test
+        run: |
+          dotnet test tests/POS.Domain.Tests/POS.Domain.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-build \
+            --logger "trx;LogFileName=domain-tests.trx" \
+            --results-directory ./TestResults \
+
+          dotnet test tests/POS.Application.Tests/POS.Application.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-build \
+            --logger "trx;LogFileName=app-tests.trx" \
+            --results-directory ./TestResults \
+
+          dotnet test tests/POS.Infrastructure.Tests/POS.Infrastructure.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-build \
+            --logger "trx;LogFileName=infra-tests.trx" \
+            --results-directory ./TestResults \
+
+          dotnet test tests/POS.Api.Tests/POS.Api.Tests.csproj \
+            -c ${{ env.BUILD_CONFIG }} --no-build \
+            --logger "trx;LogFileName=api-tests.trx" \
+            --results-directory ./TestResults \
+
+      - name: Upload test results (.trx)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./TestResults/**/*.trx
+          retention-days: 14
