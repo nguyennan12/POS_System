@@ -54,35 +54,13 @@ try
 
   builder.Services.AddAuthorization();
 
-  // ---------- Controllers + Swagger ----------
-  builder.Services.AddControllers();
-  builder.Services.AddEndpointsApiExplorer();
-  builder.Services.AddSwaggerGen(options =>
-  {
-    options.SwaggerDoc("v1", new() { Title = "POS API", Version = "v1" });
-    options.AddSecurityDefinition("Bearer", new()
-    {
-      Name = "Authorization",
-      Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-      Scheme = "bearer",
-      BearerFormat = "JWT",
-      In = Microsoft.OpenApi.Models.ParameterLocation.Header
-    });
-    options.AddSecurityRequirement(new()
+  // ---------- Controllers + OpenAPI / Scalar ----------
+  builder.Services.AddControllers()
+      .AddJsonOptions(options =>
       {
-            {
-                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-                {
-                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                    {
-                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                    }
-                },
-                Array.Empty<string>()
-            }
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
       });
-  });
+  builder.Services.AddOpenApiDocumentation();
 
   // ---------- Health checks: SQL Server + Redis (dùng cho Docker healthcheck & /health/db) ----------
   builder.Services.AddHealthChecks()
@@ -95,11 +73,7 @@ try
   app.UseExceptionHandler();
   app.UseSerilogRequestLogging();
 
-  if (app.Environment.IsDevelopment())
-  {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-  }
+  app.MapOpenApiDocumentation();
 
   app.UseHttpsRedirection();
   app.UseAuthentication();
