@@ -1,4 +1,4 @@
-## 🔌 API ENDPOINTS (Swagger / Scalar)
+## 🔌 API ENDPOINTS (Scalar)
 
 ```
 Base: https://api.yourpos.com/api/v1

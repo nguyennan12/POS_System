@@ -1,4 +1,4 @@
-# POS System — Core Backend & Infrastructure
+# POS System — Core Backend & Applications
 
 Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Architecture & CQRS:
 
@@ -78,7 +78,7 @@ docker compose down
 
 | Dịch vụ                     | Địa chỉ / URL                   | Ghi chú                             |
 | --------------------------- | ------------------------------- | ----------------------------------- |
-| **API Swagger UI**          | http://localhost:5000/swagger   | Tài liệu & Test API trực tiếp       |
+| **API Scalar UI**           | http://localhost:5000/scalar/v1 | Tài liệu & Test API trực tiếp       |
 | **Health Check tổng quát**  | http://localhost:5000/health    | Kiểm tra tình trạng API             |
 | **Health Check DB & Redis** | http://localhost:5000/health/db | Kiểm tra kết nối SQL Server & Redis |
 | **Grafana Dashboard**       | http://localhost:3000           | Log & Metrics dashboard             |
