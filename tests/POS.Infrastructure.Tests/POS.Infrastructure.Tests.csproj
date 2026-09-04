@@ -11,6 +11,7 @@
     <PackageReference Include="Bogus" Version="35.6.5" />
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NSubstitute" Version="6.2.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -22,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\POS.Infrastructure\POS.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\POS.Application\POS.Application.csproj" />
     <ProjectReference Include="..\..\src\POS.Domain\POS.Domain.csproj" />
   </ItemGroup>
