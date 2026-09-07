@@ -8,11 +8,12 @@ public static class ResultExtensions
 {
   public static ActionResult ToActionResult<T>(
       this ControllerBase controller,
-      Result<T> result)
+      Result<T> result,
+      string? successMessage = null)
   {
     if (result.IsSuccess)
     {
-      return controller.Ok(ApiResponse<T>.Ok(result.Value!));
+      return controller.Ok(ApiResponse<T>.Ok(result.Value!, successMessage));
     }
 
     var error = new ApiError
