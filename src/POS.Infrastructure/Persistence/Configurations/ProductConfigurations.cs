@@ -62,6 +62,7 @@ public class SkuConfiguration : IEntityTypeConfiguration<Sku>
         builder.HasTableCheckConstraint("ck_skus_cost_price", "cost_price >= 0");
         builder.HasTableCheckConstraint("ck_skus_sell_price", "sell_price >= 0");
         builder.HasTableCheckConstraint("ck_skus_tax_rate", "tax_rate IN (0,5,8,10)");
+        builder.HasTableCheckConstraint("ck_skus_attributes_json", "attributes_json IS NULL OR ISJSON(attributes_json) = 1");
     }
 }
 
