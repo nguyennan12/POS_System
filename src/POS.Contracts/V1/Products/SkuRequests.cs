@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace POS.Contracts.V1.Products;
 
 public record CreateSkuRequest(
@@ -6,7 +8,7 @@ public record CreateSkuRequest(
     decimal CostPrice,
     decimal SellPrice,
     decimal TaxRate = 0,
-    string? AttributesJson = null
+    JsonElement? Attributes = null
 );
 
 public record UpdateSkuRequest(
@@ -16,7 +18,7 @@ public record UpdateSkuRequest(
     decimal SellPrice,
     decimal TaxRate,
     bool IsActive,
-    string? AttributesJson = null
+    JsonElement? Attributes = null
 );
 
 public record CreateUnitConversionRequest(

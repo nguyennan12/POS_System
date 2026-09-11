@@ -14,7 +14,7 @@ namespace POS.Api.Controllers;
 public class StoresController(ISender mediator) : ControllerBase
 {
   [HttpGet("{id:guid}")]
-  public async Task<IActionResult> GetById(
+  public async Task<ActionResult<ApiResponse<StoreDetailResponse>>> GetById(
       Guid id,
       CancellationToken cancellationToken)
   {
@@ -29,7 +29,7 @@ public class StoresController(ISender mediator) : ControllerBase
   }
 
   [HttpPost]
-  public async Task<IActionResult> Create(
+  public async Task<ActionResult<ApiResponse<StoreDetailResponse>>> Create(
       [FromBody] CreateStoreRequest request,
       CancellationToken cancellationToken)
   {

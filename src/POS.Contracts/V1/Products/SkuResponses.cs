@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace POS.Contracts.V1.Products;
 
 public record UnitConversionResponse(
@@ -25,7 +27,7 @@ public record SkuResponse(
     Guid ProductId,
     string SkuCode,
     string Barcode,
-    string? AttributesJson,
+    JsonElement? Attributes,
     decimal CostPrice,
     decimal SellPrice,
     decimal TaxRate,
@@ -39,7 +41,7 @@ public record SkuDetailResponse(
     string ProductName,
     string SkuCode,
     string Barcode,
-    string? AttributesJson,
+    JsonElement? Attributes,
     decimal CostPrice,
     decimal SellPrice,
     decimal TaxRate,

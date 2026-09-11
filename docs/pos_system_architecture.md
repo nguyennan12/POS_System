@@ -1,6 +1,6 @@
-# 🏪 Kiến Trúc Hệ Thống POS — Phiên Bản Thực Tế & Đầy Đủ
+# 🏪 Kiến Trúc Hệ Thống POS
 
-> **Mô hình**: WinForms .NET 8 (Client) + ASP.NET Core Web API (Cloud Server) + SQL Server
+> **Mô hình**: WinForms .NET 10 (Client) + ASP.NET Core Web API (Cloud Server) + SQL Server
 > **Pattern**: MVP (WinForms UI) + Service + Repository Pattern + DI
 > **Auth & Logging**: JWT Bearer + Đăng nhập PIN/Password & Grafana Stack (Loki + Prometheus + Grafana)
 > **Triển khai**: Docker + Docker Compose (dev & production)
@@ -16,7 +16,7 @@
  │   ┌─────────────────────────────────────────────────────────────────┐   │
  │   │               ASP.NET Core Web API (.NET 10)                    │   │
  │   │               https://api.domain.com/api/v1                     │   │
- │   │               Scalar / Swagger UI: /swagger                     │   │
+ │   │                        Scalar API UI                            │   │
  │   └──────────────────────────────┬──────────────────────────────────┘   │
  │                                  │                                      │
  │   ┌──────────────────────────────▼──────────────────────────────────┐   │
@@ -26,15 +26,15 @@
  │                                  │                                      │
  │   ┌──────────────────────────────┴──────────────────────────────────┐   │
  │   │                MONITORING & LOGGING STACK                       │   │
- │   │  Serilog ──► Loki (Log Data) ──────┐                            │   │
+ │   │  Serilog ──► Loki (Log Data)                                    │   │
  │   │  /metrics ──► Prometheus (Metrics) ├──► Grafana UI (:3000)      │   │
- │   └────────────────────────────────────┘                            │   │
+ │   └─────────────────────────────────────────────────────────────────┘   │
  └─────────────────────────────────────────────────────────────────────────┘
               ▲                                        ▲
               |                                        |
               │ HTTPS REST + JWT                       │ HTTP REST
  ┌────────────┴──────────┐                ┌────────────┴──────────────┐
- │   WinForms .NET 8     │                │   Web Client (Tương lai)  │
+ │   WinForms .NET 10    │                │   Web Client (Tương lai)  │
  │   (Quầy thu ngân)     │                │   React / Blazor / Vue    │
  │   Store A: Quầy 1,2,3 │                │   (Admin Dashboard)       │
  │   Store B: Quầy 1,2   │                │                           │
@@ -87,7 +87,7 @@
 │  │  API Layer (ASP.NET Core Controllers)                │    │
 │  │  Auth Middleware | JWT Validation                    │    │
 │  │  TenantMiddleware (xác định StoreId từ token)        │    │
-│  │  Swagger / Scalar (API docs)                         │    │
+│  │  Scalar (API docs)                                   │    │
 │  └───────────────────────┬──────────────────────────────┘    │
 │                          │ gọi                               │
 │  ┌───────────────────────▼──────────────────────────────┐    │
@@ -130,7 +130,6 @@ POS.sln
 │   │   ├── PaymentsController.cs
 │   │   ├── InvoicesController.cs
 │   │   ├── CustomersController.cs
-│   │   ├── FeedbacksController.cs
 │   │   ├── ChatbotController.cs
 │   │   ├── PromotionsController.cs
 │   │   ├── VouchersController.cs
@@ -148,7 +147,7 @@ POS.sln
 │   │   ├── ProductMappings.cs          ← Map Contract Request ↔ Application
 │   │   ├── OrderMappings.cs
 │   │   └── CommonMappings.cs
-│   └── Program.cs                      ← DI setup, Swagger, Auth & Serilog config
+│   └── Program.cs                      ← DI setup, Scalar, Auth & Serilog config
 │
 ├── 📋 POS.Application/                  (Business Logic)
 │   ├── Abstractions/                    ← Cổng đi ra ngoài Application, Infrastructure implement
@@ -161,7 +160,6 @@ POS.sln
 │   │   │   ├── IInvoiceRepository.cs
 │   │   │   ├── IPromotionRepository.cs
 │   │   │   ├── ICustomerRepository.cs
-│   │   │   ├── IFeedbackRepository.cs
 │   │   │   ├── IChatConversationRepository.cs
 │   │   │   ├── IEmployeeRepository.cs
 │   │   │   ├── IStoreRepository.cs
@@ -306,9 +304,6 @@ POS.sln
 │   │   ├── Customers/
 │   │   │   ├── frmCustomerLookup.cs
 │   │   │   └── frmCustomerEdit.cs
-│   │   ├── Feedbacks/
-│   │   │   ├── frmFeedbackList.cs
-│   │   │   └── frmFeedbackDetail.cs
 │   │   ├── Promotions/
 │   │   │   └── frmPromotionList.cs
 │   │   ├── Shifts/
@@ -327,7 +322,6 @@ POS.sln
 │   │   ├── ProductPresenter.cs
 │   │   ├── InventoryPresenter.cs
 │   │   ├── CustomerPresenter.cs
-│   │   ├── FeedbackPresenter.cs
 │   │   ├── ShiftPresenter.cs
 │   │   └── ReportPresenter.cs
 │   ├── ViewInterfaces/                  ← View Contracts (MVP)
@@ -339,7 +333,6 @@ POS.sln
 │   │   ├── IProductView.cs
 │   │   ├── IInventoryView.cs
 │   │   ├── ICustomerView.cs
-│   │   ├── IFeedbackView.cs
 │   │   ├── IShiftView.cs
 │   │   └── IReportView.cs
 │   ├── ApiClients/                      ← Gọi REST API
@@ -352,7 +345,6 @@ POS.sln
 │   │   ├── StoreApiClient.cs
 │   │   ├── InventoryApiClient.cs
 │   │   ├── CustomerApiClient.cs
-│   │   ├── FeedbackApiClient.cs
 │   │   ├── PromotionApiClient.cs
 │   │   ├── ShiftApiClient.cs
 │   │   └── ReportApiClient.cs
@@ -568,23 +560,23 @@ CheckoutOrderCommand thành công
 
 ### Backend
 
-| Hạng mục            | Công nghệ                | NuGet Package                                      |
-| ------------------- | ------------------------ | -------------------------------------------------- |
-| **Runtime**         | .NET 10                  | —                                                  |
-| **Web Framework**   | ASP.NET Core Web API     | —                                                  |
-| **ORM**             | Entity Framework Core 8  | `Npgsql.EntityFrameworkCore.SQLServer`             |
-| **Validation**      | FluentValidation         | `FluentValidation.AspNetCore`                      |
-| **Auth**            | JWT Bearer               | `Microsoft.AspNetCore.Authentication.JwtBearer`    |
-| **API Docs**        | Scalar (mới hơn Swagger) | `Scalar.AspNetCore`                                |
-| **Mapping**         | Mapster                  | `Mapster`                                          |
-| **Cache**           | Redis                    | `StackExchange.Redis`                              |
-| **Real-time**       | SignalR                  | `Microsoft.AspNetCore.SignalR`                     |
-| **Background Jobs** | Hangfire                 | `Hangfire.SQLServer`                               |
-| **Logging**         | Serilog + Grafana Loki   | `Serilog.AspNetCore`, `Serilog.Sinks.Grafana.Loki` |
-| **Excel**           | ClosedXML                | `ClosedXML`                                        |
-| **PDF**             | QuestPDF                 | `QuestPDF`                                         |
-| **Hash Password**   | BCrypt                   | `BCrypt.Net-Next`                                  |
-| **HTTP Client**     | Refit                    | `Refit` (gọi MoMo/VietQR API)                      |
+| Hạng mục            | Công nghệ               | NuGet Package                                      |
+| ------------------- | ----------------------- | -------------------------------------------------- |
+| **Runtime**         | .NET 10                 | —                                                  |
+| **Web Framework**   | ASP.NET Core Web API    | —                                                  |
+| **ORM**             | Entity Framework Core 8 | `Npgsql.EntityFrameworkCore.SQLServer`             |
+| **Validation**      | FluentValidation        | `FluentValidation.AspNetCore`                      |
+| **Auth**            | JWT Bearer              | `Microsoft.AspNetCore.Authentication.JwtBearer`    |
+| **API Docs**        | Scalar                  | `Scalar.AspNetCore`                                |
+| **Mapping**         | Mapster                 | `Mapster`                                          |
+| **Cache**           | Redis                   | `StackExchange.Redis`                              |
+| **Real-time**       | SignalR                 | `Microsoft.AspNetCore.SignalR`                     |
+| **Background Jobs** | Hangfire                | `Hangfire.SQLServer`                               |
+| **Logging**         | Serilog + Grafana Loki  | `Serilog.AspNetCore`, `Serilog.Sinks.Grafana.Loki` |
+| **Excel**           | ClosedXML               | `ClosedXML`                                        |
+| **PDF**             | QuestPDF                | `QuestPDF`                                         |
+| **Hash Password**   | BCrypt                  | `BCrypt.Net-Next`                                  |
+| **HTTP Client**     | Refit                   | `Refit` (gọi MoMo/VietQR API)                      |
 
 ### WinForms Client
 

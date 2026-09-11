@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using POS.Contracts.V1.Common;
 using POS.Domain.Common;
 
@@ -6,19 +6,21 @@ namespace POS.Api.Extensions;
 
 public static class ResultExtensions
 {
-  public static IActionResult ToActionResult<T>(
+  public static ActionResult ToActionResult<T>(
       this ControllerBase controller,
-      Result<T> result)
+      Result<T> result,
+      string? successMessage = null)
   {
     if (result.IsSuccess)
     {
-      return controller.Ok(ApiResponse<T>.Ok(result.Value!));
+      return controller.Ok(ApiResponse<T>.Ok(result.Value!, successMessage));
     }
 
     var error = new ApiError
     {
       Code = result.Error.Code,
-      Message = result.Error.Message!
+      Message = result.Error.Message!,
+      Type = result.Error.Type
     };
 
     if (result is IValidationResult validationResult)
@@ -47,11 +49,7 @@ public static class ResultExtensions
           controller.Conflict(
               ApiResponse<object>.Fail(error)),
 
-      ErrorType.Validation =>
-          controller.BadRequest(
-              ApiResponse<object>.Fail(error)),
-
-      ErrorType.Invalid =>
+      ErrorType.Validation or ErrorType.Invalid =>
           controller.BadRequest(
               ApiResponse<object>.Fail(error)),
 
