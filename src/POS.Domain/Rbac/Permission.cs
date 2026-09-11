@@ -5,6 +5,10 @@ namespace POS.Domain.Rbac;
 
 public class Permission : BaseEntity
 {
+  public Permission() : base()
+  {
+  }
+
   public Permission(Guid resourceId, Resource resource, PermissionAction action, string? description = null, Guid? id = null) : base(id)
   {
     ResourceId = resourceId;

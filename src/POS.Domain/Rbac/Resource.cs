@@ -4,6 +4,10 @@ namespace POS.Domain.Rbac;
 
 public class Resource : BaseEntity
 {
+  public Resource() : base()
+  {
+  }
+
   public Resource(string code, string? description = null, Guid? id = null) : base(id)
   {
     Code = code;

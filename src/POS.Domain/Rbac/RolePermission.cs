@@ -5,6 +5,10 @@ namespace POS.Domain.Rbac;
 
 public class RolePermission : BaseEntity
 {
+  public RolePermission() : base()
+  {
+  }
+
   public RolePermission(Guid roleId, Role role, Guid permissionId, Permission permission, Guid? grantedBy = null, Employee? grantedByEmployee = null, Guid? id = null) : base(id)
   {
     RoleId = roleId;
