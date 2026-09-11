@@ -1,0 +1,62 @@
+using Microsoft.EntityFrameworkCore;
+using POS.Domain.Employees;
+using POS.Domain.Rbac.Constants;
+using POS.Domain.Stores;
+
+namespace POS.Infrastructure.Persistence.Seeders;
+
+public class StoreAndEmployeeSeeder : ISeeder
+{
+    public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        if (await context.Stores.AnyAsync(cancellationToken))
+            return;
+
+        var adminRoleId = await context.Roles
+            .Where(r => r.StoreId == null && r.Name == RoleNames.Admin)
+            .Select(r => r.Id)
+            .FirstAsync(cancellationToken);
+
+        var cashierRoleId = await context.Roles
+            .Where(r => r.StoreId == null && r.Name == RoleNames.Cashier)
+            .Select(r => r.Id)
+            .FirstAsync(cancellationToken);
+
+        var defaultStoreId = Guid.NewGuid();
+        var defaultStore = new Store(
+            "Cửa Hàng Trung Tâm",
+            "123 Đường Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
+            "0901234567",
+            "Asia/Ho_Chi_Minh",
+            "VND",
+            "0101234567",
+            "Chào mừng quý khách đến với POS System!",
+            "Cảm ơn và hẹn gặp lại quý khách!",
+            true,
+            defaultStoreId);
+
+        var adminUser = new Employee(
+            "Quản Trị Viên",
+            "admin",
+            BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+            BCrypt.Net.BCrypt.HashPassword("123456"),
+            adminRoleId,
+            isActive: true,
+            storeId: defaultStoreId,
+            id: Guid.NewGuid());
+
+        var cashierUser = new Employee(
+            "Thu Ngân 01",
+            "cashier01",
+            BCrypt.Net.BCrypt.HashPassword("Cashier@123"),
+            BCrypt.Net.BCrypt.HashPassword("654321"),
+            cashierRoleId,
+            isActive: true,
+            storeId: defaultStoreId,
+            id: Guid.NewGuid());
+
+        await context.Stores.AddAsync(defaultStore, cancellationToken);
+        await context.Employees.AddRangeAsync(new[] { adminUser, cashierUser }, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+}
