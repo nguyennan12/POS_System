@@ -14,13 +14,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // ---- SQL Server ----
+        // ---- PostgreSQL ----
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+            options.UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         // ---- Redis ----
         var redisConnectionString = configuration["Redis:ConnectionString"]

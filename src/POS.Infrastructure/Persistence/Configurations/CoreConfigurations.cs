@@ -11,7 +11,7 @@ public class EmployeeStoreAccessConfiguration : IEntityTypeConfiguration<Employe
     {
         builder.ToTable("employee_store_access");
         builder.ConfigureUuidPrimaryKey();
-        builder.Property(e => e.GrantedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(e => e.GrantedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(e => new { e.EmployeeId, e.StoreId }).IsUnique();
         builder.HasOne(e => e.Employee).WithMany().HasForeignKey(e => e.EmployeeId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(e => e.Store).WithMany().HasForeignKey(e => e.StoreId).OnDelete(DeleteBehavior.Cascade);
@@ -26,7 +26,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.ToTable("refresh_tokens");
         builder.ConfigureUuidPrimaryKey();
         builder.Property(r => r.TokenHash).IsRequired().HasMaxLength(255);
-        builder.Property(r => r.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(r => r.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(r => r.TokenHash).IsUnique();
         builder.HasIndex(r => new { r.EmployeeId, r.RevokedAt });
         builder.HasOne(r => r.Employee).WithMany().HasForeignKey(r => r.EmployeeId).OnDelete(DeleteBehavior.Cascade);
@@ -43,7 +43,7 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
         builder.Property(s => s.ClosingCash).HasMoneyPrecision();
         builder.Property(s => s.ActualCash).HasMoneyPrecision();
         builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(ShiftStatus.Open);
-        builder.Property(s => s.OpenedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(s => s.OpenedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(s => new { s.StoreId, s.Status });
         builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(s => s.Employee).WithMany().HasForeignKey(s => s.EmployeeId).OnDelete(DeleteBehavior.Restrict);

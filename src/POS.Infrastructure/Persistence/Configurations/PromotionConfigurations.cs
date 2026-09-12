@@ -18,7 +18,7 @@ public class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
         builder.Property(p => p.MaxDiscountAmount).HasMoneyPrecision();
         builder.Property(p => p.AppliesTo).HasConversion<string>().IsRequired().HasMaxLength(20);
         builder.Property(p => p.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(PromotionStatus.Active);
-        builder.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(p => p.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(p => new { p.StoreId, p.Status, p.ValidFrom, p.ValidTo });
         builder.HasOne(p => p.Store).WithMany().HasForeignKey(p => p.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.CreatedByEmployee).WithMany().HasForeignKey(p => p.CreatedBy).OnDelete(DeleteBehavior.Restrict);
@@ -65,7 +65,7 @@ public class VoucherUsageConfiguration : IEntityTypeConfiguration<VoucherUsage>
     {
         builder.ToTable("voucher_usages");
         builder.ConfigureUuidPrimaryKey();
-        builder.Property(v => v.UsedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(v => v.UsedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(v => new { v.VoucherId, v.OrderId }).IsUnique();
         builder.HasOne(v => v.Voucher).WithMany().HasForeignKey(v => v.VoucherId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(v => v.Customer).WithMany().HasForeignKey(v => v.CustomerId).OnDelete(DeleteBehavior.Restrict);

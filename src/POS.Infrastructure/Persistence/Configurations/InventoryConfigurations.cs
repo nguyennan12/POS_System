@@ -16,7 +16,7 @@ public class StockEntryConfiguration : IEntityTypeConfiguration<StockEntry>
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.QtyOnHand).HasQuantityPrecision();
     builder.Property(s => s.MinStock).HasQuantityPrecision();
-    builder.Property(s => s.LastUpdated).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.LastUpdated).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasIndex(s => new { s.StoreId, s.SkuId }).IsUnique();
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.Sku).WithMany().HasForeignKey(s => s.SkuId).OnDelete(DeleteBehavior.Restrict);
@@ -32,7 +32,7 @@ public class StockBatchConfiguration : IEntityTypeConfiguration<StockBatch>
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.BatchNo).IsRequired().HasMaxLength(50);
     builder.Property(s => s.Qty).HasQuantityPrecision();
-    builder.Property(s => s.ReceivedAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.ReceivedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasIndex(s => new { s.StoreId, s.SkuId, s.BatchNo }).IsUnique();
     builder.HasIndex(s => s.ExpiryDate);
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
@@ -49,7 +49,7 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.Type).HasConversion<string>().IsRequired().HasMaxLength(20);
     builder.Property(s => s.Qty).HasQuantityPrecision();
-    builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasIndex(s => new { s.SkuId, s.CreatedAt });
     builder.HasIndex(s => new { s.StoreId, s.CreatedAt });
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
@@ -75,7 +75,7 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
     builder.Property(s => s.Address).HasMaxLength(500);
     builder.Property(s => s.CreditTerms).HasMaxLength(200);
     builder.Property(s => s.IsActive).HasDefaultValue(true);
-    builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
   }
 }
 
@@ -87,7 +87,7 @@ public class SupplierPaymentConfiguration : IEntityTypeConfiguration<SupplierPay
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.Amount).HasMoneyPrecision();
     builder.Property(s => s.Method).HasConversion<string>().IsRequired().HasMaxLength(20);
-    builder.Property(s => s.PaidAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.PaidAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasOne(s => s.Supplier).WithMany().HasForeignKey(s => s.SupplierId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.Voucher).WithMany().HasForeignKey(s => s.VoucherId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.CreatedByEmployee).WithMany().HasForeignKey(s => s.CreatedBy).OnDelete(DeleteBehavior.Restrict);
@@ -104,7 +104,7 @@ public class StockInVoucherConfiguration : IEntityTypeConfiguration<StockInVouch
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.TotalAmount).HasMoneyPrecision();
     builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(StockInVoucherStatus.Completed);
-    builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.Supplier).WithMany().HasForeignKey(s => s.SupplierId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.CreatedByEmployee).WithMany().HasForeignKey(s => s.CreatedBy).OnDelete(DeleteBehavior.Restrict);
@@ -137,7 +137,7 @@ public class StockTakeConfiguration : IEntityTypeConfiguration<StockTake>
     builder.ToTable("stock_takes");
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(StockTakeStatus.Draft);
-    builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+    builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.CreatedByEmployee).WithMany().HasForeignKey(s => s.CreatedBy).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.ApprovedByEmployee).WithMany().HasForeignKey(s => s.ApprovedBy).OnDelete(DeleteBehavior.Restrict);

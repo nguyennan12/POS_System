@@ -16,8 +16,8 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.PinHash).IsRequired().HasMaxLength(255);
         builder.Property(e => e.PinLookupHash).HasColumnType("char(64)");
         builder.Property(e => e.IsActive).HasDefaultValue(true);
-        builder.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(e => e.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
+        builder.Property(e => e.UpdatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(e => e.Username).IsUnique();
         builder.HasIndex(e => new { e.StoreId, e.PinLookupHash }).IsUnique();
         builder.HasOne(e => e.Role).WithMany(r => r.Employees).HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Restrict);
