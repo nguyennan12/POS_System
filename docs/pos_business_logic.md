@@ -291,33 +291,37 @@ sequenceDiagram
 
 ### 8.1 Bảng ma trận vai trò (Roles Matrix)
 
-| Chức Năng Nghiệp Vụ | Chủ Chuỗi (`Owner`) | Quản Trị Cửa Hàng (`Admin`) | Quản Lý Ca (`Manager`) | Thu Ngân (`Cashier`) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Quản lý đa chi nhánh toàn chuỗi** | ✅ | ❌ | ❌ | ❌ |
-| **Tạo cửa hàng mới & Gán Admin** | ✅ | ❌ | ❌ | ❌ |
-| **Xem báo cáo tổng hợp toàn chuỗi** | ✅ | ❌ | ❌ | ❌ |
-| **Quản lý nhân viên chi nhánh** | ✅ | ✅ | ❌ | ❌ |
-| **Cấu hình sản phẩm, giá & khuyến mãi** | ✅ | ✅ | ❌ | ❌ |
-| **Nhập kho / Xuất kho / Kiểm kê** | ✅ | ✅ | ✅ | ❌ |
-| **Duyệt điều chỉnh tồn kho / Hủy đơn** | ✅ | ✅ | ✅ | ❌ |
-| **Bán hàng, Quét barcode & Thu tiền** | ✅ | ✅ | ✅ | ✅ |
-| **Mở ca & Đóng ca làm việc cá nhân** | ✅ | ✅ | ✅ | ✅ |
+| Chức Năng Nghiệp Vụ | Chủ Chuỗi (`Owner`) | Cửa Hàng Trưởng (`StoreManager`) | Thu Ngân (`Cashier`) |
+| :--- | :---: | :---: | :---: |
+| **Quản lý đa chi nhánh toàn chuỗi** | ✅ | ❌ | ❌ |
+| **Tạo cửa hàng mới / Tạm ngừng chi nhánh** | ✅ | ❌ | ❌ |
+| **Xem báo cáo tổng hợp toàn chuỗi** | ✅ | ❌ | ❌ |
+| **Xem báo cáo doanh thu & kho chi nhánh** | ✅ | ✅ | ❌ |
+| **Quản lý nhân viên chi nhánh** | ✅ | ✅ | ❌ |
+| **Cấu hình sản phẩm, bảng giá & khuyến mãi** | ✅ | ❌ | ❌ |
+| **Quản lý nhà cung cấp & công nợ NCC** | ✅ | ✅ | ❌ |
+| **Nhập kho / Xuất kho / Kiểm kê chi nhánh** | ✅ | ✅ | ❌ |
+| **Duyệt điều chỉnh tồn kho / Duyệt hủy đơn / Hoàn tiền** | ✅ | ✅ | ❌ |
+| **Bán hàng, Quét barcode & Thu tiền** | ✅ | ✅ | ✅ |
+| **Xử lý chăm sóc khách hàng (CRM)** | ✅ | ✅ | ✅ |
+| **Mở ca & Đóng ca làm việc cá nhân** | ✅ | ✅ | ✅ |
+| **Duyệt đối soát chênh lệch tiền mặt cuối ca** | ✅ | ✅ | ❌ |
 
 > [!TIP]
-> Hệ thống hỗ trợ mô hình **RBAC (Role-Based Access Control)** mở rộng, cho phép tùy biến chi tiết quyền theo từng chức năng trong tương lai.
+> Hệ thống hỗ trợ mô hình **RBAC (Role-Based Access Control)** mở rộng, phân định rõ ràng giữa cấp Quản trị Chuỗi (`Owner`) và Cửa hàng (`StoreManager`, `Cashier`).
 
 ### 8.2 Quản lý nhân viên
-- **Quản lý tài khoản**: Thêm mới, cập nhật hồ sơ, gán vai trò (`Role`) và chỉ định chi nhánh làm việc.
+- **Quản lý tài khoản**: Thêm mới, cập nhật hồ sơ, gán vai trò (`Role`) và chỉ định chi nhánh làm việc (`StoreId`).
 - **Bảo mật & Khóa tài khoản**:
-  - Khóa tài khoản chủ động bởi Quản lý.
+  - Khóa tài khoản chủ động bởi Quản lý/Chủ chuỗi.
   - Tự động tạm khóa tài khoản khi nhập sai mã PIN/mật khẩu quá **5 lần liên tiếp**.
 - **Cấp lại mật khẩu**: Hỗ trợ đặt lại mật khẩu hoặc cấp mã PIN mới.
 - **Audit Logging**: Nhật ký ghi vết toàn bộ lượt Đăng nhập, Đăng xuất và các thao tác nhạy cảm.
 
 ### 8.3 Quản lý cửa hàng (Dành cho Chủ chuỗi)
 - Khởi tạo cửa hàng mới: Tên chi nhánh, địa chỉ, số điện thoại, múi giờ (`Timezone`), tiền tệ mặc định (`VND`).
-- Gán tài khoản Admin quản trị cho từng chi nhánh cụ thể.
-- Cơ chế phân quyền đa cửa hàng cho tài khoản cấp cao.
+- Chỉ định tài khoản `StoreManager` quản trị cho từng chi nhánh cụ thể.
+- Cơ chế phân quyền đa cửa hàng cho tài khoản cấp cao (`EmployeeStoreAccess`).
 - Chế độ tạm ngừng hoạt động chi nhánh (*Bảo lưu toàn vẹn dữ liệu lịch sử*).
 
 ---

@@ -646,24 +646,24 @@ CheckoutOrderCommand thành công
 
 ### 8.4 Permission Matrix (RBAC)
 
-| Quyền                                 | Owner | Admin | Manager | Cashier |
-| ------------------------------------- | :---: | :---: | :-----: | :-----: |
-| Bán hàng / Checkout                   |  ✅   |  ✅   |   ✅    |   ✅    |
-| Hủy đơn hàng                          |  ✅   |  ✅   |   ✅    |   ❌    |
-| Hoàn tiền                             |  ✅   |  ✅   |   ✅    |   ❌    |
-| Override giá                          |  ✅   |  ✅   |   ✅    |   ❌    |
-| Nhập kho                              |  ✅   |  ✅   |   ✅    |   ❌    |
-| Duyệt kiểm kê                         |  ✅   |  ✅   |   ✅    |   ❌    |
-| Chuyển hàng giữa chi nhánh            |  ✅   |  ✅   |   ✅    |   ❌    |
-| Xử lý chăm sóc khách hàng (CRM)       |  ✅   |  ✅   |   ✅    |   ✅    |
-| Quản lý sản phẩm                      |  ✅   |  ✅   |   ❌    |   ❌    |
-| Cấu hình KM                           |  ✅   |  ✅   |   ❌    |   ❌    |
-| Xem báo cáo toàn chuỗi (đa chi nhánh) |  ✅   |  ❌   |   ❌    |   ❌    |
-| Xem báo cáo chi nhánh                 |  ✅   |  ✅   |   ✅    |   ❌    |
-| Quản lý nhân viên                     |  ✅   |  ✅   |   ❌    |   ❌    |
-| Tạo cửa hàng mới / gán Admin          |  ✅   |  ❌   |   ❌    |   ❌    |
-| Cấu hình hệ thống (chi nhánh)         |  ✅   |  ✅   |   ❌    |   ❌    |
-| Cấu hình chung toàn chuỗi             |  ✅   |  ❌   |   ❌    |   ❌    |
+| Quyền | Owner | StoreManager | Cashier |
+| ------------------------------------- | :---: | :---: | :---: |
+| Bán hàng / Checkout | ✅ | ✅ | ✅ |
+| Hủy đơn hàng | ✅ | ✅ | ❌ |
+| Hoàn tiền | ✅ | ✅ | ❌ |
+| Override giá | ✅ | ✅ | ❌ |
+| Nhập kho | ✅ | ✅ | ❌ |
+| Duyệt kiểm kê | ✅ | ✅ | ❌ |
+| Chuyển hàng giữa chi nhánh | ✅ | ✅ | ❌ |
+| Xử lý chăm sóc khách hàng (CRM) | ✅ | ✅ | ✅ |
+| Quản lý sản phẩm | ✅ | ❌ | ❌ |
+| Cấu hình KM | ✅ | ❌ | ❌ |
+| Xem báo cáo toàn chuỗi (đa chi nhánh) | ✅ | ❌ | ❌ |
+| Xem báo cáo chi nhánh | ✅ | ✅ | ❌ |
+| Quản lý nhân viên | ✅ | ✅ | ❌ |
+| Tạo cửa hàng mới / gán Admin | ✅ | ❌ | ❌ |
+| Cấu hình hệ thống (chi nhánh) | ✅ | ✅ | ❌ |
+| Cấu hình chung toàn chuỗi | ✅ | ❌ | ❌ |
 
 ---
 
