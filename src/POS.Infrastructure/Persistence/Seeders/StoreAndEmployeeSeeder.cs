@@ -12,8 +12,8 @@ public class StoreAndEmployeeSeeder : ISeeder
         if (await context.Stores.AnyAsync(cancellationToken))
             return;
 
-        var adminRoleId = await context.Roles
-            .Where(r => r.StoreId == null && r.Name == RoleNames.Admin)
+        var storeManagerRoleId = await context.Roles
+            .Where(r => r.StoreId == null && r.Name == RoleNames.StoreManager)
             .Select(r => r.Id)
             .FirstAsync(cancellationToken);
 
@@ -35,12 +35,12 @@ public class StoreAndEmployeeSeeder : ISeeder
             true,
             defaultStoreId);
 
-        var adminUser = new Employee(
-            "Quản Trị Viên",
-            "admin",
-            BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+        var managerUser = new Employee(
+            "Cửa Hàng Trưởng",
+            "store_manager",
+            BCrypt.Net.BCrypt.HashPassword("Manager@123"),
             BCrypt.Net.BCrypt.HashPassword("123456"),
-            adminRoleId,
+            storeManagerRoleId,
             isActive: true,
             storeId: defaultStoreId,
             id: Guid.NewGuid());
@@ -56,7 +56,7 @@ public class StoreAndEmployeeSeeder : ISeeder
             id: Guid.NewGuid());
 
         await context.Stores.AddAsync(defaultStore, cancellationToken);
-        await context.Employees.AddRangeAsync(new[] { adminUser, cashierUser }, cancellationToken);
+        await context.Employees.AddRangeAsync(new[] { managerUser, cashierUser }, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
     }
 }

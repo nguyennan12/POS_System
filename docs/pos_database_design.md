@@ -203,16 +203,15 @@ Lấy toàn bộ permission từ role (qua RolePermissions theo role_id).
 Không có override theo từng user; nếu cần ngoại lệ thì tạo role riêng.
 ```
 
-**Seed dữ liệu mặc định** — 4 role hệ thống (`is_system_role = 1`,
+**Seed dữ liệu mặc định** — 3 role hệ thống (`is_system_role = 1`,
 `store_id = NULL`), permission gán theo đúng bảng phân quyền đã thống nhất
-trước đó (Owner > Admin > Manager > Cashier), ví dụ trích một phần:
+trước đó (Owner > StoreManager > Cashier), ví dụ trích một phần:
 
-| Role    | Permission code (ví dụ)                                                                                                              |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Owner   | `stores:create`, `stores:update`, `reports:read` (toàn chuỗi), `config:override`, + toàn bộ quyền của Admin                          |
-| Admin   | `employees:create`, `products:create`, `promotions:update`, `reports:read` (chi nhánh), `config:update`, + toàn bộ quyền của Manager |
-| Manager | `inventory:create`, `stocktakes:approve`, `orders:refund`, `orders:override`, `shifts:read`                                          |
-| Cashier | `orders:create`, `payments:create`, `shifts:create` (mở/đóng ca của mình)                                                            |
+| Role         | Permission code (ví dụ)                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Owner        | `stores:create`, `stores:update`, `reports:read` (toàn chuỗi), `config:override`, + toàn bộ quyền của StoreManager                    |
+| StoreManager | `employees:create`, `products:create`, `promotions:update`, `reports:read` (chi nhánh), `config:update`, `inventory:create`, `stocktakes:approve`, `orders:refund`, `orders:override` |
+| Cashier      | `orders:create`, `payments:create`, `shifts:create` (mở/đóng ca của mình)                                                            |
 
 ### 3.3 PRODUCT
 
