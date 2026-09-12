@@ -1,7 +1,7 @@
 # 📋 BẢNG PHÂN RÃ CÔNG VIỆC & KẾ HOẠCH SPRINT (POS SYSTEM)
 
 > **Tài liệu**: Task Breakdown & Sprint Recommendation chuẩn Agile/Scrum  
-> **Dự án**: POS-System (.NET 10 Web API + WinUI / WinForms + SQL Server 2022 + Redis)  
+> **Dự án**: POS-System (.NET 10 Web API + WinUI / WinForms + PostgreSQL 17 + Redis)  
 > **Mục đích**: Sử dụng trực tiếp để quản lý và theo dõi tiến độ trên Trello / Jira  
 > **Quy chuẩn mã Task**: Đánh số tuần tự từ **T01** đến **T60** (T01 – T10: Đã hoàn thành; T11 – T60: Cần triển khai)
 
@@ -13,7 +13,7 @@
 
 Hệ thống **POS-System** là giải pháp phần mềm quản trị bán lẻ và chuỗi cửa hàng đa chi nhánh kết hợp:
 
-- **Cloud Backend Server**: ASP.NET Core Web API (.NET 10) chạy container hóa Docker trên nền SQL Server 2022 + Redis 7 + Grafana Stack (Loki, Prometheus, Grafana).
+- **Cloud Backend Server**: ASP.NET Core Web API (.NET 10) chạy container hóa Docker trên nền PostgreSQL 17 + Redis 7 + Grafana Stack (Loki, Prometheus, Grafana).
 - **Client Desktop App**: WinUI / WinForms (.NET 10) cài đặt trực tiếp tại các quầy thu ngân (POS terminal), kết nối với Cloud API qua REST (HTTPS/JSON) và SignalR (Realtime payment).
 
 ### 1.2 Architecture Pattern
@@ -22,7 +22,7 @@ Hệ thống **POS-System** là giải pháp phần mềm quản trị bán lẻ
   - `POS.Contracts`: Định nghĩa DTO Request / Response công khai (dạng `record` bất biến).
   - `POS.Domain`: Chứa Rich Domain Entities, Value Objects, Domain Services thuần túy, Result/Error pattern.
   - `POS.Application`: Use Cases (Commands, Queries, Handlers, FluentValidation, Pipeline Behaviors, Repository Abstractions).
-  - `POS.Infrastructure`: EF Core 8 / SQL Server 2022, Entity Configurations, Repository Implementations, External Adapters.
+  - `POS.Infrastructure`: EF Core 10 / PostgreSQL 17, Entity Configurations, Repository Implementations, External Adapters.
   - `POS.Api`: Controllers tiếp nhận HTTP request, dispatch qua `ISender`, chuẩn hóa phản hồi `ApiResponse<T>`.
 - **Client Desktop Architecture**: **Model-View-Presenter (MVP)** kết hợp Dependency Injection:
   - `Views`: WinForms/WinUI triển khai các `IXxxView` interfaces (thụ động, không logic nghiệp vụ).
@@ -33,7 +33,7 @@ Hệ thống **POS-System** là giải pháp phần mềm quản trị bán lẻ
 
 - **Runtime**: .NET 10 (C# 13)
 - **Web Framework**: ASP.NET Core Web API, MediatR, FluentValidation, Scalar API Documentation
-- **Database & Cache**: SQL Server 2022, Entity Framework Core 8, Redis 7 (`StackExchange.Redis`)
+- **Database & Cache**: PostgreSQL 17, Entity Framework Core 10, Redis 7 (`StackExchange.Redis`)
 - **Observability**: Serilog, Grafana Loki, Prometheus Metrics, Grafana Dashboard
 - **Desktop UI**: WinUI / WinForms (.NET 10), MaterialSkin 2
 - **DevOps**: Docker, Docker Compose (Môi trường Dev có Hot Reload + Môi trường Production tối ưu build)
@@ -41,7 +41,7 @@ Hệ thống **POS-System** là giải pháp phần mềm quản trị bán lẻ
 ### 1.4 Baseline Hiện Tại (T01 – T10 COMPLETED)
 
 1. Cấu trúc Solution đa project chuẩn Clean Architecture (`POS.sln`).
-2. Hạ tầng Docker Compose cho Dev & Production (SQL Server, Redis, API, Prometheus, Loki, Grafana).
+2. Hạ tầng Docker Compose cho Dev & Production (PostgreSQL, Redis, API, Prometheus, Loki, Grafana).
 3. Cơ chế tự động chạy EF Core Migration khi khởi động API (`MigrationExtensions`).
 4. Toàn bộ `POS.Contracts/V1` với đầy đủ DTOs cho 16 domains.
 5. Toàn bộ `POS.Domain` Entities, Enums, Value Objects và EF Configurations.
@@ -250,7 +250,7 @@ POS-System
 
 - **Status:** **COMPLETED** | **Priority:** P0 - Critical | **Suggested Role:** DEVOPS
 - **Description:** Xây dựng cấu hình container hóa gồm 2 môi trường:
-  1. `docker/dev/docker-compose.yml`: Chạy SQL Server 2022 (`localhost:14330`), Redis 7 (`localhost:6379`), API hỗ trợ volume mount hot-reload, Prometheus (`localhost:9090`), Grafana (`localhost:3000`).
+  1. `docker/dev/docker-compose.yml`: Chạy PostgreSQL 17 (`localhost:5432`), Redis 7 (`localhost:6379`), API hỗ trợ volume mount hot-reload, Prometheus (`localhost:9090`), Grafana (`localhost:3000`).
   2. `docker/production/docker-compose.yml`: Multi-stage build image tối ưu cho production.
 - **Source / Evidence:** Thư mục `docker/dev/` và `docker/production/` kèm các file `.env.example`, `Dockerfile`.
 - **Dependencies:** T01
@@ -267,7 +267,7 @@ POS-System
 - **Source / Evidence:** `src/POS.Infrastructure/Persistence/AppDbContext.cs`, `AppDbContext.DbSets.cs`, thư mục `Configurations/` và các file trong `Migrations/`.
 - **Dependencies:** T01
 - **API Contracts:** N/A (EF Core Persistence & Schema Configurations)
-- **Acceptance Criteria:** EF Core Snapshot phản ánh chính xác schema SQL Server 2022 theo tài liệu `pos_database_design.md`.
+- **Acceptance Criteria:** EF Core Snapshot phản ánh chính xác schema PostgreSQL 17 theo tài liệu `pos_database_design.md`.
 - **Estimated Size:** L
 
 ---
@@ -279,7 +279,7 @@ POS-System
 - **Source / Evidence:** `src/POS.Api/Extensions/MigrationExtensions.cs` & `src/POS.Infrastructure/Persistence/MigrationService.cs`.
 - **Dependencies:** T03
 - **API Contracts:** N/A (Startup Migration Automation)
-- **Acceptance Criteria:** Khởi chạy container API lần đầu tự động tạo đầy đủ bảng và quan hệ trên SQL Server.
+- **Acceptance Criteria:** Khởi chạy container API lần đầu tự động tạo đầy đủ bảng và quan hệ trên PostgreSQL.
 - **Estimated Size:** S
 
 ---
@@ -368,7 +368,7 @@ POS-System
 ### T11 — [DB][FEATURE] Seed System Roles, Resources & Default Permissions
 
 - **Status:** MISSING | **Priority:** P0 - Critical | **Suggested Role:** DB / BE
-- **Description:** Khởi tạo dữ liệu ban đầu cho các bảng `Roles`, `Resources`, `Permissions`, và `RolePermissions` trong SQL Server.
+- **Description:** Khởi tạo dữ liệu ban đầu cho các bảng `Roles`, `Resources`, `Permissions`, và `RolePermissions` trong PostgreSQL.
 - **Why:** Phân quyền, tạo nhân viên và đăng nhập phụ thuộc vào 4 role hệ thống (`Owner`, `Admin`, `Manager`, `Cashier`) và các mã permission chuẩn.
 - **Source / Evidence:** `doc/pos_database_design.md` mục 3.2 và `pos_system_architecture.md` mục 8.4.
 - **Dependencies:** T03

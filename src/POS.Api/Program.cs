@@ -26,7 +26,7 @@ try
   builder.Host.UseSerilog((context, services, configuration) =>
       SerilogLokiConfiguration.Configure(configuration, context.Configuration["Serilog:LokiUrl"]));
 
-  // ---------- DI: Application + Infrastructure (SQL Server + Redis wiring nằm trong đây) ----------
+  // ---------- DI: Application + Infrastructure (PostgreSQL + Redis wiring nằm trong đây) ----------
   builder.Services.AddApplication();
   builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -62,9 +62,9 @@ try
       });
   builder.Services.AddOpenApiDocumentation();
 
-  // ---------- Health checks: SQL Server + Redis (dùng cho Docker healthcheck & /health/db) ----------
+  // ---------- Health checks: PostgreSQL + Redis (dùng cho Docker healthcheck & /health/db) ----------
   builder.Services.AddHealthChecks()
-      .AddSqlServer(builder.Configuration.GetConnectionString("Default")!, name: "sqlserver")
+      .AddNpgSql(builder.Configuration.GetConnectionString("Default")!, name: "postgresql")
       .AddRedis(builder.Configuration["Redis:ConnectionString"]!, name: "redis");
 
   var app = builder.Build();

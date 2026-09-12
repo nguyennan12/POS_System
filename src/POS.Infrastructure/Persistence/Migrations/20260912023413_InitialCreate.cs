@@ -1,9 +1,10 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace POS.Infrastructure.Persistence.Migrations
+namespace POS.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -15,12 +16,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "member_tiers",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    min_spending = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    point_rate = table.Column<decimal>(type: "decimal(5,4)", precision: 5, scale: 4, nullable: false),
-                    discount_rate = table.Column<decimal>(type: "decimal(5,4)", precision: 5, scale: 4, nullable: false),
-                    display_color = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    min_spending = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    point_rate = table.Column<decimal>(type: "numeric(5,4)", precision: 5, scale: 4, nullable: false),
+                    discount_rate = table.Column<decimal>(type: "numeric(5,4)", precision: 5, scale: 4, nullable: false),
+                    display_color = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -32,9 +33,9 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "resources",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -45,18 +46,18 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stores",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    address = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    timezone = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Asia/Ho_Chi_Minh"),
-                    currency_code = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false, defaultValue: "VND"),
-                    tax_code = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    receipt_header = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    receipt_footer = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    timezone = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false, defaultValue: "Asia/Ho_Chi_Minh"),
+                    currency_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false, defaultValue: "VND"),
+                    tax_code = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    receipt_header = table.Column<string>(type: "text", nullable: true),
+                    receipt_footer = table.Column<string>(type: "text", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -67,16 +68,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "suppliers",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    tax_code = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    contact_name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    address = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    credit_terms = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    tax_code = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    contact_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    credit_terms = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -87,11 +88,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "translations",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    language_code = table.Column<string>(type: "nvarchar(5)", maxLength: 5, nullable: false),
-                    key = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    value = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    language_code = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
+                    key = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    value = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -102,16 +103,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "customers",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    phone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    email = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     dob = table.Column<DateOnly>(type: "date", nullable: true),
-                    barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    member_tier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    total_spending = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    barcode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    member_tier_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    total_spending = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -128,11 +129,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "permissions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    resource_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    action = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    code = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    resource_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    action = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    code = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: false),
+                    description = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -150,14 +151,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "categories",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    parent_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    display_order = table.Column<int>(type: "int", nullable: false),
-                    image_url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    is_visible = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    parent_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    display_order = table.Column<int>(type: "integer", nullable: false),
+                    image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    is_visible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -177,41 +178,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "faq_entries",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    category = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    question = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    answer = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    keywords = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_faq_entries", x => x.id);
-                    table.ForeignKey(
-                        name: "FK_faq_entries_stores_store_id",
-                        column: x => x.store_id,
-                        principalTable: "stores",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "roles",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    is_system_role = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    is_system_role = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -228,11 +204,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "system_configs",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    key = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    value = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    value = table.Column<string>(type: "text", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -249,13 +225,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "chat_conversations",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    customer_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    session_id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    message_count = table.Column<int>(type: "int", nullable: false),
-                    started_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    ended_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    session_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    message_count = table.Column<int>(type: "integer", nullable: false),
+                    started_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    ended_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -278,10 +254,10 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "loyalty_accounts",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    customer_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    points_balance = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    last_updated = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    points_balance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -299,17 +275,17 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "products",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    category_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    name = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    brand = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    base_unit = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    image_url = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    category_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    description = table.Column<string>(type: "text", nullable: true),
+                    brand = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    base_unit = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -333,25 +309,25 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "employees",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    role_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    is_chain_owner = table.Column<bool>(type: "bit", nullable: false),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    password_hash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    pin_hash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    role_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    is_chain_owner = table.Column<bool>(type: "boolean", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    username = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    pin_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     pin_lookup_hash = table.Column<string>(type: "char(64)", nullable: true),
                     failed_login_count = table.Column<short>(type: "smallint", nullable: false),
-                    locked_until = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    locked_until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_employees", x => x.id);
-                    table.CheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = 1");
+                    table.CheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = true");
                     table.ForeignKey(
                         name: "FK_employees_roles_role_id",
                         column: x => x.role_id,
@@ -370,11 +346,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "chat_messages",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    conversation_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sender = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    conversation_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sender = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    content = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -392,18 +368,18 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "skus",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    product_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    attributes_json = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    cost_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    sell_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    tax_rate = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 0m),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    updated_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    product_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    barcode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    attributes = table.Column<Dictionary<string, string>>(type: "jsonb", nullable: true),
+                    cost_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    sell_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    tax_rate = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 0m),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -429,15 +405,15 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "audit_logs",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    employee_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    action = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    entity_type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    entity_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ip_address = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    employee_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    action = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    entity_type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    entity_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    ip_address = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -460,11 +436,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "employee_store_access",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    employee_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    granted_by = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    granted_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    employee_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    granted_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -493,23 +469,23 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "promotions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    value = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    min_order_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    max_discount_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    conditions_json = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    priority = table.Column<int>(type: "int", nullable: false),
-                    is_stackable = table.Column<bool>(type: "bit", nullable: false),
-                    is_exclusive = table.Column<bool>(type: "bit", nullable: false),
-                    applies_to = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    valid_from = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    valid_to = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    value = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    min_order_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    max_discount_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    conditions_json = table.Column<string>(type: "text", nullable: true),
+                    priority = table.Column<int>(type: "integer", nullable: false),
+                    is_stackable = table.Column<bool>(type: "boolean", nullable: false),
+                    is_exclusive = table.Column<bool>(type: "boolean", nullable: false),
+                    applies_to = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    valid_from = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    valid_to = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -537,12 +513,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "refresh_tokens",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    employee_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    token_hash = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
-                    expires_at = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    revoked_at = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    employee_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    token_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    revoked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -559,11 +535,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "role_permissions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    role_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    permission_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    granted_by = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    granted_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    role_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    permission_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    granted_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -592,16 +568,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "shifts",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    employee_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    opening_cash = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    closing_cash = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    actual_cash = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Open"),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    opened_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    closed_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    employee_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    opening_cash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    closing_cash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    actual_cash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Open"),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    opened_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    closed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -628,14 +604,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_in_vouchers",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    supplier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    total_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Completed"),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    supplier_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    total_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Completed"),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -666,14 +642,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_takes",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Draft"),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    approved_by = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    approved_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Draft"),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    approved_by = table.Column<Guid>(type: "uuid", nullable: true),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    approved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -703,15 +679,15 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "price_lists",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    valid_from = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    valid_to = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    customer_group = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    valid_from = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    valid_to = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    customer_group = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -742,13 +718,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_batches",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    batch_no = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    batch_no = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
                     expiry_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    received_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    received_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -772,12 +748,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_entries",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    qty_on_hand = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    min_stock = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    last_updated = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    qty_on_hand = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    min_stock = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -801,11 +777,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "unit_conversions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    unit_name = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    conversion_factor = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
-                    sell_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    unit_name = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    conversion_factor = table.Column<decimal>(type: "numeric(18,4)", precision: 18, scale: 4, nullable: false),
+                    sell_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -824,10 +800,10 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "promotion_targets",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    promotion_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    category_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    promotion_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    category_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -857,14 +833,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "vouchers",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    promotion_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    max_uses = table.Column<int>(type: "int", nullable: false),
-                    used_count = table.Column<int>(type: "int", nullable: false),
-                    per_customer_limit = table.Column<int>(type: "int", nullable: false, defaultValue: 1),
-                    expires_at = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    is_active = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    promotion_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    max_uses = table.Column<int>(type: "integer", nullable: false),
+                    used_count = table.Column<int>(type: "integer", nullable: false),
+                    per_customer_limit = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
+                    expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -883,25 +859,25 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "orders",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    shift_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    customer_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Draft"),
-                    currency_code = table.Column<string>(type: "nvarchar(3)", maxLength: 3, nullable: false, defaultValue: "VND"),
-                    subtotal = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    discount_total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    tax_total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    grand_total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    paid_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    shift_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Draft"),
+                    currency_code = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false, defaultValue: "VND"),
+                    subtotal = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    discount_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    tax_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    grand_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_orders", x => x.id);
-                    table.CheckConstraint("ck_orders_status", "status IN ('Draft','Confirmed','Paid','Cancelled','Refunded','PartiallyRefunded')");
+                    table.CheckConstraint("ck_orders_status", "status IN ('Draft','Confirmed','Paid','Cancelled')");
                     table.ForeignKey(
                         name: "FK_orders_customers_customer_id",
                         column: x => x.customer_id,
@@ -932,12 +908,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_in_voucher_items",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    voucher_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    unit_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    total_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    voucher_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    unit_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    total_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -963,14 +939,14 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "supplier_payments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    supplier_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    voucher_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    method = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    paid_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    supplier_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    method = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    note = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1001,13 +977,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_take_items",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    take_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    system_qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    actual_qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    diff_qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false, computedColumnSql: "actual_qty - system_qty", stored: true),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    take_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    system_qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    actual_qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    diff_qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false, computedColumnSql: "actual_qty - system_qty", stored: true),
+                    note = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1030,16 +1006,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "invoices",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    invoice_no = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    buyer_name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    buyer_tax_code = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    buyer_address = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    total_before_tax = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    tax_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    grand_total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    issued_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    invoice_no = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    buyer_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    buyer_tax_code = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    buyer_address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    total_before_tax = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    tax_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    grand_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    issued_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -1056,13 +1032,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "order_discounts",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    promotion_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    voucher_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    discount_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    description = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    applied_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    promotion_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    discount_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    description = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    applied_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -1079,28 +1055,26 @@ namespace POS.Infrastructure.Persistence.Migrations
                         name: "FK_order_discounts_promotions_promotion_id",
                         column: x => x.promotion_id,
                         principalTable: "promotions",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "id");
                     table.ForeignKey(
                         name: "FK_order_discounts_vouchers_voucher_id",
                         column: x => x.voucher_id,
                         principalTable: "vouchers",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.NoAction);
+                        principalColumn: "id");
                 });
 
             migrationBuilder.CreateTable(
                 name: "order_items",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    unit_price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    discount_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    tax_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    line_total = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    unit_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    discount_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    tax_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    line_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1122,49 +1096,18 @@ namespace POS.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "order_returns",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    reason = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    refund_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    processed_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_order_returns", x => x.id);
-                    table.CheckConstraint("ck_order_returns_refund_amount", "refund_amount >= 0");
-                    table.CheckConstraint("ck_order_returns_status", "status IN ('Pending','Approved','Rejected')");
-                    table.ForeignKey(
-                        name: "FK_order_returns_employees_processed_by",
-                        column: x => x.processed_by,
-                        principalTable: "employees",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_order_returns_orders_order_id",
-                        column: x => x.order_id,
-                        principalTable: "orders",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "payments",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    method = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    change_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
-                    transaction_ref = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
-                    gateway_response_json = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    paid_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    method = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    change_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
+                    transaction_ref = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Pending"),
+                    gateway_response_json = table.Column<string>(type: "text", nullable: true),
+                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -1185,13 +1128,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "point_transactions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    customer_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    points = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    points = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -1215,16 +1158,16 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_transactions",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    store_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    sku_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    stock_in_voucher_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    note = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    created_by = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    created_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    store_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sku_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    stock_in_voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    note = table.Column<string>(type: "text", nullable: true),
+                    created_by = table.Column<Guid>(type: "uuid", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -1266,11 +1209,11 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "voucher_usages",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    voucher_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    customer_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    order_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    used_at = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    voucher_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    customer_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    order_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    used_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
                 },
                 constraints: table =>
                 {
@@ -1293,35 +1236,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                         principalTable: "vouchers",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "order_return_items",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
-                    return_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    order_item_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    qty = table.Column<decimal>(type: "decimal(18,3)", precision: 18, scale: 3, nullable: false),
-                    refund_amount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_order_return_items", x => x.id);
-                    table.CheckConstraint("ck_order_return_items_qty", "qty > 0");
-                    table.CheckConstraint("ck_order_return_items_refund_amount", "refund_amount >= 0");
-                    table.ForeignKey(
-                        name: "FK_order_return_items_order_items_order_item_id",
-                        column: x => x.order_item_id,
-                        principalTable: "order_items",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_order_return_items_order_returns_return_id",
-                        column: x => x.return_id,
-                        principalTable: "order_returns",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -1374,8 +1288,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_customers_barcode",
                 table: "customers",
                 column: "barcode",
-                unique: true,
-                filter: "[barcode] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_customers_member_tier_id",
@@ -1413,19 +1326,13 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_employees_store_id_pin_lookup_hash",
                 table: "employees",
                 columns: new[] { "store_id", "pin_lookup_hash" },
-                unique: true,
-                filter: "[store_id] IS NOT NULL AND [pin_lookup_hash] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_employees_username",
                 table: "employees",
                 column: "username",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_faq_entries_store_id",
-                table: "faq_entries",
-                column: "store_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_invoices_invoice_no",
@@ -1477,26 +1384,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                 column: "sku_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_order_return_items_order_item_id",
-                table: "order_return_items",
-                column: "order_item_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_order_return_items_return_id",
-                table: "order_return_items",
-                column: "return_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_order_returns_order_id",
-                table: "order_returns",
-                column: "order_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_order_returns_processed_by",
-                table: "order_returns",
-                column: "processed_by");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_orders_created_by",
                 table: "orders",
                 column: "created_by");
@@ -1520,8 +1407,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_payments_method_transaction_ref",
                 table: "payments",
                 columns: new[] { "method", "transaction_ref" },
-                unique: true,
-                filter: "[transaction_ref] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_payments_order_id",
@@ -1638,8 +1524,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_roles_store_id_name",
                 table: "roles",
                 columns: new[] { "store_id", "name" },
-                unique: true,
-                filter: "[store_id] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_shifts_employee_id",
@@ -1666,7 +1551,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_skus_store_id_is_active",
                 table: "skus",
                 columns: new[] { "store_id", "is_active" },
-                filter: "is_active = 1");
+                filter: "is_active = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_skus_store_id_sku_code",
@@ -1795,8 +1680,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "IX_system_configs_store_id_key",
                 table: "system_configs",
                 columns: new[] { "store_id", "key" },
-                unique: true,
-                filter: "[store_id] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_translations_language_code_key",
@@ -1851,9 +1735,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "employee_store_access");
 
             migrationBuilder.DropTable(
-                name: "faq_entries");
-
-            migrationBuilder.DropTable(
                 name: "invoices");
 
             migrationBuilder.DropTable(
@@ -1863,7 +1744,7 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "order_discounts");
 
             migrationBuilder.DropTable(
-                name: "order_return_items");
+                name: "order_items");
 
             migrationBuilder.DropTable(
                 name: "payments");
@@ -1917,12 +1798,6 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "chat_conversations");
 
             migrationBuilder.DropTable(
-                name: "order_items");
-
-            migrationBuilder.DropTable(
-                name: "order_returns");
-
-            migrationBuilder.DropTable(
                 name: "permissions");
 
             migrationBuilder.DropTable(
@@ -1932,22 +1807,19 @@ namespace POS.Infrastructure.Persistence.Migrations
                 name: "stock_in_vouchers");
 
             migrationBuilder.DropTable(
-                name: "vouchers");
-
-            migrationBuilder.DropTable(
                 name: "skus");
 
             migrationBuilder.DropTable(
                 name: "orders");
 
             migrationBuilder.DropTable(
+                name: "vouchers");
+
+            migrationBuilder.DropTable(
                 name: "resources");
 
             migrationBuilder.DropTable(
                 name: "suppliers");
-
-            migrationBuilder.DropTable(
-                name: "promotions");
 
             migrationBuilder.DropTable(
                 name: "products");
@@ -1957,6 +1829,9 @@ namespace POS.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "shifts");
+
+            migrationBuilder.DropTable(
+                name: "promotions");
 
             migrationBuilder.DropTable(
                 name: "categories");

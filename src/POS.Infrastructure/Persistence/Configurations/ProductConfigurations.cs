@@ -14,7 +14,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(c => c.Name).IsRequired().HasMaxLength(200);
         builder.Property(c => c.ImageUrl).HasMaxLength(500);
         builder.Property(c => c.IsVisible).HasDefaultValue(true);
-        builder.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasOne(c => c.Store).WithMany().HasForeignKey(c => c.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(c => c.Parent).WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
     }
@@ -31,8 +31,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.BaseUnit).IsRequired().HasMaxLength(30);
         builder.Property(p => p.ImageUrl).HasMaxLength(500);
         builder.Property(p => p.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(ProductStatus.Active);
-        builder.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(p => p.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(p => p.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
+        builder.Property(p => p.UpdatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(p => new { p.StoreId, p.Status }).HasFilter("status = 'Active'");
         builder.HasOne(p => p.Store).WithMany().HasForeignKey(p => p.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.Restrict);
@@ -52,17 +52,17 @@ public class SkuConfiguration : IEntityTypeConfiguration<Sku>
         builder.Property(s => s.SellPrice).HasMoneyPrecision();
         builder.Property(s => s.TaxRate).HasPrecision(5, 2).HasDefaultValue(0);
         builder.Property(s => s.IsActive).HasDefaultValue(true);
-        builder.Property(s => s.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(s => s.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
+        builder.Property(s => s.UpdatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(s => new { s.StoreId, s.Barcode }).IsUnique();
         builder.HasIndex(s => new { s.StoreId, s.SkuCode }).IsUnique();
-        builder.HasIndex(s => new { s.StoreId, s.IsActive }).HasFilter("is_active = 1");
+        builder.HasIndex(s => new { s.StoreId, s.IsActive }).HasFilter("is_active = true");
+        builder.Property(s => s.Attributes).HasColumnName("attributes").HasColumnType("jsonb");
         builder.HasOne(s => s.Product).WithMany().HasForeignKey(s => s.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasTableCheckConstraint("ck_skus_cost_price", "cost_price >= 0");
         builder.HasTableCheckConstraint("ck_skus_sell_price", "sell_price >= 0");
         builder.HasTableCheckConstraint("ck_skus_tax_rate", "tax_rate IN (0,5,8,10)");
-        builder.HasTableCheckConstraint("ck_skus_attributes_json", "attributes_json IS NULL OR ISJSON(attributes_json) = 1");
     }
 }
 
@@ -90,7 +90,7 @@ public class PriceListConfiguration : IEntityTypeConfiguration<PriceList>
         builder.ConfigureUuidPrimaryKey();
         builder.Property(p => p.Price).HasMoneyPrecision();
         builder.Property(p => p.CustomerGroup).HasMaxLength(50);
-        builder.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(p => p.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasOne(p => p.Store).WithMany().HasForeignKey(p => p.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Sku).WithMany().HasForeignKey(p => p.SkuId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(p => p.CreatedByEmployee).WithMany().HasForeignKey(p => p.CreatedBy).OnDelete(DeleteBehavior.Restrict);

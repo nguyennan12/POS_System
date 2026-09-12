@@ -419,7 +419,7 @@ public class Store : BaseEntity
 
 #### 1. Mục đích & Nguyên tắc:
 
-- Hiện thực hóa việc lưu trữ dữ liệu, tương tác cơ sở dữ liệu (SQL Server via EF Core), Cache (Redis), Email, 외부 API.
+- Hiện thực hóa việc lưu trữ dữ liệu, tương tác cơ sở dữ liệu (PostgreSQL via EF Core), Cache (Redis), Email, external API.
 - **EF Core Configuration**: Tách riêng cấu hình mapping bảng (`IEntityTypeConfiguration<T>`) thay vì để chung trong DbContext để giữ DbContext gọn gàng.
 - **Repository Implementation**: Hiện thực các Interface đã khai báo ở tầng Application.
 - **Đăng ký DI (Dependency Injection)**: Đăng ký đầy đủ Repository, DbContext, Services vào `IServiceCollection`.
@@ -470,13 +470,13 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // 1. Cấu hình DbContext với SQL Server
+        // 1. Cấu hình DbContext với PostgreSQL
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sql =>
-                sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+            options.UseNpgsql(connectionString, npgsql =>
+                npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         // 2. Đăng ký Repositories & UnitOfWork (Scoped)
         services.AddScoped<IStoreRepository, StoreRepository>();
