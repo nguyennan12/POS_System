@@ -1,6 +1,6 @@
 # 🏪 Kiến Trúc Hệ Thống POS
 
-> **Mô hình**: WinForms .NET 10 (Client) + ASP.NET Core Web API (Cloud Server) + SQL Server
+> **Mô hình**: WinForms .NET 10 (Client) + ASP.NET Core Web API (Cloud Server) + PostgreSQL
 > **Pattern**: MVP (WinForms UI) + Service + Repository Pattern + DI
 > **Auth & Logging**: JWT Bearer + Đăng nhập PIN/Password & Grafana Stack (Loki + Prometheus + Grafana)
 > **Triển khai**: Docker + Docker Compose (dev & production)
@@ -20,7 +20,7 @@
  │   └──────────────────────────────┬──────────────────────────────────┘   │
  │                                  │                                      │
  │   ┌──────────────────────────────▼──────────────────────────────────┐   │
- │   │                      SQL Server 2022                            │   │
+ │   │                      PostgreSQL 17                              │   │
  │   │                (1 DB duy nhất, phân biệt StoreId)               │   │
  │   └──────────────────────────────┬──────────────────────────────────┘   │
  │                                  │                                      │
@@ -41,7 +41,7 @@
  └───────────────────────┘                └───────────────────────────┘
 ```
 
-> Toàn bộ khối "CLOUD SERVER" (API, SQL Server, Redis, Nginx, monitoring stack) chạy trong Docker. WinForms là app desktop cài trực tiếp lên máy Windows tại quầy — không chạy trong container, chỉ gọi API qua HTTPS ra ngoài.
+> Toàn bộ khối "CLOUD SERVER" (API, PostgreSQL, Redis, Nginx, monitoring stack) chạy trong Docker. WinForms là app desktop cài trực tiếp lên máy Windows tại quầy — không chạy trong container, chỉ gọi API qua HTTPS ra ngoài.
 
 ---
 
@@ -104,7 +104,7 @@
 │                          │                                   │
 │  ┌───────────────────────▼──────────────────────────────┐    │
 │  │  Infrastructure                                      │    │
-│  │  AppDbContext (EF Core / Npgsql) | SQL Server 2022   │    │
+│  │  AppDbContext (EF Core / Npgsql) | PostgreSQL 17      │    │
 │  │  Redis | SignalR | MinIO | MoMo Adapter | VietQR     │    │
 │  └──────────────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────────────┘
@@ -393,7 +393,7 @@ POS.sln
 │
 └── 🐳 docker/                            (Docker & hạ tầng triển khai)
     ├── Dockerfile                        ← Multi-stage build cho POS.API
-    ├── docker-compose.yml                ← Base: SQL server, Redis, API, Loki, Prometheus, Grafana (dev)
+    ├── docker-compose.yml                ← Base: PostgreSQL, Redis, API, Loki, Prometheus, Grafana (dev)
     ├── docker-compose.prod.yml           ← Override cho production: Nginx + SSL, healthcheck, restart policy
     ├── .env.example
     ├── nginx/
@@ -564,14 +564,14 @@ CheckoutOrderCommand thành công
 | ------------------- | ----------------------- | -------------------------------------------------- |
 | **Runtime**         | .NET 10                 | —                                                  |
 | **Web Framework**   | ASP.NET Core Web API    | —                                                  |
-| **ORM**             | Entity Framework Core 8 | `Npgsql.EntityFrameworkCore.SQLServer`             |
+| **ORM**             | Entity Framework Core 10| `Npgsql.EntityFrameworkCore.PostgreSQL`            |
 | **Validation**      | FluentValidation        | `FluentValidation.AspNetCore`                      |
 | **Auth**            | JWT Bearer              | `Microsoft.AspNetCore.Authentication.JwtBearer`    |
 | **API Docs**        | Scalar                  | `Scalar.AspNetCore`                                |
 | **Mapping**         | Mapster                 | `Mapster`                                          |
 | **Cache**           | Redis                   | `StackExchange.Redis`                              |
 | **Real-time**       | SignalR                 | `Microsoft.AspNetCore.SignalR`                     |
-| **Background Jobs** | Hangfire                | `Hangfire.SQLServer`                               |
+| **Background Jobs** | Hangfire                | `Hangfire.PostgreSql`                              |
 | **Logging**         | Serilog + Grafana Loki  | `Serilog.AspNetCore`, `Serilog.Sinks.Grafana.Loki` |
 | **Excel**           | ClosedXML               | `ClosedXML`                                        |
 | **PDF**             | QuestPDF                | `QuestPDF`                                         |
@@ -597,7 +597,7 @@ CheckoutOrderCommand thành công
 
 | Hạng mục                 | Công nghệ                                  |
 | ------------------------ | ------------------------------------------ |
-| **Database**             | SQL Server 2022                            |
+| **Database**             | PostgreSQL 17                              |
 | **Cache**                | Redis 7 (Docker)                           |
 | **Cloud**                | VPS Ubuntu / Azure App Service             |
 | **Reverse Proxy**        | Nginx + SSL (Let's Encrypt/Certbot)        |
@@ -633,7 +633,7 @@ CheckoutOrderCommand thành công
 ### 8.2 Quản Lý Token & Session
 
 - **Access Token (JWT)**: Hết hạn sau **8 tiếng** (vừa đủ 1 ca làm việc). Payload chứa: `employee_id`, `role`, `store_id`, `shift_id`.
-- **Refresh Token**: Hết hạn sau **30 ngày**, lưu trong SQL Server. Cho phép thu hồi (revoke) ngay lập tức để buộc nhân viên đăng xuất.
+- **Refresh Token**: Hết hạn sau **30 ngày**, lưu trong PostgreSQL. Cho phép thu hồi (revoke) ngay lập tức để buộc nhân viên đăng xuất.
 - **Tự động gia hạn**: App WinForms tự động gọi API refresh token ngầm khi Access Token sắp hết hạn.
 
 ### 8.3 An Toàn & Bảo Mật (Security Checklist)

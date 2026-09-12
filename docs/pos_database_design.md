@@ -1,8 +1,8 @@
-# 🗃️ THIẾT KẾ DATABASE — HỆ THỐNG POS (SQL Server 2022)
+# 🗃️ THIẾT KẾ DATABASE — HỆ THỐNG POS (PostgreSQL 17)
 
 > File này là tài liệu **thiết kế database chính thức**, tách riêng khỏi
 > `pos_system_architecture.md` để dễ theo dõi/maintain khi schema thay đổi.
-> Toàn bộ nội dung dưới đây đã cập nhật theo chuẩn **SQL Server 2022**, thêm RBAC động,
+> Toàn bộ nội dung dưới đây đã cập nhật theo chuẩn **PostgreSQL 17**, thêm RBAC động,
 > và tinh gọn các module chưa cần cho MVP — đây là bản
 > **thay thế hoàn toàn** phần "DATABASE SCHEMA" trong file kiến trúc gốc.
 
@@ -20,15 +20,15 @@
   AuditLogs...) — chỉ soft-delete (`is_active`) cho dữ liệu chủ (Products,
   Customers, Suppliers, Roles...).
 - **Tiền tệ luôn dùng `DECIMAL(18,2)`** (hoặc `NUMERIC(18,2)`), không dùng `FLOAT`/`REAL`.
-- **Thời gian luôn dùng `DATETIMEOFFSET`** (có timezone, chuẩn UTC), mặc định `SYSUTCDATETIME()`.
-- **Khóa chính và khóa ngoại**: dùng `UNIQUEIDENTIFIER` (Guid trong C#) xuyên suốt, sinh tại ứng dụng
-  hoặc bằng `NEWID()` / `NEWSEQUENTIALID()`. UUID/Guid giúp đồng bộ offline và
+- **Thời gian luôn dùng `TIMESTAMPTZ` / `TIMESTAMP WITH TIME ZONE`** (chuẩn UTC), mặc định `TIMEZONE('utc', now())`.
+- **Khóa chính và khóa ngoại**: dùng `UUID` (Guid trong C#) xuyên suốt, sinh tại ứng dụng
+  hoặc bằng `gen_random_uuid()`. UUID giúp đồng bộ offline và
   không lộ thứ tự dữ liệu. Với các bảng ghi rất nhiều (`Orders`, ledger),
   ưu tiên Guidv7/Guid có tính tuần tự khi tầng ứng dụng hỗ trợ.
-- **Dữ liệu Boolean**: dùng kiểu `BIT` (`1` cho `true`, `0` cho `false`).
-- **Dữ liệu JSON**: dùng kiểu `NVARCHAR(MAX)` tích hợp hàm `ISJSON()` check constraint hoặc tính năng JSON native của SQL Server 2022.
+- **Dữ liệu Boolean**: dùng kiểu `BOOLEAN` (`true` / `false`).
+- **Dữ liệu JSON**: dùng kiểu `JSONB` native của PostgreSQL.
 - **Các cột status/type/method/action cố định**: trong code dùng enum, EF Core
-  convert sang string (`NVARCHAR`) trong DB để dữ liệu dễ đọc và vẫn giữ CHECK constraint.
+  convert sang string (`VARCHAR`) trong DB để dữ liệu dễ đọc và vẫn giữ CHECK constraint.
 - **Mọi FK đều phải khai báo rõ `ON DELETE`** — mặc định `RESTRICT` (hoặc `NO ACTION`) cho dữ
   liệu giao dịch/lịch sử, `CASCADE` chỉ cho bảng chi tiết đi kèm cha thật
   sự vô nghĩa khi đứng riêng (vd `OrderItems` theo `Orders`).
@@ -58,9 +58,9 @@ chuỗi** (không scope theo `store_id`) — khách mua ở bất kỳ chi nhán
 cũng tích điểm vào cùng 1 tài khoản. `MemberTiers` cũng global, nhất quán
 với quyết định này.
 
-**Khởi tạo SQL Server**:
+**Khởi tạo PostgreSQL**:
 
-- Mặc định sử dụng `DEFAULT NEWID()` (hoặc `NEWSEQUENTIALID()`) cho các cột `UNIQUEIDENTIFIER`.
+- Mặc định sử dụng `DEFAULT gen_random_uuid()` cho các cột `UUID`.
 - Client chạy offline phải tự sinh GUID cho bản ghi của mình và gửi nguyên ID đó khi đồng bộ.
 
 ---
@@ -163,7 +163,7 @@ Roles
   created_at           DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
   updated_at           DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
 
-  -- Filtered Unique Index trong SQL Server cho system role (store_id IS NULL) và custom role (store_id IS NOT NULL)
+  -- Filtered Unique Index trong PostgreSQL cho system role (store_id IS NULL) và custom role (store_id IS NOT NULL)
 
 Resources               -- danh mục "đối tượng" có thể phân quyền
   id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
@@ -658,17 +658,17 @@ CREATE INDEX idx_orders_shift ON Orders(shift_id);
 CREATE INDEX idx_stocktx_sku_created ON StockTransactions(sku_id, created_at);
 CREATE INDEX idx_stocktx_store_created ON StockTransactions(store_id, created_at);
 CREATE INDEX idx_pointtx_customer_created ON PointTransactions(customer_id, created_at);
-CREATE INDEX idx_skus_store_active ON SKUs(store_id, is_active) WHERE is_active = 1;
+CREATE INDEX idx_skus_store_active ON SKUs(store_id, is_active) WHERE is_active = true;
 CREATE INDEX idx_products_store_active ON Products(store_id, status) WHERE status = 'Active';
 CREATE INDEX idx_stockbatches_expiry ON StockBatches(expiry_date);
 CREATE INDEX idx_chatmsg_conversation_created ON ChatMessages(conversation_id, created_at);
 CREATE INDEX idx_auditlogs_entity ON AuditLogs(entity_type, entity_id);
 
--- Filtered Unique Indexes cho SQL Server đối với các bảng cho phép NULL store_id
+-- Filtered Unique Indexes cho PostgreSQL đối với các bảng cho phép NULL store_id
 CREATE UNIQUE INDEX UX_Roles_SystemRole ON Roles(name) WHERE store_id IS NULL;
 CREATE UNIQUE INDEX UX_Roles_StoreRole ON Roles(store_id, name) WHERE store_id IS NOT NULL;
-CREATE UNIQUE INDEX UX_SystemConfigs_Global ON SystemConfigs([key]) WHERE store_id IS NULL;
-CREATE UNIQUE INDEX UX_SystemConfigs_Store ON SystemConfigs(store_id, [key]) WHERE store_id IS NOT NULL;
+CREATE UNIQUE INDEX UX_SystemConfigs_Global ON SystemConfigs(key) WHERE store_id IS NULL;
+CREATE UNIQUE INDEX UX_SystemConfigs_Store ON SystemConfigs(store_id, key) WHERE store_id IS NOT NULL;
 ```
 
 ---
