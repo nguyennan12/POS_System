@@ -21,6 +21,6 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.HasIndex(e => e.Username).IsUnique();
         builder.HasIndex(e => new { e.StoreId, e.PinLookupHash }).IsUnique();
         builder.HasOne(e => e.Role).WithMany(r => r.Employees).HasForeignKey(e => e.RoleId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasTableCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = 1");
+        builder.HasTableCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = true");
     }
 }

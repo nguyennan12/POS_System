@@ -13,7 +13,7 @@ using POS.Infrastructure.Persistence;
 namespace POS.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260912020607_InitialCreate")]
+    [Migration("20260912023413_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -530,7 +530,7 @@ namespace POS.Infrastructure.Migrations
 
                     b.ToTable("employees", null, t =>
                         {
-                            t.HasCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = 1");
+                            t.HasCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = true");
                         });
                 });
 

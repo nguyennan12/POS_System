@@ -327,7 +327,7 @@ namespace POS.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_employees", x => x.id);
-                    table.CheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = 1");
+                    table.CheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = true");
                     table.ForeignKey(
                         name: "FK_employees_roles_role_id",
                         column: x => x.role_id,

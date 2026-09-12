@@ -527,7 +527,7 @@ namespace POS.Infrastructure.Migrations
 
                     b.ToTable("employees", null, t =>
                         {
-                            t.HasCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = 1");
+                            t.HasCheckConstraint("ck_employees_store_required_unless_chain_owner", "store_id IS NOT NULL OR is_chain_owner = true");
                         });
                 });
 
