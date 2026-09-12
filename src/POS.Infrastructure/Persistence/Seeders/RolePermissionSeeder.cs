@@ -16,11 +16,10 @@ public class RolePermissionSeeder : ISeeder
         var permissions = await context.Permissions.Include(p => p.Resource).ToListAsync(cancellationToken);
 
         var ownerRole = roles.FirstOrDefault(r => r.Name == RoleNames.Owner);
-        var adminRole = roles.FirstOrDefault(r => r.Name == RoleNames.Admin);
-        var managerRole = roles.FirstOrDefault(r => r.Name == RoleNames.Manager);
+        var storeManagerRole = roles.FirstOrDefault(r => r.Name == RoleNames.StoreManager);
         var cashierRole = roles.FirstOrDefault(r => r.Name == RoleNames.Cashier);
 
-        if (ownerRole == null || adminRole == null || managerRole == null || cashierRole == null)
+        if (ownerRole == null || storeManagerRole == null || cashierRole == null)
         {
             throw new InvalidOperationException("Default system roles must be seeded before seeding RolePermissions.");
         }
@@ -33,30 +32,15 @@ public class RolePermissionSeeder : ISeeder
             rolePermissions.Add(new RolePermission(ownerRole.Id, ownerRole, p.Id, p));
         }
 
-        // 2. ADMIN: All except create/delete store
-        var adminPerms = permissions.Where(p =>
+        // 2. STORE_MANAGER: All permissions except create/delete store
+        var storeManagerPerms = permissions.Where(p =>
             !(p.Resource.Code == ResourceNames.Stores && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Delete)));
-        foreach (var p in adminPerms)
+        foreach (var p in storeManagerPerms)
         {
-            rolePermissions.Add(new RolePermission(adminRole.Id, adminRole, p.Id, p));
+            rolePermissions.Add(new RolePermission(storeManagerRole.Id, storeManagerRole, p.Id, p));
         }
 
-        // 3. MANAGER: Operations (orders, inventory, customers, categories, reports)
-        var managerResources = new[]
-        {
-            ResourceNames.Orders,
-            ResourceNames.Inventory,
-            ResourceNames.Customers,
-            ResourceNames.Categories,
-            ResourceNames.Reports
-        };
-        var managerPerms = permissions.Where(p => managerResources.Contains(p.Resource.Code));
-        foreach (var p in managerPerms)
-        {
-            rolePermissions.Add(new RolePermission(managerRole.Id, managerRole, p.Id, p));
-        }
-
-        // 4. CASHIER: POS cashier operations (read-all + create order/customer)
+        // 3. CASHIER: POS cashier operations (read-all + create order/customer)
         var cashierPerms = permissions.Where(p =>
             p.Action == PermissionAction.Read ||
             (p.Resource.Code == ResourceNames.Orders && p.Action == PermissionAction.Create) ||

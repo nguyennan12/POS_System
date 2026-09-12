@@ -14,8 +14,7 @@ public class RoleSeeder : ISeeder
         var roles = new[]
         {
             new Role(RoleNames.Owner, isSystemRole: true),
-            new Role(RoleNames.Admin, isSystemRole: true),
-            new Role(RoleNames.Manager, isSystemRole: true),
+            new Role(RoleNames.StoreManager, isSystemRole: true),
             new Role(RoleNames.Cashier, isSystemRole: true)
         };
 
