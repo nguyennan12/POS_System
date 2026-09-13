@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Persistence;
 using POS.Infrastructure.Persistence.Seeders;
 
@@ -9,11 +10,13 @@ public class MigrationService : IMigrationService
 {
   private readonly AppDbContext _context;
   private readonly ILogger<MigrationService> _logger;
+  private readonly IPinLookupHasher _pinLookupHasher;
 
-  public MigrationService(AppDbContext context, ILogger<MigrationService> logger)
+  public MigrationService(AppDbContext context, ILogger<MigrationService> logger, IPinLookupHasher pinLookupHasher)
   {
     _context = context;
     _logger = logger;
+    _pinLookupHasher = pinLookupHasher;
   }
 
   public async Task ExecuteAsync(CancellationToken cancellationToken = default)
@@ -30,7 +33,7 @@ public class MigrationService : IMigrationService
           new RoleSeeder(),
             new ResourcePermissionSeeder(),
             new RolePermissionSeeder(),
-            new StoreAndEmployeeSeeder()
+            new StoreAndEmployeeSeeder(_pinLookupHasher)
       ];
       foreach (var seeder in seeders)
       {

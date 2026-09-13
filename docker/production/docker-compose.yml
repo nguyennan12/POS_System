@@ -39,6 +39,7 @@ services:
       ConnectionStrings__Default: "Host=postgres;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
       Redis__ConnectionString: "redis:6379,password=${REDIS_PASSWORD}"
       Jwt__Secret: ${JWT_SECRET}
+      Auth__PinLookupSecret: ${PIN_LOOKUP_SECRET}
       Jwt__Issuer: pos-api
       Jwt__Audience: pos-clients
       Serilog__LokiUrl: "http://loki:3100"

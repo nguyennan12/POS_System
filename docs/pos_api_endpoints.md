@@ -7,12 +7,12 @@ Auth: Bearer JWT  |  Header: X-Store-Id
 nhiều cửa hàng, hoặc bỏ trống để lấy tất cả cửa hàng được cấp quyền)
 
 ━━━ AUTH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-POST   /auth/login              { username, password }
-POST   /auth/pin                { pin }
+POST   /auth/employee/login              { username, password }
+POST   /auth/employee/pin                { pin }
 POST   /auth/refresh            { refreshToken }
 POST   /auth/logout             { refreshToken }
-POST   /auth/change-pin         { oldPin, newPin }
-POST   /auth/change-password    { oldPassword, newPassword }
+POST   /auth/employee/change-pin         { oldPin, newPin }
+POST   /auth/employee/change-password    { oldPassword, newPassword }
 GET    /auth/me
 
 ━━━ EMPLOYEES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
