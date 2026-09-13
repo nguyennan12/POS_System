@@ -5,5 +5,6 @@ namespace POS.Application.UseCases.Auth.Commands.EmployeeLoginWithPin;
 
 public record EmployeeLoginWithPinCommand(
     Guid StoreId,
-    string Pin
+    string Pin,
+    string DeviceId
 ) : ICommand<AuthDto>;

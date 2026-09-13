@@ -35,7 +35,8 @@ public class AuthController(ISender mediator) : ControllerBase
   CancellationToken cancellationToken
   )
   {
-    var command = new EmployeeLoginWithPinCommand(request.StoreId, request.Pin);
+    var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
+    var command = new EmployeeLoginWithPinCommand(request.StoreId, request.Pin, deviceId ?? string.Empty);
 
     var result = await mediator.Send(command, cancellationToken);
 

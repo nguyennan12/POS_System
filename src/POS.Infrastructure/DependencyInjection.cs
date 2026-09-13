@@ -42,9 +42,11 @@ public static class DependencyInjection
     services.AddScoped<IPermissionRepository, PermissionRepository>();
     services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+    // ---- Auth ----
     services.AddScoped<IPasswordHasher, PasswordHasher>();
     services.AddScoped<IPinLookupHasher, PinLookupHasher>();
     services.AddScoped<ITokenService, TokenService>();
+    services.AddScoped<IPinLoginRateLimiter, PinLoginRateLimiter>();
 
     // ---- Configuration ----
     services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
