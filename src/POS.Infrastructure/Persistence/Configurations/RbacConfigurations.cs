@@ -14,8 +14,8 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(r => r.Name).IsRequired().HasMaxLength(100);
         builder.Property(r => r.Description).HasMaxLength(500);
         builder.Property(r => r.IsSystemRole).HasDefaultValue(false);
-        builder.Property(r => r.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-        builder.Property(r => r.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(r => r.CreatedAt).HasDefaultValueSql("NOW()");
+        builder.Property(r => r.UpdatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(r => new { r.StoreId, r.Name }).IsUnique();
         builder.HasOne(r => r.Store).WithMany().HasForeignKey(r => r.StoreId).OnDelete(DeleteBehavior.Cascade);
     }
@@ -55,7 +55,7 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
     {
         builder.ToTable("role_permissions");
         builder.ConfigureUuidPrimaryKey();
-        builder.Property(rp => rp.GrantedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(rp => rp.GrantedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(rp => new { rp.RoleId, rp.PermissionId }).IsUnique();
         builder.HasOne(rp => rp.Role).WithMany(r => r.RolePermissions).HasForeignKey(rp => rp.RoleId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(rp => rp.Permission).WithMany().HasForeignKey(rp => rp.PermissionId).OnDelete(DeleteBehavior.Cascade);

@@ -17,7 +17,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.DiscountTotal).HasMoneyPrecision();
         builder.Property(o => o.TaxTotal).HasMoneyPrecision();
         builder.Property(o => o.GrandTotal).HasMoneyPrecision();
-        builder.Property(o => o.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(o => o.CreatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(o => new { o.StoreId, o.CreatedAt });
         builder.HasIndex(o => o.ShiftId);
         builder.HasOne(o => o.Store).WithMany().HasForeignKey(o => o.StoreId).OnDelete(DeleteBehavior.Restrict);
@@ -54,7 +54,7 @@ public class OrderDiscountConfiguration : IEntityTypeConfiguration<OrderDiscount
         builder.ConfigureUuidPrimaryKey();
         builder.Property(o => o.DiscountAmount).HasMoneyPrecision();
         builder.Property(o => o.Description).HasMaxLength(300);
-        builder.Property(o => o.AppliedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(o => o.AppliedAt).HasDefaultValueSql("NOW()");
         builder.HasOne(o => o.Order).WithMany().HasForeignKey(o => o.OrderId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(o => o.Promotion).WithMany().HasForeignKey(o => o.PromotionId).OnDelete(DeleteBehavior.ClientSetNull);
         builder.HasOne(o => o.Voucher).WithMany().HasForeignKey(o => o.VoucherId).OnDelete(DeleteBehavior.ClientSetNull);
@@ -97,7 +97,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(i => i.TotalBeforeTax).HasMoneyPrecision();
         builder.Property(i => i.TaxAmount).HasMoneyPrecision();
         builder.Property(i => i.GrandTotal).HasMoneyPrecision();
-        builder.Property(i => i.IssuedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(i => i.IssuedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(i => i.OrderId).IsUnique();
         builder.HasIndex(i => i.InvoiceNo).IsUnique();
         builder.HasOne(i => i.Order).WithOne().HasForeignKey<Invoice>(i => i.OrderId).OnDelete(DeleteBehavior.Restrict);

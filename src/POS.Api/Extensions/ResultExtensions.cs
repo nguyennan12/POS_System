@@ -57,4 +57,34 @@ public static class ResultExtensions
               ApiResponse<object>.Fail(error))
     };
   }
+
+  public static ActionResult ToActionResult(
+      this ControllerBase controller,
+      Result result)
+  {
+    if (result.IsSuccess)
+      return controller.NoContent();
+
+    var error = new ApiError
+    {
+      Code = result.Error.Code,
+      Message = result.Error.Message!,
+      Type = result.Error.Type
+    };
+
+    return result.Error.Type switch
+    {
+      ErrorType.NotFound =>
+          controller.NotFound(ApiResponse<object>.Fail(error)),
+
+      ErrorType.AlreadyExists =>
+          controller.Conflict(ApiResponse<object>.Fail(error)),
+
+      ErrorType.Validation or ErrorType.Invalid =>
+          controller.BadRequest(ApiResponse<object>.Fail(error)),
+
+      _ =>
+          controller.BadRequest(ApiResponse<object>.Fail(error))
+    };
+  }
 }

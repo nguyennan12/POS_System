@@ -7,6 +7,7 @@ using POS.Infrastructure.Cache;
 using POS.Infrastructure.Persistence;
 using POS.Infrastructure.Persistence.Repositories;
 using StackExchange.Redis;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 namespace POS.Infrastructure;
 
@@ -19,7 +20,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString, sql =>
+            options.UseNpgsql(connectionString, sql =>
                 sql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
         // ---- Redis ----
@@ -33,6 +34,7 @@ public static class DependencyInjection
 
         // ---- Repositories / UnitOfWork / Migration ----
         services.AddScoped<IStoreRepository, StoreRepository>();
+        services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IMigrationService, MigrationService>();
 

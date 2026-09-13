@@ -12,7 +12,7 @@ public class ChatConversationConfiguration : IEntityTypeConfiguration<ChatConver
         builder.ToTable("chat_conversations");
         builder.ConfigureUuidPrimaryKey();
         builder.Property(c => c.SessionId).IsRequired().HasMaxLength(100);
-        builder.Property(c => c.StartedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.StartedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(c => c.SessionId).IsUnique();
         builder.HasOne(c => c.Store).WithMany().HasForeignKey(c => c.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(c => c.Customer).WithMany().HasForeignKey(c => c.CustomerId).OnDelete(DeleteBehavior.SetNull);
@@ -27,7 +27,7 @@ public class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMessage>
         builder.ConfigureUuidPrimaryKey();
         builder.Property(c => c.Sender).HasConversion<string>().IsRequired().HasMaxLength(10);
         builder.Property(c => c.Content).IsRequired();
-        builder.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.CreatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(c => new { c.ConversationId, c.CreatedAt });
         builder.HasOne(c => c.Conversation).WithMany().HasForeignKey(c => c.ConversationId).OnDelete(DeleteBehavior.Cascade);
         builder.HasTableCheckConstraint("ck_chat_messages_sender", "sender IN ('Customer','Bot')");

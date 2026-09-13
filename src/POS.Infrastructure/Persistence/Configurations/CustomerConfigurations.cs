@@ -33,7 +33,7 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Barcode).HasMaxLength(50);
         builder.Property(c => c.TotalSpending).HasMoneyPrecision();
         builder.Property(c => c.IsActive).HasDefaultValue(true);
-        builder.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(c => c.CreatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(c => c.Phone).IsUnique();
         builder.HasIndex(c => c.Barcode).IsUnique();
         builder.HasOne(c => c.MemberTier).WithMany().HasForeignKey(c => c.MemberTierId).OnDelete(DeleteBehavior.Restrict);
@@ -47,7 +47,7 @@ public class LoyaltyAccountConfiguration : IEntityTypeConfiguration<LoyaltyAccou
         builder.ToTable("loyalty_accounts");
         builder.ConfigureUuidPrimaryKey();
         builder.Property(l => l.PointsBalance).HasMoneyPrecision();
-        builder.Property(l => l.LastUpdated).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(l => l.LastUpdated).HasDefaultValueSql("NOW()");
         builder.HasIndex(l => l.CustomerId).IsUnique();
         builder.HasOne(l => l.Customer).WithOne().HasForeignKey<LoyaltyAccount>(l => l.CustomerId).OnDelete(DeleteBehavior.Cascade);
         builder.HasTableCheckConstraint("ck_loyalty_accounts_points_balance", "points_balance >= 0");
@@ -62,7 +62,7 @@ public class PointTransactionConfiguration : IEntityTypeConfiguration<PointTrans
         builder.ConfigureUuidPrimaryKey();
         builder.Property(p => p.Points).HasMoneyPrecision();
         builder.Property(p => p.Type).HasConversion<string>().IsRequired().HasMaxLength(20);
-        builder.Property(p => p.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+        builder.Property(p => p.CreatedAt).HasDefaultValueSql("NOW()");
         builder.HasIndex(p => new { p.CustomerId, p.CreatedAt });
         builder.HasOne(p => p.Customer).WithMany().HasForeignKey(p => p.CustomerId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(p => p.Order).WithMany().HasForeignKey(p => p.OrderId).OnDelete(DeleteBehavior.Restrict);

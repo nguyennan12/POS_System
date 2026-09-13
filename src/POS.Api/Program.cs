@@ -30,6 +30,9 @@ try
   builder.Services.AddApplication();
   builder.Services.AddInfrastructure(builder.Configuration);
 
+  builder.Services.AddHttpContextAccessor();
+  builder.Services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser, POS.Api.Services.CurrentUser>();
+
   // ---------- JWT Auth ----------
   var jwtSecret = builder.Configuration["Jwt:Secret"]
       ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
@@ -64,7 +67,7 @@ try
 
   // ---------- Health checks: SQL Server + Redis (dùng cho Docker healthcheck & /health/db) ----------
   builder.Services.AddHealthChecks()
-      .AddSqlServer(builder.Configuration.GetConnectionString("Default")!, name: "sqlserver")
+      .AddNpgSql(builder.Configuration.GetConnectionString("Default")!, name: "postgres")
       .AddRedis(builder.Configuration["Redis:ConnectionString"]!, name: "redis");
 
   var app = builder.Build();
