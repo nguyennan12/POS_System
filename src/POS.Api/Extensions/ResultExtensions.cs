@@ -53,6 +53,12 @@ public static class ResultExtensions
           controller.BadRequest(
               ApiResponse<object>.Fail(error)),
 
+      ErrorType.Unauthorized =>
+          controller.Unauthorized(ApiResponse<object>.Fail(error)),
+
+      ErrorType.Forbidden =>
+          controller.StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.Fail(error)),
+
       _ =>
           controller.BadRequest(
               ApiResponse<object>.Fail(error))
