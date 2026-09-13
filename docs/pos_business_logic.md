@@ -1,426 +1,695 @@
-# TÀI LIỆU PHÂN TÍCH LOGIC NGHIỆP VỤ HỆ THỐNG POS (POS BUSINESS LOGIC)
+# TÀI LIỆU BUSINESS RULES HỆ THỐNG POS
 
-> Tài liệu chuẩn hóa toàn bộ luồng nghiệp vụ (Business Logic), quy tắc tính toán, phân quyền và các kịch bản xử lý trong hệ thống **POS-System**.
-
----
-
-## 📑 MỤC LỤC
-
-- [1. TỔNG QUAN HỆ THỐNG](#1-tổng-quan-hệ-thống)
-- [2. MODULE QUẢN LÝ SẢN PHẨM](#2-module-quản-lý-sản-phẩm)
-  - [2.1 Danh mục sản phẩm (Category)](#21-danh-mục-sản-phẩm-category)
-  - [2.2 Sản phẩm & SKU](#22-sản-phẩm--sku)
-  - [2.3 Quản lý giá](#23-quản-lý-giá)
-- [3. MODULE QUẢN LÝ KHO & TỒN KHO](#3-module-quản-lý-kho--tồn-kho)
-  - [3.1 Nhập kho (Stock In)](#31-nhập-kho-stock-in)
-  - [3.2 Xuất kho (Stock Out)](#32-xuất-kho-stock-out)
-  - [3.3 Kiểm kê (Stock Take)](#33-kiểm-kê-stock-take)
-  - [3.4 Tồn kho & Cảnh báo](#34-tồn-kho--cảnh-báo)
-  - [3.5 Nhà cung cấp (Supplier)](#35-nhà-cung-cấp-supplier)
-- [4. MODULE QUẢN LÝ KHÁCH HÀNG & CRM](#4-module-quản-lý-khách-hàng--crm)
-  - [4.1 Đăng ký thành viên](#41-đăng-ký-thành-viên)
-  - [4.2 Hạng thành viên & Tích điểm](#42-hạng-thành-viên--tích-điểm)
-  - [4.3 Chăm sóc khách hàng (CRM)](#43-chăm-sóc-khách-hàng-crm)
-  - [4.4 Trợ lý ảo (Chatbot AI)](#44-trợ-lý-ảo-chatbot-ai)
-- [5. MODULE KHUYẾN MÃI / VOUCHER](#5-module-khuyến-mãi--voucher)
-  - [5.1 Các loại hình khuyến mãi](#51-các-loại-hình-khuyến-mãi)
-  - [5.2 Quy trình tự động áp Promotion Engine](#52-quy-trình-tự-động-áp-promotion-engine)
-- [6. MODULE THANH TOÁN (PAYMENT)](#6-module-thanh-toán-payment)
-  - [6.1 Phương thức thanh toán](#61-phương-thức-thanh-toán)
-  - [6.2 Luồng xử lý thanh toán (Bao gồm Split Payment)](#62-luồng-xử-lý-thanh-toán-bao-gồm-split-payment)
-- [7. MODULE HÓA ĐƠN (INVOICE)](#7-module-hóa-đơn-invoice)
-  - [7.1 Sinh hóa đơn](#71-sinh-hóa-đơn)
-  - [7.2 In & Xuất hóa đơn](#72-in--xuất-hóa-đơn)
-  - [7.3 Lưu ý về Hóa đơn điện tử (E-Invoice)](#73-lưu-ý-về-hóa-đơn-điện-tử-e-invoice)
-- [8. MODULE NHÂN VIÊN, PHÂN QUYỀN & QUẢN LÝ CỬA HÀNG](#8-module-nhân-viên-phân-quyền--quản-lý-cửa-hàng)
-  - [8.1 Bảng ma trận vai trò (Roles Matrix)](#81-bảng-ma-trận-vai-trò-roles-matrix)
-  - [8.2 Quản lý nhân viên](#82-quản-lý-nhân-viên)
-  - [8.3 Quản lý cửa hàng (Dành cho Chủ chuỗi)](#83-quản-lý-cửa-hàng-dành-cho-chủ-chuỗi)
-- [9. MODULE CA LÀM VIỆC (SHIFT WORK)](#9-module-ca-làm-việc-shift-work)
-  - [9.1 Mở ca (Open Shift)](#91-mở-ca-open-shift)
-  - [9.2 Đóng ca (Close Shift)](#92-đóng-ca-close-shift)
-- [10. MODULE BÁO CÁO & DASHBOARD](#10-module-báo-cáo--dashboard)
-  - [10.1 Dashboard tổng quan](#101-dashboard-tổng-quan)
-  - [10.2 Báo cáo doanh thu](#102-báo-cáo-doanh-thu)
-  - [10.3 Báo cáo tồn kho](#103-báo-cáo-tồn-kho)
-  - [10.4 Xuất / Nhập dữ liệu (Import/Export)](#104-xuất--nhập-dữ-liệu-importexport)
-- [11. CẤU HÌNH HỆ THỐNG](#11-cấu-hình-hệ-thống)
-  - [11.1 Đa ngôn ngữ (i18n)](#111-đa-ngôn-ngữ-i18n)
-  - [11.2 Đa tiền tệ](#112-đa-tiền-tệ)
-  - [11.3 Barcode & Chế độ Offline](#113-barcode--chế-độ-offline)
+> Tài liệu này mô tả các quy tắc/điều kiện mà hệ thống **bắt buộc** phải tuân theo. Nội dung tập trung vào quyền hạn, điều kiện thực hiện, dữ liệu hợp lệ, ràng buộc, trạng thái, tính toán, quan hệ dữ liệu, ngoại lệ và tác động sau khi nghiệp vụ thành công.
 
 ---
 
-## 1. TỔNG QUAN HỆ THỐNG
+## 1. NGUYÊN TẮC CHUNG
 
-Hệ thống **POS-System** là giải pháp bán lẻ đa chức năng (Multi-store, Omnichannel-ready) bao gồm **11 module chính**:
+### 1.1 Phạm vi áp dụng
 
-```mermaid
-graph TD
-    A[POS SYSTEM] --> M1[1. Quản lý Sản phẩm]
-    A --> M2[2. Quản lý Kho & Tồn kho]
-    A --> M3[3. Khách hàng & CRM]
-    A --> M4[4. Khuyến mãi & Voucher]
-    A --> M5[5. Thanh toán & Split Payment]
-    A --> M6[6. Quản lý Hóa đơn]
-    A --> M7[7. Nhân viên & Phân quyền]
-    A --> M8[8. Ca làm việc]
-    A --> M9[9. Báo cáo & Dashboard]
-    A --> M10[10. Cấu hình Hệ thống]
-    A --> M11[11. Trợ lý ảo AI Chatbot]
-```
+- Mọi nghiệp vụ phải được thực hiện trong phạm vi một cửa hàng hợp lệ, trừ nghiệp vụ cấp chuỗi do `Owner` thực hiện.
+- Người dùng phải là nhân viên đang hoạt động, không bị khóa tài khoản và có quyền truy cập cửa hàng đang thao tác.
+- Hệ thống phải kiểm tra quyền theo RBAC trước khi kiểm tra dữ liệu nghiệp vụ.
+- Mọi thao tác tạo, sửa, duyệt, hủy, hoàn tiền, điều chỉnh tồn kho, điều chỉnh điểm và thay đổi cấu hình phải được ghi audit log.
+- Các nghiệp vụ làm thay đổi nhiều bảng dữ liệu phải chạy trong cùng một transaction. Nếu một bước thất bại, toàn bộ thay đổi phải rollback.
 
----
+### 1.2 Vai trò chuẩn
 
-## 2. MODULE QUẢN LÝ SẢN PHẨM
+| Vai trò        | Phạm vi quyền                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Owner`        | Quản trị toàn chuỗi, cấu hình hệ thống, sản phẩm, giá, khuyến mãi, nhân sự, báo cáo toàn chuỗi.                                       |
+| `StoreManager` | Quản trị nghiệp vụ trong cửa hàng được phân quyền: bán hàng, kho, nhà cung cấp, kiểm kê, duyệt hủy/hoàn/điều chỉnh, báo cáo cửa hàng. |
+| `Cashier`      | Bán hàng, thanh toán, tạo/cập nhật khách hàng cơ bản, mở/đóng ca của chính mình.                                                      |
 
-### 2.1 Danh mục sản phẩm (Category)
-- **Cấu trúc phân cấp**: Hỗ trợ cây đa cấp (*Danh mục cha - Danh mục con*).
-  - *Ví dụ*: `Đồ uống` > `Nước ngọt` > `Có gas`.
-- **Thao tác nghiệp vụ**:
-  - CRUD danh mục, cấu hình thứ tự hiển thị (`DisplayOrder`).
-  - Ẩn/hiện trên màn hình bán hàng POS.
-  - Gắn hình ảnh đại diện danh mục (tối ưu cho màn hình cảm ứng POS chạm chọn nhanh).
+### 1.3 Xử lý ngoại lệ chuẩn
 
-### 2.2 Sản phẩm & SKU
-- **Sản phẩm cha (Product)**:
-  - Thông tin định danh: Tên sản phẩm, mô tả, danh mục, thương hiệu.
-  - Đơn vị tính cơ bản, ảnh đại diện, trạng thái (`Đang bán` / `Ngừng bán`).
-- **SKU (Biến thể sản phẩm - Stock Keeping Unit)**:
-  - Mỗi sản phẩm có nhiều SKU theo thuộc tính (*Size, Màu sắc, Dung tích, Hương vị...*).
-  - **Mã SKU**: Tự sinh theo quy tắc hoặc nhập thủ công, liên kết Barcode/QR Code.
-  - **Đơn vị tính (UoM)**: Hỗ trợ nhiều đơn vị tính với bảng quy đổi (*vd: Cái, Lốc, Thùng*).
-  - **Cơ cấu giá**: Giá vốn (`Cost Price`), Giá bán lẻ (`Retail Price`), Giá bán buôn (`Wholesale Price`).
-  - **Thuế suất VAT**: Áp dụng theo từng SKU (`0%`, `5%`, `8%`, `10%`).
-
-### 2.3 Quản lý giá
-- **Bảng giá theo thời gian hiệu lực**: Thiết lập lịch trình tăng/giảm giá tự động theo khung thời gian.
-- **Bảng giá theo phân khúc**: Bảng giá riêng theo nhóm khách hàng hoặc theo chi nhánh (Multi-store).
-- **Lịch sử thay đổi giá (Audit Log)**: Ghi vết thời gian, giá cũ, giá mới và người thực hiện thay đổi.
+- Nếu không đủ quyền: hệ thống từ chối thao tác, không thay đổi dữ liệu.
+- Nếu dữ liệu không hợp lệ: hệ thống trả lỗi validation kèm trường lỗi cụ thể, không tạo bản ghi bán phần.
+- Nếu quan hệ dữ liệu không tồn tại hoặc không thuộc cùng cửa hàng: hệ thống trả lỗi nghiệp vụ, không tự tạo dữ liệu liên quan.
+- Nếu trạng thái hiện tại không cho phép hành động: hệ thống trả lỗi chuyển trạng thái không hợp lệ.
+- Nếu xảy ra xung đột đồng thời khi cập nhật tồn kho, thanh toán hoặc voucher: hệ thống phải khóa/kiểm tra lại dữ liệu trước khi ghi nhận thành công.
+- Nếu mất kết nối cổng thanh toán: payment giữ trạng thái `Pending` cho đến khi nhận webhook hợp lệ hoặc hết hạn thành `Timeout`.
 
 ---
 
-## 3. MODULE QUẢN LÝ KHO & TỒN KHO
+## 2. PHÂN QUYỀN VÀ PHẠM VI DỮ LIỆU
 
-### 3.1 Nhập kho (Stock In)
-- **Nhập từ Nhà cung cấp**:
-  - Chọn nhà cung cấp (NCC), danh sách SKU, số lượng, giá nhập.
-  - Tự động cập nhật giá vốn bình quân (nếu cấu hình) và tăng số lượng tồn.
-- **Nhập từ trả hàng**: Nhập hoàn kho từ các đơn trả hàng của khách (`Return to stock`).
-- **Chứng từ**: In phiếu nhập kho, lưu trữ lịch sử chứng từ.
+### 2.1 Quyền hạn
 
-### 3.2 Xuất kho (Stock Out)
-- **Xuất bán**: Tự động trừ tồn kho ngay khi đơn hàng hoàn tất thanh toán.
-- **Xuất hủy**: Hàng hỏng, hết hạn sử dụng, rơi vỡ — bắt buộc nhập lý do xuất hủy và đính kèm phê duyệt.
+- `Owner` được quản lý dữ liệu toàn chuỗi và có thể phân quyền cho nhân viên.
+- `StoreManager` chỉ được thao tác dữ liệu của các cửa hàng đã được gán quyền.
+- `Cashier` chỉ được thao tác bán hàng trong cửa hàng và ca làm việc của chính mình.
+- Quyền thực tế được xác định bởi role, permission và danh sách cửa hàng được truy cập.
 
-### 3.3 Kiểm kê (Stock Take)
-- **Tạo phiếu kiểm kê**: Theo từng kho, từng danh mục hoặc toàn bộ cửa hàng.
-- **Quét kiểm đếm**: Nhân viên quét barcode đếm thực tế $\rightarrow$ Hệ thống tự động đối chiếu với số tồn hệ thống.
-- **Xử lý chênh lệch**: Xuất báo cáo thừa/thiếu, yêu cầu cấp Quản lý (`Manager`) phê duyệt trước khi cân bằng tồn kho.
+### 2.2 Điều kiện
 
-### 3.4 Tồn kho & Cảnh báo
-- **Tồn kho Real-time**: Theo dõi chi tiết theo từng SKU và từng chi nhánh/kho.
-- **Cảnh báo Min Stock**: Cảnh báo khi tồn kho giảm xuống dưới mức tối thiểu $\rightarrow$ Gợi ý tạo đơn nhập hàng.
-- **Cảnh báo Hạn dùng (Expiry Alert)**: Theo dõi theo Lô (`Batch`) và hạn sử dụng (`Expiry Date`).
-- **Trạng thái hiển thị POS**:
-  - 🟢 **Còn hàng** (`In Stock`)
-  - 🟡 **Sắp hết** (`Low Stock`)
-  - 🔴 **Hết hàng** (`Out of Stock`)
+- Nhân viên phải có trạng thái active.
+- Cửa hàng phải có trạng thái active.
+- Token đăng nhập phải còn hiệu lực và chưa bị revoke.
+- Với thao tác bán hàng, nhân viên phải có ca `Open` hợp lệ tại cửa hàng.
 
-### 3.5 Nhà cung cấp (Supplier)
-- Hồ sơ NCC: Tên, MST, người liên hệ, số điện thoại, địa chỉ, điều khoản công nợ.
-- Lịch sử nhập hàng theo NCC.
-- Theo dõi công nợ phải trả nhà cung cấp.
+### 2.3 Dữ liệu hợp lệ
 
----
+- Username là duy nhất toàn hệ thống.
+- PIN tra cứu nhanh là duy nhất trong phạm vi cửa hàng.
+- Nhân viên cấp chuỗi có thể không gắn `store_id`, nhưng nhân viên cửa hàng phải thuộc ít nhất một cửa hàng.
+- Role tùy chỉnh phải có danh sách permission hợp lệ.
 
-## 4. MODULE QUẢN LÝ KHÁCH HÀNG & CRM
+### 2.4 Ràng buộc
 
-### 4.1 Đăng ký thành viên
-- **Thông tin thu thập**: Họ tên, Số điện thoại (*Primary Key/Định danh*), Ngày sinh, Email.
-- **Mã thành viên**: Hệ thống tự sinh Barcode/QR Code định danh duy nhất cho khách hàng để quét tại quầy.
+- Không cho phép nhân viên không thuộc cửa hàng xem hoặc sửa dữ liệu cửa hàng đó.
+- Không cho phép tự nâng quyền vượt quá quyền của người đang thao tác.
+- Không xóa vật lý dữ liệu đã phát sinh giao dịch; chỉ được khóa hoặc chuyển trạng thái inactive khi nghiệp vụ cho phép.
+- Không cho phép dùng token cũ sau khi đổi mật khẩu, đăng xuất hoặc đóng ca.
 
-### 4.2 Hạng thành viên & Tích điểm
-- **Phân hạng thành viên**:
-  - Các cấp: `Thường` $\rightarrow$ `Bạc` $\rightarrow$ `Vàng` $\rightarrow$ `VIP`...
-  - Tiêu chí thăng hạng: Dựa trên tổng chi tiêu tích lũy hoặc số lượt mua hàng trong kỳ.
-- **Cơ chế tích & tiêu điểm**:
-  - Tích điểm: $X\%$ giá trị đơn hàng $\rightarrow$ Điểm thưởng (hoặc tích lũy theo mốc).
-  - Tiêu điểm: Quy đổi điểm thành tiền giảm giá trực tiếp vào hóa đơn.
-  - Lịch sử giao dịch: Lưu chi tiết biến động điểm (Tích điểm / Tiêu điểm / Hết hạn).
+### 2.5 Trạng thái
 
-### 4.3 Chăm sóc khách hàng (CRM)
-- **Tiếp nhận phản hồi**: Ghi nhận khiếu nại, góp ý, khen ngợi từ khách hàng tại quầy hoặc qua hotline/zalo/email.
-- **Phân loại & Liên kết**: Gắn khiếu nại với mã khách hàng và hóa đơn mua hàng liên quan.
-- **Quy trình xử lý Ticket**:
-  ```
-  [Mới tiếp nhận] ──> [Đang xử lý] ──> [Đã xử lý] ──> [Đóng Ticket]
-  ```
-  - Phân công nhân viên phụ trách, lưu vết trao đổi xử lý.
-- **Báo cáo CRM**: Tần suất khiếu nại theo nhóm nguyên nhân, thời gian xử lý trung bình (SLA), so sánh chất lượng giữa các cửa hàng.
+| Đối tượng | Chuyển trạng thái hợp lệ                                                                |
+| --------- | --------------------------------------------------------------------------------------- |
+| Nhân viên | `Active` -> `Inactive/Locked`; `Locked` -> `Active` khi được mở khóa hoặc hết hạn khóa. |
+| Cửa hàng  | `Active` -> `Inactive`; cửa hàng inactive không được phát sinh giao dịch mới.           |
+| Token     | `Active` -> `Revoked`; token đã revoke không được khôi phục.                            |
 
-### 4.4 Trợ lý ảo (Chatbot AI)
-- **Kênh tương tác**: Widget web nhúng trên trang portal/website cửa hàng; khách hàng truy cập từ điện thoại cá nhân không cần cài app.
-- **Năng lực AI**: Tự động tra cứu thông tin sản phẩm, tình trạng còn hàng, chính sách đổi trả, ưu đãi hiện hành.
-- **Quản lý phiên**: Lưu vết lịch sử trò chuyện theo Session ID, liên kết thông tin khách hàng nếu đã đăng nhập.
-- **Fallback Rule**: Nếu câu hỏi nằm ngoài phạm vi tri thức $\rightarrow$ Phản hồi lịch sự và cung cấp thông tin liên hệ trực tiếp của cửa hàng.
-- **Kiểm soát chi phí**: Giới hạn số lượt tương tác (message limit) trên mỗi phiên chat.
+### 2.6 Tính toán
+
+- Số lần đăng nhập sai liên tiếp tăng thêm 1 sau mỗi lần sai PIN/mật khẩu.
+- Khi số lần sai vượt quá ngưỡng cấu hình, tài khoản bị khóa đến thời điểm `locked_until`.
+- Sau khi đăng nhập thành công, số lần sai liên tiếp phải được reset về 0.
+
+### 2.7 Quan hệ dữ liệu
+
+- `EmployeeStoreAccess` xác định nhân viên được thao tác ở cửa hàng nào.
+- `RolePermissions` xác định quyền của role.
+- Audit log phải tham chiếu được người thực hiện, cửa hàng liên quan và đối tượng bị tác động nếu có.
+
+### 2.8 Ngoại lệ
+
+- Nếu nhân viên bị khóa: từ chối đăng nhập.
+- Nếu role không có permission bắt buộc: từ chối thao tác.
+- Nếu cửa hàng inactive: từ chối mọi nghiệp vụ tạo giao dịch mới.
+
+### 2.9 Tác động
+
+- Đăng nhập thành công tạo refresh token mới.
+- Đăng xuất, đổi mật khẩu hoặc đóng ca phải revoke token liên quan theo chính sách bảo mật.
+- Thay đổi quyền phải làm mất hiệu lực cache permission của nhân viên bị ảnh hưởng.
 
 ---
 
-## 5. MODULE KHUYẾN MÃI / VOUCHER
+## 3. SẢN PHẨM, SKU, DANH MỤC VÀ GIÁ
 
-### 5.1 Các loại hình khuyến mãi
+### 3.1 Quyền hạn
 
-| Loại Khuyến Mãi | Mô Tả Nghiệp Vụ | Ví Dụ |
-| :--- | :--- | :--- |
-| **Chiết khấu trực tiếp** | Giảm theo $\%$ hoặc số tiền cố định trên SKU/Danh mục/Tổng đơn | Giảm 10% tổng đơn trên 500k |
-| **Combo / Mua X tặng Y** | Mua số lượng $X$ được tặng/giảm giá sản phẩm $Y$ | Mua 2 trà sữa tặng 1 pudding |
-| **Voucher Code** | Nhập mã voucher (1 lần / nhiều lần, giới hạn số lượt, gắn khách) | Mã `CHAOBANMOI` giảm 30k |
-| **Happy Hour** | Áp dụng tự động theo khung giờ vàng hoặc ngày trong tuần | Giảm 20% từ 14:00 - 16:00 T2-T6 |
-| **Ưu đãi hạng thẻ** | Áp dụng theo cấp bậc thành viên | Thẻ VIP giảm 5% mọi hóa đơn |
+- `Owner` được tạo, sửa, khóa sản phẩm, SKU, bảng giá và cấu hình thuế.
+- `StoreManager` chỉ được xem và quản lý trong phạm vi quyền nếu được cấp permission tương ứng.
+- `Cashier` chỉ được tra cứu sản phẩm, barcode, giá bán và tồn kho để bán hàng.
 
-### 5.2 Quy trình tự động áp Promotion Engine
+### 3.2 Điều kiện
 
-> [!IMPORTANT]
-> **Promotion Engine** hoạt động tự động và tức thời sau mỗi lần quét mã barcode sản phẩm vào giỏ hàng.
+- Cửa hàng phải active.
+- Danh mục phải tồn tại trước khi gán sản phẩm vào danh mục.
+- SKU chỉ được tạo cho sản phẩm thuộc cùng cửa hàng.
+- Giá bán áp dụng phải có hiệu lực tại thời điểm bán.
 
-```mermaid
-flowchart TD
-    A[Thu ngân quét Barcode SKU] --> B[Thêm SKU vào Giỏ hàng POS]
-    B --> C[Promotion Engine quét điều kiện]
-    C --> D{Có khuyến mãi thỏa mãn?}
-    D -- Có --> E[Đánh giá Stacking Rules - Quy tắc ưu tiên]
-    E --> F[Tự động thêm Discount Line vào đơn]
-    D -- Không --> G[Giữ nguyên giá niêm yết]
-    F --> H[Hiển thị chi tiết giảm giá trên màn hình tạm tính]
-    G --> H
-    H --> I{Thu ngân muốn Override?}
-    I -- Có --> J[Kiểm tra quyền Manager Override]
-    I -- Không --> K[Chuyển sang Thanh toán]
-    J --> K
-```
+### 3.3 Dữ liệu hợp lệ
 
-- **Quy tắc ưu tiên (Stacking Rules)**:
-  1. Khuyến mãi cấp dòng sản phẩm (Line-item discount) được tính trước.
-  2. Khuyến mãi cấp hóa đơn (Order-level discount) được tính trên tổng sau khi trừ chiết khấu dòng.
-  3. Cấu hình rõ ràng chính sách: *Được phép cộng dồn* hay *Chọn ưu đãi có giá trị cao nhất*.
-- **Quyền Override**: Thu ngân chỉ được hủy áp khuyến mãi hoặc sửa giảm giá khi có sự can thiệp và phê duyệt của `Manager`/`Admin`.
+- Tên danh mục và tên sản phẩm không được rỗng.
+- Cây danh mục không được tạo vòng lặp cha-con.
+- SKU code và barcode phải duy nhất trong phạm vi cửa hàng.
+- Giá vốn và giá bán không được âm.
+- Thuế VAT của SKU chỉ được nhận các mức hợp lệ: `0`, `5`, `8`, `10`.
+- Thuộc tính biến thể của SKU phải là JSON hợp lệ.
+- Hệ số quy đổi đơn vị phải lớn hơn 0.
 
----
+### 3.4 Ràng buộc
 
-## 6. MODULE THANH TOÁN (PAYMENT)
+- Không bán SKU inactive hoặc SKU thuộc sản phẩm inactive.
+- Không cho phép hai bảng giá cùng SKU, cùng nhóm khách hàng, cùng cửa hàng bị chồng lấn thời gian hiệu lực.
+- Không xóa danh mục/sản phẩm/SKU đã phát sinh đơn hàng hoặc giao dịch kho.
+- Không cho phép giá bán cuối cùng nhỏ hơn 0 sau giảm giá.
 
-### 6.1 Phương thức thanh toán
+### 3.5 Trạng thái
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        PHƯƠNG THỨC THANH TOÁN                         │
-├─────────────────┬──────────────────┬─────────────────┬────────────────┤
-│ 💵 Tiền mặt     │ 📱 MoMo QR /     │ 💳 Thẻ POS      │ 🔀 Split       │
-│    (Cash)       │    VietQR        │    (Card)       │    Payment     │
-│                 │                  │                 │                │
-│ Nhập tiền nhận  │ Dynamic QR code  │ Tích hợp POS    │ Phối hợp nhiều │
-│ -> Tính tiền    │ -> Callback      │ cà thẻ / Nhập   │ phương thức    │
-│    thối (Change)│    xác nhận      │    mã chuẩn chi │    cùng lúc    │
-└─────────────────┴──────────────────┴─────────────────┴────────────────┘
-```
+| Đối tượng | Chuyển trạng thái hợp lệ                                        |
+| --------- | --------------------------------------------------------------- |
+| Sản phẩm  | `Active` <-> `Inactive`                                         |
+| SKU       | `Active` <-> `Inactive`                                         |
+| Bảng giá  | Có hiệu lực khi nằm trong khoảng ngày áp dụng và không bị khóa. |
 
-- **Tiền mặt (`Cash`)**:
-  $$\text{Tiền thối (Change)} = \text{Tiền khách đưa} - \text{Tổng tiền hóa đơn}$$
-- **MoMo QR / VietQR**: Sinh mã QR động tương ứng với số tiền cần thanh toán $\rightarrow$ Lắng nghe Webhook/Callback xác thực giao dịch thành công.
-- **Quẹt thẻ ngân hàng (`Card`)**: Kết nối máy POS ngân hàng qua giao thức mạng/Serial hoặc nhập tay mã tham chiếu giao dịch.
-- **Thanh toán kết hợp (`Split Payment`)**: Cho phép chia khoản thanh toán trên cùng một đơn hàng (*ví dụ: 200k tiền mặt + 300k chuyển khoản QR*).
+### 3.6 Tính toán
 
-### 6.2 Luồng xử lý thanh toán (Bao gồm Split Payment)
+- Giá bán tại POS được xác định theo thứ tự: bảng giá hợp lệ theo cửa hàng/SKU/nhóm khách hàng/thời điểm bán, nếu không có thì dùng giá bán mặc định của SKU.
+- Giá theo đơn vị quy đổi = giá SKU gốc x hệ số quy đổi hoặc giá bán riêng của đơn vị nếu được cấu hình.
+- Giá ghi vào dòng đơn hàng phải được snapshot tại thời điểm thêm vào đơn, không tự thay đổi khi bảng giá sau đó được cập nhật.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor C as Khách hàng
-    actor T as Thu ngân
-    participant POS as Hệ thống POS
-    participant GW as Cổng Thanh Toán (MoMo/Bank)
-    participant DB as CSDL & Kho Hàng
+### 3.7 Quan hệ dữ liệu
 
-    T->>POS: Tổng hợp đơn hàng (Sau khuyến mãi)
-    T->>POS: Chọn phương thức thanh toán (Một hoặc nhiều)
-    alt Tiền mặt
-        T->>POS: Nhập tiền khách đưa
-        POS-->>T: Hiển thị tiền thừa cần thối
-    else QR Code / Thẻ
-        POS->>GW: Yêu cầu tạo giao dịch / QR Code
-        GW-->>POS: Trả về kết quả giao dịch (Success/Fail)
-    end
-    POS->>POS: Kiểm tra: Tổng tiền đã trả == Tổng đơn hàng?
-    alt Đủ tiền
-        POS->>DB: Ghi nhận Order (Paid), Trừ tồn kho, Tích điểm thành viên
-        POS->>T: In hóa đơn giao khách
-    else Thiếu tiền
-        POS-->>T: Giữ đơn trạng thái chờ (Pending), yêu cầu thanh toán phần còn lại
-    end
-```
+- Product phải thuộc một Category hợp lệ.
+- SKU phải thuộc một Product hợp lệ và cùng cửa hàng với Product.
+- UnitConversion phải thuộc một SKU hợp lệ.
+- PriceList phải tham chiếu SKU, cửa hàng và nhóm khách hàng hợp lệ nếu có.
+
+### 3.8 Ngoại lệ
+
+- Nếu barcode không tồn tại hoặc inactive: POS báo không tìm thấy sản phẩm có thể bán.
+- Nếu SKU bị khóa sau khi đã nằm trong giỏ nhưng trước khi thanh toán: hệ thống phải kiểm tra lại và từ chối checkout.
+- Nếu giá hợp lệ không xác định được: không cho phép bán SKU đó.
+
+### 3.9 Tác động
+
+- Tạo/cập nhật sản phẩm, SKU, giá phải ghi audit log.
+- Thay đổi giá không được sửa lại giá của các order item đã tạo trước đó.
+- Khóa SKU làm SKU biến mất khỏi danh sách bán hàng nhưng vẫn giữ dữ liệu lịch sử.
 
 ---
 
-## 7. MODULE HÓA ĐƠN (INVOICE)
+## 4. KHO, NHẬP KHO, XUẤT HỦY VÀ KIỂM KÊ
 
-### 7.1 Sinh hóa đơn
-- **Điều kiện kích hoạt**: Hóa đơn chỉ được sinh ra khi đơn hàng đạt trạng thái **Đã thanh toán đủ** ($\sum \text{Thanh toán} = \text{Tổng giá trị đơn hàng}$).
-- **Quy tắc sinh mã**: Mã số hóa đơn (`invoice_no`) tăng dần tự động, duy nhất theo từng cửa hàng (*vd: `HD-HCM01-20260905-0001`*).
-- **Nội dung bắt buộc trên hóa đơn**:
-  - Thông tin cửa hàng (Tên, địa chỉ, hotline, MST).
-  - Thông tin khách hàng & Mã số thuế công ty (nếu có yêu cầu xuất HĐ VAT).
-  - Danh sách SKU: Tên hàng hóa, số lượng, đơn giá, thành tiền, mức thuế VAT.
-  - Tổng tiền hàng trước thuế, tổng tiền thuế VAT, chiết khấu khuyến mãi.
-  - Tổng tiền thanh toán cuối cùng và chi tiết phương thức thanh toán.
+### 4.1 Quyền hạn
 
-### 7.2 In & Xuất hóa đơn
-- **In nhiệt tại quầy**: Kết nối máy in nhiệt (khổ `58mm` hoặc `80mm`), tự động cắt giấy khi in xong.
-- **In lại & Tra cứu**: Cho phép tra cứu lịch sử hóa đơn theo mã đơn hàng và in lại khi cần.
-- **Xuất file điện tử**: Hỗ trợ xuất file PDF để lưu trữ hoặc gửi email trực tiếp cho khách hàng.
+- `Owner` và `StoreManager` được nhập kho, xuất hủy, kiểm kê và duyệt điều chỉnh tồn.
+- `Cashier` không được tự ý điều chỉnh tồn kho, trừ xuất kho tự động khi bán hàng thành công.
+- Xuất hủy và duyệt kiểm kê bắt buộc cần quyền quản lý.
 
-### 7.3 Lưu ý về Hóa đơn điện tử (E-Invoice)
-> [!NOTE]
-> - **Giai đoạn 1**: Hệ thống phát hành **Hóa đơn bán hàng nội bộ** phục vụ giao dịch tại quầy và đối soát ca.
-> - **Giai đoạn 2 (Mở rộng)**: Sẵn sàng tích hợp API với các nhà cung cấp Hóa đơn điện tử hợp chuẩn (*Viettel, MISA, VNPT*) theo quy định của cơ quan Thuế.
+### 4.2 Điều kiện
 
----
+- SKU phải active và thuộc cửa hàng đang thao tác.
+- Nhà cung cấp phải active khi lập phiếu nhập kho.
+- Phiếu nhập kho chỉ được hoàn tất khi còn ở trạng thái `Draft`.
+- Phiếu kiểm kê chỉ được duyệt khi đã ở trạng thái `Pending`.
+- Xuất hủy phải có lý do nghiệp vụ.
 
-## 8. MODULE NHÂN VIÊN, PHÂN QUYỀN & QUẢN LÝ CỬA HÀNG
+### 4.3 Dữ liệu hợp lệ
 
-### 8.1 Bảng ma trận vai trò (Roles Matrix)
+- Số lượng nhập kho, số lượng kiểm kê thực tế và số lượng xuất hủy phải lớn hơn 0.
+- Đơn giá nhập kho không được âm.
+- Tồn kho tối thiểu không được âm.
+- Lô hàng phải có mã lô duy nhất theo cửa hàng và SKU.
+- Hạn dùng, nếu có, không được nhỏ hơn ngày nhập lô.
 
-| Chức Năng Nghiệp Vụ | Chủ Chuỗi (`Owner`) | Cửa Hàng Trưởng (`StoreManager`) | Thu Ngân (`Cashier`) |
-| :--- | :---: | :---: | :---: |
-| **Quản lý đa chi nhánh toàn chuỗi** | ✅ | ❌ | ❌ |
-| **Tạo cửa hàng mới / Tạm ngừng chi nhánh** | ✅ | ❌ | ❌ |
-| **Xem báo cáo tổng hợp toàn chuỗi** | ✅ | ❌ | ❌ |
-| **Xem báo cáo doanh thu & kho chi nhánh** | ✅ | ✅ | ❌ |
-| **Quản lý nhân viên chi nhánh** | ✅ | ✅ | ❌ |
-| **Cấu hình sản phẩm, bảng giá & khuyến mãi** | ✅ | ❌ | ❌ |
-| **Quản lý nhà cung cấp & công nợ NCC** | ✅ | ✅ | ❌ |
-| **Nhập kho / Xuất kho / Kiểm kê chi nhánh** | ✅ | ✅ | ❌ |
-| **Duyệt điều chỉnh tồn kho / Duyệt hủy đơn / Hoàn tiền** | ✅ | ✅ | ❌ |
-| **Bán hàng, Quét barcode & Thu tiền** | ✅ | ✅ | ✅ |
-| **Xử lý chăm sóc khách hàng (CRM)** | ✅ | ✅ | ✅ |
-| **Mở ca & Đóng ca làm việc cá nhân** | ✅ | ✅ | ✅ |
-| **Duyệt đối soát chênh lệch tiền mặt cuối ca** | ✅ | ✅ | ❌ |
+### 4.4 Ràng buộc
 
-> [!TIP]
-> Hệ thống hỗ trợ mô hình **RBAC (Role-Based Access Control)** mở rộng, phân định rõ ràng giữa cấp Quản trị Chuỗi (`Owner`) và Cửa hàng (`StoreManager`, `Cashier`).
+- Không cho phép tồn kho khả dụng âm sau bất kỳ giao dịch nào.
+- Không sửa phiếu nhập kho đã `Completed` hoặc `Cancelled`.
+- Không sửa phiếu kiểm kê đã `Approved`.
+- Không cho phép xuất hủy vượt quá tồn kho khả dụng.
+- Không cho phép một SKU có nhiều bản ghi tồn kho chính trong cùng cửa hàng.
 
-### 8.2 Quản lý nhân viên
-- **Quản lý tài khoản**: Thêm mới, cập nhật hồ sơ, gán vai trò (`Role`) và chỉ định chi nhánh làm việc (`StoreId`).
-- **Bảo mật & Khóa tài khoản**:
-  - Khóa tài khoản chủ động bởi Quản lý/Chủ chuỗi.
-  - Tự động tạm khóa tài khoản khi nhập sai mã PIN/mật khẩu quá **5 lần liên tiếp**.
-- **Cấp lại mật khẩu**: Hỗ trợ đặt lại mật khẩu hoặc cấp mã PIN mới.
-- **Audit Logging**: Nhật ký ghi vết toàn bộ lượt Đăng nhập, Đăng xuất và các thao tác nhạy cảm.
+### 4.5 Trạng thái
 
-### 8.3 Quản lý cửa hàng (Dành cho Chủ chuỗi)
-- Khởi tạo cửa hàng mới: Tên chi nhánh, địa chỉ, số điện thoại, múi giờ (`Timezone`), tiền tệ mặc định (`VND`).
-- Chỉ định tài khoản `StoreManager` quản trị cho từng chi nhánh cụ thể.
-- Cơ chế phân quyền đa cửa hàng cho tài khoản cấp cao (`EmployeeStoreAccess`).
-- Chế độ tạm ngừng hoạt động chi nhánh (*Bảo lưu toàn vẹn dữ liệu lịch sử*).
+| Đối tượng        | Chuyển trạng thái hợp lệ                       |
+| ---------------- | ---------------------------------------------- |
+| StockInVoucher   | `Draft` -> `Completed`; `Draft` -> `Cancelled` |
+| StockTake        | `Draft` -> `Pending` -> `Approved`             |
+| StockTransaction | Sau khi tạo là bất biến, không sửa trực tiếp.  |
 
----
+### 4.6 Tính toán
 
-## 9. MODULE CA LÀM VIỆC (SHIFT WORK)
+- `qty_on_hand_mới = qty_on_hand_hiện_tại + delta`.
+- `StockIn` làm tăng tồn kho với delta dương.
+- `SaleOut` và `Dispose` làm giảm tồn kho với delta âm.
+- `Adjust` làm tăng hoặc giảm tồn kho đúng bằng chênh lệch được duyệt trong kiểm kê.
+- Tổng tiền phiếu nhập = tổng `(số lượng x đơn giá)` của từng dòng nhập.
+- Nếu cấu hình dùng giá vốn bình quân, giá vốn mới = `(tồn cũ x giá vốn cũ + lượng nhập x đơn giá nhập) / (tồn cũ + lượng nhập)`.
+- Cảnh báo tồn thấp phát sinh khi `qty_on_hand <= min_stock`.
 
-```mermaid
-stateDiagram-v2
-    [*] --> MoCa: Đăng nhập & Khai báo tiền quỹ đầu ca
-    MoCa --> BanHangTrongCa: Thực hiện các giao dịch bán hàng (Gắn Shift_ID)
-    BanHangTrongCa --> DongCa: Kiểm đếm tiền thực tế & Đối chiếu doanh thu hệ thống
-    DongCa --> QuanLyXacNhan: Quản lý đối soát & Duyệt chênh lệch
-    QuanLyXacNhan --> InBienBan: In biên bản bàn giao & Thu hồi token
-    InBienBan --> [*]
-```
+### 4.7 Quan hệ dữ liệu
 
-### 9.1 Mở ca (Open Shift)
-- Thu ngân đăng nhập vào ca làm việc trên máy POS.
-- Khai báo số tiền mặt tồn quỹ đầu ca (`Opening Cash`).
-- Hệ thống sinh `Shift_ID` duy nhất; toàn bộ giao dịch phát sinh trong phiên làm việc đều được gắn định danh này.
+- StockEntry phải gắn với đúng một cặp Store-SKU.
+- StockTransaction phải tham chiếu nguồn nghiệp vụ hợp lệ: order, phiếu nhập, phiếu xuất hủy hoặc phiếu kiểm kê.
+- StockInVoucher phải tham chiếu Supplier hợp lệ.
+- StockTakeItem phải thuộc StockTake cùng cửa hàng.
 
-### 9.2 Đóng ca (Close Shift)
-- **Tổng hợp tự động**: Hệ thống tổng kết doanh thu theo từng phương thức thanh toán phát sinh trong ca.
-- **Kiểm đếm thực tế**: Thu ngân đếm tiền mặt thực tế trong két và nhập vào hệ thống.
-- **Đối soát chênh lệch**: Hệ thống so sánh:
-  $$\text{Chênh lệch} = \text{Tiền mặt thực tế} - (\text{Quỹ đầu ca} + \text{Doanh thu tiền mặt trong ca})$$
-- **Xác nhận**: Quản lý ca ký duyệt biên bản bàn giao ca.
-- **Bảo mật**: Thu hồi Token đăng nhập của ca hiện tại, bắt buộc đăng nhập mới cho ca tiếp theo.
+### 4.8 Ngoại lệ
+
+- Nếu không đủ tồn để bán hoặc xuất hủy: từ chối nghiệp vụ và trả tồn khả dụng hiện tại.
+- Nếu hai người cùng cập nhật một SKU: hệ thống phải kiểm tra lại tồn trước khi commit.
+- Nếu phiếu nhập/kiểm kê không ở trạng thái được phép: từ chối chuyển trạng thái.
+
+### 4.9 Tác động
+
+- Hoàn tất phiếu nhập tạo StockTransaction `StockIn`, tăng StockEntry và tăng số lượng lô nếu có.
+- Bán hàng thành công tạo StockTransaction `SaleOut` và giảm tồn.
+- Xuất hủy thành công tạo StockTransaction `Dispose` và giảm tồn.
+- Duyệt kiểm kê tạo StockTransaction `Adjust` cho từng SKU có chênh lệch và cập nhật tồn kho.
 
 ---
 
-## 10. MODULE BÁO CÁO & DASHBOARD
+## 5. KHÁCH HÀNG, HẠNG THÀNH VIÊN, ĐIỂM VÀ CRM
 
-### 10.1 Dashboard tổng quan
-- **Chỉ số kinh doanh trong ngày (Real-time)**:
-  - Doanh thu tức thời (so sánh cùng kỳ hôm qua, tuần trước).
-  - Số lượng đơn hàng đã hoàn tất.
-  - Giá trị trung bình trên một đơn hàng (AOV - Average Order Value).
-- **Biểu đồ xu hướng**: Diễn biến doanh thu 7 ngày / 30 ngày gần nhất (Dạng đường / Cột).
-- **Top 5 Sản phẩm**: Top sản phẩm bán chạy nhất theo số lượng và theo doanh thu.
-- **Cảnh báo vận hành nhanh**:
-  - Số lượng SKU chạm ngưỡng sắp hết hàng (`Low Stock Alert`).
-  - Số lượng phiếu kiểm kê kho đang chờ duyệt.
-- **Góc nhìn Chủ chuỗi (Owner View)**: Bảng xếp hạng doanh số và tỷ lệ tăng trưởng giữa các chi nhánh trong chuỗi.
+### 5.1 Quyền hạn
 
-### 10.2 Báo cáo doanh thu
-- Báo cáo theo thời gian: Theo giờ, ngày, tuần, tháng, quý, năm hoặc khoảng thời gian tùy chọn.
-- Báo cáo theo cấu trúc: Theo chi nhánh, theo nhân viên bán hàng, theo ca làm việc (`Shift`).
-- Báo cáo theo phương thức thanh toán: Tỷ trọng Tiền mặt / MoMo QR / Chuyển khoản / Thẻ.
-- Báo cáo chiết khấu: Tổng giá trị giảm giá, hiệu quả từng chương trình khuyến mãi/voucher.
+- `Owner`, `StoreManager` và `Cashier` được tạo/cập nhật thông tin khách hàng cơ bản.
+- Điều chỉnh điểm thủ công chỉ được thực hiện bởi `Owner` hoặc `StoreManager`.
+- Xem lịch sử mua hàng chi tiết phải có quyền CRM hoặc quyền báo cáo tương ứng.
 
-### 10.3 Báo cáo tồn kho
-- Tồn kho tức thời theo từng kho, danh mục và mã SKU.
-- Báo cáo tổng hợp **Nhập - Xuất - Tồn** theo kỳ kế toán.
-- Báo cáo hàng chậm luân chuyển (`Slow-moving Items`), hàng cận date cần thanh lý.
-- Báo cáo chênh lệch sau kiểm kê thực tế.
+### 5.2 Điều kiện
 
-### 10.4 Xuất / Nhập dữ liệu (Import/Export)
-- **Xuất báo cáo**: Hỗ trợ định dạng Excel (`.xlsx`), PDF, CSV với tiêu đề cột đa ngôn ngữ.
-- **Nhập hàng loạt (Bulk Import)**: Hỗ trợ nạp dữ liệu từ file Excel cho danh mục sản phẩm, bảng giá mới và số dư tồn kho đầu kỳ.
+- Khách hàng phải active để được tích điểm, dùng điểm và nhận ưu đãi thành viên.
+- Đơn hàng phải `Paid` mới được cộng điểm và cộng doanh số tích lũy.
+- Điểm chỉ được đổi trong đơn hàng hợp lệ và chưa thanh toán xong.
+
+### 5.3 Dữ liệu hợp lệ
+
+- Số điện thoại khách hàng là định danh chính và phải duy nhất.
+- Mã thành viên/barcode khách hàng phải duy nhất nếu được cấp.
+- Số dư điểm không được âm.
+- Giao dịch điểm phải thuộc một loại hợp lệ: `Earn`, `Redeem`, `Adjust`.
+- Lý do bắt buộc khi điều chỉnh điểm thủ công.
+
+### 5.4 Ràng buộc
+
+- Không cho phép đổi điểm vượt quá số dư hiện có.
+- Không cho phép dùng điểm của khách hàng này cho đơn hàng của khách hàng khác.
+- Không xóa khách hàng đã có đơn hàng; chỉ được chuyển inactive.
+- Không tự động thay đổi lịch sử điểm khi sửa thông tin cá nhân khách hàng.
+
+### 5.5 Trạng thái
+
+| Đối tượng       | Chuyển trạng thái hợp lệ                                               |
+| --------------- | ---------------------------------------------------------------------- |
+| Hạng thành viên | `Normal` -> `Silver` -> `Gold` -> `VIP` theo ngưỡng doanh số cấu hình. |
+| CRM Ticket      | `New` -> `Processing` -> `Resolved` -> `Closed`                        |
+| Khách hàng      | `Active` <-> `Inactive`                                                |
+
+### 5.6 Tính toán
+
+- Điểm tích lũy = giá trị đủ điều kiện của đơn hàng x tỷ lệ tích điểm theo hạng thành viên.
+- Giá trị đổi điểm = số điểm đổi x tỷ lệ quy đổi điểm được cấu hình.
+- Tổng chi tiêu khách hàng chỉ tăng khi đơn hàng `Paid`; khi hoàn tiền, tổng chi tiêu và điểm phải được điều chỉnh theo chính sách hoàn tiền.
+- Hạng thành viên được tính lại dựa trên tổng chi tiêu hợp lệ sau khi đơn hàng thanh toán hoặc hoàn tiền.
+
+### 5.7 Quan hệ dữ liệu
+
+- LoyaltyAccount phải thuộc đúng một Customer.
+- PointTransaction phải tham chiếu Customer/LoyaltyAccount và Order nếu phát sinh từ đơn hàng.
+- CRM Ticket phải gắn với Customer nếu khách hàng đã được định danh.
+
+### 5.8 Ngoại lệ
+
+- Nếu số điện thoại đã tồn tại: hệ thống không tạo khách hàng mới trùng, phải trả khách hàng hiện có hoặc báo lỗi trùng.
+- Nếu khách hàng inactive: không cho tích điểm hoặc dùng điểm.
+- Nếu điều chỉnh điểm làm số dư âm: từ chối thao tác.
+
+### 5.9 Tác động
+
+- Tạo khách hàng thành công tạo LoyaltyAccount mặc định nếu chưa có.
+- Đơn hàng `Paid` tạo PointTransaction `Earn` nếu đơn đủ điều kiện.
+- Dùng điểm tạo PointTransaction `Redeem` và giảm số dư điểm.
+- Điều chỉnh điểm tạo PointTransaction `Adjust`, cập nhật số dư và ghi audit log.
 
 ---
 
-## 11. CẤU HÌNH HỆ THỐNG
+## 6. KHUYẾN MÃI VÀ VOUCHER
 
-### 11.1 Đa ngôn ngữ (i18n)
-- Giao diện người dùng áp dụng cơ chế dịch thuật dựa trên khóa (`Key-based Translation`), ví dụ: `vi.json`, `en.json`.
-- Quản trị viên có thể bổ sung gói ngôn ngữ mới trực tiếp thông qua cấu hình hệ thống mà không cần build lại mã nguồn.
+### 6.1 Quyền hạn
 
-### 11.2 Đa tiền tệ
-- Cấu hình loại tiền tệ mặc định theo từng cửa hàng (mặc định: `VND`, hỗ trợ `USD`, `EUR`...).
-- Định dạng hiển thị số, dấu phân cách hàng nghìn và hàng thập phân tương thích với từng quốc gia và ngôn ngữ.
-- Cơ chế quy đổi tỷ giá và quy tắc làm tròn tiền tệ khi áp dụng đa tiền tệ trong thanh toán.
+- `Owner` được tạo, sửa, kích hoạt, khóa promotion và voucher.
+- `StoreManager` được xem và áp dụng trong cửa hàng; chỉ được cấu hình nếu được cấp permission.
+- `Cashier` được áp khuyến mãi/voucher hợp lệ khi bán hàng.
+- Ghi đè giảm giá ngoài rule cần quyền quản lý.
 
-### 11.3 Barcode & Chế độ Offline
+### 6.2 Điều kiện
 
-#### Kết nối phần cứng Barcode
-- Tương thích máy quét Barcode/QR Code kết nối qua cổng USB hoặc Bluetooth (hoạt động theo chuẩn `Keyboard Wedge` hoặc SDK riêng).
+- Promotion phải active và nằm trong thời gian hiệu lực.
+- Voucher phải active, chưa hết hạn, chưa vượt số lượt dùng và thỏa giới hạn theo khách hàng.
+- Đơn hàng/SKU phải thuộc target của promotion.
+- Đơn hàng phải đạt giá trị tối thiểu nếu promotion/voucher có `min_total`.
 
-#### Cơ chế vận hành ngoại tuyến (Offline Mode)
+### 6.3 Dữ liệu hợp lệ
 
-> [!WARNING]
-> Chế độ **Offline Mode** đòi hỏi đồng bộ dữ liệu chặt chẽ để tránh xung đột kho hàng khi khôi phục kết nối mạng.
+- Loại promotion hợp lệ: `PercentSku`, `FixedSku`, `BuyXGetY`, `CartPercent`, `CartFixed`, `HappyHour`.
+- Giá trị giảm, giá trị tối thiểu, giới hạn giảm tối đa và priority không được âm.
+- Voucher code phải duy nhất.
+- `max_uses` và giới hạn dùng theo khách hàng phải lớn hơn 0.
+- Target promotion phải tham chiếu category hoặc SKU hợp lệ.
 
-```mermaid
-flowchart LR
-    A[Mất kết nối Internet] --> B[Lưu Cache Local: SQLite/IndexedDB]
-    B --> C[Tiếp tục quét Barcode & Bán hàng]
-    C --> D[Chỉ chấp nhận Tiền mặt / Ghi nợ]
-    D --> E[Lưu đơn vào Hàng đợi Offline Queue]
-    E --> F[Có kết nối Internet trở lại]
-    F --> G[Đồng bộ Sync lên Cloud Server]
-    G --> H[Xử lý xung đột Conflict Resolution]
-```
+### 6.4 Ràng buộc
 
-- **Lưu trữ cục bộ**: Ứng dụng POS lưu trữ cache dữ liệu sản phẩm, giá bán, khuyến mãi và tồn kho tại máy trạm thông qua `SQLite` (Desktop app) hoặc `IndexedDB` (Web/PWA).
-- **Xử lý khi mất mạng**: Tiếp tục cho phép nhân viên quét mã bán hàng, đơn hàng được ghi nhận vào hàng đợi ngoại tuyến (`Offline Queue`).
-- **Giới hạn thanh toán khi Offline**: Chỉ chấp nhận phương thức **Tiền mặt** (Thanh toán qua QR/Thẻ ngân hàng yêu cầu kết nối trực tuyến tới cổng thanh toán).
-- **Khôi phục kết nối (Sync & Conflict Resolution)**:
-  - Tự động đẩy các đơn hàng từ hàng đợi cục bộ lên Server.
-  - Giải quyết xung đột dữ liệu (ví dụ: cảnh báo âm kho nếu nhiều máy cùng xuất bán SKU sắp hết hàng trong thời gian mất mạng).
+- Không cho áp promotion/voucher hết hạn hoặc inactive.
+- Không cho một promotion target đồng thời vừa là category vừa là SKU nếu rule yêu cầu chọn một phạm vi.
+- Không cho tổng giảm giá làm giá trị dòng hàng hoặc đơn hàng nhỏ hơn 0.
+- Promotion `exclusive` không được áp cùng promotion khác.
+- Promotion không `stackable` không được cộng dồn với promotion khác cùng phạm vi.
+- Voucher chỉ được ghi nhận sử dụng sau khi order thanh toán thành công.
 
+### 6.5 Trạng thái
+
+| Đối tượng | Chuyển trạng thái hợp lệ                                                            |
+| --------- | ----------------------------------------------------------------------------------- |
+| Promotion | `Active` <-> `Inactive`; chỉ có hiệu lực khi đang active và đúng thời gian áp dụng. |
+| Voucher   | `Active` <-> `Inactive/Expired`; voucher expired không được dùng lại.               |
+
+### 6.6 Tính toán
+
+- Promotion theo dòng hàng được tính trước promotion toàn đơn.
+- Promotion phần trăm = giá trị đủ điều kiện x phần trăm giảm, nhưng không vượt `max_discount` nếu có.
+- Promotion cố định = số tiền giảm cố định, nhưng không vượt giá trị đủ điều kiện.
+- `BuyXGetY` chỉ tính trên số lượng SKU/nhóm SKU đủ điều kiện theo cấu hình.
+- Khi nhiều promotion có thể áp dụng, hệ thống xét theo `priority`, `exclusive`, `is_stackable` và cấu hình chọn cộng dồn hoặc chọn lợi ích tốt nhất.
+- Grand total sau khuyến mãi = subtotal - tổng giảm giá + tổng thuế.
+
+### 6.7 Quan hệ dữ liệu
+
+- Promotion phải thuộc cửa hàng hoặc phạm vi chuỗi hợp lệ.
+- PromotionTarget phải tham chiếu đúng Promotion.
+- VoucherUsage phải tham chiếu Voucher, Order và Customer nếu voucher yêu cầu định danh khách hàng.
+- OrderDiscount phải tham chiếu promotion hoặc voucher là nguồn giảm giá.
+
+### 6.8 Ngoại lệ
+
+- Nếu voucher không hợp lệ: không áp voucher và trả lý do cụ thể như hết hạn, hết lượt, sai khách hàng hoặc chưa đạt min total.
+- Nếu promotion engine gặp xung đột rule: áp dụng rule có priority cao hơn hoặc rule có lợi nhất theo cấu hình.
+- Nếu voucher đã được dùng nhưng thanh toán thất bại: không tăng `used_count`.
+
+### 6.9 Tác động
+
+- Áp promotion/voucher tạo OrderDiscount trên đơn hàng.
+- Khi order `Paid`, VoucherUsage được tạo và `used_count` của voucher tăng.
+- Hủy đơn trước thanh toán phải giải phóng voucher đã giữ chỗ nếu có.
+
+---
+
+## 7. ĐƠN HÀNG, GIỎ HÀNG VÀ CHECKOUT
+
+### 7.1 Quyền hạn
+
+- `Cashier`, `StoreManager` và `Owner` được tạo đơn hàng trong ca hợp lệ.
+- Hủy đơn yêu cầu `StoreManager` hoặc `Owner`, trừ đơn `Draft` do chính cashier tạo và chưa phát sinh payment thành công.
+- Hoàn tiền yêu cầu `StoreManager` hoặc `Owner`.
+
+### 7.2 Điều kiện
+
+- Nhân viên phải có ca `Open` tại cửa hàng.
+- Đơn hàng phải có ít nhất một dòng hàng hợp lệ trước khi xác nhận.
+- SKU trong đơn phải active, còn bán được và đủ tồn tại thời điểm checkout.
+- Customer, nếu có, phải active.
+
+### 7.3 Dữ liệu hợp lệ
+
+- Số lượng dòng hàng phải lớn hơn 0.
+- Đơn giá, thuế, giảm giá và tổng tiền không được âm.
+- Giảm giá dòng hàng không được vượt giá trị trước giảm của dòng đó.
+- Currency của đơn hàng phải trùng currency cấu hình của cửa hàng.
+
+### 7.4 Ràng buộc
+
+- Không sửa dòng hàng, giá, giảm giá hoặc khách hàng sau khi đơn đã `Paid`.
+- Không cho checkout nếu tổng tiền không khớp với tổng dòng hàng, thuế và giảm giá do server tính lại.
+- Không cho thanh toán đơn đã `Cancelled`, `Refunded` hoặc `PartiallyRefunded` nếu không có nghiệp vụ hoàn tiền riêng.
+- Không cho một order thuộc ca đã `Closed` phát sinh payment mới.
+
+### 7.5 Trạng thái
+
+| Trạng thái hiện tại | Trạng thái được chuyển sang     |
+| ------------------- | ------------------------------- |
+| `Draft`             | `Confirmed`, `Cancelled`        |
+| `Confirmed`         | `Paid`, `Cancelled`             |
+| `Paid`              | `PartiallyRefunded`, `Refunded` |
+| `PartiallyRefunded` | `Refunded`                      |
+| `Cancelled`         | Không chuyển tiếp               |
+| `Refunded`          | Không chuyển tiếp               |
+
+### 7.6 Tính toán
+
+- `line_gross = quantity x unit_price`.
+- `line_total = line_gross - line_discount + line_tax`.
+- `subtotal = tổng line_gross`.
+- `discount_total = tổng line_discount + tổng discount toàn đơn`.
+- `tax_total = tổng line_tax`.
+- `grand_total = subtotal - discount_total + tax_total`.
+- Server là nguồn tính toán cuối cùng; client chỉ gửi lựa chọn hàng hóa, số lượng, khách hàng và mã ưu đãi.
+
+### 7.7 Quan hệ dữ liệu
+
+- Order phải thuộc Store và Shift hợp lệ.
+- OrderItem phải thuộc Order và tham chiếu SKU hợp lệ.
+- OrderDiscount phải thuộc Order và tham chiếu promotion/voucher hợp lệ nếu có.
+- Order phải tham chiếu Employee tạo đơn.
+
+### 7.8 Ngoại lệ
+
+- Nếu tồn kho thay đổi trong lúc checkout: hệ thống tính lại tồn và từ chối nếu không đủ.
+- Nếu promotion/voucher không còn hợp lệ khi checkout: hệ thống tính lại đơn không có ưu đãi đó và yêu cầu xác nhận lại.
+- Nếu order đã bị thay đổi bởi phiên khác: hệ thống trả lỗi xung đột và yêu cầu tải lại đơn.
+
+### 7.9 Tác động
+
+- Tạo order `Draft` lưu snapshot giá, thuế và thông tin SKU tại thời điểm tạo dòng hàng.
+- Xác nhận order chuyển sang `Confirmed` và khóa dữ liệu tính tiền để chuẩn bị thanh toán.
+- Khi thanh toán đủ, order chuyển `Paid`, ghi `paid_at` và kích hoạt các tác động: trừ kho, ghi payment, dùng voucher, tích điểm, tạo invoice.
+
+---
+
+## 8. THANH TOÁN, HÓA ĐƠN VÀ HOÀN TIỀN
+
+### 8.1 Quyền hạn
+
+- `Cashier`, `StoreManager` và `Owner` được tạo payment cho đơn `Confirmed` trong ca đang mở.
+- Hoàn tiền, hủy payment thành công hoặc điều chỉnh sai lệch cần quyền `StoreManager` hoặc `Owner`.
+- Webhook thanh toán điện tử được hệ thống tiếp nhận công khai nhưng bắt buộc xác thực chữ ký.
+
+### 8.2 Điều kiện
+
+- Order phải ở trạng thái `Confirmed` và chưa thanh toán đủ.
+- Payment bằng tiền mặt yêu cầu số tiền khách đưa vào không nhỏ hơn số tiền cần thu cho phần thanh toán đó.
+- Payment MoMo/VietQR/Card phải có mã tham chiếu giao dịch khi xác nhận thành công.
+- Payment bằng điểm yêu cầu khách hàng có LoyaltyAccount đủ điểm.
+
+### 8.3 Dữ liệu hợp lệ
+
+- Phương thức thanh toán hợp lệ: `Cash`, `MoMo`, `VietQR`, `Card`, `Points`.
+- Số tiền payment phải lớn hơn 0.
+- Tiền thừa không được âm.
+- Transaction reference phải duy nhất theo phương thức để chống ghi nhận trùng webhook.
+
+### 8.4 Ràng buộc
+
+- Không cho tổng tiền đã thu hợp lệ vượt quá `grand_total` của order.
+- Không cho payment `Success` chuyển lại `Pending`.
+- Không tạo invoice cho order chưa `Paid`.
+- Không tạo nhiều invoice cho cùng một order.
+- Không ghi nhận webhook nếu chữ ký không hợp lệ, sai số tiền, sai order hoặc trùng transaction reference.
+
+### 8.5 Trạng thái
+
+| Đối tượng | Chuyển trạng thái hợp lệ                                              |
+| --------- | --------------------------------------------------------------------- |
+| Payment   | `Pending` -> `Success`; `Pending` -> `Failed`; `Pending` -> `Timeout` |
+| Order     | `Confirmed` -> `Paid` khi tổng payment hợp lệ bằng `grand_total`      |
+| Invoice   | Tạo một lần sau khi order `Paid`; không sửa số tiền lịch sử.          |
+
+### 8.6 Tính toán
+
+- Với tiền mặt: `cash_applied = amount - change_amount`.
+- Với phương thức không tiền mặt: `applied_amount = amount`.
+- Tổng đã thu hợp lệ = tổng `applied_amount` của payment `Success`.
+- Order chỉ chuyển `Paid` khi tổng đã thu hợp lệ bằng đúng `grand_total`.
+- Tiền thừa = số tiền khách đưa - số tiền còn phải thu của phần thanh toán tiền mặt.
+- Mã hóa đơn sinh theo định dạng `HD-{StoreCode}-{YYYYMMDD}-{Sequence}` và phải duy nhất.
+
+### 8.7 Quan hệ dữ liệu
+
+- Payment phải thuộc một Order hợp lệ.
+- Payment điện tử phải liên kết được với yêu cầu QR hoặc transaction reference.
+- Invoice phải tham chiếu duy nhất đến Order.
+- Payment bằng điểm phải tham chiếu Customer/LoyaltyAccount của chính order đó.
+
+### 8.8 Ngoại lệ
+
+- Nếu thanh toán chưa đủ: order giữ `Confirmed`, payment thành công vẫn được lưu và hệ thống yêu cầu thanh toán phần còn lại.
+- Nếu webhook đến nhiều lần: chỉ ghi nhận một lần theo transaction reference.
+- Nếu thanh toán điện tử hết hạn: payment chuyển `Timeout`, order không chuyển `Paid`.
+- Nếu tạo invoice thất bại sau khi payment đủ: toàn bộ transaction hoàn tất checkout phải rollback hoặc đưa vào hàng đợi xử lý bù có kiểm soát.
+
+### 8.9 Tác động
+
+- Payment `Success` được ghi nhận vào order và báo realtime về quầy thanh toán nếu là QR.
+- Khi order chuyển `Paid`, hệ thống trừ tồn kho, tạo StockTransaction `SaleOut`, cập nhật doanh thu ca, ghi nhận voucher usage, cộng điểm và tạo invoice.
+- Hoàn tiền thành công chuyển order sang `PartiallyRefunded` hoặc `Refunded`, ghi nhận payment/transaction hoàn tiền, điều chỉnh điểm và doanh số theo chính sách hoàn tiền.
+
+---
+
+## 9. CA LÀM VIỆC VÀ ĐỐI SOÁT TIỀN MẶT
+
+### 9.1 Quyền hạn
+
+- `Cashier` được mở và đóng ca của chính mình.
+- `StoreManager` và `Owner` được xem, đối soát và duyệt sai lệch ca trong phạm vi quyền.
+
+### 9.2 Điều kiện
+
+- Nhân viên chỉ được có một ca `Open` tại cùng một thời điểm trong một cửa hàng.
+- Mở ca yêu cầu cửa hàng active và nhân viên có quyền bán hàng tại cửa hàng.
+- Đóng ca yêu cầu ca đang `Open` và không còn order `Draft/Confirmed` cần xử lý, trừ khi manager duyệt hủy/chuyển giao.
+
+### 9.3 Dữ liệu hợp lệ
+
+- Tiền đầu ca không được âm.
+- Tiền mặt thực đếm cuối ca không được âm.
+- Ghi chú bắt buộc nếu có chênh lệch tiền mặt.
+
+### 9.4 Ràng buộc
+
+- Không tạo order mới bằng ca đã `Closed`.
+- Không sửa tiền đầu ca sau khi ca đã phát sinh giao dịch nếu không có quyền quản lý.
+- Không cho cashier đóng ca của nhân viên khác.
+- Không cho đóng ca khi còn payment `Pending` chưa được xử lý theo chính sách cửa hàng.
+
+### 9.5 Trạng thái
+
+| Đối tượng | Chuyển trạng thái hợp lệ |
+| --------- | ------------------------ |
+| Shift     | `Open` -> `Closed`       |
+
+### 9.6 Tính toán
+
+- Tiền mặt kỳ vọng cuối ca = tiền đầu ca + tổng `cash_applied` của payment tiền mặt thành công - tiền hoàn bằng tiền mặt.
+- Chênh lệch tiền mặt = tiền mặt thực đếm - tiền mặt kỳ vọng.
+- Doanh thu ca được tính từ order `Paid` phát sinh trong ca, phân tách theo phương thức thanh toán.
+
+### 9.7 Quan hệ dữ liệu
+
+- Shift phải thuộc Employee và Store hợp lệ.
+- Order phát sinh trong ca phải tham chiếu Shift.
+- Payment trong ca được tổng hợp thông qua Order thuộc Shift đó.
+
+### 9.8 Ngoại lệ
+
+- Nếu ca đã đóng: từ chối tạo order hoặc payment mới.
+- Nếu chênh lệch vượt ngưỡng cấu hình: yêu cầu manager duyệt trước khi hoàn tất đối soát.
+- Nếu còn payment pending: hệ thống yêu cầu xử lý payment trước hoặc manager xác nhận theo chính sách.
+
+### 9.9 Tác động
+
+- Mở ca tạo Shift trạng thái `Open`.
+- Đóng ca cập nhật `closing_cash`, `actual_cash`, thời điểm đóng, trạng thái `Closed` và biên bản đối soát.
+- Đóng ca có thể revoke token/phiên bán hàng theo chính sách bảo mật.
+
+---
+
+## 10. NHÀ CUNG CẤP VÀ CÔNG NỢ
+
+### 10.1 Quyền hạn
+
+- `Owner` và `StoreManager` được quản lý nhà cung cấp, phiếu nhập và thanh toán công nợ.
+- `Cashier` không được tạo/sửa công nợ nhà cung cấp.
+
+### 10.2 Điều kiện
+
+- Nhà cung cấp phải active để được chọn khi nhập kho.
+- Thanh toán công nợ phải tham chiếu nhà cung cấp và phiếu nhập/nhóm công nợ hợp lệ nếu có.
+
+### 10.3 Dữ liệu hợp lệ
+
+- Tên nhà cung cấp không được rỗng.
+- Số tiền thanh toán nhà cung cấp phải lớn hơn 0.
+- Phương thức thanh toán hợp lệ: `Cash`, `BankTransfer`, `Other`.
+
+### 10.4 Ràng buộc
+
+- Không xóa nhà cung cấp đã có phiếu nhập hoặc thanh toán; chỉ được inactive.
+- Không ghi nhận thanh toán vượt quá công nợ còn lại nếu công nợ được theo dõi theo phiếu.
+- Không sửa thanh toán công nợ đã đối soát nếu không có quyền quản lý.
+
+### 10.5 Trạng thái
+
+- Nhà cung cấp active mới được phát sinh nghiệp vụ nhập kho mới.
+- Phiếu nhập đã `Completed` là nguồn phát sinh công nợ/chi phí, không được đưa về `Draft`.
+
+### 10.6 Tính toán
+
+- Công nợ phát sinh = tổng tiền phiếu nhập hoàn tất - tổng tiền đã thanh toán.
+- Số dư công nợ nhà cung cấp = tổng công nợ phát sinh còn lại theo nhà cung cấp.
+
+### 10.7 Quan hệ dữ liệu
+
+- SupplierPayment phải tham chiếu Supplier hợp lệ.
+- StockInVoucher phải tham chiếu Supplier hợp lệ.
+- Thanh toán theo phiếu, nếu có, phải cùng nhà cung cấp với phiếu nhập.
+
+### 10.8 Ngoại lệ
+
+- Nếu nhà cung cấp inactive: không cho tạo phiếu nhập mới.
+- Nếu số tiền thanh toán vượt công nợ còn lại: từ chối thanh toán hoặc yêu cầu manager duyệt theo chính sách.
+
+### 10.9 Tác động
+
+- Hoàn tất phiếu nhập làm tăng giá trị phải trả nhà cung cấp.
+- Ghi nhận thanh toán làm giảm công nợ và tạo lịch sử thanh toán.
+- Mọi thay đổi công nợ phải xuất hiện trong báo cáo nhà cung cấp.
+
+---
+
+## 11. BÁO CÁO, CẤU HÌNH VÀ OFFLINE
+
+### 11.1 Quyền hạn
+
+- `Owner` được xem báo cáo toàn chuỗi và thay đổi cấu hình hệ thống.
+- `StoreManager` được xem báo cáo cửa hàng được phân quyền.
+- `Cashier` chỉ được xem thông tin cần thiết cho ca của mình nếu được cấp quyền.
+
+### 11.2 Điều kiện
+
+- Báo cáo chỉ lấy dữ liệu trong phạm vi cửa hàng và thời gian người dùng được phép xem.
+- Cấu hình theo cửa hàng ghi đè cấu hình toàn cục nếu cùng khóa cấu hình.
+- Offline mode chỉ dùng cho nghiệp vụ được cho phép trong cấu hình.
+
+### 11.3 Dữ liệu hợp lệ
+
+- Khóa cấu hình phải duy nhất theo phạm vi global/store.
+- Giá trị cấu hình phải đúng kiểu dữ liệu mà khóa đó yêu cầu.
+- Export/import phải đúng schema file đã công bố.
+- Dữ liệu offline phải có định danh tạm thời để đồng bộ và chống ghi trùng.
+
+### 11.4 Ràng buộc
+
+- Báo cáo là dữ liệu tổng hợp read-only, không được sửa giao dịch gốc từ màn hình báo cáo.
+- Không cho import dữ liệu làm trùng SKU, barcode, voucher code hoặc phá quan hệ dữ liệu.
+- Offline không được ghi nhận thanh toán điện tử nếu không xác thực được gateway.
+- Offline không được vượt quyền hiện có đã cache của nhân viên.
+
+### 11.5 Trạng thái
+
+| Đối tượng               | Chuyển trạng thái hợp lệ                                           |
+| ----------------------- | ------------------------------------------------------------------ |
+| Bản ghi đồng bộ offline | `Queued` -> `Synced`; `Queued` -> `Conflict`; `Queued` -> `Failed` |
+| Cấu hình                | Phiên bản mới ghi đè hiệu lực tương lai, không sửa audit lịch sử.  |
+
+### 11.6 Tính toán
+
+- Báo cáo doanh thu chỉ tính order `Paid`, trừ/điều chỉnh theo hoàn tiền.
+- Báo cáo tồn kho lấy từ StockEntry và đối chiếu với StockTransaction.
+- Báo cáo lợi nhuận = doanh thu thuần - giá vốn theo chính sách giá vốn đã cấu hình.
+- Báo cáo ca lấy dữ liệu từ Shift, Order và Payment thành công.
+
+### 11.7 Quan hệ dữ liệu
+
+- Mọi số liệu báo cáo phải truy ngược được về order, payment, stock transaction hoặc shift gốc.
+- Cấu hình cửa hàng phải tham chiếu Store hợp lệ.
+- Dữ liệu offline khi đồng bộ phải map về đúng Store, Shift, Employee và Order gốc.
+
+### 11.8 Ngoại lệ
+
+- Nếu import sai schema: từ chối toàn bộ file hoặc từng dòng theo chế độ import được chọn và trả danh sách lỗi.
+- Nếu đồng bộ offline bị trùng hoặc xung đột tồn kho: đánh dấu `Conflict` và yêu cầu xử lý thủ công.
+- Nếu người dùng không đủ quyền xem báo cáo: không trả dữ liệu tổng hợp vượt phạm vi.
+
+### 11.9 Tác động
+
+- Thay đổi cấu hình phải ghi audit log và làm mới cache cấu hình.
+- Export không thay đổi dữ liệu nguồn.
+- Import thành công tạo/cập nhật dữ liệu theo transaction và ghi kết quả import.
+- Đồng bộ offline thành công tạo giao dịch thật trên server và liên kết với định danh tạm thời từ client.
+
+---
+
+## 12. QUY TẮC BẤT BIẾN TOÀN HỆ THỐNG
+
+- Không trạng thái cuối nào được sửa trực tiếp: `Cancelled`, `Refunded`, `Completed`, `Approved`, `Closed`, `Success`, `Failed`, `Timeout`.
+- Không cho phép số tiền, số lượng, điểm hoặc tồn kho âm nếu nghiệp vụ không định nghĩa rõ delta âm.
+- Không cho phép dữ liệu khác cửa hàng bị liên kết vào cùng một nghiệp vụ cửa hàng.
+- Không cho phép client tự quyết định tổng tiền cuối cùng, tồn kho cuối cùng, điểm cuối cùng hoặc trạng thái thanh toán cuối cùng.
+- Không cho phép webhook, import hoặc đồng bộ offline bỏ qua RBAC, chữ ký, idempotency và kiểm tra quan hệ dữ liệu.
+- Mọi nghiệp vụ thành công phải để lại đủ dấu vết để audit: ai làm, làm lúc nào, ở cửa hàng nào, đối tượng nào, trước/sau thay đổi gì nếu áp dụng.
