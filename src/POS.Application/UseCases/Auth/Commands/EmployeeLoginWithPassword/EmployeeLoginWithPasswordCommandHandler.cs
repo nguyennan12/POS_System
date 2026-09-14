@@ -1,5 +1,3 @@
-
-using System.Runtime.CompilerServices;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
@@ -7,7 +5,6 @@ using POS.Application.UseCases.Auth.Dtos;
 using POS.Application.UseCases.Auth.Errors;
 using POS.Domain.Common;
 using POS.Domain.Employees;
-using POS.Domain.Stores;
 
 namespace POS.Application.UseCases.Auth.Commands.EmployeeLoginWithPassword;
 
@@ -73,21 +70,11 @@ public class EmployeeLoginWithPasswordCommandHandler : ICommandHandler<EmployeeL
       refreshToken.ExpiresAt), cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-    return new AuthDto(
+    return AuthDto.ToDto(
+      employee,
       accessToken.AccessToken,
-      refreshToken.RefreshTokenoken,
+      refreshToken.RefreshToken,
       accessToken.ExpiresAt,
-      new CurrentUserDto(
-        employee.Id,
-        employee.Name,
-        employee.Username,
-        employee.RoleId,
-        employee.Role.Name,
-        employee.StoreId,
-        employee.Store?.Name,
-        employee.IsChainOwner,
-        permissions
-      )
-    );
+      permissions);
   }
 }

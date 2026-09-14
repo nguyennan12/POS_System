@@ -88,21 +88,11 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
       refreshToken.ExpiresAt), cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-    return new AuthDto(
+    return AuthDto.ToDto(
+      employee,
       accessToken.AccessToken,
-      refreshToken.RefreshTokenoken,
+      refreshToken.RefreshToken,
       accessToken.ExpiresAt,
-      new CurrentUserDto(
-        employee.Id,
-        employee.Name,
-        employee.Username,
-        employee.RoleId,
-        employee.Role.Name,
-        employee.StoreId,
-        employee.Store?.Name,
-        employee.IsChainOwner,
-        permissions
-      )
-    );
+      permissions);
   }
 }

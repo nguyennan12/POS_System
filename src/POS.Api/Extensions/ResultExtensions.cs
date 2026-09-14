@@ -6,6 +6,19 @@ namespace POS.Api.Extensions;
 
 public static class ResultExtensions
 {
+  public static ActionResult ToActionResult(
+      this ControllerBase controller,
+      Result result,
+      string? successMessage = null)
+  {
+    if (result.IsSuccess)
+    {
+      return controller.Ok(ApiResponse<object>.Ok(null, successMessage));
+    }
+
+    return controller.ToFailureActionResult(result);
+  }
+
   public static ActionResult ToActionResult<T>(
       this ControllerBase controller,
       Result<T> result,
@@ -16,6 +29,13 @@ public static class ResultExtensions
       return controller.Ok(ApiResponse<T>.Ok(result.Value!, successMessage));
     }
 
+    return controller.ToFailureActionResult(result);
+  }
+
+  private static ActionResult ToFailureActionResult(
+      this ControllerBase controller,
+      Result result)
+  {
     var error = new ApiError
     {
       Code = result.Error.Code,
