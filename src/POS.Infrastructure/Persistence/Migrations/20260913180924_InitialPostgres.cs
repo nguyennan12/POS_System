@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace POS.Infrastructure.Migrations
+namespace POS.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialPostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -56,8 +55,8 @@ namespace POS.Infrastructure.Migrations
                     receipt_header = table.Column<string>(type: "text", nullable: true),
                     receipt_footer = table.Column<string>(type: "text", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -77,7 +76,7 @@ namespace POS.Infrastructure.Migrations
                     address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     credit_terms = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -92,7 +91,7 @@ namespace POS.Infrastructure.Migrations
                     language_code = table.Column<string>(type: "character varying(5)", maxLength: 5, nullable: false),
                     key = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     value = table.Column<string>(type: "text", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -112,7 +111,7 @@ namespace POS.Infrastructure.Migrations
                     member_tier_id = table.Column<Guid>(type: "uuid", nullable: false),
                     total_spending = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -158,7 +157,7 @@ namespace POS.Infrastructure.Migrations
                     display_order = table.Column<int>(type: "integer", nullable: false),
                     image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     is_visible = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -186,8 +185,8 @@ namespace POS.Infrastructure.Migrations
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     is_system_role = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -208,7 +207,7 @@ namespace POS.Infrastructure.Migrations
                     store_id = table.Column<Guid>(type: "uuid", nullable: true),
                     key = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     value = table.Column<string>(type: "text", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -230,7 +229,7 @@ namespace POS.Infrastructure.Migrations
                     customer_id = table.Column<Guid>(type: "uuid", nullable: true),
                     session_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     message_count = table.Column<int>(type: "integer", nullable: false),
-                    started_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    started_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     ended_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -257,7 +256,7 @@ namespace POS.Infrastructure.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
                     customer_id = table.Column<Guid>(type: "uuid", nullable: false),
                     points_balance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -284,8 +283,8 @@ namespace POS.Infrastructure.Migrations
                     base_unit = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     image_url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -321,8 +320,8 @@ namespace POS.Infrastructure.Migrations
                     failed_login_count = table.Column<short>(type: "smallint", nullable: false),
                     locked_until = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -350,7 +349,7 @@ namespace POS.Infrastructure.Migrations
                     conversation_id = table.Column<Guid>(type: "uuid", nullable: false),
                     sender = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     content = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -373,13 +372,13 @@ namespace POS.Infrastructure.Migrations
                     store_id = table.Column<Guid>(type: "uuid", nullable: false),
                     sku_code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     barcode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    attributes = table.Column<Dictionary<string, string>>(type: "jsonb", nullable: true),
+                    attributes_json = table.Column<string>(type: "text", nullable: true),
                     cost_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     sell_price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     tax_rate = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 0m),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
+                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -413,7 +412,7 @@ namespace POS.Infrastructure.Migrations
                     entity_id = table.Column<Guid>(type: "uuid", nullable: false),
                     description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     ip_address = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -440,7 +439,7 @@ namespace POS.Infrastructure.Migrations
                     employee_id = table.Column<Guid>(type: "uuid", nullable: false),
                     store_id = table.Column<Guid>(type: "uuid", nullable: false),
                     granted_by = table.Column<Guid>(type: "uuid", nullable: true),
-                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -485,7 +484,7 @@ namespace POS.Infrastructure.Migrations
                     valid_to = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Active"),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -518,7 +517,7 @@ namespace POS.Infrastructure.Migrations
                     token_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     revoked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -539,7 +538,7 @@ namespace POS.Infrastructure.Migrations
                     role_id = table.Column<Guid>(type: "uuid", nullable: false),
                     permission_id = table.Column<Guid>(type: "uuid", nullable: false),
                     granted_by = table.Column<Guid>(type: "uuid", nullable: true),
-                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    granted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -576,7 +575,7 @@ namespace POS.Infrastructure.Migrations
                     actual_cash = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Open"),
                     note = table.Column<string>(type: "text", nullable: true),
-                    opened_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    opened_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     closed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -611,7 +610,7 @@ namespace POS.Infrastructure.Migrations
                     status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValue: "Completed"),
                     note = table.Column<string>(type: "text", nullable: true),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -648,7 +647,7 @@ namespace POS.Infrastructure.Migrations
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
                     approved_by = table.Column<Guid>(type: "uuid", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     approved_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -687,7 +686,7 @@ namespace POS.Infrastructure.Migrations
                     valid_to = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     customer_group = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -724,7 +723,7 @@ namespace POS.Infrastructure.Migrations
                     batch_no = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     qty = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
                     expiry_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    received_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    received_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -753,7 +752,7 @@ namespace POS.Infrastructure.Migrations
                     sku_id = table.Column<Guid>(type: "uuid", nullable: false),
                     qty_on_hand = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
                     min_stock = table.Column<decimal>(type: "numeric(18,3)", precision: 18, scale: 3, nullable: false),
-                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    last_updated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -871,7 +870,7 @@ namespace POS.Infrastructure.Migrations
                     grand_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     note = table.Column<string>(type: "text", nullable: true),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
@@ -944,7 +943,7 @@ namespace POS.Infrastructure.Migrations
                     voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
                     amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     method = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())"),
+                    paid_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()"),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
                     note = table.Column<string>(type: "text", nullable: true)
                 },
@@ -1015,7 +1014,7 @@ namespace POS.Infrastructure.Migrations
                     total_before_tax = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     tax_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     grand_total = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    issued_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    issued_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -1038,7 +1037,7 @@ namespace POS.Infrastructure.Migrations
                     voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
                     discount_amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
                     description = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    applied_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    applied_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -1134,7 +1133,7 @@ namespace POS.Infrastructure.Migrations
                     type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     order_id = table.Column<Guid>(type: "uuid", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -1167,7 +1166,7 @@ namespace POS.Infrastructure.Migrations
                     stock_in_voucher_id = table.Column<Guid>(type: "uuid", nullable: true),
                     note = table.Column<string>(type: "text", nullable: true),
                     created_by = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {
@@ -1213,7 +1212,7 @@ namespace POS.Infrastructure.Migrations
                     voucher_id = table.Column<Guid>(type: "uuid", nullable: false),
                     customer_id = table.Column<Guid>(type: "uuid", nullable: false),
                     order_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    used_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "TIMEZONE('utc', now())")
+                    used_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
                 },
                 constraints: table =>
                 {

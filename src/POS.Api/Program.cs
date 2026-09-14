@@ -30,6 +30,9 @@ try
   builder.Services.AddApplication();
   builder.Services.AddInfrastructure(builder.Configuration);
 
+  builder.Services.AddHttpContextAccessor();
+  builder.Services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser, POS.Api.Services.CurrentUser>();
+
   // ---------- JWT Auth ----------
   var jwtSecret = builder.Configuration["Jwt:Secret"]
       ?? throw new InvalidOperationException("Jwt:Secret is not configured.");

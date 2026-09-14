@@ -63,7 +63,7 @@ public class TokenService : ITokenService
         expiresAt);
   }
 
-  private string HashRefreshToken(string refreshToken)
+  public string HashRefreshToken(string refreshToken)
   {
     var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
     return Convert.ToHexString(bytes).ToLowerInvariant();
