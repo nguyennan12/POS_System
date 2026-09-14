@@ -158,6 +158,18 @@ public class StoreAssignmentConcurrencyTests
             return employee;
         }
 
+        public Task<Employee?> GetByUsernameWithRoleAndStoreAsync(
+            string username,
+            CancellationToken cancellationToken = default) =>
+            inner.GetByUsernameWithRoleAndStoreAsync(username, cancellationToken);
+
+        public Task<Employee?> GetByStoreAndPinLookupHashWithRoleAndStoreAsync(
+            Guid storeId,
+            string pinLookupHash,
+            CancellationToken cancellationToken = default) =>
+            inner.GetByStoreAndPinLookupHashWithRoleAndStoreAsync(
+                storeId, pinLookupHash, cancellationToken);
+
         public Task<bool> HasPinConflictAsync(Guid employeeId, Guid storeId, string pinLookupHash, CancellationToken cancellationToken = default) =>
             inner.HasPinConflictAsync(employeeId, storeId, pinLookupHash, cancellationToken);
         public Task<bool> HasMissingPinLookupAsync(Guid storeId, CancellationToken cancellationToken = default) =>

@@ -76,14 +76,12 @@ public class Employee : BaseEntity
     UpdatedAt = utcNow;
   }
 
-<<<<<<< Updated upstream
   public void setPinLookUpHash(string pinLookupHash)
   {
     PinLookupHash = pinLookupHash;
     UpdatedAt = DateTime.UtcNow;
   }
-=======
-    public Guid? StoreId { get; private set; }
+
     public void AssignStoreManager(Guid storeId, Role storeManagerRole)
     {
         if (storeId == Guid.Empty || storeManagerRole.Id == Guid.Empty ||
@@ -99,23 +97,4 @@ public class Employee : BaseEntity
         Role = storeManagerRole;
         UpdatedAt = DateTime.UtcNow;
     }
-
-    public Store? Store { get; private set; }
-
-    public Guid RoleId { get; private set; }
-    public Role Role { get; private set; } = default!;
-
-    public bool IsChainOwner { get; private set; }
-
-    public string Name { get; private set; } = default!;
-    public string Username { get; private set; } = default!;
-    public string PasswordHash { get; private set; } = default!;
-    public string PinHash { get; private set; } = default!;
-    public string? PinLookupHash { get; private set; }
-    public short FailedLoginCount { get; private set; }
-    public DateTime? LockedUntil { get; private set; }
-    public bool IsActive { get; private set; } = true;
-    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
->>>>>>> Stashed changes
 }
