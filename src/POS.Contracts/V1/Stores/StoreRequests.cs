@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace POS.Contracts.V1.Stores;
 
 public record CreateStoreRequest(
@@ -20,7 +22,7 @@ public record UpdateStoreRequest(
 );
 
 public record UpdateStoreStatusRequest(
-    bool IsActive
+    [property: JsonRequired] bool IsActive
 );
 
 public record StoreAdminAssignmentRequest(

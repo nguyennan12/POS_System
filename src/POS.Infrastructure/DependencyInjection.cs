@@ -33,11 +33,21 @@ public static class DependencyInjection
 
     services.AddScoped<ICacheService, RedisCacheService>();
 
+<<<<<<< Updated upstream
     // ---- Repositories / UnitOfWork / Migration ----
     services.AddScoped<IStoreRepository, StoreRepository>();
     services.AddScoped<ISupplierRepository, SupplierRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
     services.AddScoped<IMigrationService, MigrationService>();
+=======
+        // ---- Repositories / UnitOfWork / Migration ----
+        services.AddScoped<IStoreRepository, StoreRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IEmployeeStoreAccessRepository, EmployeeStoreAccessRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IMigrationService, MigrationService>();
+>>>>>>> Stashed changes
 
     services.AddScoped<IEmployeeRepository, EmployeeRepository>();
     services.AddScoped<IPermissionRepository, PermissionRepository>();

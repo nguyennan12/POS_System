@@ -61,6 +61,8 @@ public static class ResultExtensions
 
     return result.Error.Type switch
     {
+      ErrorType.Unauthorized => controller.Unauthorized(ApiResponse<object>.Fail(error)),
+      ErrorType.Forbidden => controller.StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.Fail(error)),
       ErrorType.NotFound =>
           controller.NotFound(
               ApiResponse<object>.Fail(error)),

@@ -3,24 +3,24 @@ using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
 using POS.Domain.Stores;
+using POS.Domain.Employees;
+using POS.Application.Abstractions.Auth;
 
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
 
-public class CreateStoreCommandHandler : ICommandHandler<CreateStoreCommand, CreateStoreDto>
+public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOfWork unitOfWork,
+    IEmployeeRepository employees, IEmployeeStoreAccessRepository access, ICurrentUser currentUser)
+    : ICommandHandler<CreateStoreCommand, CreateStoreDto>
 {
-  private readonly IStoreRepository _storeRepository;
-  private readonly IUnitOfWork _unitOfWork;
-
-  public CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOfWork unitOfWork)
-  {
-    _storeRepository = storeRepository;
-    _unitOfWork = unitOfWork;
-  }
 
   public async Task<Result<CreateStoreDto>> Handle(
         CreateStoreCommand command,
         CancellationToken cancellationToken)
   {
+    var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+    if (caller.IsFailure) return caller.Error;
+    if (!caller.Value!.IsChainOwner) return StoreManagementAccess.Forbidden;
+
     var store = new Store(
       command.Name,
       command.Address,
@@ -29,9 +29,10 @@ public class CreateStoreCommandHandler : ICommandHandler<CreateStoreCommand, Cre
       command.CurrencyCode,
       isActive: true);
 
-    await _storeRepository.AddAsync(store, cancellationToken);
-
-    await _unitOfWork.SaveChangesAsync(cancellationToken);
+    await storeRepository.AddAsync(store, cancellationToken);
+    // The creator must be able to read/manage the new store; save both rows atomically.
+    await access.AddAsync(new EmployeeStoreAccess(caller.Value.Id, store.Id, caller.Value.Id), cancellationToken);
+    await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return new CreateStoreDto(
       store.Id,
@@ -40,7 +41,9 @@ public class CreateStoreCommandHandler : ICommandHandler<CreateStoreCommand, Cre
       store.IsActive,
       store.Phone,
       store.Timezone,
-      store.CurrencyCode);
+      store.CurrencyCode,
+      new DateTimeOffset(store.CreatedAt),
+      new DateTimeOffset(store.UpdatedAt));
   }
 
 }

@@ -18,5 +18,7 @@ public record CreateStoreDto(
     bool IsActive,
     string? Phone = null,
     string Timezone = "Asia/Ho_Chi_Minh",
-    string CurrencyCode = "VND"
+    string CurrencyCode = "VND",
+    DateTimeOffset? CreatedAt = null,
+    DateTimeOffset? UpdatedAt = null
 );

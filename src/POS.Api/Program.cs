@@ -56,6 +56,8 @@ try
   });
 
   builder.Services.AddAuthorization();
+  builder.Services.AddHttpContextAccessor();
+  builder.Services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser, POS.Api.Auth.CurrentUser>();
 
   // ---------- Controllers + OpenAPI / Scalar ----------
   builder.Services.AddControllers()
