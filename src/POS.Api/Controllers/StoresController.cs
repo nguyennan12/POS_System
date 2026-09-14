@@ -7,7 +7,6 @@ using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Contracts.V1.Common;
 using POS.Contracts.V1.Stores;
 using POS.Api.Mappings;
-using Microsoft.AspNetCore.Authorization;
 using POS.Application.UseCases.Stores.Queries.GetAllStores;
 using POS.Application.UseCases.Stores.Commands.UpdateStore;
 using POS.Application.UseCases.Stores.Commands.UpdateStoreStatus;
@@ -18,7 +17,6 @@ namespace POS.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Authorize]
 [Route("api/v1/stores")]
 public class StoresController(ISender mediator) : ControllerBase
 {
