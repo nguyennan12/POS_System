@@ -6,6 +6,19 @@ namespace POS.Api.Extensions;
 
 public static class ResultExtensions
 {
+  public static ActionResult ToActionResult(
+      this ControllerBase controller,
+      Result result,
+      string? successMessage = null)
+  {
+    if (result.IsSuccess)
+    {
+      return controller.Ok(ApiResponse<object>.Ok(null, successMessage));
+    }
+
+    return controller.ToFailureActionResult(result);
+  }
+
   public static ActionResult ToActionResult<T>(
       this ControllerBase controller,
       Result<T> result,
@@ -16,6 +29,13 @@ public static class ResultExtensions
       return controller.Ok(ApiResponse<T>.Ok(result.Value!, successMessage));
     }
 
+    return controller.ToFailureActionResult(result);
+  }
+
+  private static ActionResult ToFailureActionResult(
+      this ControllerBase controller,
+      Result result)
+  {
     var error = new ApiError
     {
       Code = result.Error.Code,
@@ -62,36 +82,6 @@ public static class ResultExtensions
       _ =>
           controller.BadRequest(
               ApiResponse<object>.Fail(error))
-    };
-  }
-
-  public static ActionResult ToActionResult(
-      this ControllerBase controller,
-      Result result)
-  {
-    if (result.IsSuccess)
-      return controller.NoContent();
-
-    var error = new ApiError
-    {
-      Code = result.Error.Code,
-      Message = result.Error.Message!,
-      Type = result.Error.Type
-    };
-
-    return result.Error.Type switch
-    {
-      ErrorType.NotFound =>
-          controller.NotFound(ApiResponse<object>.Fail(error)),
-
-      ErrorType.AlreadyExists =>
-          controller.Conflict(ApiResponse<object>.Fail(error)),
-
-      ErrorType.Validation or ErrorType.Invalid =>
-          controller.BadRequest(ApiResponse<object>.Fail(error)),
-
-      _ =>
-          controller.BadRequest(ApiResponse<object>.Fail(error))
     };
   }
 }
