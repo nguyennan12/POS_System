@@ -4,12 +4,18 @@ namespace POS.Domain.Rbac;
 
 public class Resource : BaseEntity
 {
-    public Resource() : base()
-    {
-    }
+  public Resource() : base()
+  {
+  }
 
-    public string Code { get; private set; } = default!;
-    public string? Description { get; private set; }
+  public Resource(string code, string? description = null, Guid? id = null) : base(id)
+  {
+    Code = code;
+    Description = description;
+  }
 
-    public ICollection<Permission> Permissions { get; private set; } = new List<Permission>();
+  public string Code { get; private set; } = default!;
+  public string? Description { get; private set; }
+
+  public ICollection<Permission> Permissions { get; private set; } = new List<Permission>();
 }

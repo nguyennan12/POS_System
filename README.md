@@ -3,7 +3,7 @@
 Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Architecture & CQRS:
 
 - **Backend:** ASP.NET Core (.NET 10) Web API + MediatR (CQRS) + FluentValidation + JWT Bearer
-- **Database & Cache:** SQL Server 2022 + Redis 7
+- **Database & Cache:** PostgreSQL 17 + Redis 7
 - **Observability:** Serilog → Grafana Loki + Prometheus Metrics + Grafana Dashboard
 - **Deployment:** Docker Compose
 
@@ -14,7 +14,7 @@ Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Arc
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - Docker Desktop + Docker Compose v2
 - (Tùy chọn) EF Core CLI tools: `dotnet tool install --global dotnet-ef`
-- (Tùy chọn) SQL Server Management Studio (SSMS) hoặc Azure Data Studio / DBeaver
+- (Tùy chọn) DBeaver / pgAdmin / DataGrip
 
 ---
 
@@ -80,24 +80,23 @@ docker compose down
 | --------------------------- | ------------------------------- | ----------------------------------- |
 | **API Scalar UI**           | http://localhost:5000/scalar/v1 | Tài liệu & Test API trực tiếp       |
 | **Health Check tổng quát**  | http://localhost:5000/health    | Kiểm tra tình trạng API             |
-| **Health Check DB & Redis** | http://localhost:5000/health/db | Kiểm tra kết nối SQL Server & Redis |
+| **Health Check DB & Redis** | http://localhost:5000/health/db | Kiểm tra kết nối PostgreSQL & Redis |
 | **Grafana Dashboard**       | http://localhost:3000           | Log & Metrics dashboard             |
 | **Prometheus**              | http://localhost:9090           | Thu thập metrics                    |
-| **SQL Server**              | `localhost:14330`               | Xem thông tin kết nối bên dưới      |
+| **PostgreSQL**              | `localhost:5432`                | Xem thông tin kết nối bên dưới      |
 | **Redis**                   | `localhost:6379`                | Cache & Distributed lock            |
 
 ---
 
 ## 🔑 Thông tin Kết nối
 
-### 1. Kết nối SQL Server
+### 1. Kết nối PostgreSQL
 
-- **Server Name:** `tcp:localhost,14330` _(cần tiền tố `tcp:` khi dùng SSMS)_
-- **Authentication:** SQL Server Authentication
-- **User:** `sa`
-- **Password:** `your_password`
-- **Database:** `pos_dev`
-- **Trust Server Certificate:** `True` / `Encrypt=False`
+- **Host:** `localhost`
+- **Port:** `5432`
+- **User:** `pos_user`
+- **Password:** `your_password` (theo `.env`)
+- **Database:** `pos_dev` (hoặc `pos_prod`)
 
 ### 2. Kết nối Redis
 

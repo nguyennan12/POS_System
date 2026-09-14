@@ -26,6 +26,7 @@ public static class OpenApiExtensions
           var exampleApiResponse = JsonNode.Parse("""
                 {
                   "success": false,
+                  "message": "Detailed error message.",
                   "data": null,
                   "error": {
                     "code": "ERROR_CODE",

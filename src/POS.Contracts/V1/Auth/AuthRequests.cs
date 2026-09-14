@@ -7,7 +7,7 @@ public record LoginRequest(
 
 public record PinLoginRequest(
     string Pin,
-    Guid? StoreId = null
+    Guid StoreId
 );
 
 public record RefreshTokenRequest(

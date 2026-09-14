@@ -17,7 +17,7 @@ public class Sku : BaseEntity
 
     public string SkuCode { get; private set; } = default!;
     public string Barcode { get; private set; } = default!;
-    public string? AttributesJson { get; private set; }
+    public Dictionary<string, string>? Attributes { get; private set; }
     public decimal CostPrice { get; private set; }
     public decimal SellPrice { get; private set; }
     public decimal TaxRate { get; private set; }

@@ -8,11 +8,12 @@ public static class ResultExtensions
 {
   public static ActionResult ToActionResult<T>(
       this ControllerBase controller,
-      Result<T> result)
+      Result<T> result,
+      string? successMessage = null)
   {
     if (result.IsSuccess)
     {
-      return controller.Ok(ApiResponse<T>.Ok(result.Value!));
+      return controller.Ok(ApiResponse<T>.Ok(result.Value!, successMessage));
     }
 
     var error = new ApiError
@@ -51,6 +52,12 @@ public static class ResultExtensions
       ErrorType.Validation or ErrorType.Invalid =>
           controller.BadRequest(
               ApiResponse<object>.Fail(error)),
+
+      ErrorType.Unauthorized =>
+          controller.Unauthorized(ApiResponse<object>.Fail(error)),
+
+      ErrorType.Forbidden =>
+          controller.StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object>.Fail(error)),
 
       _ =>
           controller.BadRequest(

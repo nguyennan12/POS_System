@@ -1,3 +1,4 @@
+using System.Text.Json;
 using POS.Contracts.V1.Common;
 
 namespace POS.Contracts.V1.Products;
@@ -40,5 +41,5 @@ public record BulkImportProductRow(
     decimal SellPrice,
     decimal TaxRate,
     string? Brand = null,
-    string? AttributesJson = null
+    JsonElement? Attributes = null
 );
