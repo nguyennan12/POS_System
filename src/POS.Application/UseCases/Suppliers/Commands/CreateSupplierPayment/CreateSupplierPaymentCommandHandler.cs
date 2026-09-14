@@ -34,6 +34,18 @@ public class CreateSupplierPaymentCommandHandler
         if (supplier is null)
             return CommonErrors.NotFound("Supplier");
 
+        if (!supplier.IsActive)
+            return CommonErrors.Invalid("Supplier.IsActive");
+
+        if (supplier.Address is null)
+            return CommonErrors.Invalid("Supplier.Address");
+
+        if (supplier.Email is null && supplier.Phone is null)
+            return CommonErrors.Invalid("Supplier.EmailOrPhone");
+
+        if (command.VoucherId is null)
+            return CommonErrors.Invalid("VoucherId");
+
         if (!Enum.TryParse<SupplierPaymentMethod>(command.Method, ignoreCase: true, out var method))
             return CommonErrors.Invalid("Method");
 

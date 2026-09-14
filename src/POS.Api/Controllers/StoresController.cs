@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
 using POS.Application.UseCases.Stores.Commands.CreateStore;
@@ -15,6 +16,7 @@ using POS.Application.UseCases.Stores.Commands.GrantOwnerAccess;
 
 namespace POS.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Authorize]
 [Route("api/v1/stores")]
