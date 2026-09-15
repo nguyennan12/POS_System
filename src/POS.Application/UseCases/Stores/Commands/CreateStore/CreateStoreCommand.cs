@@ -1,4 +1,5 @@
 
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
@@ -9,7 +10,10 @@ public record CreateStoreCommand(
     string? Phone,
     string Timezone,
     string CurrencyCode
-) : ICommand<CreateStoreDto>;
+) : ICommand<CreateStoreDto>, IRequirePermission
+{
+    public string RequiredPermission => "stores:create";
+}
 
 public record CreateStoreDto(
     Guid Id,

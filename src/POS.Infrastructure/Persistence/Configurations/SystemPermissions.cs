@@ -101,6 +101,15 @@ public static class SystemPermissions
             (PermissionAction.Read, "View sales, revenue, and inventory reports"),
             (PermissionAction.Update, "Update report parameters and settings"),
             (PermissionAction.Delete, "Delete saved report")
+        ]),
+
+        // 11. Supplier Management
+        new(ResourceNames.Suppliers, "Supplier Management",
+        [
+            (PermissionAction.Create, "Create new supplier"),
+            (PermissionAction.Read, "View supplier details and list"),
+            (PermissionAction.Update, "Update supplier information and payments"),
+            (PermissionAction.Delete, "Deactivate supplier")
         ])
     ];
 }

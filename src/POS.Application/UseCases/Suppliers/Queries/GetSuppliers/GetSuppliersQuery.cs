@@ -1,3 +1,4 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Suppliers.Queries.GetSuppliers;
@@ -7,7 +8,10 @@ public record GetSuppliersQuery(
     bool? IsActive,
     int PageNumber,
     int PageSize
-) : IQuery<PagedSupplierList>;
+) : IQuery<PagedSupplierList>, IRequirePermission
+{
+    public string RequiredPermission => "suppliers:read";
+}
 
 public record PagedSupplierList(
     List<SupplierDto> Items,
