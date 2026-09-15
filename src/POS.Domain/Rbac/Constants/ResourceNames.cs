@@ -12,4 +12,5 @@ public static class ResourceNames
     public const string Customers = "customers";
     public const string Discounts = "discounts";
     public const string Reports = "reports";
+    public const string Suppliers = "suppliers";
 }

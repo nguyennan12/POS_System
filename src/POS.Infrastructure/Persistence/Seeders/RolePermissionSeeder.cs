@@ -9,9 +9,6 @@ public class RolePermissionSeeder : ISeeder
 {
     public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
     {
-        if (await context.RolePermissions.AnyAsync(cancellationToken))
-            return;
-
         var roles = await context.Roles.ToListAsync(cancellationToken);
         var permissions = await context.Permissions.Include(p => p.Resource).ToListAsync(cancellationToken);
 
@@ -24,12 +21,15 @@ public class RolePermissionSeeder : ISeeder
             throw new InvalidOperationException("Default system roles must be seeded before seeding RolePermissions.");
         }
 
+        var existingRolePermissions = await context.RolePermissions
+            .Select(rolePermission => new { rolePermission.RoleId, rolePermission.PermissionId })
+            .ToHashSetAsync(cancellationToken);
         var rolePermissions = new List<RolePermission>();
 
         // 1. OWNER: Full Access
         foreach (var p in permissions)
         {
-            rolePermissions.Add(new RolePermission(ownerRole.Id, ownerRole, p.Id, p));
+            AddIfMissing(ownerRole, p);
         }
 
         // 2. STORE_MANAGER: All permissions except create/delete store
@@ -37,7 +37,7 @@ public class RolePermissionSeeder : ISeeder
             !(p.Resource.Code == ResourceNames.Stores && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Delete)));
         foreach (var p in storeManagerPerms)
         {
-            rolePermissions.Add(new RolePermission(storeManagerRole.Id, storeManagerRole, p.Id, p));
+            AddIfMissing(storeManagerRole, p);
         }
 
         // 3. CASHIER: POS cashier operations (read-all + create order/customer)
@@ -47,10 +47,22 @@ public class RolePermissionSeeder : ISeeder
             (p.Resource.Code == ResourceNames.Customers && p.Action == PermissionAction.Create));
         foreach (var p in cashierPerms)
         {
-            rolePermissions.Add(new RolePermission(cashierRole.Id, cashierRole, p.Id, p));
+            AddIfMissing(cashierRole, p);
         }
 
-        await context.RolePermissions.AddRangeAsync(rolePermissions, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        if (rolePermissions.Count > 0)
+        {
+            await context.RolePermissions.AddRangeAsync(rolePermissions, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        void AddIfMissing(Role role, Permission permission)
+        {
+            if (existingRolePermissions.Contains(new { RoleId = role.Id, PermissionId = permission.Id }))
+                return;
+
+            existingRolePermissions.Add(new { RoleId = role.Id, PermissionId = permission.Id });
+            rolePermissions.Add(new RolePermission(role.Id, role, permission.Id, permission));
+        }
     }
 }

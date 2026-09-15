@@ -1,7 +1,6 @@
 using POS.Domain.Common;
 using POS.Domain.Employees;
 using POS.Domain.Inventory.Enums;
-using POS.Domain.Inventory.StockIn;
 
 namespace POS.Domain.Inventory.Suppliers;
 
@@ -33,7 +32,6 @@ public class SupplierPayment : BaseEntity
     public Supplier Supplier { get; private set; } = default!;
 
     public Guid? VoucherId { get; private set; }
-    public StockInVoucher? Voucher { get; private set; }
 
     public decimal Amount { get; private set; }
     public SupplierPaymentMethod Method { get; private set; }

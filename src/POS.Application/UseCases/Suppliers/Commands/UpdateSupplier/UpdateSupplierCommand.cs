@@ -1,3 +1,4 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Suppliers.Commands.UpdateSupplier;
@@ -12,4 +13,7 @@ public record UpdateSupplierCommand(
     string? Address,
     string? CreditTerms,
     bool IsActive
-) : ICommand<SupplierDto>;
+) : ICommand<SupplierDto>, IRequirePermission
+{
+    public string RequiredPermission => "suppliers:update";
+}

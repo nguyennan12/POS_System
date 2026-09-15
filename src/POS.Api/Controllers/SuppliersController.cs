@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
 using POS.Api.Mappings;
@@ -14,6 +15,7 @@ using POS.Contracts.V1.Inventory;
 
 namespace POS.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/suppliers")]
 public class SuppliersController(ISender mediator) : ControllerBase

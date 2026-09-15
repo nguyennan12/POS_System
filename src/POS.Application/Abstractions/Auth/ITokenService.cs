@@ -1,11 +1,10 @@
-using POS.Domain.Employees;
-
 namespace POS.Application.Abstractions.Auth;
 
 public interface ITokenService
 {
   AuthTokenResult CreateAccessToken(TokenSubject subject);
   RefreshTokenResult CreateRefreshToken();
+  string HashRefreshToken(string refreshToken);
 }
 
 
@@ -15,7 +14,7 @@ public record AuthTokenResult(
 );
 
 public record RefreshTokenResult(
-    string RefreshTokenoken,
+    string RefreshToken,
     string RefreshTokenHash,
     DateTime ExpiresAt
 );

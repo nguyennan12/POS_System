@@ -1,5 +1,6 @@
 using POS.Domain.Common;
 using POS.Domain.Rbac;
+using POS.Domain.Rbac.Constants;
 using POS.Domain.Stores;
 
 namespace POS.Domain.Employees;
@@ -80,4 +81,20 @@ public class Employee : BaseEntity
     PinLookupHash = pinLookupHash;
     UpdatedAt = DateTime.UtcNow;
   }
+
+    public void AssignStoreManager(Guid storeId, Role storeManagerRole)
+    {
+        if (storeId == Guid.Empty || storeManagerRole.Id == Guid.Empty ||
+            !storeManagerRole.IsSystemRole || storeManagerRole.StoreId != null ||
+            storeManagerRole.Name != RoleNames.StoreManager)
+            throw new ArgumentException("A store and the system StoreManager role are required.");
+        if (IsChainOwner || !IsActive)
+            throw new InvalidOperationException("Only active store employees can be assigned as StoreManager.");
+        if (StoreId == storeId && RoleId == storeManagerRole.Id) return;
+
+        StoreId = storeId;
+        RoleId = storeManagerRole.Id;
+        Role = storeManagerRole;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
