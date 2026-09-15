@@ -6,7 +6,9 @@ public class AssignAdminToStoreCommandValidator : AbstractValidator<AssignAdminT
 {
     public AssignAdminToStoreCommandValidator()
     {
-        RuleFor(x => x.StoreId).NotEmpty();
-        RuleFor(x => x.EmployeeId).NotEmpty();
+        RuleFor(x => x.StoreId)
+            .NotEmpty().WithMessage("Id cửa hàng không hợp lệ.");
+        RuleFor(x => x.EmployeeId)
+            .NotEmpty().WithMessage("Id nhân viên không hợp lệ.");
     }
 }

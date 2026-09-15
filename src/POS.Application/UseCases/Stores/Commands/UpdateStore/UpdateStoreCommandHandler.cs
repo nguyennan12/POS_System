@@ -1,7 +1,7 @@
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
-using POS.Application.Common;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Domain.Common;
 
@@ -16,10 +16,10 @@ public class UpdateStoreCommandHandler(IStoreRepository stores, IEmployeeReposit
         var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
         if (caller.IsFailure) return caller.Error;
         if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, access, cancellationToken))
-            return StoreManagementAccess.Forbidden;
+            return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);
-        if (store is null) return CommonErrors.NotFound("Store");
+        if (store is null) return StoreErrors.StoreNotFound;
 
         store.UpdateInfo(command.Name, command.Address, command.Phone, command.Timezone,
             command.CurrencyCode, command.TaxCode, command.ReceiptHeader, command.ReceiptFooter);

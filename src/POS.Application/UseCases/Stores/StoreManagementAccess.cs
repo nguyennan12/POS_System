@@ -1,5 +1,6 @@
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Persistence;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Domain.Common;
 using POS.Domain.Employees;
 using POS.Domain.Rbac.Constants;
@@ -10,18 +11,16 @@ namespace POS.Application.UseCases.Stores;
 // This does not implement T16's dynamic permission authorization pipeline.
 internal static class StoreManagementAccess
 {
-    internal static readonly Error Forbidden = new(ErrorType.Forbidden, "Store.Forbidden", "Không có quyền quản lý cửa hàng này.");
-
     internal static async Task<Result<Employee>> GetOwnerAsync(
         ICurrentUser currentUser, IEmployeeRepository employees, CancellationToken cancellationToken)
     {
         if (!currentUser.IsAuthenticated || currentUser.EmployeeId is not Guid id || id == Guid.Empty)
-            return new Error(ErrorType.Unauthorized, "Store.Unauthorized", "Cần đăng nhập với danh tính nhân viên hợp lệ.");
+            return StoreErrors.Unauthorized;
 
         var employee = await employees.GetByIdAsync(id, cancellationToken);
         if (employee is null || !employee.IsActive || employee.LockedUntil > DateTime.UtcNow ||
             !HasSystemRole(employee, RoleNames.Owner))
-            return Forbidden;
+            return StoreErrors.Forbidden;
 
         return employee;
     }

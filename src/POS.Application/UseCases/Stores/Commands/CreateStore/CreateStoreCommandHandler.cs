@@ -5,6 +5,7 @@ using POS.Domain.Common;
 using POS.Domain.Stores;
 using POS.Domain.Employees;
 using POS.Application.Abstractions.Auth;
+using POS.Application.UseCases.Stores.Errors;
 
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
 
@@ -19,7 +20,7 @@ public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOf
   {
     var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
     if (caller.IsFailure) return caller.Error;
-    if (!caller.Value!.IsChainOwner) return StoreManagementAccess.Forbidden;
+    if (!caller.Value!.IsChainOwner) return StoreErrors.Forbidden;
 
     var store = new Store(
       command.Name,

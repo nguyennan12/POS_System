@@ -3,7 +3,7 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
-using POS.Application.Common;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Domain.Common;
 using POS.Domain.Rbac.Constants;
@@ -38,44 +38,43 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
         var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
         if (caller.IsFailure) return caller.Error;
         if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, access, cancellationToken))
-            return StoreManagementAccess.Forbidden;
+            return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);
-        if (store is null) return CommonErrors.NotFound("Store");
-        if (!store.IsActive) return CommonErrors.Invalid("StoreStatus");
+        if (store is null) return StoreErrors.StoreNotFound;
+        if (!store.IsActive) return StoreErrors.InactiveStore;
 
         var employee = await employees.GetByIdAsync(command.EmployeeId, cancellationToken);
-        if (employee is null) return CommonErrors.NotFound("Employee");
+        if (employee is null) return StoreErrors.EmployeeNotFound;
         if (!employee.IsActive || employee.LockedUntil > DateTime.UtcNow)
-            return CommonErrors.Invalid("EmployeeStatus");
+            return StoreErrors.InactiveEmployee;
         if (employee.IsChainOwner ||
             !(StoreManagementAccess.HasSystemRole(employee, RoleNames.Cashier) ||
               StoreManagementAccess.HasSystemRole(employee, RoleNames.StoreManager)))
-            return CommonErrors.Invalid("EmployeeRole");
+            return StoreErrors.InvalidEmployeeRole;
 
         if (employee.StoreId is not Guid sourceStoreId)
-            return CommonErrors.Invalid("EmployeeStore");
+            return StoreErrors.InvalidEmployeeStore;
         if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, sourceStoreId, access, cancellationToken))
-            return StoreManagementAccess.Forbidden;
+            return StoreErrors.Forbidden;
 
         var managerRoles = await roles.GetSystemRolesByNameAsync(RoleNames.StoreManager, cancellationToken);
-        if (managerRoles.Count != 1) return CommonErrors.Invalid("StoreManagerRole");
+        if (managerRoles.Count != 1) return StoreErrors.InvalidStoreManagerRole;
         var managerRole = managerRoles[0];
 
         if (employee.StoreId != store.Id)
         {
             if (await employees.HasOpenShiftOutsideStoreAsync(employee.Id, store.Id, cancellationToken))
-                return CommonErrors.Invalid("EmployeeOpenShift");
+                return StoreErrors.EmployeeOpenShift;
 
             // T12/T20 own HMAC lookup generation/reset. A BCrypt hash cannot be used
             // to reconstruct it. Refuse a transfer whose PIN uniqueness is unknowable.
             if (string.IsNullOrWhiteSpace(employee.PinLookupHash) ||
                 await employees.HasMissingPinLookupAsync(store.Id, cancellationToken))
-                return new Error(ErrorType.Invalid, "Employee.PinLookupMissing",
-                    "Chưa đủ dữ liệu PIN lookup để kiểm tra trùng PIN. Cần hoàn thiện/reset PIN qua T12/T20 trước khi chuyển cửa hàng.");
+                return StoreErrors.PinLookupMissing;
 
             if (await employees.HasPinConflictAsync(employee.Id, store.Id, employee.PinLookupHash, cancellationToken))
-                return CommonErrors.AlreadyExists("EmployeePin");
+                return StoreErrors.EmployeePinAlreadyExists;
         }
 
         // Existing model: one role and home store per employee; never promote a chain owner
@@ -86,9 +85,9 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
             // EF commits the role and store changes together.
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (EmployeeAssignmentConflictException)
+        catch (PersistenceConflictException ex) when (ex.ConstraintName == PersistenceConstraints.EmployeeStorePinLookupUnique)
         {
-            return CommonErrors.AlreadyExists("EmployeePin");
+            return StoreErrors.EmployeePinAlreadyExists;
         }
 
         return StoreDetailDto.FromStore(store);
