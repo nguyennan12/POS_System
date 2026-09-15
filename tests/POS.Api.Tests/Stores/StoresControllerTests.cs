@@ -126,16 +126,19 @@ public class StoresControllerTests
         Assert.Equal(expected, Assert.IsAssignableFrom<ObjectResult>(result).StatusCode);
     }
 
-    [Fact]
-    public void Current_user_reads_employee_id_only_from_authenticated_principal()
+    [Theory]
+    [InlineData("sub")]
+    [InlineData(ClaimTypes.NameIdentifier)]
+    [InlineData("employee_id")]
+    public void Current_user_reads_employee_identity_only_from_authenticated_principal(string claimType)
     {
         var id = Guid.NewGuid();
         var context = new DefaultHttpContext();
         var accessor = new HttpContextAccessor { HttpContext = context };
         var user = new CurrentUser(accessor);
-        context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("employee_id", id.ToString())]));
+        context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(claimType, id.ToString())]));
         Assert.Null(user.EmployeeId);
-        context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("employee_id", id.ToString())], "Bearer"));
+        context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim(claimType, id.ToString())], "Bearer"));
         Assert.Equal(id, user.EmployeeId);
     }
 
