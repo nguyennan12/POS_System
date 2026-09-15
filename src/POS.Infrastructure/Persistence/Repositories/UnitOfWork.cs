@@ -24,18 +24,10 @@ public class UnitOfWork : IUnitOfWork
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException
         {
             SqlState: PostgresErrorCodes.UniqueViolation,
-            ConstraintName: "IX_employee_store_access_employee_id_store_id"
-        })
+            ConstraintName: not null
+        } pg)
         {
-            throw new DuplicateStoreAccessException(ex);
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException
-        {
-            SqlState: PostgresErrorCodes.UniqueViolation,
-            ConstraintName: "IX_employees_store_id_pin_lookup_hash"
-        })
-        {
-            throw new EmployeeAssignmentConflictException(ex);
+            throw new PersistenceConflictException(pg.ConstraintName, ex);
         }
     }
 
