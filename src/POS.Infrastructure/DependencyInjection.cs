@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IEmployeeStoreAccessRepository, EmployeeStoreAccessRepository>();
+        services.AddScoped<IShiftRepository, ShiftRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IMigrationService, MigrationService>();
 
