@@ -6,6 +6,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -66,6 +67,9 @@ public class CurrentUserJwtIntegrationTests
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(auth.AccessToken);
         Assert.Equal(factory.Employee.Id.ToString(), jwt.Subject);
         Assert.DoesNotContain(jwt.Claims, claim => claim.Type == "employee_id");
+        Assert.Equal(factory.Employee.RoleId.ToString(), jwt.Claims.Single(claim => claim.Type == "role_id").Value);
+        Assert.Equal(factory.Employee.IsChainOwner.ToString(),
+            jwt.Claims.Single(claim => claim.Type == "is_chain_owner").Value);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);
         using var response = await client.GetAsync("/test/current-user");
@@ -87,6 +91,54 @@ public class CurrentUserJwtIntegrationTests
         var options = factory.Services.GetRequiredService<IOptionsMonitor<JwtBearerOptions>>()
             .Get(JwtBearerDefaults.AuthenticationScheme);
         Assert.Equal(mapInboundClaims, options.MapInboundClaims);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Signed_token_with_empty_role_id_resolves_null_without_exception(bool mapInboundClaims)
+    {
+        await using var factory = new LoginApplicationFactory(false, mapInboundClaims);
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false
+        });
+        using var scope = factory.Services.CreateScope();
+        var tokenService = scope.ServiceProvider.GetRequiredService<ITokenService>();
+        var accessToken = tokenService.CreateAccessToken(new TokenSubject(
+            factory.Employee.Id, "Employee", null, null, false, [])).AccessToken;
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(accessToken);
+        Assert.Equal(string.Empty, jwt.Claims.Single(claim => claim.Type == "role_id").Value);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        using var response = await client.GetAsync("/test/current-user");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var current = await response.Content.ReadFromJsonAsync<CurrentUserSnapshot>();
+        Assert.NotNull(current);
+        Assert.True(current.IsAuthenticated);
+        Assert.Equal(factory.Employee.Id, current.EmployeeId);
+        Assert.Null(current.RoleId);
+        Assert.False(current.IsChainOwner);
+        Assert.Null(current.Role);
+    }
+
+    [Fact]
+    public void Missing_or_malformed_role_and_chain_claims_use_safe_defaults()
+    {
+        var context = new DefaultHttpContext();
+        var current = new POS.Api.Auth.CurrentUser(new HttpContextAccessor { HttpContext = context });
+
+        context.User = new ClaimsPrincipal(new ClaimsIdentity([], "Bearer"));
+        Assert.Null(current.RoleId);
+        Assert.False(current.IsChainOwner);
+
+        context.User = new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim("role_id", "not-a-guid"),
+            new Claim("is_chain_owner", "not-a-bool")
+        ], "Bearer"));
+        Assert.Null(current.RoleId);
+        Assert.False(current.IsChainOwner);
     }
 
     [Fact]
@@ -178,9 +230,7 @@ public sealed class CurrentUserProbeController(ICurrentUser currentUser) : Contr
     [HttpGet]
     public CurrentUserSnapshot Get() => new(
         currentUser.EmployeeId, currentUser.StoreId, currentUser.Role, currentUser.IsAuthenticated,
-        // These properties do not exist on ICurrentUser; inspect validated claims without expanding it.
-        Guid.Parse(User.FindFirstValue("role_id")!),
-        bool.Parse(User.FindFirstValue("is_chain_owner")!),
+        currentUser.RoleId, currentUser.IsChainOwner,
         User.FindAll("permission").Select(claim => claim.Value).ToArray(),
         User.FindFirstValue("subject_type")!,
         User.HasClaim(claim => claim.Type == ClaimTypes.NameIdentifier),
@@ -188,5 +238,5 @@ public sealed class CurrentUserProbeController(ICurrentUser currentUser) : Contr
 }
 
 public sealed record CurrentUserSnapshot(Guid? EmployeeId, Guid? StoreId, string? Role,
-    bool IsAuthenticated, Guid RoleId, bool IsChainOwner, string[] Permissions, string SubjectType,
+    bool IsAuthenticated, Guid? RoleId, bool IsChainOwner, string[] Permissions, string SubjectType,
     bool HasMappedSubject, bool HasRawSubject);

@@ -10,7 +10,10 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated == true;
     
     public Guid? EmployeeId => ReadGuid("sub") ?? ReadGuid(ClaimTypes.NameIdentifier) ?? ReadGuid("employee_id");
+    public Guid? RoleId => ReadGuid("role_id");
     public Guid? StoreId => ReadGuid("store_id");
+    public bool IsChainOwner => IsAuthenticated &&
+        bool.TryParse(User?.FindFirstValue("is_chain_owner"), out var isChainOwner) && isChainOwner;
     public string? Role => User?.FindFirstValue(ClaimTypes.Role) ?? User?.FindFirstValue("role");
 
     private Guid? ReadGuid(string claim) =>
