@@ -1,11 +1,15 @@
 
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Domain.Stores;
 
 namespace POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 
 public record GetStoreDetailQuery(
-  Guid StoreId) : IQuery<StoreDetailDto>;
+  Guid StoreId) : IQuery<StoreDetailDto>, IRequirePermission
+{
+  public string RequiredPermission => "stores:read";
+}
 
 public record StoreDetailDto(
   Guid Id,
