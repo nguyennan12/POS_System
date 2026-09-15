@@ -6,6 +6,9 @@ public class UpdateStoreStatusCommandValidator : AbstractValidator<UpdateStoreSt
 {
     public UpdateStoreStatusCommandValidator()
     {
-        RuleFor(x => x.StoreId).NotEmpty();
+        RuleFor(x => x.StoreId)
+            .NotEmpty().WithMessage("Id cửa hàng không hợp lệ.");
+        RuleFor(x => x.IsActive)
+            .NotNull().WithMessage("Trạng thái hoạt động của cửa hàng không được để trống.");
     }
 }

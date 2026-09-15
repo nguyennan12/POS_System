@@ -29,13 +29,9 @@ namespace POS.Api.Tests.Stores;
 public class StoresControllerTests
 {
     [Theory]
-    [InlineData("{}")]
-    [InlineData("{\"active\":false}")]
-    [InlineData("{\"isActve\":true}")]
-    [InlineData("{\"isActive\":null}")]
     [InlineData("{\"isActive\":\"false\"}")]
     [InlineData("{\"isActive\":0}")]
-    public async Task Status_json_missing_or_invalid_field_returns_400_without_dispatch(string json)
+    public async Task Status_json_invalid_field_returns_400_without_dispatch(string json)
     {
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<UpdateStoreStatusRequest>(
             json, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
@@ -47,6 +43,19 @@ public class StoresControllerTests
             new StringContent(json, Encoding.UTF8, "application/json"));
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Empty(mediator.ReceivedCalls());
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"active\":false}")]
+    [InlineData("{\"isActve\":true}")]
+    [InlineData("{\"isActive\":null}")]
+    public void Status_json_missing_or_null_field_binds_to_null(string json)
+    {
+        var request = JsonSerializer.Deserialize<UpdateStoreStatusRequest>(
+            json, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Assert.Null(request!.IsActive);
     }
 
     [Theory]

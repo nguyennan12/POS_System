@@ -1,7 +1,7 @@
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
-using POS.Application.Common;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Domain.Common;
 
@@ -16,14 +16,14 @@ public class UpdateStoreStatusCommandHandler(IStoreRepository stores, IEmployeeR
         var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
         if (caller.IsFailure) return caller.Error;
         if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, access, cancellationToken))
-            return StoreManagementAccess.Forbidden;
+            return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);
-        if (store is null) return CommonErrors.NotFound("Store");
+        if (store is null) return StoreErrors.StoreNotFound;
 
         // Both directions are supported; repeating the current status is a no-op.
         // Do not require an active store here: Owners must be able to reactivate it.
-        store.UpdateStatus(command.IsActive);
+        store.UpdateStatus(command.IsActive!.Value);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return StoreDetailDto.FromStore(store);
     }

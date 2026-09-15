@@ -112,6 +112,17 @@ public class StoreManagementTests
     }
 
     [Fact]
+    public void Status_validator_rejects_missing_active_status()
+    {
+        var command = new UpdateStoreStatusCommand(store.Id, null);
+        var result = new UpdateStoreStatusCommandValidator().Validate(command);
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal(nameof(UpdateStoreStatusCommand.IsActive), error.PropertyName);
+        Assert.Equal("Trạng thái hoạt động của cửa hàng không được để trống.", error.ErrorMessage);
+    }
+
+    [Fact]
     public async Task Create_saves_store_and_creator_access_with_one_commit()
     {
         Store? created = null;
@@ -164,9 +175,12 @@ public class StoreManagementTests
         access.ExistsAsync(recipient.Id, store.Id, Arg.Any<CancellationToken>()).Returns(!concurrent);
         if (concurrent)
             unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
-                .Returns(Task.FromException<int>(new DuplicateStoreAccessException(new Exception())));
+                .Returns(Task.FromException<int>(new PersistenceConflictException(
+                    PersistenceConstraints.EmployeeStoreAccessUnique, new Exception())));
         var result = await GrantHandler().Handle(new(store.Id, recipient.Id), default);
         Assert.Equal(ErrorType.AlreadyExists, result.Error.Type);
+        Assert.Equal("STORE.EMPLOYEE_ACCESS_ALREADY_EXISTS", result.Error.Code);
+        Assert.Equal("EmployeeStoreAccess đã tồn tại.", result.Error.Message);
     }
 
     [Fact]
@@ -202,7 +216,7 @@ public class StoreManagementTests
         var employee = PrepareCashier();
         employees.HasOpenShiftOutsideStoreAsync(employee.Id, store.Id, Arg.Any<CancellationToken>()).Returns(true);
         var result = await AssignHandler().Handle(new(store.Id, employee.Id), default);
-        Assert.Equal("EmployeeOpenShift.Invalid", result.Error.Code);
+        Assert.Equal("STORE.EMPLOYEE_OPEN_SHIFT", result.Error.Code);
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -242,7 +256,7 @@ public class StoreManagementTests
         var pinHash = employee.PinHash;
         var result = await AssignHandler().Handle(new(store.Id, employee.Id), default);
 
-        Assert.Equal("Employee.PinLookupMissing", result.Error.Code);
+        Assert.Equal("STORE.PIN_LOOKUP_MISSING", result.Error.Code);
         Assert.Equal(source, employee.StoreId);
         Assert.Equal(roleId, employee.RoleId);
         Assert.Equal(pinHash, employee.PinHash);
@@ -257,7 +271,7 @@ public class StoreManagementTests
         var employee = PrepareCashier();
         employees.HasMissingPinLookupAsync(store.Id, Arg.Any<CancellationToken>()).Returns(true);
         var result = await AssignHandler().Handle(new(store.Id, employee.Id), default);
-        Assert.Equal("Employee.PinLookupMissing", result.Error.Code);
+        Assert.Equal("STORE.PIN_LOOKUP_MISSING", result.Error.Code);
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -281,8 +295,24 @@ public class StoreManagementTests
         var employee = PrepareCashier();
         employees.HasPinConflictAsync(employee.Id, store.Id, employee.PinLookupHash!, Arg.Any<CancellationToken>()).Returns(true);
         var result = await AssignHandler().Handle(new(store.Id, employee.Id), default);
-        Assert.Equal("EmployeePin.AlreadyExists", result.Error.Code);
+        Assert.Equal("STORE.EMPLOYEE_PIN_ALREADY_EXISTS", result.Error.Code);
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Assignment_pin_constraint_conflict_returns_existing_error()
+    {
+        var employee = PrepareCashier();
+        unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<int>(new PersistenceConflictException(
+                PersistenceConstraints.EmployeeStorePinLookupUnique, new Exception())));
+
+        var result = await AssignHandler().Handle(new(store.Id, employee.Id), default);
+
+        Assert.Equal(ErrorType.AlreadyExists, result.Error.Type);
+        Assert.Equal("STORE.EMPLOYEE_PIN_ALREADY_EXISTS", result.Error.Code);
+        Assert.Equal("EmployeePin đã tồn tại.", result.Error.Message);
+        await cache.DidNotReceive().RemoveAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
