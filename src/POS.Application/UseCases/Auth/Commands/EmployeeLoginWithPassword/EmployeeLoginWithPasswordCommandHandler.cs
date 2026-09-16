@@ -5,6 +5,7 @@ using POS.Application.UseCases.Auth.Dtos;
 using POS.Application.UseCases.Auth.Errors;
 using POS.Domain.Common;
 using POS.Domain.Employees;
+using POS.Domain.Auditing;
 
 namespace POS.Application.UseCases.Auth.Commands.EmployeeLoginWithPassword;
 
@@ -16,13 +17,14 @@ public class EmployeeLoginWithPasswordCommandHandler : ICommandHandler<EmployeeL
   private readonly IPermissionRepository _permissionRepository;
   private readonly ITokenService _tokenService;
   private readonly IRefreshTokenRepository _refreshTokenRepository;
+  private readonly IAuditLogRepository _auditLogs;
 
   public EmployeeLoginWithPasswordCommandHandler(
     IEmployeeRepository employeeRepository,
     IUnitOfWork unitOfWork, IPasswordHasher passwordHasher,
     IPermissionRepository permissionRepository,
     ITokenService tokenService,
-    IRefreshTokenRepository refreshTokenRepository)
+    IRefreshTokenRepository refreshTokenRepository, IAuditLogRepository auditLogs)
   {
     _employeeRepository = employeeRepository;
     _unitOfWork = unitOfWork;
@@ -30,19 +32,24 @@ public class EmployeeLoginWithPasswordCommandHandler : ICommandHandler<EmployeeL
     _permissionRepository = permissionRepository;
     _tokenService = tokenService;
     _refreshTokenRepository = refreshTokenRepository;
+    _auditLogs = auditLogs;
   }
   public async Task<Result<AuthDto>> Handle(EmployeeLoginWithPasswordCommand command, CancellationToken cancellationToken)
   {
     var now = DateTime.UtcNow;
     var employee = await _employeeRepository.GetByUsernameWithRoleAndStoreAsync(command.Username, cancellationToken);
 
-    if (employee is null) return AuthErrors.InvalidCredentials;
-    if (!employee.IsActive) return AuthErrors.InvalidCredentials;
-    if (employee.IsLocked(now)) return AuthErrors.AccountLocked;
+    if (employee is null || !employee.IsActive || employee.IsLocked(now))
+    {
+      await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.LoginFailed), cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
+      return employee?.IsLocked(now) == true && employee.IsActive ? AuthErrors.AccountLocked : AuthErrors.InvalidCredentials;
+    }
 
     if (!_passwordHasher.Verify(command.Password, employee.PasswordHash))
     {
       employee.RegisterFailedLogin(now);
+      await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.LoginFailed), cancellationToken);
       await _unitOfWork.SaveChangesAsync(cancellationToken);
       return AuthErrors.InvalidCredentials;
     }
@@ -68,6 +75,7 @@ public class EmployeeLoginWithPasswordCommandHandler : ICommandHandler<EmployeeL
       employee,
       refreshToken.RefreshTokenHash,
       refreshToken.ExpiresAt), cancellationToken);
+    await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.Login), cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
     return AuthDto.ToDto(

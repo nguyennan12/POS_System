@@ -209,6 +209,8 @@ public class CurrentUserJwtIntegrationTests
                 services.AddSingleton(permissions);
                 services.RemoveAll<IRefreshTokenRepository>();
                 services.AddSingleton(Substitute.For<IRefreshTokenRepository>());
+                services.RemoveAll<IAuditLogRepository>();
+                services.AddSingleton(Substitute.For<IAuditLogRepository>());
                 services.RemoveAll<IUnitOfWork>();
                 services.AddSingleton(Substitute.For<IUnitOfWork>());
                 services.AddControllers().AddApplicationPart(typeof(CurrentUserProbeController).Assembly);
