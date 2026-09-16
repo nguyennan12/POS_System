@@ -144,6 +144,13 @@ public class StoreAssignmentConcurrencyTests
     // and transactions use the real repositories and PostgreSQL provider.
     private sealed class PausedEmployeeRepository(IEmployeeRepository inner, Guid targetId) : IEmployeeRepository
     {
+        public Task AddAsync(Employee employee, CancellationToken cancellationToken = default) => inner.AddAsync(employee, cancellationToken);
+        public Task<Employee?> GetDetailAsync(Guid id, CancellationToken cancellationToken = default) => inner.GetDetailAsync(id, cancellationToken);
+        public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default) => inner.ExistsByUsernameAsync(username, cancellationToken);
+        public Task<int> CountActiveOwnersInStoreAsync(Guid? storeId, CancellationToken cancellationToken = default) => inner.CountActiveOwnersInStoreAsync(storeId, cancellationToken);
+        public Task<(List<Employee> Items, int TotalCount)> GetPagedAsync(Guid? storeId, Guid? employeeId,
+            Guid? roleId, string? search, bool? isActive, int pageNumber, int pageSize, CancellationToken cancellationToken = default) =>
+            inner.GetPagedAsync(storeId, employeeId, roleId, search, isActive, pageNumber, pageSize, cancellationToken);
         public TaskCompletionSource Read { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Continue { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
