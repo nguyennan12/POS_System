@@ -3,7 +3,7 @@
 > **Tài liệu**: Task Breakdown & Sprint Recommendation chuẩn Agile/Scrum  
 > **Dự án**: POS-System (.NET 10 Web API + WinUI / WinForms + PostgreSQL 17 + Redis)  
 > **Mục đích**: Sử dụng trực tiếp để quản lý và theo dõi tiến độ trên Trello / Jira  
-> **Quy chuẩn mã Task**: Đánh số tuần tự từ **T01** đến **T60** (T01 – T10: Đã hoàn thành; T11 – T60: Cần triển khai)
+> **Quy chuẩn mã Task**: Đánh số tuần tự từ **T01** đến **T62** (T01 – T10: Đã hoàn thành; T11 – T62: Cần triển khai)
 
 ---
 
@@ -92,6 +92,7 @@ POS-System
 │
 ├── EPIC 02: Product Catalog & Pricing Management
 │   ├── Feature 2.1: Category Tree Management
+│   │   ├── [DB] Seed Default Store Category Tree (T62)
 │   │   ├── [BE] Implement Category Hierarchy Queries and Mutations (T22)
 │   │   ├── [API] Implement Categories Endpoints (T23)
 │   │   └── [FE] Implement Category Tree View Screen
@@ -225,6 +226,8 @@ POS-System
 | **T58** | Implement System Configuration & Multi-language (i18n) Engine               | FEATURE  | BE/FE     | MISSING       | P2 - Medium   | T07                |
 | **T59** | End-to-End Integration Tests for Complete Sales Cycle                       | TEST     | TEST      | MISSING       | P0 - Critical | T35, T50, T51, T53 |
 | **T60** | Configure Production Docker Stack (Nginx SSL + Loki/Prometheus)             | DEVOPS   | DEVOPS    | MISSING       | P1 - High     | T14, T02           |
+| **T61** | Apply `IRequirePermission` to API Commands                                    | FEATURE  | BE        | MISSING       | P1 - High     | T16, T17           |
+| **T62** | Seed Default Store Category Tree                                        | FEATURE  | DB        | MISSING       | P1 - High     | T03, T08           |
 
 ---
 
@@ -979,6 +982,43 @@ POS-System
 - **Dependencies:** T14, T02
 - **API Contracts:** N/A (Production Docker Compose, Reverse Proxy SSL, Prometheus Metrics Scraper, Grafana Dashboard)
 - **Acceptance Criteria:** Khởi chạy bằng 1 lệnh `docker compose`, bảo mật HTTPS, giám sát được lỗi API thời gian thực.
+- **Estimated Size:** M
+
+---
+
+### T61 — [BE][FEATURE] Apply `IRequirePermission` to API Commands
+
+- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** BE
+- **Description:** Rà soát toàn bộ command xử lý nghiệp vụ cho các API thuộc phạm vi của mình đảm nhiệm và cho command implement `IRequirePermission`. Mỗi command phải khai báo `RequiredPermission` theo đúng resource/action, để `AuthorizationBehavior` kiểm tra quyền trước khi handler thực thi; không tự kiểm tra JWT hoặc role trực tiếp trong handler.
+- **Dependencies:** T16, T17, T19, T22, T24, T29, T36, T41, T42, T45
+- **API Contracts:** Không thay đổi public API contract; sử dụng các permission code dạng `resource:action` đã seed trong `SystemPermissions`.
+- **Acceptance Criteria:**
+  - Tất cả command create/update/delete/approve/override thuộc các API trong phạm vi đều implement `IRequirePermission` và khai báo permission phù hợp.
+  - Permission được ánh xạ đúng theo resource, ví dụ `categories:create`, `categories:update`, `products:delete`, `suppliers:create`, `orders:approve`.
+  - `AuthorizationBehavior` được chạy trước handler; request chưa xác thực nhận `401 Unauthorized`, user thiếu quyền nhận `403 Forbidden`.
+- **Estimated Size:** L
+
+---
+
+### T62 — [DB][FEATURE] Seed Default Store Category Tree
+
+- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** DB / BE
+- **Description:** Xây dựng `CategorySeeder` để khởi tạo cây danh mục mẫu cho cửa hàng mặc định. Seeder tạo 7 category gốc và 22 category con, tổng cộng 29 category, theo đúng quan hệ `ParentId` và `StoreId`.
+- **Dependencies:** T03, T08
+- **Seed Data:**
+  - `Đồ uống`: `Nước suối`, `Nước ngọt`, `Cà phê và trà`.
+  - `Thực phẩm khô`: `Mì và cháo`, `Đồ hộp`, `Gia vị`, `Ngũ cốc, hạt ăn liền`.
+  - `Bánh kẹo và ăn vặt`: `Bánh snack`, `Kẹo`, `Socola`.
+  - `Sữa và dinh dưỡng`: `Sữa nước`, `Sữa chua`, `Sữa bột, sữa hạt`.
+  - `Chăm sóc cá nhân`: `Dầu gội`, `Vệ sinh răng miệng`, `Chăm sóc da`.
+  - `Kem & đồ đông lạnh`: `Kem que, kem hộp`, `Đá viên`, `Thực phẩm đông lạnh (chả giò, xúc xích)`.
+  - `Đồ dùng gia đình nhỏ`: `Túi rác, màng bọc thực phẩm`, `Khăn giấy, giấy vệ sinh`, `Bao cao su, sản phẩm sức khỏe`.
+- **API Contracts:** N/A (Infrastructure database seeding; không thay đổi public API contract)
+- **Acceptance Criteria:**
+  - Seeder chạy sau `StoreAndEmployeeSeeder` để sử dụng đúng `StoreId` của cửa hàng mặc định.
+  - Tạo chính xác 29 category gồm 7 category gốc và 22 category con; category con tham chiếu đúng `ParentId`.
+  - Tất cả category có `IsVisible = true`, `ImageUrl = null`, `DisplayOrder` ổn định và thuộc cùng một `StoreId`.
+  - Seeder idempotent: chạy lại không tạo bản ghi trùng hoặc tạo thêm category mới.
 - **Estimated Size:** M
 
 ---
