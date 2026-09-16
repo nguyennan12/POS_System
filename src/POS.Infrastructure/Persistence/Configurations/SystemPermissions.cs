@@ -67,7 +67,16 @@ public static class SystemPermissions
             (PermissionAction.Delete, "Delete or void inventory slip")
         ]),
 
-        // 7. Order & Sales Management
+        // 7. Shift Management
+        new(ResourceNames.Shifts, "Shift Management",
+        [
+            (PermissionAction.Create, "Open a shift"),
+            (PermissionAction.Read, "View shift details and history"),
+            (PermissionAction.Update, "Close and reconcile a shift"),
+            (PermissionAction.Delete, "Void a shift")
+        ]),
+
+        // 8. Order & Sales Management
         new(ResourceNames.Orders, "Order and Sales Management",
         [
             (PermissionAction.Create, "Create new sales order"),
@@ -76,7 +85,7 @@ public static class SystemPermissions
             (PermissionAction.Delete, "Cancel or delete sales order")
         ]),
 
-        // 8. Customer Management
+        // 9. Customer Management
         new(ResourceNames.Customers, "Customer Management",
         [
             (PermissionAction.Create, "Create new customer profile"),
@@ -85,7 +94,7 @@ public static class SystemPermissions
             (PermissionAction.Delete, "Delete customer profile")
         ]),
 
-        // 9. Discount & Promotion Management
+        // 10. Discount & Promotion Management
         new(ResourceNames.Discounts, "Discount and Promotion Management",
         [
             (PermissionAction.Create, "Create new promotional campaign or discount"),
@@ -94,13 +103,22 @@ public static class SystemPermissions
             (PermissionAction.Delete, "Delete promotional campaign or discount")
         ]),
 
-        // 10. Reports & Analytics Management
+        // 11. Reports & Analytics Management
         new(ResourceNames.Reports, "Reports and Analytics Management",
         [
             (PermissionAction.Create, "Generate new analytics report"),
             (PermissionAction.Read, "View sales, revenue, and inventory reports"),
             (PermissionAction.Update, "Update report parameters and settings"),
             (PermissionAction.Delete, "Delete saved report")
+        ]),
+
+        // 12. Supplier Management
+        new(ResourceNames.Suppliers, "Supplier Management",
+        [
+            (PermissionAction.Create, "Create new supplier"),
+            (PermissionAction.Read, "View supplier details and list"),
+            (PermissionAction.Update, "Update supplier information and payments"),
+            (PermissionAction.Delete, "Deactivate supplier")
         ])
     ];
 }

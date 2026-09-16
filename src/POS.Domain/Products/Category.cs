@@ -5,8 +5,23 @@ namespace POS.Domain.Products;
 
 public class Category : BaseEntity
 {
-    public Category() : base()
+    private Category() : base()
     {
+    }
+
+    private Category(Guid storeId, string name, Guid? parentId, int displayOrder, string? imageUrl, bool isVisible) : base()
+    {
+        StoreId = storeId;
+        Name = name;
+        ParentId = parentId;
+        DisplayOrder = displayOrder;
+        ImageUrl = imageUrl;
+        IsVisible = isVisible;
+    }
+
+    public static Category Create(Guid storeId, string name, Guid? parentId = null, int displayOrder = 0, string? imageUrl = null, bool isVisible = true)
+    {
+        return new Category(storeId, name, parentId, displayOrder, imageUrl, isVisible);
     }
 
     public Guid StoreId { get; private set; }
@@ -20,4 +35,13 @@ public class Category : BaseEntity
     public string? ImageUrl { get; private set; }
     public bool IsVisible { get; private set; } = true;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+
+    public void Update(string name, Guid? parentId, int displayOrder, string? imageUrl, bool isVisible)
+    {
+        Name = name;
+        ParentId = parentId;
+        DisplayOrder = displayOrder;
+        ImageUrl = imageUrl;
+        IsVisible = isVisible;
+    }
 }

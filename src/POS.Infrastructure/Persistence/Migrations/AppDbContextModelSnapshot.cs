@@ -1162,8 +1162,6 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.HasIndex("VoucherId");
-
                     b.ToTable("supplier_payments", null, t =>
                         {
                             t.HasCheckConstraint("ck_supplier_payments_amount", "amount > 0");
@@ -2643,16 +2641,9 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("POS.Domain.Inventory.StockIn.StockInVoucher", "Voucher")
-                        .WithMany()
-                        .HasForeignKey("VoucherId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("CreatedByEmployee");
 
                     b.Navigation("Supplier");
-
-                    b.Navigation("Voucher");
                 });
 
             modelBuilder.Entity("POS.Domain.Orders.Invoice", b =>

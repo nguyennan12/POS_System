@@ -12,6 +12,7 @@ public record ShiftFilterRequest(
 ) : PagedRequest(PageNumber, PageSize);
 
 public record OpenShiftRequest(
+    Guid StoreId,
     decimal OpeningCash,
     string? Note = null
 );

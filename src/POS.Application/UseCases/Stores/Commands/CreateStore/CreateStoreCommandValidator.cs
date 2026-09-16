@@ -12,6 +12,14 @@ public class CreateStoreCommandValidator : AbstractValidator<CreateStoreCommand>
 
         RuleFor(x => x.CurrencyCode)
             .NotEmpty().WithMessage("Đơn vị tiền tệ không được để trống.")
-            .MaximumLength(10).WithMessage("Mã tiền tệ tối đa 10 ký tự.");
+            .Length(3).Matches("^[A-Z]{3}$").WithMessage("Mã tiền tệ gồm 3 chữ cái in hoa.");
+        RuleFor(x => x.Address)
+            .MaximumLength(500).WithMessage("Địa chỉ cửa hàng tối đa 500 ký tự.");
+        RuleFor(x => x.Phone)
+            .MaximumLength(20).WithMessage("Số điện thoại cửa hàng tối đa 20 ký tự.");
+        RuleFor(x => x.Timezone)
+            .NotEmpty().WithMessage("Múi giờ không được để trống.")
+            .MaximumLength(50).WithMessage("Múi giờ tối đa 50 ký tự.")
+            .Must(StoreValidation.IsValidTimezone).WithMessage("Múi giờ không hợp lệ.");
     }
 }

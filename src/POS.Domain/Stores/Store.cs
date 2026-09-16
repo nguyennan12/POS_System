@@ -36,6 +36,30 @@ public class Store : BaseEntity
     }
 
     public string Name { get; private set; } = default!;
+    public void UpdateInfo(string name, string? address, string? phone, string timezone,
+        string currencyCode, string? taxCode, string? receiptHeader, string? receiptFooter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(timezone);
+        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
+        Name = name;
+        Address = address;
+        Phone = phone;
+        Timezone = timezone;
+        CurrencyCode = currencyCode;
+        TaxCode = taxCode;
+        ReceiptHeader = receiptHeader;
+        ReceiptFooter = receiptFooter;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateStatus(bool isActive)
+    {
+        if (IsActive == isActive) return;
+        IsActive = isActive;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public string? Address { get; private set; }
     public string? Phone { get; private set; }
     public string Timezone { get; private set; } = "Asia/Ho_Chi_Minh";

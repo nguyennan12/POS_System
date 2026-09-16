@@ -1,11 +1,14 @@
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Application.UseCases.Stores.Commands.CreateStore;
 using POS.Contracts.V1.Stores;
+using POS.Application.UseCases.Stores.Queries.GetAllStores;
 
 namespace POS.Api.Mappings;
 
 public static class StoreMapping
 {
+  public static StoreResponse ToResponse(this StoreDto store) =>
+      new(store.Id, store.Name, store.Address, store.Phone, store.IsActive);
   public static StoreDetailResponse ToResponse(
  this StoreDetailDto store)
   {
@@ -13,7 +16,8 @@ public static class StoreMapping
     store.Id,
     store.Name,
     store.Address,
-    store.IsActive);
+    store.IsActive, store.Phone, store.Timezone, store.CurrencyCode, store.TaxCode,
+    store.ReceiptHeader, store.ReceiptFooter, store.CreatedAt, store.UpdatedAt);
   }
 
   public static StoreDetailResponse ToResponse(
@@ -26,7 +30,9 @@ public static class StoreMapping
         store.IsActive,
         store.Phone,
         store.Timezone,
-        store.CurrencyCode
+        store.CurrencyCode,
+        CreatedAt: store.CreatedAt,
+        UpdatedAt: store.UpdatedAt
       );
   }
 

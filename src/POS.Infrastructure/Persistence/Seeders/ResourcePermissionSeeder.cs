@@ -8,19 +8,25 @@ public class ResourcePermissionSeeder : ISeeder
 {
     public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
     {
-        if (await context.Resources.AnyAsync(cancellationToken))
-            return;
-
         foreach (var resDef in SystemPermissions.Resources)
         {
-            var resource = new Resource(resDef.Code, resDef.Description);
-            foreach (var (act, actDesc) in resDef.Actions)
+            var resource = await context.Resources
+                .Include(item => item.Permissions)
+                .SingleOrDefaultAsync(item => item.Code == resDef.Code, cancellationToken);
+
+            if (resource is null)
             {
-                var permission = new Permission(resource.Id, resource, act, actDesc);
-                resource.Permissions.Add(permission);
+                resource = new Resource(resDef.Code, resDef.Description);
+                await context.Resources.AddAsync(resource, cancellationToken);
             }
 
-            await context.Resources.AddAsync(resource, cancellationToken);
+            foreach (var (action, description) in resDef.Actions)
+            {
+                if (resource.Permissions.Any(permission => permission.Action == action))
+                    continue;
+
+                resource.Permissions.Add(new Permission(resource.Id, resource, action, description));
+            }
         }
 
         await context.SaveChangesAsync(cancellationToken);

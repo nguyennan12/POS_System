@@ -20,7 +20,7 @@ public record UpdateStoreRequest(
 );
 
 public record UpdateStoreStatusRequest(
-    bool IsActive
+    bool? IsActive
 );
 
 public record StoreAdminAssignmentRequest(
