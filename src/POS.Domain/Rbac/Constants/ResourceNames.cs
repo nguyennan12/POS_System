@@ -8,6 +8,7 @@ public static class ResourceNames
     public const string Products = "products";
     public const string Categories = "categories";
     public const string Inventory = "inventory";
+    public const string Shifts = "shifts";
     public const string Orders = "orders";
     public const string Customers = "customers";
     public const string Discounts = "discounts";
