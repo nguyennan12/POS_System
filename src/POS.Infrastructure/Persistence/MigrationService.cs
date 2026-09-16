@@ -31,9 +31,10 @@ public class MigrationService : IMigrationService
       ISeeder[] seeders =
       [
           new RoleSeeder(),
-            new ResourcePermissionSeeder(),
-            new RolePermissionSeeder(),
-            new StoreAndEmployeeSeeder(_pinLookupHasher)
+          new ResourcePermissionSeeder(),
+          new RolePermissionSeeder(),
+          new StoreAndEmployeeSeeder(_pinLookupHasher),
+          new MemberTierSeeder()
       ];
       foreach (var seeder in seeders)
       {
