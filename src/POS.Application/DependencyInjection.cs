@@ -6,6 +6,7 @@ namespace POS.Application;
 
 public static class DependencyInjection
 {
+    /// <summary>Registers application services, pipeline behaviors, and domain services.</summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));

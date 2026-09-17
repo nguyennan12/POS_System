@@ -14,6 +14,7 @@ public class Promotion : BaseEntity
     {
     }
 
+    /// <summary>Creates a promotion with its eligibility, priority, and stacking rules.</summary>
     public Promotion(
         Guid storeId,
         string name,
@@ -70,21 +71,25 @@ public class Promotion : BaseEntity
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    /// <summary>Adds an existing SKU or category target to this promotion.</summary>
     public void AddTarget(PromotionTarget target)
     {
         _targets.Add(target);
     }
 
+    /// <summary>Adds a SKU target to this promotion.</summary>
     public void AddTargetSku(Guid skuId)
     {
         _targets.Add(PromotionTarget.ForSku(Id, skuId));
     }
 
+    /// <summary>Adds a category target to this promotion.</summary>
     public void AddTargetCategory(Guid categoryId)
     {
         _targets.Add(PromotionTarget.ForCategory(Id, categoryId));
     }
 
+    /// <summary>Determines whether this promotion is active at the specified time.</summary>
     public bool IsActiveAt(DateTime now)
     {
         if (Status != PromotionStatus.Active)
@@ -99,11 +104,13 @@ public class Promotion : BaseEntity
         return true;
     }
 
+    /// <summary>Marks this promotion as inactive.</summary>
     public void Deactivate()
     {
         Status = PromotionStatus.Inactive;
     }
 
+    /// <summary>Marks this promotion as active.</summary>
     public void Activate()
     {
         Status = PromotionStatus.Active;

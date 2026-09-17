@@ -155,6 +155,7 @@ public class CustomerManagementTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a tier update succeeds when the spending order remains valid.</summary>
     [Fact]
     public async Task UpdateMemberTier_ValidOrder_ShouldSucceed()
     {
@@ -181,6 +182,7 @@ public class CustomerManagementTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that duplicate minimum spending thresholds are rejected.</summary>
     [Fact]
     public async Task UpdateMemberTier_DuplicateMinSpending_ShouldReturnConflict()
     {
@@ -207,6 +209,7 @@ public class CustomerManagementTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>Verifies that a tier update cannot violate the spending hierarchy.</summary>
     [Fact]
     public async Task UpdateMemberTier_InvalidOrder_ShouldReturnValidationError()
     {

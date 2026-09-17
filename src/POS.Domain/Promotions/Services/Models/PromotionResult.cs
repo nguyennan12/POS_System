@@ -1,5 +1,6 @@
 namespace POS.Domain.Promotions.Services.Models;
 
+/// <summary>Contains cart totals and discount details produced by promotion evaluation.</summary>
 public record PromotionResult(
     decimal Subtotal,
     decimal TotalDiscount,

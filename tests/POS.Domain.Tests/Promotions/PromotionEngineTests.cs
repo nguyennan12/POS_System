@@ -19,9 +19,11 @@ public class PromotionEngineTests
     private readonly Guid _skuTea = Guid.NewGuid();
     private readonly Guid _skuCake = Guid.NewGuid();
 
+    /// <summary>Returns today's UTC date at the requested time.</summary>
     private DateTime TodayAt(int hour, int minute) =>
         DateTime.UtcNow.Date.AddHours(hour).AddMinutes(minute);
 
+    /// <summary>Verifies percentage discounts for targeted SKUs.</summary>
     [Fact]
     public void Evaluate_PercentSku_CalculatesCorrectDiscount()
     {
@@ -49,6 +51,7 @@ public class PromotionEngineTests
         result.AppliedPromotions[0].DiscountAmount.Should().Be(10_000m);
     }
 
+    /// <summary>Verifies that percentage discounts honor their maximum amount.</summary>
     [Fact]
     public void Evaluate_PercentSku_CapsAtMaxDiscountAmount()
     {
@@ -73,6 +76,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(950_000m);
     }
 
+    /// <summary>Verifies that fixed SKU discounts cannot exceed the item total.</summary>
     [Fact]
     public void Evaluate_FixedSku_CalculatesCorrectDiscount_AndCapsAtItemTotal()
     {
@@ -97,6 +101,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(0m);
     }
 
+    /// <summary>Verifies buy-X-get-Y discounts when the purchased and free SKU are the same.</summary>
     [Fact]
     public void Evaluate_BuyXGetY_SameSku_CalculatesFreeItemsCorrectly()
     {
@@ -124,6 +129,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(120_000m);
     }
 
+    /// <summary>Verifies buy-X-get-Y discounts when a different SKU receives the discount.</summary>
     [Fact]
     public void Evaluate_BuyXGetY_CrossSku_AppliesDiscountToGiftSku()
     {
@@ -151,6 +157,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(105_000m);
     }
 
+    /// <summary>Verifies percentage discounts on carts that meet the order threshold.</summary>
     [Fact]
     public void Evaluate_CartPercent_AppliesToEligibleSubtotal()
     {
@@ -173,6 +180,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(450_000m);
     }
 
+    /// <summary>Verifies that carts below the order threshold receive no discount.</summary>
     [Fact]
     public void Evaluate_CartPercent_WhenBelowMinOrderAmount_DoesNotApply()
     {
@@ -196,6 +204,7 @@ public class PromotionEngineTests
         result.AppliedPromotions.Should().BeEmpty();
     }
 
+    /// <summary>Verifies that fixed cart discounts cannot exceed the cart total.</summary>
     [Fact]
     public void Evaluate_CartFixed_CalculatesDiscountAndNeverExceedsTotal()
     {
@@ -217,6 +226,7 @@ public class PromotionEngineTests
         result.GrandTotal.Should().Be(0m);
     }
 
+    /// <summary>Verifies that happy-hour discounts apply only within their configured window.</summary>
     [Fact]
     public void Evaluate_HappyHour_AppliesWithinTimeRange_IgnoresOutsideTimeRange()
     {
@@ -244,6 +254,7 @@ public class PromotionEngineTests
         resultOutHour.TotalDiscount.Should().Be(0m);
     }
 
+    /// <summary>Verifies that an exclusive promotion prevents later promotions from applying.</summary>
     [Fact]
     public void Evaluate_ExclusivePromotion_StopsFurtherPromotions()
     {
@@ -278,6 +289,7 @@ public class PromotionEngineTests
         result.TotalDiscount.Should().Be(20_000m);
     }
 
+    /// <summary>Verifies that stackable line and cart promotions combine.</summary>
     [Fact]
     public void Evaluate_StackablePromotions_CombinesCorrectly()
     {
@@ -315,6 +327,7 @@ public class PromotionEngineTests
         result.AppliedPromotions.Should().HaveCount(2);
     }
 
+    /// <summary>Verifies that higher-priority non-stackable promotions apply first.</summary>
     [Fact]
     public void Evaluate_PriorityOrder_AppliesHigherPriorityFirst()
     {
@@ -347,6 +360,7 @@ public class PromotionEngineTests
         result.TotalDiscount.Should().Be(30_000m);
     }
 
+    /// <summary>Verifies that promotion evaluation meets the performance requirement.</summary>
     [Fact]
     public void Evaluate_Performance_CompletesUnder5Milliseconds()
     {

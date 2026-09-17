@@ -8,6 +8,7 @@ public class Voucher : BaseEntity
     {
     }
 
+    /// <summary>Creates a voucher with global and per-customer usage limits.</summary>
     public Voucher(
         Guid promotionId,
         string code,
@@ -36,6 +37,7 @@ public class Voucher : BaseEntity
     public DateTime? ExpiresAt { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    /// <summary>Determines whether the voucher can be used at the specified time.</summary>
     public bool CanBeUsed(DateTime now, int customerUsedCount = 0)
     {
         if (!IsActive)
@@ -53,6 +55,7 @@ public class Voucher : BaseEntity
         return true;
     }
 
+    /// <summary>Records one successful use of the voucher.</summary>
     public void RecordUse()
     {
         UsedCount++;

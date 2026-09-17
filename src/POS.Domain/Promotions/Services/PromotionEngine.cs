@@ -11,6 +11,7 @@ public class PromotionEngine : IPromotionEngine
         PropertyNameCaseInsensitive = true
     };
 
+    /// <inheritdoc />
     public PromotionResult Evaluate(
         PromotionCart cart,
         IEnumerable<Promotion> activePromotions,
@@ -175,6 +176,7 @@ public class PromotionEngine : IPromotionEngine
             OrderDiscounts: orderDiscounts);
     }
 
+    /// <summary>Determines whether a promotion applies at the cart-line level.</summary>
     private static bool IsLineLevelPromotion(Promotion promo)
     {
         return promo.Type switch
@@ -187,6 +189,7 @@ public class PromotionEngine : IPromotionEngine
         };
     }
 
+    /// <summary>Checks the promotion's active window, store, threshold, schedule, and targets.</summary>
     private static bool IsEligible(Promotion promo, PromotionCart cart, DateTime now, Voucher? appliedVoucher)
     {
         if (!promo.IsActiveAt(now))
@@ -238,6 +241,7 @@ public class PromotionEngine : IPromotionEngine
         return true;
     }
 
+    /// <summary>Applies a line-level promotion and returns its total discount.</summary>
     private static decimal ApplyLinePromotion(
         Promotion promo,
         List<WorkingCartItem> items,
@@ -357,6 +361,7 @@ public class PromotionEngine : IPromotionEngine
         return totalPromoDiscount;
     }
 
+    /// <summary>Applies a cart-level promotion across the remaining item balances.</summary>
     private static decimal ApplyCartPromotion(
         Promotion promo,
         List<WorkingCartItem> items,
@@ -409,6 +414,7 @@ public class PromotionEngine : IPromotionEngine
         return discount;
     }
 
+    /// <summary>Returns the cart items targeted by the promotion.</summary>
     private static List<WorkingCartItem> FilterEligibleItems(Promotion promo, List<WorkingCartItem> items)
     {
         if (promo.AppliesTo == PromotionAppliesTo.All)
@@ -429,6 +435,7 @@ public class PromotionEngine : IPromotionEngine
         return items;
     }
 
+    /// <summary>Parses a buy-X-get-Y condition, falling back to safe defaults.</summary>
     private static BuyXGetYCondition ParseBuyXGetYCondition(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -444,6 +451,7 @@ public class PromotionEngine : IPromotionEngine
         }
     }
 
+    /// <summary>Tracks mutable discount state for a cart item during evaluation.</summary>
     private sealed class WorkingCartItem(
         Guid SkuId,
         string SkuCode,

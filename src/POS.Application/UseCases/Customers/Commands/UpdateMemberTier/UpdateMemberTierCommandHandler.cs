@@ -10,6 +10,9 @@ public class UpdateMemberTierCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateMemberTierCommand, MemberTierDto>
 {
+    /// <summary>
+    /// Updates a member tier after validating that spending thresholds remain unique and ordered.
+    /// </summary>
     public async Task<Result<MemberTierDto>> Handle(
         UpdateMemberTierCommand request,
         CancellationToken cancellationToken)

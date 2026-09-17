@@ -1,5 +1,6 @@
 namespace POS.Domain.Promotions.Services.Models;
 
+/// <summary>Represents the cart context supplied to the promotion engine.</summary>
 public record PromotionCart(
     Guid StoreId,
     IReadOnlyList<PromotionCartItem> Items,
