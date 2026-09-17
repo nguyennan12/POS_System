@@ -1,4 +1,4 @@
-﻿using POS.Domain.Common;
+using POS.Domain.Common;
 
 namespace POS.Domain.Customers.Errors;
 
@@ -33,4 +33,14 @@ public static class CustomerErrors
         ErrorType.Invalid,
         "CUSTOMER.HAS_ORDERS",
         "Khách hàng đã phát sinh đơn hàng, không thể xóa khỏi hệ thống.");
+
+    public static readonly Error MemberTierDuplicateMinSpending = new(
+        ErrorType.AlreadyExists,
+        "MEMBER_TIER.DUPLICATE_MIN_SPENDING",
+        "Các hạng thành viên không được có cùng mức chi tiêu tối thiểu (minSpending).");
+
+    public static readonly Error MemberTierInvalidOrder = new(
+        ErrorType.Validation,
+        "MEMBER_TIER.INVALID_ORDER",
+        "Mức chi tiêu tối thiểu của hạng cao hơn phải lớn hơn hạng thấp hơn theo thứ tự phân cấp (Normal < Silver < Gold < VIP).");
 }

@@ -1,9 +1,10 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Customers.Commands.CreateCustomer;
 using POS.Application.UseCases.Customers.Commands.DeleteCustomer;
 using POS.Application.UseCases.Customers.Commands.UpdateCustomer;
+using POS.Application.UseCases.Customers.Commands.UpdateMemberTier;
 using POS.Application.UseCases.Customers.Queries.GetCustomerById;
 using POS.Application.UseCases.Customers.Queries.GetCustomers;
 using POS.Domain.Customers;
@@ -152,5 +153,83 @@ public class CustomerManagementTests
         result.IsSuccess.Should().BeTrue();
         customerRepository.Received(1).Remove(customer);
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateMemberTier_ValidOrder_ShouldSucceed()
+    {
+        // Arrange
+        var normal = new MemberTier(MemberTierName.Normal, 0m, 0.01m, 0m, "#808080");
+        var silver = new MemberTier(MemberTierName.Silver, 5000000m, 0.015m, 0.02m, "#C0C0C0");
+        var gold = new MemberTier(MemberTierName.Gold, 15000000m, 0.02m, 0.05m, "#FFD700");
+        var vip = new MemberTier(MemberTierName.VIP, 30000000m, 0.03m, 0.10m, "#9400D3");
+        var allTiers = new List<MemberTier> { normal, silver, gold, vip };
+
+        memberTierRepository.GetByIdAsync(silver.Id, Arg.Any<CancellationToken>()).Returns(silver);
+        memberTierRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(allTiers);
+
+        var handler = new UpdateMemberTierCommandHandler(memberTierRepository, unitOfWork);
+        // Update silver from 5M to 7M (still > 0 and < 15M)
+        var command = new UpdateMemberTierCommand(silver.Id, 7000000m, 0.015m, 0.02m, "#C0C0C0");
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        silver.MinSpending.Should().Be(7000000m);
+        await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateMemberTier_DuplicateMinSpending_ShouldReturnConflict()
+    {
+        // Arrange
+        var normal = new MemberTier(MemberTierName.Normal, 0m, 0.01m, 0m, "#808080");
+        var silver = new MemberTier(MemberTierName.Silver, 5000000m, 0.015m, 0.02m, "#C0C0C0");
+        var gold = new MemberTier(MemberTierName.Gold, 15000000m, 0.02m, 0.05m, "#FFD700");
+        var vip = new MemberTier(MemberTierName.VIP, 30000000m, 0.03m, 0.10m, "#9400D3");
+        var allTiers = new List<MemberTier> { normal, silver, gold, vip };
+
+        memberTierRepository.GetByIdAsync(silver.Id, Arg.Any<CancellationToken>()).Returns(silver);
+        memberTierRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(allTiers);
+
+        var handler = new UpdateMemberTierCommandHandler(memberTierRepository, unitOfWork);
+        // Setting silver minSpending to 15M (same as gold)
+        var command = new UpdateMemberTierCommand(silver.Id, 15000000m, 0.015m, 0.02m, "#C0C0C0");
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CustomerErrors.MemberTierDuplicateMinSpending);
+        await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateMemberTier_InvalidOrder_ShouldReturnValidationError()
+    {
+        // Arrange
+        var normal = new MemberTier(MemberTierName.Normal, 0m, 0.01m, 0m, "#808080");
+        var silver = new MemberTier(MemberTierName.Silver, 5000000m, 0.015m, 0.02m, "#C0C0C0");
+        var gold = new MemberTier(MemberTierName.Gold, 15000000m, 0.02m, 0.05m, "#FFD700");
+        var vip = new MemberTier(MemberTierName.VIP, 30000000m, 0.03m, 0.10m, "#9400D3");
+        var allTiers = new List<MemberTier> { normal, silver, gold, vip };
+
+        memberTierRepository.GetByIdAsync(silver.Id, Arg.Any<CancellationToken>()).Returns(silver);
+        memberTierRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(allTiers);
+
+        var handler = new UpdateMemberTierCommandHandler(memberTierRepository, unitOfWork);
+        // Setting silver minSpending to 20M (> gold 15M, breaking Normal < Silver < Gold < VIP order)
+        var command = new UpdateMemberTierCommand(silver.Id, 20000000m, 0.015m, 0.02m, "#C0C0C0");
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CustomerErrors.MemberTierInvalidOrder);
+        await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }
