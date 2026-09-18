@@ -9,5 +9,5 @@ public record UpdateRolePermissionsCommand(
     IReadOnlyList<Guid> PermissionIds
 ) : ICommand<RoleDetailDto>, IRequirePermission
 {
-  public string RequiredPermission => "roles:update";
+    public string RequiredPermission => "roles:update";
 }

@@ -10,5 +10,5 @@ public record UpdateRoleCommand(
     string? Description = null
 ) : ICommand<RoleDto>, IRequirePermission
 {
-  public string RequiredPermission => "roles:update";
+    public string RequiredPermission => "roles:update";
 }

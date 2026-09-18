@@ -10,5 +10,5 @@ public record CreateRoleCommand(
     Guid? StoreId = null
 ) : ICommand<RoleDto>, IRequirePermission
 {
-  public string RequiredPermission => "roles:create";
+    public string RequiredPermission => "roles:create";
 }
