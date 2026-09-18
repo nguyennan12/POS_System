@@ -82,6 +82,39 @@ public class Employee : BaseEntity
     UpdatedAt = DateTime.UtcNow;
   }
 
+  public void UpdateProfile(string name, Guid roleId, Guid? storeId, bool isChainOwner)
+  {
+    if (roleId == Guid.Empty || storeId == Guid.Empty || (!isChainOwner && storeId is null))
+      throw new ArgumentException("A role and a store (unless chain owner) are required.");
+    Name = name ?? throw new ArgumentNullException(nameof(name));
+    RoleId = roleId;
+    StoreId = storeId;
+    IsChainOwner = isChainOwner;
+    UpdatedAt = DateTime.UtcNow;
+  }
+
+  public void SetActive(bool isActive)
+  {
+    IsActive = isActive;
+    if (isActive) RegisterSuccessfulLogin(DateTime.UtcNow);
+    UpdatedAt = DateTime.UtcNow;
+  }
+
+  public void ResetCredentialPassword(string newHash)
+  {
+    PasswordHash = newHash ?? throw new ArgumentNullException(nameof(newHash));
+    RegisterSuccessfulLogin(DateTime.UtcNow);
+  }
+
+  public void ResetCredentialPin(string newHash, string newLookupHash)
+  {
+    ArgumentException.ThrowIfNullOrWhiteSpace(newHash);
+    ArgumentException.ThrowIfNullOrWhiteSpace(newLookupHash);
+    PinHash = newHash;
+    PinLookupHash = newLookupHash;
+    RegisterSuccessfulLogin(DateTime.UtcNow);
+  }
+
     public void AssignStoreManager(Guid storeId, Role storeManagerRole)
     {
         if (storeId == Guid.Empty || storeManagerRole.Id == Guid.Empty ||

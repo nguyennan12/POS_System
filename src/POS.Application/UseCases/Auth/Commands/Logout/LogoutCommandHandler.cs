@@ -3,6 +3,7 @@ using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Auth.Errors;
 using POS.Domain.Common;
+using POS.Domain.Auditing;
 
 namespace POS.Application.UseCases.Auth.Commands.Logout;
 
@@ -11,14 +12,16 @@ public class LogoutCommandHandler : ICommandHandler<LogoutCommand>
   private readonly ITokenService _tokenService;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IRefreshTokenRepository _refreshTokenRepository;
+  private readonly IAuditLogRepository _auditLogs;
   public LogoutCommandHandler(
     ITokenService tokenService,
     IRefreshTokenRepository refreshTokenRepository,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork, IAuditLogRepository auditLogs)
   {
     _unitOfWork = unitOfWork;
     _tokenService = tokenService;
     _refreshTokenRepository = refreshTokenRepository;
+    _auditLogs = auditLogs;
   }
   public async Task<Result> Handle(
     LogoutCommand command,
@@ -34,6 +37,7 @@ public class LogoutCommandHandler : ICommandHandler<LogoutCommand>
     if (storedToken.RevokedAt is null)
     {
       storedToken.Revoke(DateTime.UtcNow);
+      await _auditLogs.AddAsync(AuditLog.Authentication(storedToken.Employee, AuthenticationAuditActions.Logout), cancellationToken);
       await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 

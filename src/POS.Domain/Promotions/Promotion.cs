@@ -7,8 +7,48 @@ namespace POS.Domain.Promotions;
 
 public class Promotion : BaseEntity
 {
+    private readonly List<PromotionTarget> _targets = [];
+    public IReadOnlyCollection<PromotionTarget> Targets => _targets.AsReadOnly();
+
     public Promotion() : base()
     {
+    }
+
+    /// <summary>Creates a promotion with its eligibility, priority, and stacking rules.</summary>
+    public Promotion(
+        Guid storeId,
+        string name,
+        PromotionType type,
+        decimal value,
+        decimal minOrderAmount = 0,
+        decimal? maxDiscountAmount = null,
+        string? conditionsJson = null,
+        int priority = 0,
+        bool isStackable = false,
+        bool isExclusive = false,
+        PromotionAppliesTo appliesTo = PromotionAppliesTo.All,
+        DateTime? validFrom = null,
+        DateTime? validTo = null,
+        PromotionStatus status = PromotionStatus.Active,
+        Guid? createdBy = null,
+        Guid? id = null) : base(id)
+    {
+        StoreId = storeId;
+        Name = name;
+        Type = type;
+        Value = value;
+        MinOrderAmount = minOrderAmount;
+        MaxDiscountAmount = maxDiscountAmount;
+        ConditionsJson = conditionsJson;
+        Priority = priority;
+        IsStackable = isStackable;
+        IsExclusive = isExclusive;
+        AppliesTo = appliesTo;
+        ValidFrom = validFrom ?? DateTime.UtcNow;
+        ValidTo = validTo;
+        Status = status;
+        CreatedBy = createdBy ?? Guid.Empty;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public Guid StoreId { get; private set; }
@@ -30,4 +70,49 @@ public class Promotion : BaseEntity
     public Guid CreatedBy { get; private set; }
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+
+    /// <summary>Adds an existing SKU or category target to this promotion.</summary>
+    public void AddTarget(PromotionTarget target)
+    {
+        _targets.Add(target);
+    }
+
+    /// <summary>Adds a SKU target to this promotion.</summary>
+    public void AddTargetSku(Guid skuId)
+    {
+        _targets.Add(PromotionTarget.ForSku(Id, skuId));
+    }
+
+    /// <summary>Adds a category target to this promotion.</summary>
+    public void AddTargetCategory(Guid categoryId)
+    {
+        _targets.Add(PromotionTarget.ForCategory(Id, categoryId));
+    }
+
+    /// <summary>Determines whether this promotion is active at the specified time.</summary>
+    public bool IsActiveAt(DateTime now)
+    {
+        if (Status != PromotionStatus.Active)
+            return false;
+
+        if (now < ValidFrom)
+            return false;
+
+        if (ValidTo.HasValue && now > ValidTo.Value)
+            return false;
+
+        return true;
+    }
+
+    /// <summary>Marks this promotion as inactive.</summary>
+    public void Deactivate()
+    {
+        Status = PromotionStatus.Inactive;
+    }
+
+    /// <summary>Marks this promotion as active.</summary>
+    public void Activate()
+    {
+        Status = PromotionStatus.Active;
+    }
 }

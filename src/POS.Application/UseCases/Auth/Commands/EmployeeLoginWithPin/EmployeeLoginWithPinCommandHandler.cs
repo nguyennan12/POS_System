@@ -5,6 +5,7 @@ using POS.Application.UseCases.Auth.Dtos;
 using POS.Application.UseCases.Auth.Errors;
 using POS.Domain.Common;
 using POS.Domain.Employees;
+using POS.Domain.Auditing;
 
 namespace POS.Application.UseCases.Auth.Commands.EmployeeLoginWithPin;
 
@@ -18,6 +19,7 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
   private readonly IRefreshTokenRepository _refreshTokenRepository;
   private readonly IPinLookupHasher _pinLookupHasher;
   private readonly IPinLoginRateLimiter _pinLoginRateLimiter;
+  private readonly IAuditLogRepository _auditLogs;
 
   public EmployeeLoginWithPinCommandHandler(
     IEmployeeRepository employeeRepository,
@@ -26,7 +28,7 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
     ITokenService tokenService,
     IPinLookupHasher pinLookupHasher,
     IRefreshTokenRepository refreshTokenRepository,
-    IPinLoginRateLimiter pinLoginRateLimiter)
+    IPinLoginRateLimiter pinLoginRateLimiter, IAuditLogRepository auditLogs)
   {
     _employeeRepository = employeeRepository;
     _unitOfWork = unitOfWork;
@@ -36,12 +38,17 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
     _refreshTokenRepository = refreshTokenRepository;
     _pinLookupHasher = pinLookupHasher;
     _pinLoginRateLimiter = pinLoginRateLimiter;
+    _auditLogs = auditLogs;
   }
 
   public async Task<Result<AuthDto>> Handle(EmployeeLoginWithPinCommand command, CancellationToken cancellationToken)
   {
     if (await _pinLoginRateLimiter.IsBlockedAsync(command.StoreId, command.DeviceId, cancellationToken))
+    {
+      await _auditLogs.AddAsync(AuditLog.Authentication(null, AuthenticationAuditActions.LoginFailed), cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
       return AuthErrors.PinLoginRateLimited;
+    }
 
     var now = DateTime.UtcNow;
     var pinLookupHash = _pinLookupHasher.ComputeHash(command.Pin);
@@ -50,16 +57,23 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
     if (employee is null)
     {
       await _pinLoginRateLimiter.RegisterFailedAttemptAsync(command.StoreId, command.DeviceId, cancellationToken);
+      await _auditLogs.AddAsync(AuditLog.Authentication(null, AuthenticationAuditActions.LoginFailed), cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
       return AuthErrors.InvalidCredentials;
     }
 
-    if (!employee.IsActive) return AuthErrors.InvalidCredentials;
-    if (employee.IsLocked(now)) return AuthErrors.AccountLocked;
+    if (!employee.IsActive || employee.IsLocked(now))
+    {
+      await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.LoginFailed), cancellationToken);
+      await _unitOfWork.SaveChangesAsync(cancellationToken);
+      return employee.IsActive ? AuthErrors.AccountLocked : AuthErrors.InvalidCredentials;
+    }
 
     if (!_passwordHasher.Verify(command.Pin, employee.PinHash))
     {
       employee.RegisterFailedLogin(now);
       await _pinLoginRateLimiter.RegisterFailedAttemptAsync(command.StoreId, command.DeviceId, cancellationToken);
+      await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.LoginFailed), cancellationToken);
       await _unitOfWork.SaveChangesAsync(cancellationToken);
       return AuthErrors.InvalidCredentials;
     }
@@ -86,6 +100,7 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
       employee,
       refreshToken.RefreshTokenHash,
       refreshToken.ExpiresAt), cancellationToken);
+    await _auditLogs.AddAsync(AuditLog.Authentication(employee, AuthenticationAuditActions.Login), cancellationToken);
     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
     return AuthDto.ToDto(

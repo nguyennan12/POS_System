@@ -10,6 +10,18 @@ public class AuditLog : BaseEntity
     {
     }
 
+    public AuditLog(Guid? actorId, Guid targetEmployeeId, Guid? storeId, string action) : base()
+    {
+        EmployeeId = actorId;
+        EntityType = "Employee";
+        EntityId = targetEmployeeId;
+        StoreId = storeId;
+        Action = action;
+    }
+
+    public static AuditLog Authentication(Employee? employee, string action) =>
+        new(employee?.Id, employee?.Id ?? Guid.Empty, employee?.StoreId, action);
+
     public Guid? StoreId { get; private set; }
     public Store? Store { get; private set; }
 

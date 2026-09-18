@@ -40,11 +40,11 @@ public class RolePermissionSeeder : ISeeder
             AddIfMissing(storeManagerRole, p);
         }
 
-        // 3. CASHIER: POS cashier operations (read-all + create order/customer)
+        // 3. CASHIER: POS cashier operations (read-all + create order/customer + update customer)
         var cashierPerms = permissions.Where(p =>
             p.Action == PermissionAction.Read ||
             (p.Resource.Code == ResourceNames.Orders && p.Action == PermissionAction.Create) ||
-            (p.Resource.Code == ResourceNames.Customers && p.Action == PermissionAction.Create));
+            (p.Resource.Code == ResourceNames.Customers && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Update)));
         foreach (var p in cashierPerms)
         {
             AddIfMissing(cashierRole, p);

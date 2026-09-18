@@ -479,6 +479,13 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("name");
 
+                    b.Property<string>("NormalizedUsername")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("normalized_username")
+                        .HasComputedColumnSql("lower(username)", true);
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -516,6 +523,10 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnName("username");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("NormalizedUsername")
+                        .IsUnique()
+                        .HasDatabaseName("IX_employees_normalized_username");
 
                     b.HasIndex("RoleId");
 
@@ -1941,6 +1952,10 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("promotion_id");
 
+                    b.Property<Guid?>("PromotionId1")
+                        .HasColumnType("uuid")
+                        .HasColumnName("promotion_id1");
+
                     b.Property<Guid?>("SkuId")
                         .HasColumnType("uuid")
                         .HasColumnName("sku_id");
@@ -1950,6 +1965,8 @@ namespace POS.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("PromotionId");
+
+                    b.HasIndex("PromotionId1");
 
                     b.HasIndex("SkuId");
 
@@ -2870,6 +2887,10 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Promotions.Promotion", null)
+                        .WithMany("Targets")
+                        .HasForeignKey("PromotionId1");
+
                     b.HasOne("POS.Domain.Products.Sku", "Sku")
                         .WithMany()
                         .HasForeignKey("SkuId")
@@ -2980,6 +3001,11 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("POS.Domain.Promotions.Promotion", b =>
+                {
+                    b.Navigation("Targets");
                 });
 
             modelBuilder.Entity("POS.Domain.Rbac.Resource", b =>
