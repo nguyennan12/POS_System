@@ -46,8 +46,8 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
 
         var employee = await employees.GetByIdAsync(command.EmployeeId, cancellationToken);
         if (employee is null) return StoreErrors.EmployeeNotFound;
-        if (!employee.IsActive || employee.LockedUntil > DateTime.UtcNow)
-            return StoreErrors.InactiveEmployee;
+        var stateError = EmployeeTransferGuards.ValidateState(employee, store);
+        if (stateError != Error.None) return stateError;
         if (employee.IsChainOwner ||
             !(StoreManagementAccess.HasSystemRole(employee, RoleNames.Cashier) ||
               StoreManagementAccess.HasSystemRole(employee, RoleNames.StoreManager)))
@@ -62,20 +62,8 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
         if (managerRoles.Count != 1) return StoreErrors.InvalidStoreManagerRole;
         var managerRole = managerRoles[0];
 
-        if (employee.StoreId != store.Id)
-        {
-            if (await employees.HasOpenShiftOutsideStoreAsync(employee.Id, store.Id, cancellationToken))
-                return StoreErrors.EmployeeOpenShift;
-
-            // T12/T20 own HMAC lookup generation/reset. A BCrypt hash cannot be used
-            // to reconstruct it. Refuse a transfer whose PIN uniqueness is unknowable.
-            if (string.IsNullOrWhiteSpace(employee.PinLookupHash) ||
-                await employees.HasMissingPinLookupAsync(store.Id, cancellationToken))
-                return StoreErrors.PinLookupMissing;
-
-            if (await employees.HasPinConflictAsync(employee.Id, store.Id, employee.PinLookupHash, cancellationToken))
-                return StoreErrors.EmployeePinAlreadyExists;
-        }
+        var transferError = await EmployeeTransferGuards.ValidatePinAndShiftAsync(employee, store.Id, employees, cancellationToken);
+        if (transferError != Error.None) return transferError;
 
         // Existing model: one role and home store per employee; never promote a chain owner
         // or invent a per-store role. The StoreManager role is the actual seeded system role.

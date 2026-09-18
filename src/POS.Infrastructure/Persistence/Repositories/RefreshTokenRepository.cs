@@ -6,6 +6,13 @@ namespace POS.Infrastructure.Persistence.Repositories;
 
 public class RefreshTokenRepository : IRefreshTokenRepository
 {
+  public async Task RevokeAllByEmployeeIdAsync(Guid employeeId, DateTime utcNow, CancellationToken cancellationToken = default)
+  {
+    var tokens = await _context.RefreshTokens.Where(t => t.EmployeeId == employeeId &&
+        t.RevokedAt == null && t.ExpiresAt > utcNow).ToListAsync(cancellationToken);
+    foreach (var token in tokens) token.Revoke(utcNow);
+  }
+
   private readonly AppDbContext _context;
 
   public RefreshTokenRepository(AppDbContext context)

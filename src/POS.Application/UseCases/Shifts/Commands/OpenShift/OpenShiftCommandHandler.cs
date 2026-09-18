@@ -24,6 +24,12 @@ public class OpenShiftCommandHandler(
         if (employee is null)
             return new Error(ErrorType.NotFound, "Employee.NotFound", "Không tìm thấy nhân viên.");
 
+        if (!employee.IsActive)
+            return new Error(ErrorType.Forbidden, "Employee.Inactive", "Nhân viên đã bị khóa hoặc ngừng hoạt động.");
+
+        if (!employee.IsChainOwner && employee.StoreId != command.StoreId)
+            return new Error(ErrorType.Forbidden, "Employee.InvalidStore", "Nhân viên không thuộc cửa hàng này.");
+
         // Use serializable transaction to prevent race condition (two shifts opening simultaneously)
         return await unitOfWork.ExecuteSerializableAsync(async ct =>
         {
