@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Persistence;
@@ -28,6 +30,7 @@ public class RoleManagementTests
     private readonly ICacheService cacheService = Substitute.For<ICacheService>();
     private readonly ICurrentUser currentUser = Substitute.For<ICurrentUser>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ILogger<UpdateRolePermissionsCommandHandler> logger = Substitute.For<ILogger<UpdateRolePermissionsCommandHandler>>();
 
     [Fact]
     public async Task CreateRole_Success_WhenChainOwner()
@@ -132,6 +135,25 @@ public class RoleManagementTests
     }
 
     [Fact]
+    public async Task CreateRole_CatchesPersistenceConflict_AndReturnsNameAlreadyExists()
+    {
+        var storeId = Guid.NewGuid();
+        var store = new Store("Test Store", "Address", "0123456789", "Asia/Ho_Chi_Minh", "VND", isActive: true);
+        currentUser.IsChainOwner.Returns(true);
+        storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns(store);
+        roleRepository.ExistsByNameAsync("Concurrent Role", storeId, null, Arg.Any<CancellationToken>()).Returns(false);
+
+        unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Throws(new PersistenceConflictException(PersistenceConstraints.RoleStoreNameUnique, new Exception()));
+
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, accessRepository, currentUser, unitOfWork);
+        var result = await handler.Handle(new CreateRoleCommand("Concurrent Role", null, storeId), default);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(RoleErrors.NameAlreadyExists.Code, result.Error.Code);
+    }
+
+    [Fact]
     public async Task UpdateRole_Success_ForCustomRole()
     {
         var storeId = Guid.NewGuid();
@@ -187,6 +209,26 @@ public class RoleManagementTests
     }
 
     [Fact]
+    public async Task UpdateRole_CatchesPersistenceConflict_AndReturnsNameAlreadyExists()
+    {
+        var storeId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var role = new Role("Old Name", isSystemRole: false, storeId: storeId, description: "Old desc", id: roleId);
+        currentUser.IsChainOwner.Returns(true);
+        roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
+        roleRepository.ExistsByNameAsync("Duplicated Name", storeId, roleId, Arg.Any<CancellationToken>()).Returns(false);
+
+        unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Throws(new PersistenceConflictException(PersistenceConstraints.RoleStoreNameUnique, new Exception()));
+
+        var handler = new UpdateRoleCommandHandler(roleRepository, accessRepository, currentUser, unitOfWork);
+        var result = await handler.Handle(new UpdateRoleCommand(roleId, "Duplicated Name"), default);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(RoleErrors.NameAlreadyExists.Code, result.Error.Code);
+    }
+
+    [Fact]
     public async Task UpdateRolePermissions_Success_And_BatchInvalidatesCacheForEmployees()
     {
         var storeId = Guid.NewGuid();
@@ -218,7 +260,8 @@ public class RoleManagementTests
             accessRepository,
             cacheService,
             currentUser,
-            unitOfWork);
+            unitOfWork,
+            logger);
 
         var result = await handler.Handle(new UpdateRolePermissionsCommand(roleId, [perm1Id, perm2Id]), default);
 
@@ -238,7 +281,46 @@ public class RoleManagementTests
                 keys.Contains($"perm:{emp1}") &&
                 keys.Contains($"perm:{emp2}") &&
                 keys.Count() == 2),
-            Arg.Any<CancellationToken>());
+            CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task UpdateRolePermissions_Succeeds_EvenWhenRedisThrowsException()
+    {
+        var storeId = Guid.NewGuid();
+        var roleId = Guid.NewGuid();
+        var customRole = new Role("Custom Role", isSystemRole: false, storeId: storeId, id: roleId);
+        currentUser.IsChainOwner.Returns(true);
+        roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(customRole);
+
+        var resource = new Resource("roles", "Role Management");
+        var perm1Id = Guid.NewGuid();
+        var perm1 = new Permission(resource.Id, resource, PermissionAction.Read, "Read roles", perm1Id);
+        permissionRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns([perm1]);
+
+        var emp1 = Guid.NewGuid();
+        roleRepository.GetEmployeeIdsByRoleIdAsync(roleId, Arg.Any<CancellationToken>())
+            .Returns([emp1]);
+
+        // Redis cache throws transient exception
+        cacheService.RemoveRangeAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Throws(new Exception("Redis connection timeout"));
+
+        var handler = new UpdateRolePermissionsCommandHandler(
+            roleRepository,
+            permissionRepository,
+            accessRepository,
+            cacheService,
+            currentUser,
+            unitOfWork,
+            logger);
+
+        var result = await handler.Handle(new UpdateRolePermissionsCommand(roleId, [perm1Id]), default);
+
+        // Transaction is committed and result succeeds resiliently
+        Assert.True(result.IsSuccess);
+        await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -258,7 +340,8 @@ public class RoleManagementTests
             accessRepository,
             cacheService,
             currentUser,
-            unitOfWork);
+            unitOfWork,
+            logger);
 
         var result = await handler.Handle(new UpdateRolePermissionsCommand(roleId, [Guid.NewGuid()]), default);
 
@@ -281,7 +364,8 @@ public class RoleManagementTests
             accessRepository,
             cacheService,
             currentUser,
-            unitOfWork);
+            unitOfWork,
+            logger);
 
         var result = await handler.Handle(new UpdateRolePermissionsCommand(roleId, [Guid.NewGuid()]), default);
 
@@ -313,7 +397,8 @@ public class RoleManagementTests
             accessRepository,
             cacheService,
             currentUser,
-            unitOfWork);
+            unitOfWork,
+            logger);
 
         var result = await handler.Handle(new UpdateRolePermissionsCommand(roleId, [permId1, permId2]), default);
 

@@ -41,7 +41,16 @@ public class UpdateRoleCommandHandler(
         }
 
         role.Update(request.Name.Trim(), request.Description?.Trim());
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (PersistenceConflictException ex) when (ex.ConstraintName == PersistenceConstraints.RoleStoreNameUnique ||
+                                                     ex.ConstraintName == PersistenceConstraints.RoleSystemNameUnique)
+        {
+            return RoleErrors.NameAlreadyExists;
+        }
 
         return new RoleDto(
             role.Id,

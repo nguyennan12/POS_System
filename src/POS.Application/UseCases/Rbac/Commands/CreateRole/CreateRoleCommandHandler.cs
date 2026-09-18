@@ -46,8 +46,16 @@ public class CreateRoleCommandHandler(
             storeId: request.StoreId,
             description: request.Description?.Trim());
 
-        await roleRepository.AddAsync(role, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await roleRepository.AddAsync(role, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (PersistenceConflictException ex) when (ex.ConstraintName == PersistenceConstraints.RoleStoreNameUnique ||
+                                                     ex.ConstraintName == PersistenceConstraints.RoleSystemNameUnique)
+        {
+            return RoleErrors.NameAlreadyExists;
+        }
 
         return new RoleDto(
             role.Id,

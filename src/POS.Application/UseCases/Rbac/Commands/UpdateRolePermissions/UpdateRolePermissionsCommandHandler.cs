@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Messaging;
@@ -14,7 +15,8 @@ public class UpdateRolePermissionsCommandHandler(
     IEmployeeStoreAccessRepository accessRepository,
     ICacheService cacheService,
     ICurrentUser currentUser,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    ILogger<UpdateRolePermissionsCommandHandler> logger
 ) : ICommandHandler<UpdateRolePermissionsCommand, RoleDetailDto>
 {
     public async Task<Result<RoleDetailDto>> Handle(UpdateRolePermissionsCommand request, CancellationToken cancellationToken)
@@ -53,13 +55,12 @@ public class UpdateRolePermissionsCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // Batch Invalidation of Redis Cache for all affected employees
-        var employeeIds = await roleRepository.GetEmployeeIdsByRoleIdAsync(role.Id, cancellationToken);
-        if (employeeIds.Count > 0)
-        {
-            var cacheKeys = employeeIds.Select(id => $"perm:{id}");
-            await cacheService.RemoveRangeAsync(cacheKeys, cancellationToken);
-        }
+        // Resilient Batch Invalidation of Redis Cache for all affected employees
+        await RoleMutationSupport.InvalidateRoleEmployeesAsync(
+            role.Id,
+            roleRepository,
+            cacheService,
+            logger);
 
         var permissionDtos = permissions.Select(p => new PermissionDto(
             p.Id,
