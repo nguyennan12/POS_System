@@ -36,9 +36,9 @@ public class MigrationService : IMigrationService
           new StoreAndEmployeeSeeder(_pinLookupHasher),
 
           new MemberTierSeeder(),
-          new CategorySeeder()
+          new CategorySeeder(),
 
-          new MemberTierSeeder()
+          new MemberTierSeeder(),
 
       ];
       foreach (var seeder in seeders)
