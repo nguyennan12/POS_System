@@ -30,4 +30,11 @@ public class RedisCacheService : ICacheService
 
     public Task RemoveAsync(string key, CancellationToken cancellationToken = default) =>
         Db.KeyDeleteAsync(key);
+
+    public async Task RemoveRangeAsync(IEnumerable<string> keys, CancellationToken cancellationToken = default)
+    {
+        var redisKeys = keys.Select(k => (RedisKey)k).ToArray();
+        if (redisKeys.Length == 0) return;
+        await Db.KeyDeleteAsync(redisKeys);
+    }
 }
