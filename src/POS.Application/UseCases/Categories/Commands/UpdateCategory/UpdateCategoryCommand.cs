@@ -1,3 +1,4 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Categories.Dtos;
 
@@ -10,4 +11,7 @@ public record UpdateCategoryCommand(
     int DisplayOrder,
     string? ImageUrl,
     bool IsVisible
-) : ICommand<CategoryDto>;
+) : ICommand<CategoryDto>, IRequirePermission
+{
+    public string RequiredPermission => "categories:update";
+}
