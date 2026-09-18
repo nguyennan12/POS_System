@@ -34,12 +34,8 @@ public class MigrationService : IMigrationService
           new ResourcePermissionSeeder(),
           new RolePermissionSeeder(),
           new StoreAndEmployeeSeeder(_pinLookupHasher),
-
           new MemberTierSeeder(),
           new CategorySeeder(),
-
-          new MemberTierSeeder(),
-
       ];
       foreach (var seeder in seeders)
       {
