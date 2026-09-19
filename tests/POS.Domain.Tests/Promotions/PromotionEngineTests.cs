@@ -240,7 +240,8 @@ public class PromotionEngineTests
             name: "Happy Hour 14h-17h",
             type: PromotionType.HappyHour,
             value: 20m,
-            conditionsJson: JsonSerializer.Serialize(condition));
+            conditionsJson: JsonSerializer.Serialize(condition),
+            validFrom: TodayAt(0, 0));
 
         var item = new PromotionCartItem(_skuCoffee, "SKU-CF", _catBeverages, Quantity: 1, UnitPrice: 100_000m);
         var cart = new PromotionCart(_storeId, [item]);
