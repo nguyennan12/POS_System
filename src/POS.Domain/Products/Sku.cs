@@ -9,11 +9,36 @@ public class Sku : BaseEntity
     {
     }
 
+    public Sku(
+        Guid productId,
+        Guid storeId,
+        string skuCode,
+        string barcode,
+        decimal sellPrice,
+        decimal costPrice = 0,
+        decimal taxRate = 0,
+        bool isActive = true,
+        Dictionary<string, string>? attributes = null,
+        Guid? id = null) : base(id)
+    {
+        ProductId = productId;
+        StoreId = storeId;
+        SkuCode = skuCode;
+        Barcode = barcode;
+        SellPrice = sellPrice;
+        CostPrice = costPrice;
+        TaxRate = taxRate;
+        IsActive = isActive;
+        Attributes = attributes;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public Guid ProductId { get; private set; }
-    public Product Product { get; private set; } = default!;
+    public Product Product { get; set; } = default!;
 
     public Guid StoreId { get; private set; }
-    public Store Store { get; private set; } = default!;
+    public Store Store { get; set; } = default!;
 
     public string SkuCode { get; private set; } = default!;
     public string Barcode { get; private set; } = default!;

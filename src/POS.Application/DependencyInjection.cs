@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
 
         services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
+        services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
 
         return services;
     }

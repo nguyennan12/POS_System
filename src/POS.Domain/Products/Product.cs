@@ -10,6 +10,29 @@ public class Product : BaseEntity
     {
     }
 
+    public Product(
+        Guid storeId,
+        Guid categoryId,
+        string name,
+        string baseUnit,
+        string? description = null,
+        string? brand = null,
+        string? imageUrl = null,
+        ProductStatus status = ProductStatus.Active,
+        Guid? id = null) : base(id)
+    {
+        StoreId = storeId;
+        CategoryId = categoryId;
+        Name = name;
+        BaseUnit = baseUnit;
+        Description = description;
+        Brand = brand;
+        ImageUrl = imageUrl;
+        Status = status;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     public Guid StoreId { get; private set; }
     public Store Store { get; private set; } = default!;
 
