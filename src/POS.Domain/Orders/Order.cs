@@ -67,9 +67,11 @@ public class Order : BaseEntity
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; private set; }
+    public string? CancelReason { get; private set; }
 
     public ICollection<OrderItem> Items { get; private set; } = new List<OrderItem>();
     public ICollection<OrderDiscount> Discounts { get; private set; } = new List<OrderDiscount>();
+    public ICollection<Payment> Payments { get; private set; } = new List<Payment>();
 
     public void SetCustomer(Guid? customerId)
     {
@@ -85,6 +87,18 @@ public class Order : BaseEntity
     {
         AppliedVoucherId = voucherId;
         AppliedVoucherCode = voucherCode;
+    }
+
+    public Result Confirm()
+    {
+        if (Status != OrderStatus.Draft)
+            return new Error(ErrorType.Invalid, "ORDER.NOT_DRAFT",
+                "Chỉ có thể xác nhận đơn ở trạng thái Draft.");
+        if (!Items.Any())
+            return new Error(ErrorType.Invalid, "ORDER.CART_EMPTY",
+                "Giỏ hàng trống.");
+        Status = OrderStatus.Confirmed;
+        return Result.Success();
     }
 
     public void ClearAppliedVoucher()
@@ -175,5 +189,66 @@ public class Order : BaseEntity
         DiscountTotal = Math.Round(result.TotalDiscount, 2);
         TaxTotal = Math.Round(Items.Sum(i => i.TaxAmount), 2);
         GrandTotal = Math.Max(0, Math.Round(Subtotal - DiscountTotal + TaxTotal, 2));
+    }
+
+    public (decimal TotalApplied, decimal ChangeAmount, OrderStatus Status) ProcessPayments(
+        IEnumerable<(PaymentMethod Method, decimal Amount, string? TransactionRef)> newPayments)
+    {
+        if (Status != OrderStatus.Confirmed)
+            throw new InvalidOperationException("Chỉ có thể thanh toán đơn ở trạng thái Confirmed.");
+        if (!Items.Any())
+            throw new InvalidOperationException("Giỏ hàng đang trống.");
+
+        foreach (var (method, amount, transactionRef) in newPayments)
+        {
+            if (amount <= 0)
+                throw new ArgumentOutOfRangeException(nameof(newPayments), "Số tiền thanh toán phải lớn hơn 0.");
+
+            var payment = Payment.CreateSuccess(
+                orderId: Id,
+                method: method,
+                amount: amount,
+                transactionRef: transactionRef);
+
+            Payments.Add(payment);
+        }
+
+        decimal totalRaw = Payments
+            .Where(p => p.Status == PaymentStatus.Success)
+            .Sum(p => p.Amount);
+
+        decimal changeAmount = totalRaw > GrandTotal
+            ? Math.Round(totalRaw - GrandTotal, 2)
+            : 0;
+
+        // totalApplied = totalRaw - changeAmount (cash trả lại)
+        decimal totalApplied = Math.Round(totalRaw - changeAmount, 2);
+
+        if (totalApplied == GrandTotal)
+        {
+            if (changeAmount > 0)
+            {
+                var lastCashPayment = Payments
+                    .Where(p => p.Method == PaymentMethod.Cash && p.Status == PaymentStatus.Success)
+                    .LastOrDefault();
+                lastCashPayment?.SetChangeAmount(changeAmount);
+            }
+            Status = OrderStatus.Paid;
+            PaidAt = DateTime.UtcNow;
+        }
+        // Nếu chưa đủ: giữ Confirmed, không chuyển trạng thái
+
+        return (totalApplied, changeAmount, Status);
+    }
+
+    public void Cancel(string? reason = null)
+    {
+        if (Status == OrderStatus.Paid)
+            throw new InvalidOperationException("Không thể hủy đơn hàng đã thanh toán.");
+        if (Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException("Đơn hàng đã bị hủy trước đó.");
+
+        Status = OrderStatus.Cancelled;
+        CancelReason = reason;
     }
 }

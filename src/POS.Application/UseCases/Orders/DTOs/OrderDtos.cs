@@ -67,3 +67,31 @@ public record OrderSummaryDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset? PaidAt
 );
+
+public record ReceiptDataDto(
+    string StoreName,
+    string? StoreAddress,
+    string? StorePhone,
+    string OrderNo,
+    string CashierName,
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<OrderItemDto> Items,
+    decimal Subtotal,
+    decimal DiscountTotal,
+    decimal TaxTotal,
+    decimal GrandTotal,
+    decimal AmountPaid,
+    decimal ChangeAmount,
+    string? ReceiptHeader,
+    string? ReceiptFooter
+);
+
+public record CheckoutDto(
+    Guid OrderId,
+    decimal GrandTotal,
+    decimal TotalPaid,
+    decimal ChangeAmount,
+    string Status,
+    IReadOnlyList<OrderPaymentDto> Payments,
+    ReceiptDataDto? ReceiptData = null
+);

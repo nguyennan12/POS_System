@@ -5,6 +5,8 @@ using POS.Api.Extensions;
 using POS.Api.Mappings;
 using POS.Application.UseCases.Orders.Commands.AddOrderItem;
 using POS.Application.UseCases.Orders.Commands.ApplyVoucher;
+using POS.Application.UseCases.Orders.Commands.CancelOrder;
+using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
 using POS.Application.UseCases.Orders.Commands.CreateOrder;
 using POS.Application.UseCases.Orders.Queries.GetOrderById;
 using POS.Contracts.V1.Common;
@@ -63,6 +65,40 @@ public class OrdersController(ISender mediator) : ControllerBase
   {
     var result = await mediator.Send(
         new ApplyVoucherCommand(id, request.Code),
+        cancellationToken);
+
+    if (result.IsFailure) return this.ToActionResult(result);
+    return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+  [HttpPost("{id:guid}/checkout")]
+  public async Task<ActionResult<ApiResponse<CheckoutResponse>>> Checkout(
+      Guid id,
+      [FromBody] CheckoutOrderRequest request,
+      CancellationToken cancellationToken)
+  {
+    var paymentInputs = request.Payments.Select(p =>
+        new PaymentSplitInputDto(p.Method, p.Amount, p.TransactionRef)).ToList();
+
+    var result = await mediator.Send(
+        new CheckoutOrderCommand(id, paymentInputs),
+        cancellationToken);
+
+    if (result.IsFailure) return this.ToActionResult(result);
+    return Ok(ApiResponse<CheckoutResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+  /// <summary>
+  /// Hủy đơn hàng. Yêu cầu quyền StoreManager hoặc Owner.
+  /// </summary>
+  [HttpPost("{id:guid}/cancel")]
+  public async Task<ActionResult<ApiResponse<OrderDetailResponse>>> Cancel(
+      Guid id,
+      [FromBody] CancelOrderRequest request,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(
+        new CancelOrderCommand(id, request.Reason),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);

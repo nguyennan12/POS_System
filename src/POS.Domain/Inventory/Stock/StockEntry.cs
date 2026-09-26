@@ -10,6 +10,15 @@ public class StockEntry : BaseEntity
     {
     }
 
+    public StockEntry(Guid storeId, Guid skuId, decimal qtyOnHand, decimal minStock = 0, Guid? id = null) : base(id)
+    {
+        StoreId = storeId;
+        SkuId = skuId;
+        QtyOnHand = qtyOnHand;
+        MinStock = minStock;
+        LastUpdated = DateTime.UtcNow;
+    }
+
     public Guid StoreId { get; private set; }
     public Store Store { get; private set; } = default!;
 

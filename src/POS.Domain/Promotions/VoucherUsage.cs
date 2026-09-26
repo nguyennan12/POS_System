@@ -10,6 +10,23 @@ public class VoucherUsage : BaseEntity
     {
     }
 
+    private VoucherUsage(
+        Guid voucherId,
+        Guid customerId,
+        Guid orderId,
+        Guid? id = null) : base(id)
+    {
+        VoucherId = voucherId;
+        CustomerId = customerId;
+        OrderId = orderId;
+        UsedAt = DateTime.UtcNow;
+    }
+
+    public static VoucherUsage Create(Guid voucherId, Guid customerId, Guid orderId)
+    {
+        return new VoucherUsage(voucherId, customerId, orderId);
+    }
+
     public Guid VoucherId { get; private set; }
     public Voucher Voucher { get; private set; } = default!;
 

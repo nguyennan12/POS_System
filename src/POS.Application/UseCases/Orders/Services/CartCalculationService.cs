@@ -18,7 +18,8 @@ public class CartCalculationService(
     public async Task<Result> RecalculateAsync(
         Order order,
         Voucher? appliedVoucher = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool revalidateVoucher = false)
     {
         if (order.Items.Count == 0)
         {
@@ -72,6 +73,30 @@ public class CartCalculationService(
         if (appliedVoucher == null && order.AppliedVoucherId.HasValue)
         {
             appliedVoucher = await voucherRepository.GetByIdWithPromotionAsync(order.AppliedVoucherId.Value, cancellationToken);
+        }
+
+        // Re-validate voucher tại thời điểm checkout (revalidateVoucher = true)
+        if (revalidateVoucher && appliedVoucher != null)
+        {
+            if (!appliedVoucher.IsActive)
+                return OrderErrors.VoucherInactive;
+
+            if (appliedVoucher.ExpiresAt.HasValue && now > appliedVoucher.ExpiresAt.Value)
+                return OrderErrors.VoucherExpired;
+
+            if (appliedVoucher.UsedCount >= appliedVoucher.MaxUses)
+                return OrderErrors.VoucherUsageLimitReached;
+
+            if (appliedVoucher.Promotion == null || appliedVoucher.Promotion.Status != POS.Domain.Promotions.Enums.PromotionStatus.Active)
+                return OrderErrors.VoucherInactive;
+
+            if (order.CustomerId.HasValue)
+            {
+                var customerUsed = await voucherRepository.GetCustomerUsageCountAsync(
+                    appliedVoucher.Id, order.CustomerId.Value, cancellationToken);
+                if (customerUsed >= appliedVoucher.PerCustomerLimit)
+                    return OrderErrors.VoucherCustomerLimitReached;
+            }
         }
 
         var promoCart = new PromotionCart(

@@ -9,5 +9,6 @@ public interface ICartCalculationService
     Task<Result> RecalculateAsync(
         Order order,
         Voucher? appliedVoucher = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool revalidateVoucher = false);
 }

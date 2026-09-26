@@ -19,6 +19,14 @@ public static class DependencyInjection
         services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
         services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
 
+        // ---- Payment Strategies & Factory ----
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CashPaymentStrategy>();
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.MoMoPaymentStrategy>();
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.VietQrPaymentStrategy>();
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CardPaymentStrategy>();
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.PointsPaymentStrategy>();
+        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategyFactory, POS.Application.UseCases.Payments.PaymentStrategyFactory>();
+
         return services;
     }
 }

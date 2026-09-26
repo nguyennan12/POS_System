@@ -28,7 +28,15 @@ public static class OrderMappingExtensions
             AppliedAt: new DateTimeOffset(d.AppliedAt, TimeSpan.Zero)
         )).ToList();
 
-        var payments = new List<OrderPaymentDto>();
+        var payments = order.Payments.Select(p => new OrderPaymentDto(
+            Id: p.Id,
+            Method: p.Method.ToString(),
+            Amount: p.Amount,
+            ChangeAmount: p.ChangeAmount,
+            TransactionRef: p.TransactionRef,
+            Status: p.Status.ToString(),
+            PaidAt: p.PaidAt.HasValue ? new DateTimeOffset(p.PaidAt.Value, TimeSpan.Zero) : null
+        )).ToList();
 
         return new OrderDetailDto(
             Id: order.Id,

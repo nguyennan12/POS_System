@@ -22,6 +22,7 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
                 .ThenInclude(i => i.Sku)
                     .ThenInclude(s => s.Product)
             .Include(o => o.Discounts)
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
     }
 

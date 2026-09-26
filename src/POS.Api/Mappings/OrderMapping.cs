@@ -78,4 +78,61 @@ public static class OrderMapping
             PaidAt: dto.PaidAt
         );
     }
+
+    public static CheckoutResponse ToResponse(this CheckoutDto dto)
+    {
+        var payments = dto.Payments.Select(p => new OrderPaymentResponse(
+            Id: p.Id,
+            Method: p.Method,
+            Amount: p.Amount,
+            ChangeAmount: p.ChangeAmount,
+            TransactionRef: p.TransactionRef,
+            Status: p.Status,
+            PaidAt: p.PaidAt
+        )).ToList();
+
+        ReceiptDataResponse? receiptData = null;
+        if (dto.ReceiptData is not null)
+        {
+            var items = dto.ReceiptData.Items.Select(i => new OrderItemResponse(
+                Id: i.Id,
+                SkuId: i.SkuId,
+                SkuCode: i.SkuCode,
+                ProductName: i.ProductName,
+                Qty: i.Qty,
+                UnitPrice: i.UnitPrice,
+                DiscountAmount: i.DiscountAmount,
+                TaxAmount: i.TaxAmount,
+                LineTotal: i.LineTotal
+            )).ToList();
+
+            receiptData = new ReceiptDataResponse(
+                StoreName: dto.ReceiptData.StoreName,
+                StoreAddress: dto.ReceiptData.StoreAddress,
+                StorePhone: dto.ReceiptData.StorePhone,
+                OrderNo: dto.ReceiptData.OrderNo,
+                CashierName: dto.ReceiptData.CashierName,
+                CreatedAt: dto.ReceiptData.CreatedAt,
+                Items: items,
+                Subtotal: dto.ReceiptData.Subtotal,
+                DiscountTotal: dto.ReceiptData.DiscountTotal,
+                TaxTotal: dto.ReceiptData.TaxTotal,
+                GrandTotal: dto.ReceiptData.GrandTotal,
+                AmountPaid: dto.ReceiptData.AmountPaid,
+                ChangeAmount: dto.ReceiptData.ChangeAmount,
+                ReceiptHeader: dto.ReceiptData.ReceiptHeader,
+                ReceiptFooter: dto.ReceiptData.ReceiptFooter
+            );
+        }
+
+        return new CheckoutResponse(
+            OrderId: dto.OrderId,
+            GrandTotal: dto.GrandTotal,
+            TotalPaid: dto.TotalPaid,
+            ChangeAmount: dto.ChangeAmount,
+            Status: dto.Status,
+            Payments: payments,
+            ReceiptData: receiptData
+        );
+    }
 }
