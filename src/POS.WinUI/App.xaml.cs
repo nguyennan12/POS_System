@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using POS.WinUI.ApiClients;
 using POS.WinUI.Extensions;
 using POS.WinUI.ViewModels.Auth;
 using POS.WinUI.ViewModels.Shell;
@@ -23,6 +24,20 @@ public partial class App : Application
 
     public App()
     {
+        DispatcherUnhandledException += (s, e) =>
+        {
+            MessageBox.Show($"Lỗi giao diện: {e.Exception.Message}\n{e.Exception.InnerException?.Message}", "POS Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                MessageBox.Show($"Lỗi hệ thống: {ex.Message}", "POS Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        };
+
         _host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration((context, config) =>
             {
@@ -33,15 +48,16 @@ public partial class App : Application
             })
             .ConfigureServices((context, services) =>
             {
-                var apiBaseUrl = context.Configuration["ApiSettings:BaseUrl"]
-                                ?? "https://localhost:7000/";
+                var apiBaseUrl = context.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000/";
 
-                // Đăng ký HttpClient chung với base URL + Polly retry
+                // Đăng ký HttpClient chung với base URL + NetworkStatusHandler + Polly retry
                 services.AddHttpClient("PosApi", client =>
                 {
                     client.BaseAddress = new Uri(apiBaseUrl);
                     client.Timeout = TimeSpan.FromSeconds(30);
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("X-Device-Id", Environment.MachineName);
                 })
+                .AddHttpMessageHandler<NetworkStatusHandler>()
                 .AddStandardResilienceHandler();
 
                 // Lấy HttpClient mặc định cho tất cả ApiClients
@@ -60,9 +76,11 @@ public partial class App : Application
             .Build();
     }
 
-    protected override async void OnStartup(StartupEventArgs e)
+    protected override void OnStartup(StartupEventArgs e)
     {
-        await Host.StartAsync();
+        base.OnStartup(e);
+
+        Host.Start();
 
         // Mặc định load LoginView vào MainWindow
         var mainViewModel = Host.Services.GetRequiredService<MainWindowViewModel>();
@@ -70,9 +88,8 @@ public partial class App : Application
         mainViewModel.CurrentView = loginView;
 
         var mainWindow = Host.Services.GetRequiredService<MainWindow>();
+        MainWindow = mainWindow;
         mainWindow.Show();
-
-        base.OnStartup(e);
     }
 
     protected override async void OnExit(ExitEventArgs e)

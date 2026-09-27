@@ -17,9 +17,13 @@ public static class ServiceCollectionExtensions
     {
         // ── Services ──────────────────────────────────────────────
         services.AddSingleton<SessionService>();
+        services.AddSingleton<NetworkStatusService>();
 
-        // ── ApiClients ────────────────────────────────────────────
+        // ── ApiClients & Handlers ──────────────────────────────────
+        services.AddTransient<NetworkStatusHandler>();
         services.AddTransient<StoreApiClient>();
+        services.AddTransient<AuthApiClient>();
+        services.AddTransient<HealthApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();

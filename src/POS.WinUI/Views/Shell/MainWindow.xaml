@@ -7,10 +7,10 @@
         xmlns:viewModels="clr-namespace:POS.WinUI.ViewModels.Shell"
         mc:Ignorable="d"
         Title="{Binding Title}" 
-        Height="768" 
-        Width="1024"
-        MinHeight="600"
-        MinWidth="800"
+        Height="800" 
+        Width="1200"
+        MinHeight="680"
+        MinWidth="1000"
         WindowStartupLocation="CenterScreen">
 
     <Grid>
@@ -23,6 +23,6 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding Title}" />
 
         <!-- Main Content Area -->
-        <ContentControl Grid.Row="1" Content="{Binding CurrentView}" Margin="16"/>
+        <ContentControl Grid.Row="1" Content="{Binding CurrentView}"/>
     </Grid>
 </ui:FluentWindow>
