@@ -22,6 +22,7 @@ public partial class LoginViewModel : ObservableObject
     // ── Stores ────────────────────────────────────────────────────
     [ObservableProperty] private ObservableCollection<StoreItem> _stores = new();
     [ObservableProperty] private StoreItem? _selectedStore;
+    [ObservableProperty] private bool _isLoadingStores = false;
 
     // ── Login form ────────────────────────────────────────────────
     [ObservableProperty] private string _username = string.Empty;
@@ -89,6 +90,7 @@ public partial class LoginViewModel : ObservableObject
 
     private async Task LoadStoresAsync()
     {
+        IsLoadingStores = true;
         try
         {
             var res = await _storeApiClient.GetPublicStoresAsync();
@@ -105,6 +107,10 @@ public partial class LoginViewModel : ObservableObject
         catch
         {
             // NetworkStatusHandler đã tự động bắt lỗi và gọi ReportFailure()
+        }
+        finally
+        {
+            IsLoadingStores = false;
         }
     }
 

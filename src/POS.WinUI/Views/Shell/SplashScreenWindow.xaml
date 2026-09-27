@@ -1,0 +1,72 @@
+<Window x:Class="POS.WinUI.Views.Shell.SplashScreenWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        Title="OraPOS"
+        Width="440"
+        Height="260"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        Topmost="True">
+
+    <!-- Card nổi bo góc 28px chuẩn OraPOS Design System -->
+    <Border Background="{StaticResource CardBackgroundBrush}"
+            CornerRadius="28"
+            BorderBrush="{StaticResource InputBorderBrush}"
+            BorderThickness="1"
+            Margin="16"
+            Padding="32,28">
+        <Border.Effect>
+            <!-- DropShadow soft tông ấm #1E0A02 -->
+            <DropShadowEffect BlurRadius="36" Color="#1E0A02" Opacity="0.18" ShadowDepth="8" Direction="270"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Cụm Logo + Thương hiệu trung tâm -->
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border Width="56" Height="56" CornerRadius="16"
+                        Background="{StaticResource PrimaryBrush}"
+                        HorizontalAlignment="Center">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="12" Color="{StaticResource BrandPrimaryColor}" Opacity="0.4" ShadowDepth="0"/>
+                    </Border.Effect>
+                    <ui:SymbolIcon Symbol="BuildingShop24" FontSize="28" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <TextBlock Text="OraPOS" FontSize="26" FontWeight="Black"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                
+                <TextBlock Text="Quầy Thu Ngân • Retail POS" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           HorizontalAlignment="Center" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <!-- Thanh Loading vô tận màu cam ở đáy card -->
+            <StackPanel Grid.Row="1" Margin="0,16,0,0">
+                <!-- Thanh Progress mỏng chạy sóng mượt mà -->
+                <ProgressBar IsIndeterminate="True" Height="4"
+                             Foreground="{StaticResource PrimaryBrush}"
+                             Background="{StaticResource SegmentedBackgroundBrush}"
+                             BorderThickness="0"/>
+                
+                <Grid Margin="0,8,0,0">
+                    <TextBlock x:Name="TxtStatus" Text="Đang khởi động..." FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource TextPlaceholderBrush}"/>
+                    <TextBlock Text="v1.0.0" HorizontalAlignment="Right" FontSize="11" FontWeight="Medium"
+                               Foreground="{StaticResource TextPlaceholderBrush}"/>
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

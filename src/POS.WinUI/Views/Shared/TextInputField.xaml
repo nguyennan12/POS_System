@@ -4,13 +4,49 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              x:Name="Root">
 
-    <!--
-        Input text generic có icon + placeholder tái sử dụng được ở mọi màn hình (Auth, Customer, Order, Inventory...)
-        DPs: Icon (SymbolRegular), PlaceholderText (string), Text (string, TwoWay).
-    -->
-    <Border Background="{StaticResource InputBackgroundBrush}"
+    <UserControl.Resources>
+        <!-- Style làm sạch TextBox bên trong: bỏ viền/nền mặc định của WPF-UI, thêm padding trên/dưới rộng rãi -->
+        <Style x:Key="CleanInnerTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="8,10,8,10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="Transparent" BorderThickness="0">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          VerticalAlignment="Center"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Khung Input bo góc chuẩn 12px, chiều cao 50px -->
+    <Border x:Name="ContainerBorder"
+            Background="{StaticResource InputBackgroundBrush}"
             BorderBrush="{StaticResource InputBorderBrush}"
-            BorderThickness="1" CornerRadius="12" Height="50">
+            BorderThickness="1" 
+            CornerRadius="12" 
+            Height="50">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <!-- Đổi màu viền sang màu cam thương hiệu khi người dùng focus vào ô nhập -->
+                    <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=Root}" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryAccentBrush}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
         <Grid Margin="12,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -22,18 +58,14 @@
                            Symbol="{Binding Icon, ElementName=Root}"
                            FontSize="18"
                            Foreground="{StaticResource TextPlaceholderBrush}"
-                           Margin="0,0,10,0"
+                           Margin="0,0,8,0"
                            VerticalAlignment="Center"/>
 
             <!-- TextBox + Placeholder -->
             <Grid Grid.Column="1" VerticalAlignment="Center">
                 <TextBox x:Name="InnerTextBox"
-                         Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         FontSize="14"
-                         Padding="6,0,0,0"
-                         VerticalAlignment="Center"/>
+                         Style="{StaticResource CleanInnerTextBoxStyle}"
+                         Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
                 <TextBlock Text="{Binding PlaceholderText, ElementName=Root}"
                            Foreground="{StaticResource TextPlaceholderBrush}"
