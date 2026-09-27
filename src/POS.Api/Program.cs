@@ -60,6 +60,7 @@ try
   app.UseAuthorization();
 
   app.MapControllers();
+  app.MapHealthChecks("/health");
   app.MapHealthChecks("/health/db");
 
   // ---------- Auto-migrate & Seed data khi khởi động ----------

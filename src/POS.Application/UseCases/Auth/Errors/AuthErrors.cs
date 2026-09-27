@@ -12,7 +12,7 @@ public static class AuthErrors
   public static readonly Error AccountLocked = new(
         ErrorType.Forbidden,
         "AUTH.ACCOUNT_LOCKED",
-        "Tài khoản đang bị khóa.");
+        "Thiết bị đăng nhập PIN sai quá nhiều lần. Vui lòng thử lại sau 15 phút.");
 
   public static readonly Error PinLoginRateLimited = new(
         ErrorType.Forbidden,

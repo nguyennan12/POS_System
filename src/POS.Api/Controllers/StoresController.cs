@@ -20,6 +20,15 @@ namespace POS.Api.Controllers;
 [Route("api/v1/stores")]
 public class StoresController(ISender mediator) : ControllerBase
 {
+  [AllowAnonymous]
+  [HttpGet("public")]
+  public async Task<ActionResult<ApiResponse<List<StoreResponse>>>> GetPublicStores(CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(new POS.Application.UseCases.Stores.Queries.GetPublicStores.GetPublicStoresQuery(), cancellationToken);
+    if (result.IsFailure) return this.ToActionResult(result);
+    return Ok(ApiResponse<List<StoreResponse>>.Ok(result.Value!.Select(s => s.ToResponse()).ToList()));
+  }
+
   [HttpGet]
   public async Task<ActionResult<ApiResponse<List<StoreResponse>>>> GetAll(CancellationToken cancellationToken)
   {
