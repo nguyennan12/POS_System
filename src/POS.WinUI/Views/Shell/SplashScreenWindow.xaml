@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="OraPOS"
-        Width="440"
-        Height="260"
+        Width="460"
+        Height="290"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -33,19 +33,56 @@
 
             <!-- Cụm Logo + Thương hiệu trung tâm -->
             <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border Width="56" Height="56" CornerRadius="16"
-                        Background="{StaticResource PrimaryBrush}"
-                        HorizontalAlignment="Center">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="12" Color="{StaticResource BrandPrimaryColor}" Opacity="0.4" ShadowDepth="0"/>
-                    </Border.Effect>
-                    <ui:SymbolIcon Symbol="BuildingShop24" FontSize="28" Foreground="White"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
+                <Grid Width="100" Height="100" HorizontalAlignment="Center">
+                    <!-- Vùng sáng Ambient Glow khuếch tán phía sau -->
+                    <Ellipse Width="100" Height="100" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush>
+                                <GradientStop Color="#45ED7A1C" Offset="0.0"/>
+                                <GradientStop Color="#18ED7A1C" Offset="0.55"/>
+                                <GradientStop Color="#00ED7A1C" Offset="1.0"/>
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
 
-                <TextBlock Text="OraPOS" FontSize="26" FontWeight="Black"
+                    <!-- Logo với hiệu ứng Breathing (nhịp thở 60fps tinh tế) -->
+                    <Image Source="/Assets/logo.png" Width="76" Height="76"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <ScaleTransform x:Name="LogoScale" ScaleX="1.0" ScaleY="1.0"/>
+                        </Image.RenderTransform>
+                        <Image.Triggers>
+                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                        <DoubleAnimation Storyboard.TargetName="LogoScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         From="0.96" To="1.04"
+                                                         Duration="0:0:1.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseInOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="LogoScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         From="0.96" To="1.04"
+                                                         Duration="0:0:1.3">
+                                            <DoubleAnimation.EasingFunction>
+                                                <SineEase EasingMode="EaseInOut"/>
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Image.Triggers>
+                    </Image>
+                </Grid>
+
+                <TextBlock Text="OraPOS" FontSize="28" FontWeight="Black"
                            Foreground="{StaticResource TextPrimaryBrush}"
-                           HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                           HorizontalAlignment="Center" Margin="0,4,0,0"/>
                 
                 <TextBlock Text="Quầy Thu Ngân • Retail POS" FontSize="13" FontWeight="SemiBold"
                            Foreground="{StaticResource TextMutedBrush}"

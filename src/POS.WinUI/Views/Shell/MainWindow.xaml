@@ -19,8 +19,8 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" />
+        <!-- Title Bar (Thanh tiêu đề thu gọn chiều cao) -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" Height="32" />
 
         <!-- Main Content Area -->
         <ContentControl Grid.Row="1" Content="{Binding CurrentView}"/>
