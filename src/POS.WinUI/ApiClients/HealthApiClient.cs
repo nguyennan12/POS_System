@@ -1,11 +1,11 @@
-using System;
 using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
+using POS.WinUI.Constants;
 using POS.WinUI.Services;
 
 namespace POS.WinUI.ApiClients;
 
+
+[Obsolete("Use NetworkStatusService.CheckHealthAsync() instead. This class will be removed in a future cleanup.", error: false)]
 public sealed class HealthApiClient : BaseApiClient
 {
     public HealthApiClient(HttpClient http, SessionService session)
@@ -17,29 +17,12 @@ public sealed class HealthApiClient : BaseApiClient
     {
         try
         {
-            var response = await _http.GetAsync("health", ct);
+            var response = await _http.GetAsync(ApiRoutes.Health, ct);
             return response.IsSuccessStatusCode;
         }
         catch
         {
             return false;
-        }
-    }
-
-    public async Task<string> CheckDatabaseHealthAsync(CancellationToken ct = default)
-    {
-        try
-        {
-            var response = await _http.GetAsync("health/db", ct);
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadAsStringAsync(ct);
-            }
-            return "Unhealthy";
-        }
-        catch (Exception ex)
-        {
-            return $"Lỗi kết nối: {ex.Message}";
         }
     }
 }

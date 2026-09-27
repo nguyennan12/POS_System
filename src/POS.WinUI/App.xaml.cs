@@ -7,8 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using POS.WinUI.ApiClients;
 using POS.WinUI.Extensions;
-using POS.WinUI.ViewModels.Auth;
-using POS.WinUI.ViewModels.Shell;
+using POS.WinUI.Services;
 using POS.WinUI.Views.Auth;
 using POS.WinUI.Views.Shell;
 
@@ -18,28 +17,36 @@ public partial class App : Application
 {
     private static IHost? _host;
 
-    public static IHost Host => _host ?? throw new InvalidOperationException("Host is not initialized");
-
+    public static IHost Host => _host ?? throw new InvalidOperationException("Host chưa được khởi tạo.");
     public static IServiceProvider Services => Host.Services;
 
     public App()
     {
+        // Bắt exception không xử lý ở cấp UI thread
         DispatcherUnhandledException += (s, e) =>
         {
-            MessageBox.Show($"Lỗi giao diện: {e.Exception.Message}\n{e.Exception.InnerException?.Message}", "POS Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                $"Lỗi giao diện: {e.Exception.Message}\n{e.Exception.InnerException?.Message}",
+                "POS Error", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         };
 
+        // Bắt exception không xử lý ở thread khác
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
             if (e.ExceptionObject is Exception ex)
-            {
                 MessageBox.Show($"Lỗi hệ thống: {ex.Message}", "POS Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         };
+    }
 
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        // Build host tại đây để exception xảy ra sau khi WPF App đã sẵn sàng,
+        // giúp DispatcherUnhandledException có thể bắt và hiển thị cho user.
         _host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-            .ConfigureAppConfiguration((context, config) =>
+            .ConfigureAppConfiguration((_, config) =>
             {
                 config.SetBasePath(AppContext.BaseDirectory)
                       .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -50,7 +57,7 @@ public partial class App : Application
             {
                 var apiBaseUrl = context.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5000/";
 
-                // Đăng ký HttpClient chung với base URL + NetworkStatusHandler + Polly retry
+                // HttpClient chính cho toàn bộ ApiClients: có resilience + NetworkStatusHandler
                 services.AddHttpClient("PosApi", client =>
                 {
                     client.BaseAddress = new Uri(apiBaseUrl);
@@ -60,11 +67,11 @@ public partial class App : Application
                 .AddHttpMessageHandler<NetworkStatusHandler>()
                 .AddStandardResilienceHandler();
 
-                // Lấy HttpClient mặc định cho tất cả ApiClients
+                // HttpClient mặc định resolve cho tất cả ApiClients
                 services.AddTransient(sp =>
                     sp.GetRequiredService<IHttpClientFactory>().CreateClient("PosApi"));
 
-                // Đăng ký toàn bộ WPF UI services, ViewModels, Views
+                // Toàn bộ WPF UI services, ViewModels, Views
                 services.AddWinUIServices();
             })
             .ConfigureLogging(logging =>
@@ -74,20 +81,14 @@ public partial class App : Application
                 logging.AddDebug();
             })
             .Build();
-    }
 
-    protected override void OnStartup(StartupEventArgs e)
-    {
-        base.OnStartup(e);
+        _host.Start();
 
-        Host.Start();
+        // Dùng INavigationService để navigate đến LoginView — không hard-code nữa
+        var nav = _host.Services.GetRequiredService<INavigationService>();
+        nav.NavigateTo<LoginView>();
 
-        // Mặc định load LoginView vào MainWindow
-        var mainViewModel = Host.Services.GetRequiredService<MainWindowViewModel>();
-        var loginView = Host.Services.GetRequiredService<LoginView>();
-        mainViewModel.CurrentView = loginView;
-
-        var mainWindow = Host.Services.GetRequiredService<MainWindow>();
+        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = mainWindow;
         mainWindow.Show();
     }

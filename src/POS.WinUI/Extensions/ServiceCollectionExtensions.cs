@@ -15,15 +15,18 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddWinUIServices(this IServiceCollection services)
     {
-        // ── Services ──────────────────────────────────────────────
+        // ── Core Services ─────────────────────────────────────────
         services.AddSingleton<SessionService>();
         services.AddSingleton<NetworkStatusService>();
+
+        // INavigationService là Singleton vì giữ ref đến MainWindowViewModel
+        services.AddSingleton<INavigationService, NavigationService>();
 
         // ── ApiClients & Handlers ──────────────────────────────────
         services.AddTransient<NetworkStatusHandler>();
         services.AddTransient<StoreApiClient>();
         services.AddTransient<AuthApiClient>();
-        services.AddTransient<HealthApiClient>();
+        // HealthApiClient đã bị [Obsolete] — không đăng ký để tránh dùng nhầm
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();

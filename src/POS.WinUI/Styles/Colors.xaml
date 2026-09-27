@@ -1,11 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- ========================================================= -->
     <!-- 1. BẢNG MÃ MÀU GỐC TẬP TRUNG (BRAND BASE COLORS)          -->
-    <!-- Đổi màu chủ đạo tại đây, toàn bộ Brush & Shadow sẽ đổi theo-->
-    <!-- ========================================================= -->
-    <!-- Tông Cam Vàng Ấm (Warm Amber-Orange - thêm sắc vàng ấm, dịu mắt và sang trọng) -->
     <Color x:Key="BrandPrimaryColor">#ED7A1C</Color>
     <Color x:Key="BrandHoverColor">#D6680D</Color>
     <Color x:Key="BrandPressedColor">#B75304</Color>
@@ -22,9 +18,7 @@
     <Color x:Key="DangerBgColor">#FEF2F2</Color>
     <Color x:Key="DangerBorderColor">#FECACA</Color>
 
-    <!-- ========================================================= -->
     <!-- 2. CỌ VẼ THƯƠNG HIỆU (SOLID COLOR BRUSHES)                -->
-    <!-- ========================================================= -->
     <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource BrandPrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource BrandPrimaryColor}" />
     <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource BrandHoverColor}" />

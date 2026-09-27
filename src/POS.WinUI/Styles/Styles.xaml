@@ -2,9 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
 
-    <!-- ========================================== -->
-    <!--         GLOBAL REUSABLE COMPONENT STYLES   -->
-    <!-- ========================================== -->
 
     <!-- Style cho Chấm tròn PIN -->
     <Style x:Key="PinDotStyle" TargetType="Border">
@@ -98,6 +95,29 @@
                             <Setter Property="Foreground" Value="{StaticResource TextPlaceholderBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--        Base Style cho Segmented Tab Button.    -->
+    <Style x:Key="SegmentedTabButtonStyle" TargetType="Button">
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <!-- Effect="{TemplateBinding Effect}" cho phép Style.Triggers bên ngoài set shadow -->
+                    <Border CornerRadius="10"
+                            Background="{TemplateBinding Background}"
+                            Effect="{TemplateBinding Effect}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
