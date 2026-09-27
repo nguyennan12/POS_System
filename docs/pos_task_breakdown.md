@@ -3,7 +3,7 @@
 > **Tài liệu**: Task Breakdown & Sprint Recommendation chuẩn Agile/Scrum  
 > **Dự án**: POS-System (.NET 10 Web API + WinUI / WinForms + PostgreSQL 17 + Redis)  
 > **Mục đích**: Sử dụng trực tiếp để quản lý và theo dõi tiến độ trên Trello / Jira  
-> **Quy chuẩn mã Task**: Đánh số tuần tự từ **T01** đến **T62** (T01 – T10: Đã hoàn thành; T11 – T62: Cần triển khai)
+> **Quy chuẩn mã Task**: Đánh số tuần tự từ **T01** đến **T63** (T01 – T10: Đã hoàn thành; T11 – T63: Cần triển khai)
 
 ---
 
@@ -88,6 +88,7 @@ POS-System
 │   └── Feature 1.3: Employee & Store Access Management
 │       ├── [BE] Complete Store Management (Update, Status, Assign Admin) (T19)
 │       ├── [BE] Implement Employee Management (CRUD, Lock, PIN Reset) (T20)
+│       ├── [ARCH/BE] Extract Store Access Control into Policy Pattern (T63)
 │       └── [FE] Implement Employee Management Screen (T21)
 │
 ├── EPIC 02: Product Catalog & Pricing Management
@@ -228,6 +229,7 @@ POS-System
 | **T60** | Configure Production Docker Stack (Nginx SSL + Loki/Prometheus)             | DEVOPS   | DEVOPS    | MISSING       | P1 - High     | T14, T02           |
 | **T61** | Apply `IRequirePermission` to API Commands                                    | FEATURE  | BE        | MISSING       | P1 - High     | T16, T17           |
 | **T62** | Seed Default Store Category Tree                                        | FEATURE  | DB        | MISSING       | P1 - High     | T03, T08           |
+| **T63** | Extract Store Access Control into Policy Pattern                         | REFACTOR | BE        | MISSING       | P1 - High     | T16, T17, T19      |
 
 ---
 
@@ -1020,6 +1022,27 @@ POS-System
   - Tất cả category có `IsVisible = true`, `ImageUrl = null`, `DisplayOrder` ổn định và thuộc cùng một `StoreId`.
   - Seeder idempotent: chạy lại không tạo bản ghi trùng hoặc tạo thêm category mới.
 - **Estimated Size:** M
+
+---
+
+### T63 — [ARCH/BE][REFACTOR] Extract Store Access Control into Policy Pattern
+
+- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** ARCH / BE
+- **Description:** Tách logic kiểm tra quyền Store và RBAC khỏi handler bằng Policy Pattern để dễ mock khi test và dễ thay đổi cách phân quyền.
+- **Implementation:**
+  - Tạo `IStoreAccessPolicy` trong `POS.Application/Abstractions/Auth/`.
+  - Tạo `StoreAccessPolicy` để gom logic từ `StoreManagementAccess` và `RoleAccessControl`.
+  - Inject policy vào các Store/RBAC handlers thay cho việc gọi static class.
+  - Đăng ký `IStoreAccessPolicy` với lifetime `Scoped` trong `DependencyInjection.cs`.
+  - Xóa `StoreManagementAccess.cs` và `RoleAccessControl.cs` sau khi refactor.
+- **Dependencies:** T16, T17, T19
+- **API Contracts:** Không thay đổi public API contract; chỉ thay đổi dependency và implementation boundary trong Application layer.
+- **Acceptance Criteria:**
+  - Không còn handler nào gọi `StoreManagementAccess` hoặc `RoleAccessControl`.
+  - Giữ nguyên kết quả kiểm tra `Unauthorized`, `Forbidden`, Owner và quyền truy cập Store/RBAC.
+  - Unit test có thể mock `IStoreAccessPolicy` bằng `Substitute.For<IStoreAccessPolicy>()`.
+  - Solution build thành công và toàn bộ test pass.
+- **Estimated Size:** L
 
 ---
 

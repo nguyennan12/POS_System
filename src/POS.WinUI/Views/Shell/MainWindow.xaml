@@ -1,0 +1,28 @@
+<ui:FluentWindow x:Class="POS.WinUI.Views.Shell.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:viewModels="clr-namespace:POS.WinUI.ViewModels.Shell"
+        mc:Ignorable="d"
+        Title="{Binding Title}" 
+        Height="800" 
+        Width="1200"
+        MinHeight="680"
+        MinWidth="1000"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title Bar (Thanh tiêu đề thu gọn chiều cao) -->
+        <ui:TitleBar Grid.Row="0" Title="{Binding Title}" Height="32" />
+
+        <!-- Main Content Area -->
+        <ContentControl Grid.Row="1" Content="{Binding CurrentView}"/>
+    </Grid>
+</ui:FluentWindow>

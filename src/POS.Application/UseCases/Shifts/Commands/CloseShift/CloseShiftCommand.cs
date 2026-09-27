@@ -1,3 +1,4 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Shifts.Commands.CloseShift;
@@ -6,7 +7,10 @@ public record CloseShiftCommand(
     Guid ShiftId,
     decimal ActualCash,
     string? Note
-) : ICommand<ShiftSummaryDto>;
+) : ICommand<ShiftSummaryDto>, IRequirePermission
+{
+    public string RequiredPermission => "shifts:update";
+}
 
 public record ShiftSummaryDto(
     Guid ShiftId,

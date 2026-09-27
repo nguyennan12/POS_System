@@ -117,11 +117,15 @@ public class PromotionEngine : IPromotionEngine
                 if (!promo.IsStackable && hasNonStackableCartApplied)
                     continue;
 
-                decimal remainingSubtotal = workingItems.Sum(i => i.RemainingAmount);
-                if (remainingSubtotal <= 0)
-                    break;
+                var eligibleCartItems = FilterEligibleItems(promo, workingItems)
+                    .Where(i => i.RemainingAmount > 0)
+                    .ToList();
 
-                var discount = ApplyCartPromotion(promo, workingItems, remainingSubtotal);
+                decimal eligibleSubtotal = eligibleCartItems.Sum(i => i.RemainingAmount);
+                if (eligibleSubtotal <= 0)
+                    continue;
+
+                var discount = ApplyCartPromotion(promo, eligibleCartItems, eligibleSubtotal);
                 if (discount > 0)
                 {
                     var appliedResult = new AppliedPromotionResult(
@@ -361,25 +365,25 @@ public class PromotionEngine : IPromotionEngine
         return totalPromoDiscount;
     }
 
-    /// <summary>Applies a cart-level promotion across the remaining item balances.</summary>
+    /// <summary>Applies a cart-level promotion across the eligible item balances.</summary>
     private static decimal ApplyCartPromotion(
         Promotion promo,
-        List<WorkingCartItem> items,
-        decimal remainingSubtotal)
+        List<WorkingCartItem> eligibleItems,
+        decimal eligibleSubtotal)
     {
         decimal discount = 0;
 
         if (promo.Type == PromotionType.CartPercent || promo.Type == PromotionType.HappyHour)
         {
             decimal rate = promo.Value > 1m ? promo.Value / 100m : promo.Value;
-            discount = Math.Round(remainingSubtotal * rate, 2);
+            discount = Math.Round(eligibleSubtotal * rate, 2);
         }
         else if (promo.Type == PromotionType.CartFixed)
         {
             discount = promo.Value;
         }
 
-        discount = Math.Min(discount, remainingSubtotal);
+        discount = Math.Min(discount, eligibleSubtotal);
 
         if (promo.MaxDiscountAmount.HasValue)
         {
@@ -389,21 +393,20 @@ public class PromotionEngine : IPromotionEngine
         if (discount <= 0)
             return 0;
 
-        // Phân bổ chiết khấu toàn đơn tỷ lệ thuận theo giá trị còn lại của từng dòng
+        // Phân bổ chiết khấu tỷ lệ thuận theo giá trị còn lại của các dòng trong nhóm target
         decimal allocated = 0;
-        var activeItems = items.Where(i => i.RemainingAmount > 0).ToList();
 
-        for (int idx = 0; idx < activeItems.Count; idx++)
+        for (int idx = 0; idx < eligibleItems.Count; idx++)
         {
-            var item = activeItems[idx];
+            var item = eligibleItems[idx];
             decimal share;
-            if (idx == activeItems.Count - 1)
+            if (idx == eligibleItems.Count - 1)
             {
                 share = discount - allocated; // Đảm bảo làm tròn không bị lệch 1 đồng
             }
             else
             {
-                share = Math.Round(discount * (item.RemainingAmount / remainingSubtotal), 2);
+                share = Math.Round(discount * (item.RemainingAmount / eligibleSubtotal), 2);
                 allocated += share;
             }
 

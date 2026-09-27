@@ -32,4 +32,11 @@ public class Role : BaseEntity
 
     public ICollection<Employee> Employees { get; private set; } = new List<Employee>();
     public ICollection<RolePermission> RolePermissions { get; private set; } = new List<RolePermission>();
+
+    public void Update(string name, string? description)
+    {
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Description = description;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

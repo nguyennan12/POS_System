@@ -9,6 +9,23 @@ public class OrderDiscount : BaseEntity
     {
     }
 
+    public OrderDiscount(
+        Guid orderId,
+        Guid? promotionId,
+        Guid? voucherId,
+        decimal discountAmount,
+        string? description,
+        DateTime appliedAt,
+        Guid? id = null) : base(id)
+    {
+        OrderId = orderId;
+        PromotionId = promotionId;
+        VoucherId = voucherId;
+        DiscountAmount = Math.Max(0, discountAmount);
+        Description = description;
+        AppliedAt = appliedAt;
+    }
+
     public Guid OrderId { get; private set; }
     public Order Order { get; private set; } = default!;
 

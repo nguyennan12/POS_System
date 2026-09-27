@@ -1,30 +1,41 @@
 using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.ApiClients;
-using POS.WinUI.Forms.Stores;
-using POS.WinUI.Presenters;
 using POS.WinUI.Services;
+using POS.WinUI.ViewModels.Auth;
+using POS.WinUI.ViewModels.Shell;
+using POS.WinUI.Views.Auth;
+using POS.WinUI.Views.Shell;
 
 namespace POS.WinUI.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  /// Đăng ký toàn bộ services của tầng WinUI vào DI container.
-  public static IServiceCollection AddWinUIServices(this IServiceCollection services)
-  {
-    // ── Services ──────────────────────────────────────────────
-    services.AddSingleton<SessionService>();
+    /// <summary>
+    /// Đăng ký toàn bộ services, ViewModels, Views của tầng WPF UI vào DI container.
+    /// </summary>
+    public static IServiceCollection AddWinUIServices(this IServiceCollection services)
+    {
+        // ── Core Services ─────────────────────────────────────────
+        services.AddSingleton<SessionService>();
+        services.AddSingleton<NetworkStatusService>();
 
-    // ── ApiClients ────────────────────────────────────────────
-    services.AddTransient<StoreApiClient>();
+        // INavigationService là Singleton vì giữ ref đến MainWindowViewModel
+        services.AddSingleton<INavigationService, NavigationService>();
 
-    // ── Presenters ────────────────────────────────────────────
-    services.AddTransient<StorePresenter>();
+        // ── ApiClients & Handlers ──────────────────────────────────
+        services.AddTransient<NetworkStatusHandler>();
+        services.AddTransient<StoreApiClient>();
+        services.AddTransient<AuthApiClient>();
+        // HealthApiClient đã bị [Obsolete] — không đăng ký để tránh dùng nhầm
 
-    // ── Forms ─────────────────────────────────────────────────
-    services.AddTransient<frmStoreList>();
-    services.AddTransient<frmStoreEdit>();
+        // ── ViewModels ────────────────────────────────────────────
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddTransient<LoginViewModel>();
 
+        // ── Views ─────────────────────────────────────────────────
+        services.AddSingleton<MainWindow>();
+        services.AddTransient<LoginView>();
 
-    return services;
-  }
+        return services;
+    }
 }

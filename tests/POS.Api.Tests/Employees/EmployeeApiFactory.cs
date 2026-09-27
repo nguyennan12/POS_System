@@ -184,6 +184,13 @@ internal sealed class ObservableCache : ICacheService
         values.TryRemove(key, out _);
         Removed.Enqueue(key);
     }
+    public async Task RemoveRangeAsync(IEnumerable<string> keys, CancellationToken cancellationToken = default)
+    {
+        foreach (var key in keys)
+        {
+            await RemoveAsync(key, cancellationToken);
+        }
+    }
 }
 
 internal sealed class SnapshotBarrier : DbCommandInterceptor

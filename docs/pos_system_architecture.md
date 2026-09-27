@@ -1,7 +1,7 @@
 # 🏪 Kiến Trúc Hệ Thống POS
 
-> **Mô hình**: WinForms .NET 10 (Client) + ASP.NET Core Web API (Cloud Server) + PostgreSQL
-> **Pattern**: MVP (WinForms UI) + Service + Repository Pattern + DI
+> **Mô hình**: WPF .NET 10 (Client, Fluent WPF-UI) + ASP.NET Core Web API (Cloud Server) + PostgreSQL
+> **Pattern**: MVVM (WPF UI with CommunityToolkit.Mvvm) + Clean Architecture (Application/Domain/Infrastructure) + DI
 > **Auth & Logging**: JWT Bearer + Đăng nhập PIN/Password & Grafana Stack (Loki + Prometheus + Grafana)
 > **Triển khai**: Docker + Docker Compose (dev & production)
 
@@ -31,50 +31,49 @@
  │   └─────────────────────────────────────────────────────────────────┘   │
  └─────────────────────────────────────────────────────────────────────────┘
               ▲                                        ▲
-              |                                        |
+              │                                        │
               │ HTTPS REST + JWT                       │ HTTP REST
  ┌────────────┴──────────┐                ┌────────────┴──────────────┐
- │   WinForms .NET 10    │                │   Web Client (Tương lai)  │
- │   (Quầy thu ngân)     │                │   React / Blazor / Vue    │
+ │     WPF .NET 10       │                │   Web Client (Tương lai)  │
+ │   (Fluent WPF-UI)     │                │   React / Blazor / Vue    │
  │   Store A: Quầy 1,2,3 │                │   (Admin Dashboard)       │
  │   Store B: Quầy 1,2   │                │                           │
  └───────────────────────┘                └───────────────────────────┘
 ```
 
-> Toàn bộ khối "CLOUD SERVER" (API, PostgreSQL, Redis, Nginx, monitoring stack) chạy trong Docker. WinForms là app desktop cài trực tiếp lên máy Windows tại quầy — không chạy trong container, chỉ gọi API qua HTTPS ra ngoài.
+> Toàn bộ khối "CLOUD SERVER" (API, PostgreSQL, Redis, Nginx, monitoring stack) chạy trong Docker. WPF là app desktop cài trực tiếp lên máy Windows tại quầy — không chạy trong container, chỉ gọi API qua HTTPS ra ngoài.
 
 ---
 
-## 2. 🏗️ KIẾN TRÚC LAYER — MVP + Service + Repository
+## 2. 🏗️ KIẾN TRÚC LAYER — MVVM + Clean Architecture
 
 ### Nguyên tắc cốt lõi
 
-- **UI (WinForms)** không biết gì về DB, chỉ gọi API
-- **Presenter** điều phối giữa View và Service — có thể unit test
-- **Service** chứa business logic — có thể unit test vì dùng Interface
-- **Repository** ẩn EF Core — chỉ Service biết Repository
-- **DI Container** kết nối tất cả — swap implementation dễ dàng
+- **UI (WPF XAML)**: Giao diện người dùng Declarative, hỗ trợ High-DPI, Data Binding 2 chiều với ViewModel.
+- **ViewModel (CommunityToolkit.Mvvm)**: Quản lý trạng thái UI, commands, điều phối gọi `ApiClient` — dễ dàng Unit Test độc lập với View.
+- **API Client Layer**: Đóng gói các lời gọi HTTP REST API sang backend, tích hợp Polly (Retry, Circuit Breaker).
+- **Contracts**: Dùng chung các DTO / Request / Response giữa Client và Server.
+- **DI Container & Generic Host**: Quản lý vòng đời `MainWindow`, `Views`, `ViewModels`, `ApiClients` và các nền tảng ngoại vi (In ấn ESC/POS, Quét mã vạch).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    WINFORMS CLIENT (.NET 10)                 │
+│                      WPF CLIENT (.NET 10)                    │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐     │
-│  │  View Layer (Forms)                                 │     │
-│  │  frmSalesMain | frmProduct | frmInventory | ...     │     │
-│  │  Implement IXxxView interface                       │     │
-│  │  Chỉ hiển thị UI, không có logic                    │     │
+│  │  View Layer (XAML Views & Fluent UI)                │     │
+│  │  MainWindow | PosMainView | LoginView | ...         │     │
+│  │  Chỉ hiển thị UI & Data Binding qua DataContext     │     │
 │  └──────────────────────┬──────────────────────────────┘     │
-│                         │ gọi / nhận event                   │
+│                         │ Data Binding 2 chiều & Commands    │
 │  ┌──────────────────────▼──────────────────────────────┐     │
-│  │  Presenter Layer                                    │     │
-│  │  ProductPresenter | OrderPresenter | ...            │     │
-│  │  Điều phối View ↔ ApiClient                         │     │
+│  │  ViewModel Layer (CommunityToolkit.Mvvm)            │     │
+│  │  MainWindowViewModel | PosMainViewModel | ...       │     │
+│  │  ObservableProperty, RelayCommand, UI state logic   │     │
 │  └──────────────────────┬──────────────────────────────┘     │
 │                         │ gọi HTTP                           │
 │  ┌──────────────────────▼──────────────────────────────┐     │
 │  │  API Client Layer                                   │     │
-│  │  ProductApiClient | OrderApiClient | ...            │     │
+│  │  AuthApiClient | ProductApiClient | OrderApiClient  │     │
 │  │  HttpClient + Polly (retry, circuit breaker)        │     │
 │  └─────────────────────────────────────────────────────┘     │
 └──────────────────────────────────────────────────────────────┘
@@ -278,63 +277,74 @@ POS.sln
 │   │   └── PdfReportService.cs          ← QuestPDF
 │   └── DependencyInjection.cs           ← Extension method đăng ký services
 │
-├── 🖥️ POS.WinForms/                     (.NET 10 WinForms)
-│   ├── Forms/
+├── 🖥️ POS.WinUI/                     (.NET 10 WPF + Fluent WPF-UI)
+│   ├── App.xaml / App.xaml.cs       ← Host bootstrap, DI registration, Theme resources
+│   ├── appsettings.json             ← Config BaseUrl, Logging
+│   ├── Views/                       ← XAML Views (Fluent UI)
+│   │   ├── Shell/
+│   │   │   └── MainWindow.xaml      ← Cửa sổ chính chứa TitleBar & Navigation
 │   │   ├── Auth/
-│   │   │   └── frmLogin.cs
+│   │   │   └── LoginView.xaml       ← Đăng nhập Username/Password & PIN 6 số
 │   │   ├── Dashboard/
-│   │   │   └── frmDashboard.cs          ← Màn hình đầu tiên sau đăng nhập
+│   │   │   └── DashboardView.xaml   ← Màn hình tổng quan sau đăng nhập
 │   │   ├── Sales/
-│   │   │   ├── frmSalesMain.cs          ← Màn hình bán hàng chính
-│   │   │   ├── frmPaymentDialog.cs      ← Dialog chọn thanh toán + QR
-│   │   │   └── frmInvoiceView.cs        ← Xem lại / in lại hóa đơn
+│   │   │   ├── PosMainView.xaml     ← Màn hình bán hàng / thu ngân
+│   │   │   ├── CartView.xaml        ← Component giỏ hàng real-time
+│   │   │   ├── PaymentDialog.xaml   ← Modal chọn thanh toán & hiển thị VietQR / MoMo
+│   │   │   └── InvoiceHistoryView.xaml ← Tra cứu / in lại hóa đơn
 │   │   ├── Employees/
-│   │   │   ├── frmEmployeeList.cs
-│   │   │   └── frmEmployeeEdit.cs
+│   │   │   ├── EmployeeListView.xaml
+│   │   │   └── EmployeeEditDialog.xaml
 │   │   ├── Stores/
-│   │   │   ├── frmStoreList.cs          ← Owner: danh sách cửa hàng trong chuỗi
-│   │   │   └── frmStoreEdit.cs
+│   │   │   ├── StoreListView.xaml
+│   │   │   └── StoreEditDialog.xaml
 │   │   ├── Products/
-│   │   │   ├── frmProductList.cs
-│   │   │   └── frmProductEdit.cs
+│   │   │   ├── ProductListView.xaml
+│   │   │   └── ProductEditDialog.xaml
 │   │   ├── Inventory/
-│   │   │   ├── frmStockIn.cs
-│   │   │   ├── frmStockTake.cs
-│   │   │   └── frmStockAlert.cs
+│   │   │   ├── StockInView.xaml
+│   │   │   ├── StockTakeView.xaml
+│   │   │   └── StockAlertView.xaml
 │   │   ├── Customers/
-│   │   │   ├── frmCustomerLookup.cs
-│   │   │   └── frmCustomerEdit.cs
+│   │   │   ├── CustomerLookupDialog.xaml
+│   │   │   └── CustomerEditDialog.xaml
 │   │   ├── Promotions/
-│   │   │   └── frmPromotionList.cs
+│   │   │   └── PromotionListView.xaml
 │   │   ├── Shifts/
-│   │   │   ├── frmOpenShift.cs
-│   │   │   └── frmCloseShift.cs
+│   │   │   ├── OpenShiftDialog.xaml
+│   │   │   └── CloseShiftDialog.xaml
 │   │   ├── Reports/
-│   │   │   └── frmReport.cs
+│   │   │   └── ReportView.xaml
 │   │   └── Settings/
-│   │       └── frmSettings.cs
-│   ├── Presenters/                      ← MVP Presenters
-│   │   ├── SalesPresenter.cs
-│   │   ├── DashboardPresenter.cs
-│   │   ├── EmployeePresenter.cs
-│   │   ├── StorePresenter.cs
-│   │   ├── InvoicePresenter.cs
-│   │   ├── ProductPresenter.cs
-│   │   ├── InventoryPresenter.cs
-│   │   ├── CustomerPresenter.cs
-│   │   ├── ShiftPresenter.cs
-│   │   └── ReportPresenter.cs
-│   ├── ViewInterfaces/                  ← View Contracts (MVP)
-│   │   ├── ISalesView.cs
-│   │   ├── IDashboardView.cs
-│   │   ├── IEmployeeView.cs
-│   │   ├── IStoreView.cs
-│   │   ├── IInvoiceView.cs
-│   │   ├── IProductView.cs
-│   │   ├── IInventoryView.cs
-│   │   ├── ICustomerView.cs
-│   │   ├── IShiftView.cs
-│   │   └── IReportView.cs
+│   │       └── SettingsView.xaml
+│   ├── ViewModels/                  ← MVVM ViewModels (CommunityToolkit.Mvvm)
+│   │   ├── Shell/
+│   │   │   └── MainWindowViewModel.cs
+│   │   ├── Auth/
+│   │   │   └── LoginViewModel.cs
+│   │   ├── Dashboard/
+│   │   │   └── DashboardViewModel.cs
+│   │   ├── Sales/
+│   │   │   ├── PosMainViewModel.cs
+│   │   │   └── PaymentViewModel.cs
+│   │   ├── Employees/
+│   │   │   └── EmployeeListViewModel.cs
+│   │   ├── Stores/
+│   │   │   └── StoreListViewModel.cs
+│   │   ├── Products/
+│   │   │   └── ProductListViewModel.cs
+│   │   ├── Inventory/
+│   │   │   └── InventoryViewModel.cs
+│   │   ├── Customers/
+│   │   │   └── CustomerViewModel.cs
+│   │   ├── Shifts/
+│   │   │   └── ShiftViewModel.cs
+│   │   └── Reports/
+│   │       └── ReportViewModel.cs
+│   ├── Converters/                  ← XAML Value Converters
+│   │   ├── BoolToVisibilityConverter.cs
+│   │   ├── CurrencyFormatterConverter.cs
+│   │   └── StatusToColorConverter.cs
 │   ├── ApiClients/                      ← Gọi REST API
 │   │   ├── BaseApiClient.cs             ← HttpClient base + token management
 │   │   ├── ProductApiClient.cs
@@ -388,8 +398,8 @@ POS.sln
 │   │   ├── OrderServiceTests.cs         ← Mock IRepository/ICacheService
 │   │   ├── PromotionServiceTests.cs
 │   │   └── InventoryServiceTests.cs
-│   └── WinForms/
-│       └── SalesPresenterTests.cs       ← Mock IView + ApiClient
+│   └── WPF/
+│       └── PosMainViewModelTests.cs    ← Unit test ViewModel độc lập với View
 │
 └── 🐳 docker/                            (Docker & hạ tầng triển khai)
     ├── Dockerfile                        ← Multi-stage build cho POS.API
@@ -404,7 +414,7 @@ POS.sln
 
 ### Quy ước thiết kế
 
-- `POS.Contracts` chỉ chứa public API contract: `Request`, `Response`, `ApiResponse`, `ApiError`, `PagedResponse`, enum cần expose ra WinForms/Web Client.
+- `POS.Contracts` chỉ chứa public API contract: `Request`, `Response`, `ApiResponse`, `ApiError`, `PagedResponse`, enum cần expose ra WPF/Web Client.
 - `POS.Application` không chứa API `Request/Response`. Layer này dùng `Command` cho thao tác ghi, `Query` cho thao tác đọc, và `Dto`/`PagedResult` cho kết quả nội bộ.
 - Các feature nghiệp vụ đặt trong `POS.Application/UseCases`, ví dụ `UseCases/Products`, `UseCases/Orders`, `UseCases/Inventory`.
 - Mỗi use case chính có `Command/Query + Handler + Validator` trong cùng một folder, ví dụ `UseCases/Products/Commands/CreateProduct`.
@@ -419,7 +429,7 @@ POS.sln
 Dependency chuẩn:
 
 ```
-POS.WinForms -> POS.Contracts
+POS.WinUI -> POS.Contracts
 POS.API -> POS.Contracts + POS.Application
 POS.Application -> POS.Domain
 POS.Infrastructure -> POS.Application + POS.Domain
@@ -451,7 +461,7 @@ POS.Domain -> không phụ thuộc project nào
     │       GET /skus/barcode/8934567890123
     │       POST /orders/{id}/items { skuId, qty: 1 }
     │       ← Server chạy PromotionEngine → trả về giỏ hàng + KM đã áp
-    │       → WinForms cập nhật UI giỏ hàng real-time
+    │       → WPF cập nhật UI giỏ hàng real-time qua Data Binding
     │
     ├─ 5. Áp voucher (tuỳ chọn)
     │       POST /orders/{id}/voucher { code: "SUMMER20" }
@@ -466,13 +476,13 @@ POS.Domain -> không phụ thuộc project nào
     │   ├─ QR (MoMo/VietQR):
     │   │       POST /payments/qr/generate { orderId, method: "MoMo" }
     │   │       ← { qrCode, paymentId }
-    │   │       → WinForms hiển thị QR (QRDisplayService)
+    │   │       → WPF hiển thị QR (QRDisplayService / Image binding)
     │   │       → SignalRClientService lắng nghe "PaymentResult/{paymentId}"
     │   │       [Khách quét QR trên điện thoại]
     │   │       → MoMo gọi POST /payments/webhook/momo
     │   │       → Server verify signature → Update DB → SignalR push
     │   │       ← SignalR event "PaymentSuccess"
-    │   │       → WinForms nhận → Complete order → In hóa đơn
+    │   │       → WPF nhận → Complete order → In hóa đơn
     │   │
     │   └─ NHIỀU PHƯƠNG THỨC (split payment, vd Cash + Card):
     │           POST /orders/{id}/checkout
@@ -578,20 +588,22 @@ CheckoutOrderCommand thành công
 | **Hash Password**   | BCrypt                  | `BCrypt.Net-Next`                                  |
 | **HTTP Client**     | Refit                   | `Refit` (gọi MoMo/VietQR API)                      |
 
-### WinForms Client
+### WPF Client (.NET 10)
 
-| Hạng mục           | Công nghệ            | NuGet Package                              |
-| ------------------ | -------------------- | ------------------------------------------ |
-| **UI Library**     | MaterialSkin 2       | `MaterialSkin.2`                           |
-| **HTTP**           | HttpClient + Polly   | `Microsoft.Extensions.Http.Polly`          |
-| **SignalR Client** | SignalR Client       | `Microsoft.AspNetCore.SignalR.Client`      |
-| **Local DB**       | SQLite               | `sqlite-net-pcl`                           |
-| **Print bill**     | ESCPOS.NET           | `ESCPOS.NET`                               |
-| **QR Generate**    | ZXing.Net            | `ZXing.Net.Bindings.Windows.Compatibility` |
-| **Report Print**   | FastReport           | `FastReport.OpenSource`                    |
-| **DI**             | MS Extensions DI     | `Microsoft.Extensions.DependencyInjection` |
-| **Config**         | MS Extensions Config | `Microsoft.Extensions.Configuration.Json`  |
-| **JSON**           | System.Text.Json     | built-in                                   |
+| Hạng mục           | Công nghệ                 | NuGet Package                                      |
+| ------------------ | ------------------------- | -------------------------------------------------- |
+| **UI Framework**   | WPF (.NET 10)             | built-in (`<UseWPF>true</UseWPF>`)                 |
+| **UI Library**     | Fluent WPF-UI             | `WPF-UI` (v4.x)                                    |
+| **MVVM Pattern**   | CommunityToolkit.Mvvm     | `CommunityToolkit.Mvvm`                            |
+| **HTTP + Polly**   | HttpClient + Polly        | `Microsoft.Extensions.Http.Polly`, `Http`          |
+| **SignalR Client** | SignalR Client            | `Microsoft.AspNetCore.SignalR.Client`              |
+| **Local DB**       | SQLite                    | `sqlite-net-pcl`                                   |
+| **Print bill**     | ESCPOS.NET                | `ESCPOS_NET`                                       |
+| **QR Generate**    | ZXing.Net                 | `ZXing.Net.Bindings.Windows.Compatibility`         |
+| **Report Print**   | FastReport / QuestPDF     | `FastReport.OpenSource` / `QuestPDF`               |
+| **DI & Host**      | Generic Host & MS Ext DI  | `Microsoft.Extensions.Hosting`, `DependencyInjection` |
+| **Config**         | MS Extensions Config      | `Microsoft.Extensions.Configuration.Json`          |
+| **JSON**           | System.Text.Json          | built-in                                           |
 
 ### Infrastructure
 
@@ -634,7 +646,7 @@ CheckoutOrderCommand thành công
 
 - **Access Token (JWT)**: Hết hạn sau **8 tiếng** (vừa đủ 1 ca làm việc). Payload chứa: `employee_id`, `role`, `store_id`, `shift_id`.
 - **Refresh Token**: Hết hạn sau **30 ngày**, lưu trong PostgreSQL. Cho phép thu hồi (revoke) ngay lập tức để buộc nhân viên đăng xuất.
-- **Tự động gia hạn**: App WinForms tự động gọi API refresh token ngầm khi Access Token sắp hết hạn.
+- **Tự động gia hạn**: App WPF tự động gọi API refresh token ngầm khi Access Token sắp hết hạn.
 
 ### 8.3 An Toàn & Bảo Mật (Security Checklist)
 

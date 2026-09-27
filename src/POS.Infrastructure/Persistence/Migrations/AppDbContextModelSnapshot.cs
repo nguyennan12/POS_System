@@ -1254,6 +1254,19 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<string>("AppliedVoucherCode")
+                        .HasColumnType("text")
+                        .HasColumnName("applied_voucher_code");
+
+                    b.Property<Guid?>("AppliedVoucherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("applied_voucher_id");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cancel_reason");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -1364,6 +1377,10 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("order_id");
 
+                    b.Property<Guid?>("OrderId1")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id1");
+
                     b.Property<Guid?>("PromotionId")
                         .HasColumnType("uuid")
                         .HasColumnName("promotion_id");
@@ -1375,6 +1392,8 @@ namespace POS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("OrderId1");
 
                     b.HasIndex("PromotionId");
 
@@ -1952,10 +1971,6 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("promotion_id");
 
-                    b.Property<Guid?>("PromotionId1")
-                        .HasColumnType("uuid")
-                        .HasColumnName("promotion_id1");
-
                     b.Property<Guid?>("SkuId")
                         .HasColumnType("uuid")
                         .HasColumnName("sku_id");
@@ -1965,8 +1980,6 @@ namespace POS.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("PromotionId");
-
-                    b.HasIndex("PromotionId1");
 
                     b.HasIndex("SkuId");
 
@@ -2184,8 +2197,15 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_roles_name")
+                        .HasFilter("store_id IS NULL");
+
                     b.HasIndex("StoreId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("IX_roles_store_id_name")
+                        .HasFilter("store_id IS NOT NULL");
 
                     b.ToTable("roles", (string)null);
                 });
@@ -2716,6 +2736,10 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Orders.Order", null)
+                        .WithMany("Discounts")
+                        .HasForeignKey("OrderId1");
+
                     b.HasOne("POS.Domain.Promotions.Promotion", "Promotion")
                         .WithMany()
                         .HasForeignKey("PromotionId");
@@ -2753,7 +2777,7 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.Payment", b =>
                 {
                     b.HasOne("POS.Domain.Orders.Order", "Order")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2882,14 +2906,10 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("POS.Domain.Promotions.Promotion", "Promotion")
-                        .WithMany()
+                        .WithMany("Targets")
                         .HasForeignKey("PromotionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("POS.Domain.Promotions.Promotion", null)
-                        .WithMany("Targets")
-                        .HasForeignKey("PromotionId1");
 
                     b.HasOne("POS.Domain.Products.Sku", "Sku")
                         .WithMany()
@@ -3000,7 +3020,11 @@ namespace POS.Infrastructure.Migrations
 
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>
                 {
+                    b.Navigation("Discounts");
+
                     b.Navigation("Items");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("POS.Domain.Promotions.Promotion", b =>
