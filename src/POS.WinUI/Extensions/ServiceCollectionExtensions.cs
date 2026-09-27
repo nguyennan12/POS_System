@@ -1,30 +1,34 @@
 using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.ApiClients;
-using POS.WinUI.Forms.Stores;
-using POS.WinUI.Presenters;
 using POS.WinUI.Services;
+using POS.WinUI.ViewModels.Auth;
+using POS.WinUI.ViewModels.Shell;
+using POS.WinUI.Views.Auth;
+using POS.WinUI.Views.Shell;
 
 namespace POS.WinUI.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-  /// Đăng ký toàn bộ services của tầng WinUI vào DI container.
-  public static IServiceCollection AddWinUIServices(this IServiceCollection services)
-  {
-    // ── Services ──────────────────────────────────────────────
-    services.AddSingleton<SessionService>();
+    /// <summary>
+    /// Đăng ký toàn bộ services, ViewModels, Views của tầng WPF UI vào DI container.
+    /// </summary>
+    public static IServiceCollection AddWinUIServices(this IServiceCollection services)
+    {
+        // ── Services ──────────────────────────────────────────────
+        services.AddSingleton<SessionService>();
 
-    // ── ApiClients ────────────────────────────────────────────
-    services.AddTransient<StoreApiClient>();
+        // ── ApiClients ────────────────────────────────────────────
+        services.AddTransient<StoreApiClient>();
 
-    // ── Presenters ────────────────────────────────────────────
-    services.AddTransient<StorePresenter>();
+        // ── ViewModels ────────────────────────────────────────────
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddTransient<LoginViewModel>();
 
-    // ── Forms ─────────────────────────────────────────────────
-    services.AddTransient<frmStoreList>();
-    services.AddTransient<frmStoreEdit>();
+        // ── Views ─────────────────────────────────────────────────
+        services.AddSingleton<MainWindow>();
+        services.AddTransient<LoginView>();
 
-
-    return services;
-  }
+        return services;
+    }
 }

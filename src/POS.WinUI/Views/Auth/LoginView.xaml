@@ -1,0 +1,68 @@
+<UserControl x:Class="POS.WinUI.Views.Auth.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:converters="clr-namespace:POS.WinUI.Converters"
+             xmlns:viewModels="clr-namespace:POS.WinUI.ViewModels.Auth"
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="400">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis" />
+        <converters:BoolToVisibilityConverter x:Key="InverseBoolToVis" Invert="True" />
+    </UserControl.Resources>
+
+    <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Width="360" Padding="24">
+        <StackPanel>
+            <TextBlock Text="Đăng Nhập POS" 
+                       FontSize="22" 
+                       FontWeight="SemiBold" 
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,16"/>
+
+            <!-- Error Message -->
+            <ui:InfoBar IsOpen="{Binding ErrorMessage, Converter={StaticResource BoolToVis}}"
+                        Severity="Error"
+                        Message="{Binding ErrorMessage}"
+                        Margin="0,0,0,12"/>
+
+            <!-- Password Mode -->
+            <StackPanel Visibility="{Binding IsPinMode, Converter={StaticResource InverseBoolToVis}}" Margin="0,0,0,12">
+                <ui:TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
+                            PlaceholderText="Tên đăng nhập" 
+                            Icon="{ui:SymbolIcon Symbol=Person24}"
+                            Margin="0,0,0,10"/>
+
+                <ui:PasswordBox Password="{Binding Password, UpdateSourceTrigger=PropertyChanged}" 
+                                PlaceholderText="Mật khẩu" 
+                                Icon="{ui:SymbolIcon Symbol=Password24}"/>
+            </StackPanel>
+
+            <!-- PIN Mode -->
+            <StackPanel Visibility="{Binding IsPinMode, Converter={StaticResource BoolToVis}}" Margin="0,0,0,12">
+                <ui:PasswordBox Password="{Binding Pin, UpdateSourceTrigger=PropertyChanged}" 
+                                PlaceholderText="Nhập mã PIN" 
+                                MaxLength="6"
+                                HorizontalContentAlignment="Center"
+                                FontSize="18"
+                                Icon="{ui:SymbolIcon Symbol=Key24}"/>
+            </StackPanel>
+
+            <!-- Login Button -->
+            <ui:Button Appearance="Primary" 
+                       Content="Đăng Nhập" 
+                       Command="{Binding LoginCommand}" 
+                       HorizontalAlignment="Stretch"
+                       Height="40"
+                       Margin="0,0,0,10"/>
+
+            <!-- Switch Mode Button -->
+            <ui:Button Appearance="Transparent" 
+                       Content="Đổi chế độ đăng nhập" 
+                       Command="{Binding SwitchLoginModeCommand}" 
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </ui:Card>
+</UserControl>

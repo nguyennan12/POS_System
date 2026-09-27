@@ -1,5 +1,6 @@
 namespace POS.WinUI.ApiClients;
 
+using System.Net.Http;
 using POS.WinUI.Services;
 
 /// Gọi REST API cho resource 'stores'
