@@ -21,6 +21,8 @@ public class StockTransaction : BaseEntity
         decimal qty,
         Guid createdBy,
         Guid? orderId = null,
+        Guid? stockInVoucherId = null,
+        decimal? unitCost = null,
         string? note = null,
         Guid? id = null) : base(id)
     {
@@ -30,6 +32,8 @@ public class StockTransaction : BaseEntity
         Qty = qty;
         CreatedBy = createdBy;
         OrderId = orderId;
+        StockInVoucherId = stockInVoucherId;
+        UnitCost = unitCost;
         Note = note;
         CreatedAt = DateTime.UtcNow;
     }
@@ -44,7 +48,38 @@ public class StockTransaction : BaseEntity
     {
         if (qty <= 0)
             throw new ArgumentOutOfRangeException(nameof(qty), "Số lượng xuất kho phải lớn hơn 0.");
-        return new StockTransaction(storeId, skuId, StockTransactionType.SaleOut, qty, createdBy, orderId, note);
+        return new StockTransaction(storeId, skuId, StockTransactionType.SaleOut, qty, createdBy, orderId: orderId, note: note);
+    }
+
+    public static StockTransaction CreateStockIn(
+        Guid storeId,
+        Guid skuId,
+        decimal qty,
+        Guid createdBy,
+        Guid stockInVoucherId,
+        decimal unitCost,
+        string? note = null)
+    {
+        if (qty <= 0)
+            throw new ArgumentOutOfRangeException(nameof(qty), "Số lượng nhập kho phải lớn hơn 0.");
+        if (unitCost < 0)
+            throw new ArgumentOutOfRangeException(nameof(unitCost), "Đơn giá nhập không được âm.");
+        return new StockTransaction(storeId, skuId, StockTransactionType.StockIn, qty, createdBy,
+            stockInVoucherId: stockInVoucherId, unitCost: unitCost, note: note);
+    }
+
+    public static StockTransaction CreateDispose(
+        Guid storeId,
+        Guid skuId,
+        decimal qty,
+        Guid createdBy,
+        string note)
+    {
+        if (qty <= 0)
+            throw new ArgumentOutOfRangeException(nameof(qty), "Số lượng xuất hủy phải lớn hơn 0.");
+        if (string.IsNullOrWhiteSpace(note))
+            throw new ArgumentException("Ghi chú bắt buộc khi xuất hủy.", nameof(note));
+        return new StockTransaction(storeId, skuId, StockTransactionType.Dispose, qty, createdBy, note: note);
     }
 
     public Guid StoreId { get; private set; }
@@ -55,6 +90,7 @@ public class StockTransaction : BaseEntity
 
     public StockTransactionType Type { get; private set; }
     public decimal Qty { get; private set; }
+    public decimal? UnitCost { get; private set; }
     public Guid? OrderId { get; private set; }
     public Order? Order { get; private set; }
     public Guid? StockInVoucherId { get; private set; }
@@ -64,3 +100,4 @@ public class StockTransaction : BaseEntity
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 }
+
