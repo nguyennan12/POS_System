@@ -36,6 +36,9 @@ public interface IStockEntryRepository
     /// <summary>Deduct (trừ) tồn kho bằng raw SQL atomic để tránh lost-update.</summary>
     Task DeductStockAsync(Guid skuId, Guid storeId, decimal qty, CancellationToken cancellationToken = default);
 
+    /// <summary>Trừ tổng tồn kho và tự động trừ các lô còn hàng theo thứ tự hạn dùng gần nhất (FEFO).</summary>
+    Task DeductStockWithBatchesAsync(Guid skuId, Guid storeId, decimal qty, CancellationToken cancellationToken = default);
+
     /// <summary>Cộng tồn kho và cập nhật giá vốn bình quân bằng raw SQL atomic.</summary>
     Task IncrementStockAsync(Guid skuId, Guid storeId, decimal qty, decimal newAverageCost, CancellationToken cancellationToken = default);
 }
