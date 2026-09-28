@@ -40,8 +40,8 @@ public class CompleteStockInVoucherCommandHandler(
         if (voucher is null)
             return StockInErrors.VoucherNotFound;
 
-        // 3. Chỉ người tạo hoặc ChainOwner mới được complete
-        if (!employee.IsChainOwner && voucher.CreatedBy != employee.Id)
+        // 3. Chỉ ChainOwner hoặc nhân viên thuộc cùng cửa hàng mới được complete
+        if (!employee.IsChainOwner && voucher.StoreId != employee.StoreId)
             return StockInErrors.AccessDenied;
 
         // 4. Thực thi trong Serializable transaction để đảm bảo an toàn
@@ -55,9 +55,23 @@ public class CompleteStockInVoucherCommandHandler(
             var completeResult = freshVoucher.Complete();
             if (completeResult.IsFailure) return completeResult.Error;
 
-            // 6. Với từng item: tạo StockTransaction + cập nhật StockEntry
-            foreach (var item in freshVoucher.Items)
+            // Merge items by SKU to prevent using stale QtyOnHand/AverageCost for repeated SKUs
+            var mergedItems = freshVoucher.Items
+                .GroupBy(i => i.SkuId)
+                .Select(g => new
+                {
+                    SkuId = g.Key,
+                    TotalQty = g.Sum(x => x.Qty),
+                    TotalPrice = g.Sum(x => x.Qty * x.UnitPrice)
+                })
+                .Where(x => x.TotalQty > 0)
+                .ToList();
+
+            // 6. Với từng merged item: tạo StockTransaction + cập nhật StockEntry
+            foreach (var item in mergedItems)
             {
+                var averageItemPrice = item.TotalPrice / item.TotalQty;
+
                 // 6a. Lấy hoặc tạo StockEntry
                 var entry = await stockEntryRepository.GetBySkuAndStoreAsync(item.SkuId, freshVoucher.StoreId, ct);
                 if (entry is null)
@@ -69,21 +83,21 @@ public class CompleteStockInVoucherCommandHandler(
                 }
 
                 // 6b. Tính giá vốn bình quân mới
-                var totalValue = entry!.QtyOnHand * entry.AverageCost + item.Qty * item.UnitPrice;
-                var newQty = entry.QtyOnHand + item.Qty;
-                var newAvgCost = newQty > 0 ? totalValue / newQty : item.UnitPrice;
+                var totalValue = entry!.QtyOnHand * entry.AverageCost + item.TotalPrice;
+                var newQty = entry.QtyOnHand + item.TotalQty;
+                var newAvgCost = newQty > 0 ? totalValue / newQty : averageItemPrice;
 
                 // 6c. Cập nhật tồn kho atomic bằng raw SQL
-                await stockEntryRepository.IncrementStockAsync(item.SkuId, freshVoucher.StoreId, item.Qty, newAvgCost, ct);
+                await stockEntryRepository.IncrementStockAsync(item.SkuId, freshVoucher.StoreId, item.TotalQty, newAvgCost, ct);
 
                 // 6d. Tạo StockTransaction ledger entry
                 var tx = StockTransaction.CreateStockIn(
                     storeId: freshVoucher.StoreId,
                     skuId: item.SkuId,
-                    qty: item.Qty,
+                    qty: item.TotalQty,
                     createdBy: employee.Id,
                     stockInVoucherId: freshVoucher.Id,
-                    unitCost: item.UnitPrice);
+                    unitCost: averageItemPrice);
 
                 await stockTransactionRepository.AddAsync(tx, ct);
             }

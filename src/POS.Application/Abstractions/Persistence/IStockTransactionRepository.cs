@@ -7,7 +7,7 @@ public interface IStockTransactionRepository
     Task AddAsync(StockTransaction transaction, CancellationToken cancellationToken = default);
 
     Task<(List<StockTransaction> Items, int TotalCount)> GetPagedAsync(
-        Guid storeId,
+        Guid? storeId,
         Guid? skuId,
         string? type,
         int pageNumber,

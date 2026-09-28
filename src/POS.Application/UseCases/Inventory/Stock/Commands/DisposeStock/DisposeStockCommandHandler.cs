@@ -18,6 +18,7 @@ public class DisposeStockCommandHandler(
     IStockEntryRepository stockEntryRepository,
     IStockTransactionRepository stockTransactionRepository,
     IEmployeeRepository employeeRepository,
+    IStoreRepository storeRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser) : ICommandHandler<DisposeStockCommand, StockTransactionDto>
 {
@@ -34,6 +35,13 @@ public class DisposeStockCommandHandler(
 
         if (currentUser.StoreId is null)
             return InventoryErrors.StoreRequired;
+
+        if (employee.StoreId != currentUser.StoreId)
+            return InventoryErrors.Unauthorized;
+
+        var store = await storeRepository.GetByIdAsync(currentUser.StoreId.Value, cancellationToken);
+        if (store is null || !store.IsActive)
+            return InventoryErrors.StoreInactive;
 
         return await unitOfWork.ExecuteSerializableAsync(async ct =>
         {

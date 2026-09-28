@@ -8,9 +8,9 @@ namespace POS.Application.UseCases.Inventory.Stock.Queries.GetStockBatches;
 
 public class GetStockBatchesQueryHandler(
     IStockEntryRepository stockEntryRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetStockBatchesQuery, List<StockBatchDto>>
+    ICurrentUser currentUser) : IQueryHandler<GetStockBatchesQuery, PagedStockBatchList>
 {
-    public async Task<Result<List<StockBatchDto>>> Handle(
+    public async Task<Result<PagedStockBatchList>> Handle(
         GetStockBatchesQuery query,
         CancellationToken cancellationToken)
     {
@@ -19,9 +19,11 @@ public class GetStockBatchesQueryHandler(
 
         var storeId = currentUser.StoreId ?? Guid.Empty;
 
-        var batches = await stockEntryRepository.GetBatchesAsync(
-            storeId, query.SkuId, query.ExpiryBefore, cancellationToken);
+        var (items, total) = await stockEntryRepository.GetBatchesAsync(
+            storeId, query.SkuId, query.ExpiryBefore, query.PageNumber, query.PageSize, cancellationToken);
 
-        return Result<List<StockBatchDto>>.Success(batches.Select(b => b.ToDto()).ToList());
+        var dtos = items.Select(b => b.ToDto()).ToList();
+        return Result<PagedStockBatchList>.Success(
+            new PagedStockBatchList(dtos, total, query.PageNumber, query.PageSize));
     }
 }

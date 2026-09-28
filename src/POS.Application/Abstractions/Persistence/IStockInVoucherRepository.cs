@@ -7,7 +7,7 @@ public interface IStockInVoucherRepository
     Task<StockInVoucher?> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default);
 
     Task<(List<StockInVoucher> Items, int TotalCount)> GetPagedAsync(
-        Guid storeId,
+        Guid? storeId,
         Guid? supplierId,
         string? status,
         DateTimeOffset? from,
