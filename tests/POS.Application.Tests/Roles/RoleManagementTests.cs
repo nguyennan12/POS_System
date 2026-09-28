@@ -489,7 +489,7 @@ public class RoleManagementTests
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!);
-        Assert.Equal("orders", result.Value[0].Code);
-        Assert.Single(result.Value[0].Permissions);
+        Assert.Equal("orders", result.Value![0].Code);
+        Assert.Single(result.Value![0].Permissions);
     }
 }

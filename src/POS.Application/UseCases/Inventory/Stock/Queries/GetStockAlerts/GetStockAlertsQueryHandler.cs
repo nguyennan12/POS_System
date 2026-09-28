@@ -8,23 +8,27 @@ namespace POS.Application.UseCases.Inventory.Stock.Queries.GetStockAlerts;
 
 public class GetStockAlertsQueryHandler(
     IStockEntryRepository stockEntryRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetStockAlertsQuery, List<StockAlertDto>>
+    ICurrentUser currentUser) : IQueryHandler<GetStockAlertsQuery, PagedStockAlertList>
 {
-    public async Task<Result<List<StockAlertDto>>> Handle(
+    public async Task<Result<PagedStockAlertList>> Handle(
         GetStockAlertsQuery query,
         CancellationToken cancellationToken)
     {
         if (currentUser.StoreId is null && !currentUser.IsChainOwner)
             return InventoryErrors.StoreRequired;
 
-        var storeId = currentUser.StoreId ?? Guid.Empty;
+        var storeId = currentUser.StoreId;
         var nearExpiryDays = query.NearExpiryDays <= 0 ? 30 : query.NearExpiryDays;
 
-        var alertEntries = await stockEntryRepository.GetAlertsAsync(storeId, nearExpiryDays, cancellationToken);
+        var (alertEntries, total) = await stockEntryRepository.GetAlertsAsync(
+            storeId, nearExpiryDays, query.PageNumber, query.PageSize, cancellationToken);
 
         // Lấy batches gần hết hạn để đánh dấu NearExpiry
         var expiryBefore = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(nearExpiryDays));
-        var nearExpiryBatches = await stockEntryRepository.GetBatchesAsync(storeId, null, expiryBefore, cancellationToken);
+        // We only care if any batch exists for this SKU that is near expiry, so paging is not needed here
+        // We can just check the db directly, or since GetBatches is now paged, just take 100 max
+        var (nearExpiryBatches, _) = await stockEntryRepository.GetBatchesAsync(
+            storeId, null, expiryBefore, 1, 1000, cancellationToken);
         var nearExpirySkuIds = nearExpiryBatches.Select(b => b.SkuId).ToHashSet();
 
         var alerts = new List<StockAlertDto>();
@@ -47,21 +51,19 @@ public class GetStockAlertsQueryHandler(
             // Cảnh báo hàng cận hạn (có thể cùng SKU với min-stock)
             if (nearExpirySkuIds.Contains(entry.SkuId))
             {
-                // Chỉ thêm nếu chưa có MinStock alert cho SKU này
-                if (!alerts.Any(a => a.SkuId == entry.SkuId && a.AlertType == "NearExpiry"))
-                {
-                    alerts.Add(new StockAlertDto(
-                        entry.SkuId,
-                        entry.Sku?.SkuCode ?? string.Empty,
-                        entry.Sku?.Barcode ?? string.Empty,
-                        entry.Sku?.Product?.Name ?? string.Empty,
-                        entry.QtyOnHand,
-                        entry.MinStock,
-                        "NearExpiry"));
-                }
+                // SKU entry is processed only once, no need to check duplicates in alerts list
+                alerts.Add(new StockAlertDto(
+                    entry.SkuId,
+                    entry.Sku?.SkuCode ?? string.Empty,
+                    entry.Sku?.Barcode ?? string.Empty,
+                    entry.Sku?.Product?.Name ?? string.Empty,
+                    entry.QtyOnHand,
+                    entry.MinStock,
+                    "NearExpiry"));
             }
         }
 
-        return Result<List<StockAlertDto>>.Success(alerts);
+        return Result<PagedStockAlertList>.Success(
+            new PagedStockAlertList(alerts, total, query.PageNumber, query.PageSize));
     }
 }

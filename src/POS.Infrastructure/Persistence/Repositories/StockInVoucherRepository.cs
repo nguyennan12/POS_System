@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
+using POS.Domain.Inventory.Enums;
 using POS.Domain.Inventory.StockIn;
 
 namespace POS.Infrastructure.Persistence.Repositories;
@@ -17,7 +18,7 @@ public class StockInVoucherRepository(AppDbContext dbContext) : IStockInVoucherR
     }
 
     public async Task<(List<StockInVoucher> Items, int TotalCount)> GetPagedAsync(
-        Guid storeId,
+        Guid? storeId,
         Guid? supplierId,
         string? status,
         DateTimeOffset? from,
@@ -26,17 +27,22 @@ public class StockInVoucherRepository(AppDbContext dbContext) : IStockInVoucherR
         int pageSize,
         CancellationToken cancellationToken = default)
     {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Min(100, Math.Max(1, pageSize));
+
         var query = dbContext.StockInVouchers
             .AsNoTracking()
             .Include(v => v.Supplier)
-            .Where(v => v.StoreId == storeId)
             .AsQueryable();
+
+        if (storeId.HasValue)
+            query = query.Where(v => v.StoreId == storeId.Value);
 
         if (supplierId.HasValue)
             query = query.Where(v => v.SupplierId == supplierId.Value);
 
-        if (!string.IsNullOrWhiteSpace(status))
-            query = query.Where(v => v.Status.ToString() == status);
+        if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<StockInVoucherStatus>(status, true, out var parsedStatus))
+            query = query.Where(v => v.Status == parsedStatus);
 
         if (from.HasValue)
             query = query.Where(v => v.CreatedAt >= from.Value.UtcDateTime);

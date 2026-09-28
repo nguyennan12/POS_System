@@ -6,8 +6,17 @@ namespace POS.Application.UseCases.Inventory.Stock.Queries.GetStockBatches;
 
 public record GetStockBatchesQuery(
     Guid? SkuId,
-    DateOnly? ExpiryBefore
-) : IQuery<List<StockBatchDto>>, IRequirePermission
+    DateOnly? ExpiryBefore,
+    int PageNumber = 1,
+    int PageSize = 20
+) : IQuery<PagedStockBatchList>, IRequirePermission
 {
     public string RequiredPermission => "inventory:stock:read";
 }
+
+public record PagedStockBatchList(
+    IReadOnlyList<StockBatchDto> Items,
+    int TotalCount,
+    int PageNumber,
+    int PageSize
+);

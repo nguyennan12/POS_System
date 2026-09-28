@@ -7,7 +7,7 @@ public interface IStockEntryRepository
     Task<StockEntry?> GetBySkuAndStoreAsync(Guid skuId, Guid storeId, CancellationToken cancellationToken = default);
 
     Task<(List<StockEntry> Items, int TotalCount)> GetPagedAsync(
-        Guid storeId,
+        Guid? storeId,
         Guid? skuId,
         Guid? categoryId,
         string? search,
@@ -16,15 +16,19 @@ public interface IStockEntryRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>Trả về danh sách tồn kho cần cảnh báo: min-stock hoặc hàng cận hạn.</summary>
-    Task<List<StockEntry>> GetAlertsAsync(
-        Guid storeId,
+    Task<(List<StockEntry> Items, int TotalCount)> GetAlertsAsync(
+        Guid? storeId,
         int nearExpiryDays,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
-    Task<List<StockBatch>> GetBatchesAsync(
-        Guid storeId,
+    Task<(List<StockBatch> Items, int TotalCount)> GetBatchesAsync(
+        Guid? storeId,
         Guid? skuId,
         DateOnly? expiryBefore,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task AddAsync(StockEntry entry, CancellationToken cancellationToken = default);

@@ -10,7 +10,6 @@ namespace POS.Application.UseCases.Inventory.StockIn.Commands.CreateStockInVouch
 
 public class CreateStockInVoucherCommandHandler(
     IStockInVoucherRepository stockInVoucherRepository,
-    IStockEntryRepository stockEntryRepository,
     ISkuRepository skuRepository,
     ISupplierRepository supplierRepository,
     IStoreRepository storeRepository,

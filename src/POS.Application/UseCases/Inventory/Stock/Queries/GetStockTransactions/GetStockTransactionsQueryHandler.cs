@@ -17,7 +17,7 @@ public class GetStockTransactionsQueryHandler(
         if (currentUser.StoreId is null && !currentUser.IsChainOwner)
             return InventoryErrors.StoreRequired;
 
-        var storeId = currentUser.StoreId ?? Guid.Empty;
+        var storeId = currentUser.StoreId;
 
         var (items, total) = await stockTransactionRepository.GetPagedAsync(
             storeId,

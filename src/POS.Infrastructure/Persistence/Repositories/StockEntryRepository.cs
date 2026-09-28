@@ -15,7 +15,7 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
     }
 
     public async Task<(List<StockEntry> Items, int TotalCount)> GetPagedAsync(
-        Guid storeId,
+        Guid? storeId,
         Guid? skuId,
         Guid? categoryId,
         string? search,
@@ -23,11 +23,16 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
         int pageSize,
         CancellationToken cancellationToken = default)
     {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Min(100, Math.Max(1, pageSize));
+
         var query = dbContext.StockEntries
             .AsNoTracking()
             .Include(e => e.Sku).ThenInclude(s => s.Product)
-            .Where(e => e.StoreId == storeId)
             .AsQueryable();
+
+        if (storeId.HasValue)
+            query = query.Where(e => e.StoreId == storeId.Value);
 
         if (skuId.HasValue)
             query = query.Where(e => e.SkuId == skuId.Value);
@@ -41,7 +46,7 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
             query = query.Where(e =>
                 e.Sku.SkuCode.ToLower().Contains(term) ||
                 e.Sku.Product.Name.ToLower().Contains(term) ||
-                (e.Sku.Barcode != null && e.Sku.Barcode.Contains(term)));
+                (e.Sku.Barcode != null && e.Sku.Barcode.ToLower().Contains(term)));
         }
 
         var total = await query.CountAsync(cancellationToken);
@@ -54,44 +59,70 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
         return (items, total);
     }
 
-    public async Task<List<StockEntry>> GetAlertsAsync(
-        Guid storeId,
+    public async Task<(List<StockEntry> Items, int TotalCount)> GetAlertsAsync(
+        Guid? storeId,
         int nearExpiryDays,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Min(100, Math.Max(1, pageSize));
+
         var expiryThreshold = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(nearExpiryDays));
 
         // Lấy SKU IDs của lô gần hết hạn
-        var nearExpirySkuIds = await dbContext.StockBatches
+        var batchesQuery = dbContext.StockBatches
             .AsNoTracking()
-            .Where(b => b.StoreId == storeId
-                        && b.Qty > 0
+            .Where(b => b.Qty > 0
                         && b.ExpiryDate.HasValue
-                        && b.ExpiryDate.Value <= expiryThreshold)
+                        && b.ExpiryDate.Value <= expiryThreshold);
+
+        if (storeId.HasValue)
+            batchesQuery = batchesQuery.Where(b => b.StoreId == storeId.Value);
+
+        var nearExpirySkuIds = await batchesQuery
             .Select(b => b.SkuId)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        return await dbContext.StockEntries
+        var query = dbContext.StockEntries
             .AsNoTracking()
             .Include(e => e.Sku).ThenInclude(s => s.Product)
-            .Where(e => e.StoreId == storeId
-                        && (e.QtyOnHand <= e.MinStock || nearExpirySkuIds.Contains(e.SkuId)))
+            .Where(e => (e.QtyOnHand <= e.MinStock || nearExpirySkuIds.Contains(e.SkuId)));
+
+        if (storeId.HasValue)
+            query = query.Where(e => e.StoreId == storeId.Value);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
             .OrderBy(e => e.Sku.Product.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return (items, total);
     }
 
-    public async Task<List<StockBatch>> GetBatchesAsync(
-        Guid storeId,
+    public async Task<(List<StockBatch> Items, int TotalCount)> GetBatchesAsync(
+        Guid? storeId,
         Guid? skuId,
         DateOnly? expiryBefore,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
+        pageNumber = Math.Max(1, pageNumber);
+        pageSize = Math.Min(100, Math.Max(1, pageSize));
+
         var query = dbContext.StockBatches
             .AsNoTracking()
             .Include(b => b.Sku).ThenInclude(s => s.Product)
-            .Where(b => b.StoreId == storeId)
+            .Where(b => b.Qty > 0) // filter results to batches with quantity greater than zero
             .AsQueryable();
+
+        if (storeId.HasValue)
+            query = query.Where(b => b.StoreId == storeId.Value);
 
         if (skuId.HasValue)
             query = query.Where(b => b.SkuId == skuId.Value);
@@ -99,9 +130,14 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
         if (expiryBefore.HasValue)
             query = query.Where(b => b.ExpiryDate.HasValue && b.ExpiryDate.Value <= expiryBefore.Value);
 
-        return await query
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
             .OrderBy(b => b.ExpiryDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync(cancellationToken);
+
+        return (items, total);
     }
 
     public async Task AddAsync(StockEntry entry, CancellationToken cancellationToken = default)
