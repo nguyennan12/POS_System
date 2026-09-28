@@ -199,7 +199,7 @@ public class CheckoutAndCancelOrderTests
     order.PaidAt.Should().NotBeNull();
 
     // Verify side effects
-    await _stockEntryRepository.Received(1).DeductStockAsync(Arg.Any<Guid>(), _storeId, 1, Arg.Any<CancellationToken>());
+    await _stockEntryRepository.Received(1).DeductStockWithBatchesAsync(Arg.Any<Guid>(), _storeId, 1, Arg.Any<CancellationToken>());
     await _stockTransactionRepository.Received(1).AddAsync(Arg.Any<StockTransaction>(), Arg.Any<CancellationToken>());
     await _invoiceRepository.Received(1).AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
   }

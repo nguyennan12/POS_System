@@ -211,10 +211,10 @@ public class CheckoutOrderCommandHandler(
 
     private async Task ExecutePostPaidSideEffectsAsync(Order order, Employee employee, Store store, CancellationToken ct)
     {
-        // 1. Trừ kho và tạo StockTransaction SaleOut
+        // 1. Trừ kho (kèm theo lô FEFO nếu có) và tạo StockTransaction SaleOut
         foreach (var item in order.Items)
         {
-            await stockEntryRepository.DeductStockAsync(item.SkuId, order.StoreId, item.Qty, ct);
+            await stockEntryRepository.DeductStockWithBatchesAsync(item.SkuId, order.StoreId, item.Qty, ct);
 
             var stockTx = StockTransaction.CreateSaleOut(
                 storeId: order.StoreId,

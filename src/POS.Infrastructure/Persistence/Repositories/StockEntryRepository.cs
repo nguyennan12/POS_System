@@ -154,6 +154,30 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
             cancellationToken);
     }
 
+    public async Task DeductStockWithBatchesAsync(
+        Guid skuId, Guid storeId, decimal qty, CancellationToken cancellationToken = default)
+    {
+        // 1. Trừ tổng tồn kho atomic trong stock_entries
+        await DeductStockAsync(skuId, storeId, qty, cancellationToken);
+
+        // 2. Lấy danh sách các Lô còn tồn theo thứ tự ưu tiên FEFO (hạn dùng sớm nhất -> ngày nhập sớm nhất)
+        var batches = await dbContext.StockBatches
+            .Where(b => b.StoreId == storeId && b.SkuId == skuId && b.Qty > 0)
+            .OrderBy(b => b.ExpiryDate == null ? 1 : 0)
+            .ThenBy(b => b.ExpiryDate)
+            .ThenBy(b => b.ReceivedAt)
+            .ToListAsync(cancellationToken);
+
+        var remaining = qty;
+        foreach (var batch in batches)
+        {
+            if (remaining <= 0) break;
+            var deductAmount = Math.Min(batch.Qty, remaining);
+            batch.DeductQty(deductAmount);
+            remaining -= deductAmount;
+        }
+    }
+
     public async Task IncrementStockAsync(
         Guid skuId, Guid storeId, decimal qty, decimal newAverageCost, CancellationToken cancellationToken = default)
     {
