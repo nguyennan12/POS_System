@@ -12,7 +12,9 @@ public record InventoryFilterRequest(
 
 public record BatchFilterRequest(
     Guid? SkuId = null,
-    DateOnly? ExpiryBefore = null
+    DateOnly? ExpiryBefore = null,
+    int PageNumber = 1,
+    int PageSize = 20
 );
 
 public record DisposeStockRequest(
