@@ -2,7 +2,7 @@
 
 > **Mô hình**: WPF .NET 10 (Client, Fluent WPF-UI) + ASP.NET Core Web API (Cloud Server) + PostgreSQL
 > **Pattern**: MVVM (WPF UI with CommunityToolkit.Mvvm) + Clean Architecture (Application/Domain/Infrastructure) + DI
-> **Auth & Logging**: JWT Bearer + Đăng nhập PIN/Password & Grafana Stack (Loki + Prometheus + Grafana)
+> **Auth & Logging**: JWT Bearer + Đăng nhập PIN/Password & Grafana Cloud (Alloy + Loki + Prometheus)
 > **Triển khai**: Docker + Docker Compose (dev & production)
 
 ---
@@ -262,7 +262,7 @@ POS.sln
 │   │   │   └── ...
 │   │   └── Migrations/                  ← EF Core migrations
 │   ├── Logging/                         ← Cấu hình Logging & Sink
-│   │   └── SerilogLokiConfiguration.cs  ← Cấu hình đẩy Log về Grafana Loki
+│   │   └── SerilogLokiConfiguration.cs  ← Cấu hình Serilog đẩy Log về Alloy Gateway (:3100)
 │   ├── Cache/
 │   │   └── RedisCacheService.cs
 │   ├── Payment/
@@ -582,7 +582,7 @@ CheckoutOrderCommand thành công
 | **Cache**           | Redis                   | `StackExchange.Redis`                              |
 | **Real-time**       | SignalR                 | `Microsoft.AspNetCore.SignalR`                     |
 | **Background Jobs** | Hangfire                | `Hangfire.PostgreSql`                              |
-| **Logging**         | Serilog + Grafana Loki  | `Serilog.AspNetCore`, `Serilog.Sinks.Grafana.Loki` |
+| **Logging & APM**   | Serilog + Grafana Alloy + Grafana Cloud (Loki & Prometheus) | `Serilog.AspNetCore`, `Serilog.Sinks.Grafana.Loki`, `prometheus-net` |
 | **Excel**           | ClosedXML               | `ClosedXML`                                        |
 | **PDF**             | QuestPDF                | `QuestPDF`                                         |
 | **Hash Password**   | BCrypt                  | `BCrypt.Net-Next`                                  |
@@ -615,7 +615,7 @@ CheckoutOrderCommand thành công
 | **Reverse Proxy**        | Nginx + SSL (Let's Encrypt/Certbot)        |
 | **Container**            | Docker + Docker Compose (dev & production) |
 | **CI/CD**                | GitHub Actions                             |
-| **Monitoring / Logging** | Grafana + Loki + Prometheus                |
+| **Monitoring & Logging** | Grafana Cloud (Loki Logs + Prometheus Metrics + APM) |
 | **File Storage**         | MinIO self-host / Azure Blob               |
 
 ---
