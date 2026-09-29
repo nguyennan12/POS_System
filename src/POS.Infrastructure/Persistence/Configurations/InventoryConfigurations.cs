@@ -124,6 +124,7 @@ public class StockInVoucherItemConfiguration : IEntityTypeConfiguration<StockInV
     builder.Property(s => s.Qty).HasQuantityPrecision();
     builder.Property(s => s.UnitPrice).HasMoneyPrecision();
     builder.Property(s => s.TotalPrice).HasMoneyPrecision();
+    builder.Property(s => s.BatchNo).HasMaxLength(50);
     builder.HasOne(s => s.Voucher).WithMany(v => v.Items).HasForeignKey(s => s.VoucherId).OnDelete(DeleteBehavior.Cascade);
     builder.HasOne(s => s.Sku).WithMany().HasForeignKey(s => s.SkuId).OnDelete(DeleteBehavior.Restrict);
     builder.HasTableCheckConstraint("ck_stock_in_voucher_items_qty", "qty > 0");

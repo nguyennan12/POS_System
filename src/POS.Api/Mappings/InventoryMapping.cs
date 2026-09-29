@@ -14,7 +14,9 @@ public static class InventoryMapping
         dto.ProductName,
         dto.Qty,
         dto.UnitPrice,
-        dto.TotalPrice
+        dto.TotalPrice,
+        dto.BatchNo,
+        dto.ExpiryDate
     );
 
     public static StockInVoucherSummaryResponse ToResponse(this StockInVoucherSummaryDto dto) => new(

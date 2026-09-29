@@ -15,8 +15,8 @@ public interface IStockEntryRepository
         int pageSize,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Trả về danh sách tồn kho cần cảnh báo: min-stock hoặc hàng cận hạn.</summary>
-    Task<(List<StockEntry> Items, int TotalCount)> GetAlertsAsync(
+    /// <summary>Trả về danh sách tồn kho cần cảnh báo: min-stock hoặc hàng cận hạn. Cũng trả về tập SkuId near-expiry.</summary>
+    Task<(List<StockEntry> Items, int TotalCount, HashSet<Guid> NearExpirySkuIds)> GetAlertsAsync(
         Guid? storeId,
         int nearExpiryDays,
         int pageNumber,

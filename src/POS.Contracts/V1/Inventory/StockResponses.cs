@@ -53,7 +53,9 @@ public record StockInVoucherItemResponse(
     string ProductName,
     decimal Qty,
     decimal UnitPrice,
-    decimal TotalPrice
+    decimal TotalPrice,
+    string? BatchNo,
+    DateOnly? ExpiryDate
 );
 
 public record StockInVoucherSummaryResponse(

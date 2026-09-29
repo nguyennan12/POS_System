@@ -1,4 +1,4 @@
-using POS.Application.Abstractions.Auth;
+﻿using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Inventory;
 
@@ -11,7 +11,7 @@ public record GetStockBatchesQuery(
     int PageSize = 20
 ) : IQuery<PagedStockBatchList>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:stock:read";
+    public string RequiredPermission => "inventory:read";
 }
 
 public record PagedStockBatchList(
@@ -20,3 +20,4 @@ public record PagedStockBatchList(
     int PageNumber,
     int PageSize
 );
+

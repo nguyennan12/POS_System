@@ -11,13 +11,15 @@ namespace POS.Application.UseCases.Inventory.StockIn.Commands.CompleteStockInVou
 /// Hoàn thành phiếu nhập kho:
 /// 1. Validate trạng thái phiếu (Draft → Completed).
 /// 2. Thực thi trong Serializable transaction:
-///    a. Tạo StockTransaction (StockIn) cho từng item.
-///    b. Tăng QtyOnHand và tính lại AverageCost (Weighted Average Cost).
-///    c. Nếu StockEntry chưa tồn tại, tạo mới.
+///    a. Với mỗi item: cộng dồn StockEntry.QtyOnHand + tính AverageCost qua domain method.
+///    b. Tạo/cộng dồn StockBatch nếu item có BatchNo.
+///    c. Tạo StockTransaction (StockIn) cho từng item.
+///    d. SaveChangesAsync() một lần duy nhất ở cuối.
 /// </summary>
 public class CompleteStockInVoucherCommandHandler(
     IStockInVoucherRepository stockInVoucherRepository,
     IStockEntryRepository stockEntryRepository,
+    IStockBatchRepository stockBatchRepository,
     IStockTransactionRepository stockTransactionRepository,
     IEmployeeRepository employeeRepository,
     IUnitOfWork unitOfWork,
@@ -44,64 +46,58 @@ public class CompleteStockInVoucherCommandHandler(
         if (!employee.IsChainOwner && voucher.StoreId != employee.StoreId)
             return StockInErrors.AccessDenied;
 
-        // 4. Thực thi trong Serializable transaction để đảm bảo an toàn
+        // 4. Thực thi trong Serializable transaction
         return await unitOfWork.ExecuteSerializableAsync(async ct =>
         {
             // Reload để lấy trạng thái mới nhất trong transaction
             var freshVoucher = await stockInVoucherRepository.GetByIdWithItemsAsync(command.VoucherId, ct);
             if (freshVoucher is null) return StockInErrors.VoucherNotFound;
 
-            // 5. Complete phiếu
+            // 5. Complete phiếu (Draft → Completed)
             var completeResult = freshVoucher.Complete();
             if (completeResult.IsFailure) return completeResult.Error;
 
-            // Merge items by SKU to prevent using stale QtyOnHand/AverageCost for repeated SKUs
-            var mergedItems = freshVoucher.Items
-                .GroupBy(i => i.SkuId)
-                .Select(g => new
-                {
-                    SkuId = g.Key,
-                    TotalQty = g.Sum(x => x.Qty),
-                    TotalPrice = g.Sum(x => x.Qty * x.UnitPrice)
-                })
-                .Where(x => x.TotalQty > 0)
-                .ToList();
-
-            // 6. Với từng merged item: tạo StockTransaction + cập nhật StockEntry
-            foreach (var item in mergedItems)
+            // 6. Với từng item: cập nhật StockEntry và StockBatch
+            foreach (var item in freshVoucher.Items)
             {
-                var averageItemPrice = item.TotalPrice / item.TotalQty;
-
                 // 6a. Lấy hoặc tạo StockEntry
                 var entry = await stockEntryRepository.GetBySkuAndStoreAsync(item.SkuId, freshVoucher.StoreId, ct);
                 if (entry is null)
                 {
                     entry = new StockEntry(freshVoucher.StoreId, item.SkuId, 0);
                     await stockEntryRepository.AddAsync(entry, ct);
-                    await unitOfWork.SaveChangesAsync(ct); // flush để có Id
-                    entry = await stockEntryRepository.GetBySkuAndStoreAsync(item.SkuId, freshVoucher.StoreId, ct);
                 }
 
-                // 6b. Tính giá vốn bình quân mới
-                var totalValue = entry!.QtyOnHand * entry.AverageCost + item.TotalPrice;
-                var newQty = entry.QtyOnHand + item.TotalQty;
-                var newAvgCost = newQty > 0 ? totalValue / newQty : averageItemPrice;
+                // 6b. Cộng tồn kho + tính lại AverageCost qua Domain method (không raw SQL)
+                entry.IncreaseStock(item.Qty, item.UnitPrice);
 
-                // 6c. Cập nhật tồn kho atomic bằng raw SQL
-                await stockEntryRepository.IncrementStockAsync(item.SkuId, freshVoucher.StoreId, item.TotalQty, newAvgCost, ct);
-
-                // 6d. Tạo StockTransaction ledger entry
+                // 6c. Tạo StockTransaction ledger entry
                 var tx = StockTransaction.CreateStockIn(
                     storeId: freshVoucher.StoreId,
                     skuId: item.SkuId,
-                    qty: item.TotalQty,
+                    qty: item.Qty,
                     createdBy: employee.Id,
                     stockInVoucherId: freshVoucher.Id,
-                    unitCost: averageItemPrice);
+                    unitCost: item.UnitPrice);
 
                 await stockTransactionRepository.AddAsync(tx, ct);
+
+                // 6d. Nếu item có BatchNo thì tạo mới hoặc cộng dồn StockBatch
+                if (!string.IsNullOrWhiteSpace(item.BatchNo))
+                {
+                    var batch = await stockBatchRepository.GetByBatchNoAsync(
+                        freshVoucher.StoreId, item.SkuId, item.BatchNo, ct);
+
+                    if (batch is null)
+                        await stockBatchRepository.AddAsync(
+                            new StockBatch(freshVoucher.StoreId, item.SkuId, item.BatchNo, item.Qty, item.ExpiryDate),
+                            ct);
+                    else
+                        batch.AddQty(item.Qty);
+                }
             }
 
+            // 7. Lưu tất cả thay đổi một lần
             await unitOfWork.SaveChangesAsync(ct);
 
             var result = await stockInVoucherRepository.GetByIdWithItemsAsync(freshVoucher.Id, ct);

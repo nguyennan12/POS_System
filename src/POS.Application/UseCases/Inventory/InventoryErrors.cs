@@ -19,4 +19,11 @@ public static class InventoryErrors
     public static Error InsufficientStock(Guid skuId, decimal available, decimal requested) =>
         new(ErrorType.Invalid, "Inventory.InsufficientStock",
             $"Tồn kho không đủ cho SKU {skuId}: hiện có {available}, yêu cầu {requested}.");
+
+    public static Error BatchNotFound(Guid batchId) =>
+        new(ErrorType.NotFound, "Inventory.BatchNotFound", $"Không tìm thấy lô hàng: {batchId}.");
+
+    public static Error InsufficientBatchStock(Guid batchId, decimal available, decimal requested) =>
+        new(ErrorType.Invalid, "Inventory.InsufficientBatchStock",
+            $"Số lượng lô {batchId} không đủ: hiện có {available}, yêu cầu {requested}.");
 }

@@ -9,13 +9,16 @@ public class StockInVoucherItem : BaseEntity
     {
     }
 
-    public StockInVoucherItem(Guid voucherId, Guid skuId, decimal qty, decimal unitPrice) : base()
+    public StockInVoucherItem(Guid voucherId, Guid skuId, decimal qty, decimal unitPrice,
+        string? batchNo = null, DateOnly? expiryDate = null) : base()
     {
         VoucherId = voucherId;
         SkuId = skuId;
         Qty = qty;
         UnitPrice = unitPrice;
         TotalPrice = qty * unitPrice;
+        BatchNo = batchNo?.Trim();
+        ExpiryDate = expiryDate;
     }
 
     public Guid VoucherId { get; private set; }
@@ -27,5 +30,7 @@ public class StockInVoucherItem : BaseEntity
     public decimal Qty { get; private set; }
     public decimal UnitPrice { get; private set; }
     public decimal TotalPrice { get; private set; }
+    public string? BatchNo { get; private set; }
+    public DateOnly? ExpiryDate { get; private set; }
 }
 

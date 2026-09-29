@@ -20,7 +20,8 @@ public record BatchFilterRequest(
 public record DisposeStockRequest(
     Guid SkuId,
     decimal Qty,
-    string Note
+    string Note,
+    Guid? BatchId = null
 );
 
 public record StockInVoucherFilterRequest(
@@ -35,7 +36,9 @@ public record StockInVoucherFilterRequest(
 public record StockInVoucherItemRequest(
     Guid SkuId,
     decimal Qty,
-    decimal UnitPrice
+    decimal UnitPrice,
+    string? BatchNo = null,
+    DateOnly? ExpiryDate = null
 );
 
 public record CreateStockInVoucherRequest(
