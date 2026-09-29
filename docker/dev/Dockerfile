@@ -8,4 +8,4 @@ ENV ASPNETCORE_ENVIRONMENT=Development
 
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "watch", "run", "--project", "src/POS.Api/POS.Api.csproj", "--urls", "http://0.0.0.0:8080", "--non-interactive"]
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile", "--project", "src/POS.Api/POS.Api.csproj", "--urls", "http://0.0.0.0:8080", "--non-interactive"]
