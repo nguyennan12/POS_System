@@ -11,6 +11,8 @@ using POS.Application.UseCases.Orders.Commands.CreateOrder;
 using POS.Application.UseCases.Orders.Queries.GetOrderById;
 using POS.Contracts.V1.Common;
 using POS.Contracts.V1.Orders;
+using POS.Contracts.V1.Payments;
+using POS.Domain.Common;
 
 namespace POS.Api.Controllers;
 
@@ -19,6 +21,23 @@ namespace POS.Api.Controllers;
 [Route("api/v1/orders")]
 public class OrdersController(ISender mediator) : ControllerBase
 {
+  [HttpGet("{id:guid}/payments/{paymentId:guid}/status")]
+  public async Task<ActionResult<ApiResponse<PaymentStatusResponse>>> GetPaymentStatus(
+      Guid id, Guid paymentId, CancellationToken cancellationToken)
+  {
+    // Reuse the order query's existing authentication and store access checks.
+    var result = await mediator.Send(new GetOrderByIdQuery(id), cancellationToken);
+    if (result.IsFailure) return this.ToActionResult(result);
+    var payment = result.Value!.Payments.FirstOrDefault(p => p.Id == paymentId);
+    if (payment is null)
+      return this.ToActionResult(Result.Failure(new Error(ErrorType.NotFound,
+          "PAYMENT.NOT_FOUND", "Không tìm thấy thanh toán của đơn hàng.")));
+
+    return Ok(ApiResponse<PaymentStatusResponse>.Ok(new(
+        payment.Id, id, payment.Method, payment.Amount, payment.Status,
+        payment.TransactionRef, payment.PaidAt)));
+  }
+
   /// <summary>
   /// Tạo mới đơn hàng ở trạng thái Draft gắn với ca làm việc.
   /// </summary>

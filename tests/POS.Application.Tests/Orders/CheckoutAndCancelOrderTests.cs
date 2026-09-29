@@ -26,7 +26,7 @@ using POS.Domain.Stores;
 
 namespace POS.Application.Tests.Orders;
 
-public class CheckoutAndCancelOrderTests
+public partial class CheckoutAndCancelOrderTests
 {
   private readonly IOrderRepository _orderRepository = Substitute.For<IOrderRepository>();
   private readonly IShiftRepository _shiftRepository = Substitute.For<IShiftRepository>();
@@ -124,7 +124,7 @@ public class CheckoutAndCancelOrderTests
         .Returns(ci => ci.Arg<Func<CancellationToken, Task<Result<CheckoutDto>>>>()(ci.Arg<CancellationToken>()));
   }
 
-  private CheckoutOrderCommandHandler CreateCheckoutHandler() => new(
+  private CheckoutOrderCommandHandler CreateCheckoutHandler(ICartCalculationService? calculationService = null) => new(
       _orderRepository,
       _shiftRepository,
       _employeeRepository,
@@ -136,9 +136,10 @@ public class CheckoutAndCancelOrderTests
       _voucherRepository,
       _voucherUsageRepository,
       _paymentStrategyFactory,
-      _cartCalculationService,
+      calculationService ?? _cartCalculationService,
       _unitOfWork,
-      _currentUser);
+      _currentUser,
+      _customerRepository);
 
   private Order CreateDraftOrderWithItems(decimal itemPrice = 100_000, decimal qty = 1)
   {
@@ -162,6 +163,38 @@ public class CheckoutAndCancelOrderTests
     );
     order.ApplyPromotionEvaluation(promoResult, new Dictionary<Guid, decimal>());
     return order;
+  }
+
+  [Theory]
+  [InlineData(false)]
+  [InlineData(true)]
+  public async Task Checkout_ShouldComplete_WithRealCalculationService(bool split)
+  {
+    var order = CreateDraftOrderWithItems();
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    var skus = Substitute.For<ISkuRepository>();
+    skus.GetByIdsWithProductAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+        .Returns(order.Items.Select(i => i.Sku).ToList());
+    var promotions = Substitute.For<IPromotionRepository>();
+    promotions.GetActiveAutomaticPromotionsAsync(_storeId, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        .Returns(new List<Promotion>());
+    var service = new CartCalculationService(skus, promotions, _voucherRepository,
+        _customerRepository, new POS.Domain.Promotions.Services.PromotionEngine());
+
+    var handler = CreateCheckoutHandler(service);
+    if (split)
+    {
+      var partial = await handler.Handle(new(_orderId, [new("Cash", 40_000)]), CancellationToken.None);
+      partial.IsSuccess.Should().BeTrue();
+      order.Status.Should().Be(OrderStatus.Confirmed);
+    }
+    var result = await handler.Handle(
+        new(_orderId, [new("Cash", split ? 60_000 : 100_000)]), CancellationToken.None);
+
+    result.IsSuccess.Should().BeTrue();
+    order.Status.Should().Be(OrderStatus.Paid);
   }
 
   [Fact]

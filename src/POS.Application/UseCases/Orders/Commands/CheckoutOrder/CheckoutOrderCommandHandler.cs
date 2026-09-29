@@ -31,55 +31,63 @@ public class CheckoutOrderCommandHandler(
     IPaymentStrategyFactory paymentStrategyFactory,
     ICartCalculationService cartCalculationService,
     IUnitOfWork unitOfWork,
-    ICurrentUser currentUser) : ICommandHandler<CheckoutOrderCommand, CheckoutDto>
+    ICurrentUser currentUser,
+    ICustomerRepository customerRepository) : ICommandHandler<CheckoutOrderCommand, CheckoutDto>
 {
     public async Task<Result<CheckoutDto>> Handle(
         CheckoutOrderCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Kiểm tra xác thực nhân viên
-        var authResult = await ValidateEmployeeAuthAsync(cancellationToken);
-        if (authResult.IsFailure) return authResult.Error;
-        var employee = authResult.Value!;
-
-        // 2. Lấy thông tin đơn hàng
-        var order = await orderRepository.GetByIdWithDetailsAsync(command.OrderId, cancellationToken);
-        if (order is null) return OrderErrors.OrderNotFound;
-
-        // 3. Kiểm tra trạng thái đơn, ca làm việc, quyền cửa hàng và trạng thái cửa hàng
-        var guardResult = await ValidatePreCheckoutGuardsAsync(order, employee, cancellationToken);
-        if (guardResult.IsFailure) return guardResult.Error;
-        var (shift, store) = guardResult.Value;
-
-        // 4. Validate các phương thức thanh toán đầu vào qua Payment Strategy Factory
-        var paymentResult = await ParseAndValidatePaymentsAsync(command.Payments, order, cancellationToken);
-        if (paymentResult.IsFailure) return paymentResult.Error;
-        var parsedPayments = paymentResult.Value!;
-
-        // 5. Thực thi thanh toán trong Serializable Transaction
-        return await unitOfWork.ExecuteSerializableAsync(async ct =>
+        try
         {
-            var freshOrder = await orderRepository.GetByIdWithDetailsAsync(command.OrderId, ct);
-            if (freshOrder is null) return OrderErrors.OrderNotFound;
-
-            var prepareResult = await PrepareAndRecalculateOrderAsync(freshOrder, ct);
-            if (prepareResult.IsFailure) return prepareResult.Error;
-
-            var stockResult = await ValidateInventoryAsync(freshOrder, ct);
-            if (stockResult.IsFailure) return stockResult.Error;
-
-            freshOrder.ProcessPayments(parsedPayments);
-            orderRepository.Update(freshOrder);
-
-            if (freshOrder.Status == OrderStatus.Paid)
+            // Every read used for a payment decision belongs to the same snapshot.
+            return await unitOfWork.ExecuteSerializableAsync<CheckoutDto>(async ct =>
             {
-                await ExecutePostPaidSideEffectsAsync(freshOrder, employee, store, ct);
-            }
+                var authResult = await ValidateEmployeeAuthAsync(ct);
+                if (authResult.IsFailure) return authResult.Error;
+                var employee = authResult.Value!;
 
-            await unitOfWork.SaveChangesAsync(ct);
+                var order = await orderRepository.GetByIdWithDetailsAsync(command.OrderId, ct);
+                if (order is null) return OrderErrors.OrderNotFound;
+                var guardResult = await ValidatePreCheckoutGuardsAsync(order, employee, ct);
+                if (guardResult.IsFailure) return guardResult.Error;
+                var (_, store) = guardResult.Value;
 
-            return Result<CheckoutDto>.Success(BuildCheckoutDto(freshOrder, employee, store));
-        }, cancellationToken);
+                var prepareResult = await PrepareAndRecalculateOrderAsync(order, ct);
+                if (prepareResult.IsFailure) return prepareResult.Error;
+
+                var paymentResult = await ParseAndValidatePaymentsAsync(command.Payments, order, ct);
+                if (paymentResult.IsFailure) return paymentResult.Error;
+                var parsedPayments = paymentResult.Value!;
+
+                var stockResult = await ValidateInventoryAsync(order, ct);
+                if (stockResult.IsFailure) return stockResult.Error;
+
+                // Redeem only this request's points, including partial settlements.
+                var points = parsedPayments.Where(p => p.Method == PaymentMethod.Points).Sum(p => p.Amount);
+                if (points > 0)
+                {
+                    var account = await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
+                    if (account is null || !account.DeductPoints(points))
+                        return OrderErrors.InsufficientPoints;
+                }
+
+                var previousIds = order.Payments.Select(p => p.Id).ToHashSet();
+                order.ProcessPayments(parsedPayments);
+                await orderRepository.AddPaymentsAsync(order.Payments.Where(p => !previousIds.Contains(p.Id)), ct);
+
+                if (order.Status == OrderStatus.Paid)
+                    await ExecutePostPaidSideEffectsAsync(order, employee, store, ct);
+
+                await unitOfWork.SaveChangesAsync(ct);
+                return Result<CheckoutDto>.Success(BuildCheckoutDto(order, employee, store));
+            }, cancellationToken);
+        }
+        catch (PersistenceConflictException ex) when (ex.ConstraintName == "IX_payments_method_transaction_ref")
+        {
+            // Includes a duplicate that won a concurrent race after our existence check.
+            return OrderErrors.DuplicatePayment;
+        }
     }
 
     // ── Helper Methods ────────────────────────────────────────────────────────
@@ -143,51 +151,78 @@ public class CheckoutOrderCommandHandler(
     private async Task<Result<List<(PaymentMethod Method, decimal Amount, string? TransactionRef)>>> ParseAndValidatePaymentsAsync(
         IReadOnlyList<PaymentSplitInputDto> payments, Order order, CancellationToken ct)
     {
-        if (payments.Count == 0)
+        if (payments is null || payments.Count == 0)
             return OrderErrors.NoPaymentsProvided;
 
+        if (order.Payments.Any(p => !Enum.IsDefined(p.Status) || !Enum.IsDefined(p.Method)
+            || p.Amount <= 0 || p.Amount != Math.Round(p.Amount, 2)
+            || (p.ChangeAmount.HasValue && (p.ChangeAmount < 0 || p.ChangeAmount > p.Amount
+                || p.ChangeAmount != Math.Round(p.ChangeAmount.Value, 2)))
+            || (p.Method != PaymentMethod.Cash && (p.ChangeAmount ?? 0) != 0)))
+            return OrderErrors.InvalidPaymentState;
+
         var parsedPayments = new List<(PaymentMethod Method, decimal Amount, string? TransactionRef)>();
-        decimal nonCashTotal = 0;
+        var remaining = order.GrandTotal - order.GetPaymentTotals().TotalApplied;
+        if (remaining < 0) return OrderErrors.InvalidPaymentState;
+        if (remaining == 0 && order.Payments.Any(p => p.Status == PaymentStatus.Success))
+            return OrderErrors.AlreadyPaid;
+        var references = order.Payments.Where(p => p.TransactionRef != null)
+            .Select(p => (p.Method, p.TransactionRef)).ToHashSet();
 
         foreach (var p in payments)
         {
+            if (p is null || p.Amount <= 0 || p.Amount != Math.Round(p.Amount, 2) || p.Amount > 9999999999999999.99m)
+                return OrderErrors.InvalidPaymentAmount;
+            if (p.TransactionRef != null && (string.IsNullOrWhiteSpace(p.TransactionRef) || p.TransactionRef.Length > 100))
+                return OrderErrors.InvalidTransactionRef;
+
             var parseResult = paymentStrategyFactory.ParseMethod(p.Method);
             if (parseResult.IsFailure)
                 return parseResult.Error;
 
             var method = parseResult.Value;
-            var strategy = paymentStrategyFactory.GetStrategy(method);
+            IPaymentStrategy strategy;
+            try
+            {
+                strategy = paymentStrategyFactory.GetStrategy(method);
+            }
+            catch (NotSupportedException)
+            {
+                return OrderErrors.InvalidPaymentMethod;
+            }
 
             var validationResult = await strategy.ValidateAsync(p, order, ct);
             if (validationResult.IsFailure)
                 return validationResult.Error;
 
-            if (method != PaymentMethod.Cash)
-                nonCashTotal += p.Amount;
+            if (p.TransactionRef != null && (!references.Add((method, p.TransactionRef))
+                || await orderRepository.PaymentReferenceExistsAsync(method, p.TransactionRef, ct)))
+                return OrderErrors.DuplicatePayment;
+
+            if (method != PaymentMethod.Cash && p.Amount > remaining)
+                return OrderErrors.NonCashOverpaymentNotAllowed;
+
+            remaining -= Math.Min(p.Amount, remaining);
 
             parsedPayments.Add((method, p.Amount, p.TransactionRef));
         }
-
-        if (nonCashTotal > order.GrandTotal)
-            return OrderErrors.NonCashOverpaymentNotAllowed;
 
         return Result<List<(PaymentMethod, decimal, string?)>>.Success(parsedPayments);
     }
 
     private async Task<Result> PrepareAndRecalculateOrderAsync(Order order, CancellationToken ct)
     {
-        if (order.Status == OrderStatus.Draft)
-        {
-            var confirmResult = order.Confirm();
-            if (confirmResult.IsFailure)
-                return confirmResult.Error;
-        }
-        else if (order.Status != OrderStatus.Confirmed)
+        // Confirmed orders retain the total agreed before the first payment.
+        if (order.Status == OrderStatus.Confirmed)
+            return Result.Success();
+
+        if (order.Status != OrderStatus.Draft)
         {
             return order.Status == OrderStatus.Paid ? OrderErrors.AlreadyPaid : OrderErrors.AlreadyCancelled;
         }
 
         decimal grandTotalBefore = order.GrandTotal;
+        var previousDiscounts = order.Discounts.ToList();
         var recalcResult = await cartCalculationService.RecalculateAsync(order, revalidateVoucher: true, cancellationToken: ct);
         if (recalcResult.IsFailure)
             return recalcResult.Error;
@@ -195,7 +230,8 @@ public class CheckoutOrderCommandHandler(
         if (order.GrandTotal != grandTotalBefore)
             return OrderErrors.GrandTotalMismatch;
 
-        return Result.Success();
+        orderRepository.ReplaceDiscounts(previousDiscounts, order.Discounts);
+        return order.Confirm();
     }
 
     private async Task<Result> ValidateInventoryAsync(Order order, CancellationToken ct)
@@ -241,7 +277,7 @@ public class CheckoutOrderCommandHandler(
         }
 
         // 3. Thực thi xử lý post-paid cho các phương thức thanh toán qua Strategy
-        foreach (var payment in order.Payments)
+        foreach (var payment in order.Payments.Where(p => p.Status == PaymentStatus.Success))
         {
             var strategy = paymentStrategyFactory.GetStrategy(payment.Method);
             await strategy.ProcessPostPaidAsync(payment, order, ct);
@@ -266,15 +302,7 @@ public class CheckoutOrderCommandHandler(
 
     private static CheckoutDto BuildCheckoutDto(Order order, Employee employee, Store store)
     {
-        var totalPaid = order.Payments
-            .Where(p => p.Status == PaymentStatus.Success)
-            .Sum(p => p.Amount);
-
-        var lastCashPayment = order.Payments
-            .Where(p => p.Method == PaymentMethod.Cash && p.Status == PaymentStatus.Success)
-            .LastOrDefault();
-
-        var changeAmount = lastCashPayment?.ChangeAmount ?? 0;
+        var (totalPaid, changeAmount) = order.GetPaymentTotals();
 
         ReceiptDataDto? receiptData = null;
         if (order.Status == OrderStatus.Paid)
@@ -303,7 +331,7 @@ public class CheckoutOrderCommandHandler(
                 DiscountTotal: order.DiscountTotal,
                 TaxTotal: order.TaxTotal,
                 GrandTotal: order.GrandTotal,
-                AmountPaid: totalPaid - changeAmount,
+                AmountPaid: totalPaid,
                 ChangeAmount: changeAmount,
                 ReceiptHeader: store.ReceiptHeader,
                 ReceiptFooter: store.ReceiptFooter
@@ -323,7 +351,7 @@ public class CheckoutOrderCommandHandler(
         return new CheckoutDto(
             OrderId: order.Id,
             GrandTotal: order.GrandTotal,
-            TotalPaid: totalPaid - changeAmount,
+            TotalPaid: totalPaid,
             ChangeAmount: changeAmount,
             Status: order.Status.ToString(),
             Payments: paymentDtos,

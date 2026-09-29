@@ -4,6 +4,18 @@ namespace POS.Application.UseCases.Orders.Errors;
 
 public static class OrderErrors
 {
+    public static readonly Error DuplicatePayment = new(
+        ErrorType.AlreadyExists, "ORDER.DUPLICATE_PAYMENT",
+        "Mã giao dịch của phương thức thanh toán đã được sử dụng.");
+
+    public static readonly Error InvalidTransactionRef = new(
+        ErrorType.Invalid, "ORDER.INVALID_TRANSACTION_REF",
+        "Mã giao dịch phải có nội dung và không vượt quá 100 ký tự.");
+
+    public static readonly Error InvalidPaymentState = new(
+        ErrorType.Invalid, "ORDER.INVALID_PAYMENT_STATE",
+        "Dữ liệu thanh toán hiện tại không hợp lệ.");
+
     public static readonly Error Unauthorized = new(
         ErrorType.Unauthorized,
         "ORDER.UNAUTHORIZED",
@@ -112,7 +124,7 @@ public static class OrderErrors
     public static readonly Error InvalidPaymentAmount = new(
         ErrorType.Invalid,
         "ORDER.INVALID_PAYMENT_AMOUNT",
-        "Số tiền thanh toán phải lớn hơn 0.");
+        "Số tiền thanh toán phải lớn hơn 0 và phù hợp decimal(18,2).");
 
     public static readonly Error NoPaymentsProvided = new(
         ErrorType.Invalid,
@@ -137,7 +149,7 @@ public static class OrderErrors
     public static readonly Error NonCashOverpaymentNotAllowed = new(
         ErrorType.Invalid,
         "ORDER.NON_CASH_OVERPAYMENT",
-        "Phương thức thanh toán điện tử không được phép thanh toán vượt quá tổng đơn.");
+        "Phương thức thanh toán không dùng tiền mặt không được vượt số tiền còn lại.");
 
     public static readonly Error StockInsufficient = new(
         ErrorType.Invalid,

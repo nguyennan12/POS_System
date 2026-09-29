@@ -17,7 +17,13 @@ public class CheckoutOrderCommandValidator : AbstractValidator<CheckoutOrderComm
         RuleForEach(x => x.Payments).ChildRules(p =>
         {
             p.RuleFor(x => x.Amount)
-                .GreaterThan(0).WithMessage("Số tiền thanh toán phải lớn hơn 0.");
+                .GreaterThan(0).WithMessage("Số tiền thanh toán phải lớn hơn 0.")
+                .PrecisionScale(18, 2, true).WithMessage("Số tiền phải phù hợp decimal(18,2).");
+
+            p.RuleFor(x => x.TransactionRef)
+                .MaximumLength(100)
+                .Must(value => value == null || !string.IsNullOrWhiteSpace(value))
+                .WithMessage("Mã giao dịch không được chỉ chứa khoảng trắng.");
 
             p.RuleFor(x => x.Method)
                 .NotEmpty().WithMessage("Phương thức thanh toán không được để trống.")
@@ -27,6 +33,6 @@ public class CheckoutOrderCommandValidator : AbstractValidator<CheckoutOrderComm
 
     private static bool BeAValidPaymentMethod(string method)
     {
-        return Enum.TryParse<PaymentMethod>(method, ignoreCase: true, out _);
+        return Enum.TryParse<PaymentMethod>(method, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed);
     }
 }
