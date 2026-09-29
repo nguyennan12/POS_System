@@ -49,6 +49,7 @@ public static class DependencyInjection
 
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<ISkuRepository, SkuRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IStockEntryRepository, StockEntryRepository>();
@@ -56,6 +57,8 @@ public static class DependencyInjection
         services.AddScoped<IStockInVoucherRepository, StockInVoucherRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
+        services.AddScoped<IUnitConversionRepository, UnitConversionRepository>();
+        services.AddScoped<IPriceListRepository, PriceListRepository>();
 
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();

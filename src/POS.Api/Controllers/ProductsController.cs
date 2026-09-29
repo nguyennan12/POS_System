@@ -1,0 +1,116 @@
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using POS.Api.Extensions;
+using POS.Api.Mappings;
+using POS.Application.UseCases.Products.Queries.GetProductById;
+using POS.Application.UseCases.Products.Queries.GetProducts;
+using POS.Contracts.V1.Common;
+using POS.Contracts.V1.Products;
+
+namespace POS.Api.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/v1/products")]
+public class ProductsController(ISender mediator) : ControllerBase
+{
+    /// <summary>
+    /// [P01] Lấy danh sách sản phẩm phân trang với bộ lọc tên/danh mục/trạng thái.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResponse<ProductSummaryResponse>>>> GetProducts(
+        [FromQuery] ProductFilterRequest request,
+        CancellationToken cancellationToken)
+    {
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize   = Math.Min(100, Math.Max(1, request.PageSize));
+
+        var result = await mediator.Send(
+            new GetProductsQuery(
+                request.Search,
+                request.CategoryId,
+                request.Status,
+                pageNumber,
+                pageSize),
+            cancellationToken);
+
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        var paged = result.Value!;
+        return Ok(ApiResponse<PagedResponse<ProductSummaryResponse>>.Ok(
+            new PagedResponse<ProductSummaryResponse>(
+                paged.Items.Select(p => p.ToResponse()).ToList().AsReadOnly(),
+                paged.PageNumber,
+                paged.PageSize,
+                paged.TotalCount)));
+    }
+
+    /// <summary>
+    /// [P02] Lấy chi tiết sản phẩm theo ID (kèm danh sách SKU).
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<ProductDetailResponse>>> GetProductById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetProductByIdQuery(id), cancellationToken);
+
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        return Ok(ApiResponse<ProductDetailResponse>.Ok(result.Value!.ToResponse()));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ApiResponse<Guid>>> CreateProduct(
+        [FromBody] CreateProductRequest request,
+        CancellationToken cancellationToken)
+    {
+        var skus = request.Skus?.Select(s => new Application.UseCases.Products.Commands.CreateProduct.CreateSkuInfo(
+            s.SkuCode,
+            s.Barcode,
+            s.CostPrice,
+            s.SellPrice,
+            s.TaxRate,
+            s.Attributes
+        )).ToList().AsReadOnly();
+
+        var command = new Application.UseCases.Products.Commands.CreateProduct.CreateProductCommand(
+            request.Name,
+            request.CategoryId,
+            request.BaseUnit,
+            request.Description,
+            request.Brand,
+            request.ImageUrl,
+            skus
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        return Ok(ApiResponse<Guid>.Ok(result.Value));
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<Guid>>> UpdateProduct(
+        Guid id,
+        [FromBody] UpdateProductRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new Application.UseCases.Products.Commands.UpdateProduct.UpdateProductCommand(
+            id,
+            request.Name,
+            request.CategoryId,
+            request.BaseUnit,
+            request.Description,
+            request.Brand,
+            request.ImageUrl,
+            request.Status
+        );
+
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        return Ok(ApiResponse<Guid>.Ok(result.Value));
+    }
+}

@@ -47,16 +47,20 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty] private string? _errorMessage;
     [ObservableProperty] private string? _successMessage;
 
+    private readonly INavigationService _navigationService;
+
     public LoginViewModel(
         SessionService sessionService,
         AuthApiClient authApiClient,
         StoreApiClient storeApiClient,
-        NetworkStatusService networkStatusService)
+        NetworkStatusService networkStatusService,
+        INavigationService navigationService)
     {
         _sessionService = sessionService;
         _authApiClient = authApiClient;
         _storeApiClient = storeApiClient;
         _networkStatusService = networkStatusService;
+        _navigationService = navigationService;
 
         _isServerConnected = _networkStatusService.IsOnline;
         _serverStatusText = _networkStatusService.StatusText;
@@ -226,8 +230,8 @@ public partial class LoginViewModel : ObservableObject
                     auth.User.Name,
                     auth.User.RoleName,
                     auth.User.StoreId?.ToString() ?? (SelectedStore?.Id.ToString() ?? string.Empty));
-
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 3000);
+                _navigationService.NavigateTo<POS.WinUI.Views.Products.ProductListView>();
             }
             else
             {
@@ -277,8 +281,8 @@ public partial class LoginViewModel : ObservableObject
                     auth.User.Name,
                     auth.User.RoleName,
                     auth.User.StoreId?.ToString() ?? SelectedStore.Id.ToString());
-
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 3000);
+                _navigationService.NavigateTo<POS.WinUI.Views.Products.ProductListView>();
             }
             else
             {

@@ -36,6 +36,7 @@ public class MigrationService : IMigrationService
           new StoreAndEmployeeSeeder(_pinLookupHasher),
           new MemberTierSeeder(),
           new CategorySeeder(),
+          new ProductAndSkuSeeder(),
       ];
       foreach (var seeder in seeders)
       {

@@ -21,4 +21,21 @@ public static class ApiRoutes
         public const string Public  = "api/v1/stores/public";
         public const string All     = "api/v1/stores";
     }
+
+    public static class Categories
+    {
+        public const string All = "api/v1/categories";
+    }
+
+    public static class Products
+    {
+        public const string Base     = "api/v1/products";
+        public static string ById(Guid id) => $"api/v1/products/{id}";
+    }
+
+    public static class Skus
+    {
+        public static string ById(Guid id)          => $"api/v1/skus/{id}";
+        public static string ByBarcode(string code) => $"api/v1/skus/barcode/{Uri.EscapeDataString(code)}";
+    }
 }

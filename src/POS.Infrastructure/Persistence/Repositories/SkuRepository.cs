@@ -31,4 +31,19 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
             .Where(s => idList.Contains(s.Id))
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<bool> IsSkuCodeUniqueAsync(string skuCode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        return !await dbContext.Skus.AnyAsync(s => s.StoreId == storeId && s.SkuCode == skuCode && (!excludeId.HasValue || s.Id != excludeId.Value), cancellationToken);
+    }
+
+    public async Task<bool> IsBarcodeUniqueAsync(string barcode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default)
+    {
+        return !await dbContext.Skus.AnyAsync(s => s.StoreId == storeId && s.Barcode == barcode && (!excludeId.HasValue || s.Id != excludeId.Value), cancellationToken);
+    }
+
+    public async Task AddAsync(Sku sku, CancellationToken cancellationToken = default)
+    {
+        await dbContext.Skus.AddAsync(sku, cancellationToken);
+    }
 }

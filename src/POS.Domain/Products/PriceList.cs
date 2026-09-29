@@ -23,4 +23,15 @@ public class PriceList : BaseEntity
     public Guid CreatedBy { get; private set; }
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+
+    public PriceList(Guid storeId, Guid skuId, decimal price, DateTime validFrom, DateTime? validTo, string? customerGroup, Guid createdBy, Guid id = default) : base(id)
+    {
+        StoreId = storeId;
+        SkuId = skuId;
+        Price = price;
+        ValidFrom = validFrom;
+        ValidTo = validTo;
+        CustomerGroup = customerGroup;
+        CreatedBy = createdBy;
+    }
 }

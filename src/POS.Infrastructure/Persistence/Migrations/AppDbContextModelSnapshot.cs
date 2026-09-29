@@ -2866,7 +2866,7 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.Sku", b =>
                 {
                     b.HasOne("POS.Domain.Products.Product", "Product")
-                        .WithMany()
+                        .WithMany("Skus")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2885,7 +2885,7 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.UnitConversion", b =>
                 {
                     b.HasOne("POS.Domain.Products.Sku", "Sku")
-                        .WithMany()
+                        .WithMany("UnitConversions")
                         .HasForeignKey("SkuId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3039,6 +3039,16 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Items");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("POS.Domain.Products.Product", b =>
+                {
+                    b.Navigation("Skus");
+                });
+
+            modelBuilder.Entity("POS.Domain.Products.Sku", b =>
+                {
+                    b.Navigation("UnitConversions");
                 });
 
             modelBuilder.Entity("POS.Domain.Promotions.Promotion", b =>

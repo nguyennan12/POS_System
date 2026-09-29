@@ -47,4 +47,26 @@ public class Product : BaseEntity
     public ProductStatus Status { get; private set; } = ProductStatus.Active;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
+
+    /// <summary>Danh sách SKU thuộc sản phẩm (eager-load khi cần detail).</summary>
+    public IReadOnlyList<Sku>? Skus { get; private set; }
+
+    public void Update(
+        Guid categoryId,
+        string name,
+        string baseUnit,
+        string? description,
+        string? brand,
+        string? imageUrl,
+        ProductStatus status)
+    {
+        CategoryId = categoryId;
+        Name = name;
+        BaseUnit = baseUnit;
+        Description = description;
+        Brand = brand;
+        ImageUrl = imageUrl;
+        Status = status;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
