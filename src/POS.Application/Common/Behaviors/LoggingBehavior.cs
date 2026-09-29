@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -16,9 +17,19 @@ public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
-        _logger.LogInformation("Handling {RequestName}", requestName);
+        _logger.LogDebug("Handling {RequestName}", requestName);
+
+        var stopwatch = Stopwatch.StartNew();
         var response = await next();
-        _logger.LogInformation("Handled {RequestName}", requestName);
+        stopwatch.Stop();
+
+        _logger.LogDebug("Handled {RequestName} in {ElapsedMilliseconds} ms", requestName, stopwatch.ElapsedMilliseconds);
+
+        if (stopwatch.ElapsedMilliseconds > 500)
+        {
+            _logger.LogWarning("Long running request: {RequestName} took {ElapsedMilliseconds} ms", requestName, stopwatch.ElapsedMilliseconds);
+        }
+
         return response;
     }
 }
