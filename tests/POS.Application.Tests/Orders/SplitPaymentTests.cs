@@ -278,6 +278,7 @@ public partial class CheckoutAndCancelOrderTests
         _unitOfWork.When(x => x.SaveChangesAsync(Arg.Any<CancellationToken>()))
             .Do(_ => inTransaction.Should().BeTrue());
         (await CreateCheckoutHandler().Handle(new(_orderId, [new("Cash", 100)]), default)).IsSuccess.Should().BeTrue();
-        await _orderRepository.Received(1).GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>());
+        // Checkout and its nested invoice command both read through the same transaction.
+        await _orderRepository.Received(2).GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>());
     }
 }

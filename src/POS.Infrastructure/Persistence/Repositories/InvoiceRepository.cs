@@ -8,7 +8,7 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
 {
     public async Task<bool> ExistsForOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Invoices
+        return dbContext.Invoices.Local.Any(i => i.OrderId == orderId) || await dbContext.Invoices
             .AnyAsync(i => i.OrderId == orderId, cancellationToken);
     }
 
@@ -16,16 +16,15 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
     {
         // The UPSERT locks this store/day row until the UnitOfWork commits.
         // Serializable conflicts must replay the whole checkout decision.
-        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+        var values = await dbContext.Database.SqlQuery<long>($"""
             INSERT INTO invoice_sequences (store_id, invoice_date, last_value)
             VALUES ({storeId}, {date}, 1)
             ON CONFLICT (store_id, invoice_date)
             DO UPDATE SET last_value = invoice_sequences.last_value + 1
-            """, cancellationToken);
-        return await dbContext.InvoiceSequences.AsNoTracking()
-            .Where(s => s.StoreId == storeId && s.InvoiceDate == date)
-            .Select(s => s.LastValue)
-            .SingleAsync(cancellationToken);
+            RETURNING last_value AS "Value"
+            """).ToListAsync(cancellationToken);
+        // Materialize before Single: INSERT ... RETURNING is not composable SQL.
+        return values.Single();
     }
 
     public async Task AddAsync(Invoice invoice, CancellationToken cancellationToken = default)

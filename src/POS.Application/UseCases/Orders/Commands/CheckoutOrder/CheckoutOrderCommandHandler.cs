@@ -1,7 +1,9 @@
+using MediatR;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.Abstractions.Payments;
+using POS.Application.UseCases.Invoices.Commands.GenerateInvoice;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Mappings;
@@ -27,7 +29,7 @@ public class CheckoutOrderCommandHandler(
     IStoreRepository storeRepository,
     IStockEntryRepository stockEntryRepository,
     IStockTransactionRepository stockTransactionRepository,
-    IInvoiceRepository invoiceRepository,
+    ISender sender,
     IVoucherRepository voucherRepository,
     IVoucherUsageRepository voucherUsageRepository,
     IPaymentStrategyFactory paymentStrategyFactory,
@@ -90,7 +92,11 @@ public class CheckoutOrderCommandHandler(
                 await orderRepository.AddPaymentsAsync(order.Payments.Where(p => !previousIds.Contains(p.Id)), ct);
 
                 if (order.Status == OrderStatus.Paid)
-                    await ExecutePostPaidSideEffectsAsync(order, employee, store, ct);
+                {
+                    await ExecutePostPaidSideEffectsAsync(order, employee, ct);
+                    var invoiceResult = await sender.Send(new GenerateInvoiceCommand(order.Id), ct);
+                    if (invoiceResult.IsFailure) return invoiceResult.Error;
+                }
 
                 await unitOfWork.SaveChangesAsync(ct);
                 return Result<CheckoutDto>.Success(order.ToCheckoutDto(employee, store));
@@ -287,7 +293,7 @@ public class CheckoutOrderCommandHandler(
         return Result.Success();
     }
 
-    private async Task ExecutePostPaidSideEffectsAsync(Order order, Employee employee, Store store, CancellationToken ct)
+    private async Task ExecutePostPaidSideEffectsAsync(Order order, Employee employee, CancellationToken ct)
     {
         // 1. Trừ kho (kèm theo lô FEFO nếu có) và tạo StockTransaction SaleOut
         foreach (var item in order.Items)
@@ -326,23 +332,6 @@ public class CheckoutOrderCommandHandler(
         {
             var strategy = paymentStrategyFactory.GetStrategy(payment.Method);
             await strategy.ProcessPostPaidAsync(payment, order, ct);
-        }
-
-        // 4. Tạo Invoice nếu chưa có
-        if (!await invoiceRepository.ExistsForOrderAsync(order.Id, ct))
-        {
-            var localDate = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(
-                DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(store.Timezone)).Date);
-            var seq = await invoiceRepository.GetNextSequenceAsync(order.StoreId, localDate, ct);
-            var invoiceNo = $"HD-{store.Code}-{localDate:yyyyMMdd}-{seq:D6}";
-            var invoice = Invoice.Create(
-                orderId: order.Id,
-                invoiceNo: invoiceNo,
-                subtotal: order.Subtotal,
-                taxAmount: order.TaxTotal,
-                grandTotal: order.GrandTotal,
-                buyerName: order.Customer?.Name);
-            await invoiceRepository.AddAsync(invoice, ct);
         }
     }
 }

@@ -1,4 +1,7 @@
 using FluentAssertions;
+using MediatR;
+using Microsoft.Extensions.Logging.Abstractions;
+using POS.Application.UseCases.Invoices.Commands.GenerateInvoice;
 using NSubstitute;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Persistence;
@@ -37,6 +40,7 @@ public partial class CheckoutAndCancelOrderTests
   private readonly IStockEntryRepository _stockEntryRepository = Substitute.For<IStockEntryRepository>();
   private readonly IStockTransactionRepository _stockTransactionRepository = Substitute.For<IStockTransactionRepository>();
   private readonly IInvoiceRepository _invoiceRepository = Substitute.For<IInvoiceRepository>();
+  private readonly ISender _sender = Substitute.For<ISender>();
   private readonly IVoucherRepository _voucherRepository = Substitute.For<IVoucherRepository>();
   private readonly IVoucherUsageRepository _voucherUsageRepository = Substitute.For<IVoucherUsageRepository>();
   private readonly ICustomerRepository _customerRepository = Substitute.For<ICustomerRepository>();
@@ -109,6 +113,10 @@ public partial class CheckoutAndCancelOrderTests
 
     _invoiceRepository.ExistsForOrderAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
     _invoiceRepository.GetNextSequenceAsync(Arg.Any<Guid>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns(1);
+    _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>())
+        .Returns(call => new GenerateInvoiceCommandHandler(_orderRepository, _storeRepository,
+            _invoiceRepository, NullLogger<GenerateInvoiceCommandHandler>.Instance)
+            .Handle(call.Arg<GenerateInvoiceCommand>(), call.Arg<CancellationToken>()));
 
     var strategies = new IPaymentStrategy[]
     {
@@ -133,7 +141,7 @@ public partial class CheckoutAndCancelOrderTests
       _storeRepository,
       _stockEntryRepository,
       _stockTransactionRepository,
-      _invoiceRepository,
+      _sender,
       _voucherRepository,
       _voucherUsageRepository,
       _paymentStrategyFactory,

@@ -3,6 +3,7 @@ using FluentAssertions;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Categories.Commands.CreateCategory;
+using POS.Application.UseCases.Invoices.Commands.GenerateInvoice;
 
 namespace POS.Application.Tests.Common.Behaviors;
 
@@ -55,6 +56,9 @@ public sealed class CommandPermissionMappingTests
         "LogoutCommand",
     ];
 
+    // Invoked by checkout after its authorization, inside its existing transaction.
+    private static readonly HashSet<string> InternalCommands = [nameof(GenerateInvoiceCommand)];
+
     [Fact]
     public void Commands_ShouldDeclareExpectedBusinessPermissions()
     {
@@ -72,7 +76,7 @@ public sealed class CommandPermissionMappingTests
         commandTypes
             .Select(type => type.Name)
             .Should()
-            .BeEquivalentTo(ExpectedPermissions.Keys.Concat(AuthenticationCommands));
+            .BeEquivalentTo(ExpectedPermissions.Keys.Concat(AuthenticationCommands).Concat(InternalCommands));
 
         foreach (Type commandType in commandTypes.Where(type => ExpectedPermissions.ContainsKey(type.Name)))
         {
@@ -86,6 +90,12 @@ public sealed class CommandPermissionMappingTests
         {
             commandType.Should().NotImplement<IRequirePermission>(
                 "authentication lifecycle commands must remain callable before business authorization");
+        }
+
+        foreach (Type commandType in commandTypes.Where(type => InternalCommands.Contains(type.Name)))
+        {
+            commandType.Should().NotImplement<IRequirePermission>(
+                "internal commands inherit the caller's authorized workflow");
         }
     }
 
