@@ -6,38 +6,59 @@ namespace POS.WinUI.Services;
 /// </summary>
 public sealed class SessionService
 {
-  public string? AccessToken { get; private set; }
-  public string? RefreshToken { get; private set; }
-  public string? EmployeeId { get; private set; }
-  public string? EmployeeName { get; private set; }
-  public string? Role { get; private set; }
-  public string? StoreId { get; private set; }
-  public string? ShiftId { get; private set; }
-  public bool IsLoggedIn => !string.IsNullOrEmpty(AccessToken);
+    public string? AccessToken { get; private set; }
+    public string? RefreshToken { get; private set; }
+    public string? EmployeeId { get; private set; }
+    public string? EmployeeName { get; private set; }
+    public string? Role { get; private set; }
+    public string? StoreId { get; private set; }
+    public string? StoreName { get; private set; }
+    public string? ShiftId { get; private set; }
+    public string? ShiftName { get; private set; }
+    public bool IsLoggedIn => !string.IsNullOrEmpty(AccessToken);
 
-  public void SetSession(string accessToken, string refreshToken,
-      string employeeId, string employeeName, string role, string storeId)
-  {
-    AccessToken = accessToken;
-    RefreshToken = refreshToken;
-    EmployeeId = employeeId;
-    EmployeeName = employeeName;
-    Role = role;
-    StoreId = storeId;
-  }
+    public void SetSession(string accessToken, string refreshToken,
+        string employeeId, string employeeName, string role, string storeId, string? storeName = null)
+    {
+        AccessToken = accessToken;
+        RefreshToken = refreshToken;
+        EmployeeId = employeeId;
+        EmployeeName = employeeName;
+        Role = role;
+        StoreId = storeId;
+        if (!string.IsNullOrWhiteSpace(storeName))
+        {
+            StoreName = storeName;
+        }
+    }
 
-  public void SetShift(string shiftId) => ShiftId = shiftId;
+    public void SetStore(string storeId, string? storeName = null)
+    {
+        StoreId = storeId;
+        if (!string.IsNullOrWhiteSpace(storeName))
+        {
+            StoreName = storeName;
+        }
+    }
 
-  public void RefreshAccessToken(string newAccessToken) => AccessToken = newAccessToken;
+    public void SetShift(string shiftId, string? shiftName = null)
+    {
+        ShiftId = shiftId;
+        ShiftName = shiftName;
+    }
 
-  public void Clear()
-  {
-    AccessToken = null;
-    RefreshToken = null;
-    EmployeeId = null;
-    EmployeeName = null;
-    Role = null;
-    StoreId = null;
-    ShiftId = null;
-  }
+    public void RefreshAccessToken(string newAccessToken) => AccessToken = newAccessToken;
+
+    public void Clear()
+    {
+        AccessToken = null;
+        RefreshToken = null;
+        EmployeeId = null;
+        EmployeeName = null;
+        Role = null;
+        StoreId = null;
+        StoreName = null;
+        ShiftId = null;
+        ShiftName = null;
+    }
 }

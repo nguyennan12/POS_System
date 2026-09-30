@@ -2,8 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.ApiClients;
 using POS.WinUI.Services;
 using POS.WinUI.ViewModels.Auth;
+using POS.WinUI.ViewModels.Management;
 using POS.WinUI.ViewModels.Shell;
 using POS.WinUI.Views.Auth;
+using POS.WinUI.Views.Management;
 using POS.WinUI.Views.Shell;
 
 namespace POS.WinUI.Extensions;
@@ -26,15 +28,28 @@ public static class ServiceCollectionExtensions
         services.AddTransient<NetworkStatusHandler>();
         services.AddTransient<StoreApiClient>();
         services.AddTransient<AuthApiClient>();
+        services.AddTransient<ShiftApiClient>();
         // HealthApiClient đã bị [Obsolete] — không đăng ký để tránh dùng nhầm
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
+        services.AddTransient<ManagementMainViewModel>();
+
+        // ── Management Tab / Feature ViewModels ───────────────────
+        services.AddTransient<POS.WinUI.ViewModels.Dashboard.DashboardViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.OrdersTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.ProductsTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.InventoryTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.CustomersTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.EmployeesTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.ReportsTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.SettingsTabViewModel>();
 
         // ── Views ─────────────────────────────────────────────────
         services.AddSingleton<MainWindow>();
         services.AddTransient<LoginView>();
+        services.AddTransient<ManagementMainView>();
 
         return services;
     }

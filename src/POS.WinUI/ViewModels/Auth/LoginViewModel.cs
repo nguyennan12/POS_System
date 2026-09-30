@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using POS.WinUI.ApiClients;
 using POS.WinUI.Models;
 using POS.WinUI.Services;
+using POS.WinUI.Views.Management;
 
 namespace POS.WinUI.ViewModels.Auth;
 
@@ -14,6 +15,7 @@ public partial class LoginViewModel : ObservableObject
     private readonly AuthApiClient _authApiClient;
     private readonly StoreApiClient _storeApiClient;
     private readonly NetworkStatusService _networkStatusService;
+    private readonly INavigationService _navigationService;
 
     // ── Network ───────────────────────────────────────────────────
     [ObservableProperty] private bool _isServerConnected;
@@ -51,12 +53,14 @@ public partial class LoginViewModel : ObservableObject
         SessionService sessionService,
         AuthApiClient authApiClient,
         StoreApiClient storeApiClient,
-        NetworkStatusService networkStatusService)
+        NetworkStatusService networkStatusService,
+        INavigationService navigationService)
     {
         _sessionService = sessionService;
         _authApiClient = authApiClient;
         _storeApiClient = storeApiClient;
         _networkStatusService = networkStatusService;
+        _navigationService = navigationService;
 
         _isServerConnected = _networkStatusService.IsOnline;
         _serverStatusText = _networkStatusService.StatusText;
@@ -219,15 +223,20 @@ public partial class LoginViewModel : ObservableObject
             if (response?.Success == true && response.Data != null)
             {
                 var auth = response.Data;
+                var storeId = auth.User.StoreId?.ToString() ?? (SelectedStore?.Id.ToString() ?? string.Empty);
+                var storeName = SelectedStore?.Name;
                 _sessionService.SetSession(
                     auth.AccessToken,
                     auth.RefreshToken,
                     auth.User.Id.ToString(),
                     auth.User.Name,
                     auth.User.RoleName,
-                    auth.User.StoreId?.ToString() ?? (SelectedStore?.Id.ToString() ?? string.Empty));
+                    storeId,
+                    storeName);
 
-                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 3000);
+                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
+                await Task.Delay(400);
+                _navigationService.NavigateTo<ManagementMainView>();
             }
             else
             {
@@ -270,15 +279,20 @@ public partial class LoginViewModel : ObservableObject
             if (response?.Success == true && response.Data != null)
             {
                 var auth = response.Data;
+                var storeId = auth.User.StoreId?.ToString() ?? SelectedStore.Id.ToString();
+                var storeName = SelectedStore.Name;
                 _sessionService.SetSession(
                     auth.AccessToken,
                     auth.RefreshToken,
                     auth.User.Id.ToString(),
                     auth.User.Name,
                     auth.User.RoleName,
-                    auth.User.StoreId?.ToString() ?? SelectedStore.Id.ToString());
+                    storeId,
+                    storeName);
 
-                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 3000);
+                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
+                await Task.Delay(400);
+                _navigationService.NavigateTo<ManagementMainView>();
             }
             else
             {

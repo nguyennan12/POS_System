@@ -1,0 +1,56 @@
+<UserControl x:Class="POS.WinUI.Views.Dashboard.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <Grid Margin="28,20,28,24">
+        <!-- Khung Card nội dung Coming Soon phân hệ Dashboard -->
+        <Border Background="{StaticResource CardBackgroundBrush}" 
+                BorderBrush="{StaticResource InputBorderBrush}" 
+                BorderThickness="1" 
+                CornerRadius="16" 
+                Padding="40">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="20" Color="#0F172A" Opacity="0.03" ShadowDepth="3" Direction="270"/>
+            </Border.Effect>
+
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Icon hộp tròn bo góc lớn -->
+                <Border Width="72" Height="72" CornerRadius="20" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Grid24" FontSize="32" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- Badge Tag SẮP RA MẮT -->
+                <Border Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12,5" HorizontalAlignment="Center" Margin="0,20,0,10">
+                    <TextBlock Text="COMING SOON" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                </Border>
+
+                <!-- Tiêu đề Coming Soon -->
+                <TextBlock Text="Tổng quan kinh doanh (Dashboard)" 
+                           FontSize="20" 
+                           FontWeight="Bold" 
+                           Foreground="{StaticResource TextPrimaryBrush}" 
+                           HorizontalAlignment="Center"/>
+                
+                <!-- Mô tả chi tiết -->
+                <TextBlock Text="Phân hệ Tổng quan đang trong quá trình xây dựng biểu đồ doanh thu và các thẻ chỉ số KPI. Tính năng sẽ sẵn sàng trong bản cập nhật sắp tới." 
+                           FontSize="13.5" 
+                           Foreground="{StaticResource TextMutedBrush}" 
+                           HorizontalAlignment="Center" 
+                           TextAlignment="Center"
+                           MaxWidth="480"
+                           TextWrapping="Wrap"
+                           LineHeight="20"
+                           Margin="0,8,0,0"/>
+
+                <!-- Thanh tiến độ / tag thông tin -->
+                <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18,10" Margin="0,26,0,0" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Code24" FontSize="15" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Dự kiến hoàn thiện trong bản cập nhật kế tiếp" FontSize="12.5" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

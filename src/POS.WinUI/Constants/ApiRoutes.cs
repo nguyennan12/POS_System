@@ -21,4 +21,12 @@ public static class ApiRoutes
         public const string Public  = "api/v1/stores/public";
         public const string All     = "api/v1/stores";
     }
+
+    public static class Shifts
+    {
+        public const string Open = "api/v1/shifts/open";
+        public const string Current = "api/v1/shifts/current";
+        public static string GetById(Guid id) => $"api/v1/shifts/{id}";
+        public static string Close(Guid id) => $"api/v1/shifts/{id}/close";
+    }
 }

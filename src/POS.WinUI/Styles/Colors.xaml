@@ -2,12 +2,12 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- 1. BẢNG MÃ MÀU GỐC TẬP TRUNG (BRAND BASE COLORS)          -->
-    <Color x:Key="BrandPrimaryColor">#ED7A1C</Color>
-    <Color x:Key="BrandHoverColor">#D6680D</Color>
-    <Color x:Key="BrandPressedColor">#B75304</Color>
+    <Color x:Key="BrandPrimaryColor">#EB7F0E</Color>
+    <Color x:Key="BrandHoverColor">#D66F09</Color>
+    <Color x:Key="BrandPressedColor">#B85C02</Color>
     <Color x:Key="BrandLightColor">#FFF7ED</Color>
     <Color x:Key="BrandBorderColor">#FDD8B3</Color>
-    <Color x:Key="BrandGlowColor">#F38D38</Color>
+    <Color x:Key="BrandGlowColor">#F48B1C</Color>
 
     <!-- Trạng thái (Status Colors) -->
     <Color x:Key="SuccessColor">#10B981</Color>
