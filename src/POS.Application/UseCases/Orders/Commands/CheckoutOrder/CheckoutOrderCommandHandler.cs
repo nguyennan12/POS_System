@@ -4,8 +4,10 @@ using POS.Application.Abstractions.Persistence;
 using POS.Application.Abstractions.Payments;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
+using POS.Application.UseCases.Orders.Mappings;
 using POS.Application.UseCases.Orders.Services;
 using POS.Domain.Common;
+using POS.Domain.Customers.Errors;
 using POS.Domain.Employees;
 using POS.Domain.Employees.Enums;
 using POS.Domain.Inventory.Stock;
@@ -49,6 +51,14 @@ public class CheckoutOrderCommandHandler(
 
                 var order = await orderRepository.GetByIdWithDetailsAsync(command.OrderId, ct);
                 if (order is null) return OrderErrors.OrderNotFound;
+
+                if (command.CustomerId.HasValue && order.CustomerId != command.CustomerId.Value)
+                {
+                    if (order.Status != OrderStatus.Draft)
+                        return OrderErrors.NotDraft;
+                    order.SetCustomer(command.CustomerId.Value);
+                }
+
                 var guardResult = await ValidatePreCheckoutGuardsAsync(order, employee, ct);
                 if (guardResult.IsFailure) return guardResult.Error;
                 var (_, store) = guardResult.Value;
@@ -80,7 +90,7 @@ public class CheckoutOrderCommandHandler(
                     await ExecutePostPaidSideEffectsAsync(order, employee, store, ct);
 
                 await unitOfWork.SaveChangesAsync(ct);
-                return Result<CheckoutDto>.Success(BuildCheckoutDto(order, employee, store));
+                return Result<CheckoutDto>.Success(order.ToCheckoutDto(employee, store));
             }, cancellationToken);
         }
         catch (PersistenceConflictException ex) when (ex.ConstraintName == "IX_payments_method_transaction_ref")
@@ -145,13 +155,30 @@ public class CheckoutOrderCommandHandler(
         if (store is null || !store.IsActive)
             return OrderErrors.StoreInactive;
 
+        // Khách hàng (nếu có)
+        if (order.CustomerId.HasValue)
+        {
+            var customer = order.Customer != null && order.Customer.Id == order.CustomerId.Value
+                ? order.Customer
+                : (await customerRepository.GetByIdAsync(order.CustomerId.Value, ct))?.Customer;
+
+            if (customer is null)
+                return OrderErrors.CustomerNotFound;
+
+            if (!customer.IsActive)
+                return CustomerErrors.Inactive;
+        }
+
         return Result<(Shift, Store)>.Success((shift, store));
     }
 
     private async Task<Result<List<(PaymentMethod Method, decimal Amount, string? TransactionRef)>>> ParseAndValidatePaymentsAsync(
         IReadOnlyList<PaymentSplitInputDto> payments, Order order, CancellationToken ct)
     {
-        if (payments is null || payments.Count == 0)
+        if (payments is null)
+            return OrderErrors.NoPaymentsProvided;
+
+        if (payments.Count == 0 && order.GrandTotal > 0)
             return OrderErrors.NoPaymentsProvided;
 
         if (order.Payments.Any(p => !Enum.IsDefined(p.Status) || !Enum.IsDefined(p.Method)
@@ -164,7 +191,7 @@ public class CheckoutOrderCommandHandler(
         var parsedPayments = new List<(PaymentMethod Method, decimal Amount, string? TransactionRef)>();
         var remaining = order.GrandTotal - order.GetPaymentTotals().TotalApplied;
         if (remaining < 0) return OrderErrors.InvalidPaymentState;
-        if (remaining == 0 && order.Payments.Any(p => p.Status == PaymentStatus.Success))
+        if (remaining == 0 && (order.Payments.Any(p => p.Status == PaymentStatus.Success) || order.Status == OrderStatus.Paid))
             return OrderErrors.AlreadyPaid;
         var references = order.Payments.Where(p => p.TransactionRef != null)
             .Select(p => (p.Method, p.TransactionRef)).ToHashSet();
@@ -262,17 +289,20 @@ public class CheckoutOrderCommandHandler(
         }
 
         // 2. Ghi nhận sử dụng voucher
-        if (order.AppliedVoucherId.HasValue && order.CustomerId.HasValue)
+        if (order.AppliedVoucherId.HasValue)
         {
             var voucher = await voucherRepository.GetByIdWithPromotionAsync(order.AppliedVoucherId.Value, ct);
             if (voucher != null)
             {
                 voucher.RecordUse();
-                var usage = VoucherUsage.Create(
-                    voucherId: voucher.Id,
-                    customerId: order.CustomerId.Value,
-                    orderId: order.Id);
-                await voucherUsageRepository.AddAsync(usage, ct);
+                if (order.CustomerId.HasValue)
+                {
+                    var usage = VoucherUsage.Create(
+                        voucherId: voucher.Id,
+                        customerId: order.CustomerId.Value,
+                        orderId: order.Id);
+                    await voucherUsageRepository.AddAsync(usage, ct);
+                }
             }
         }
 
@@ -298,64 +328,5 @@ public class CheckoutOrderCommandHandler(
                 buyerName: order.Customer?.Name);
             await invoiceRepository.AddAsync(invoice, ct);
         }
-    }
-
-    private static CheckoutDto BuildCheckoutDto(Order order, Employee employee, Store store)
-    {
-        var (totalPaid, changeAmount) = order.GetPaymentTotals();
-
-        ReceiptDataDto? receiptData = null;
-        if (order.Status == OrderStatus.Paid)
-        {
-            var itemsDto = order.Items.Select(i => new OrderItemDto(
-                Id: i.Id,
-                SkuId: i.SkuId,
-                SkuCode: i.Sku?.SkuCode ?? string.Empty,
-                ProductName: i.Sku?.Product?.Name ?? string.Empty,
-                Qty: i.Qty,
-                UnitPrice: i.UnitPrice,
-                DiscountAmount: i.DiscountAmount,
-                TaxAmount: i.TaxAmount,
-                LineTotal: i.LineTotal
-            )).ToList();
-
-            receiptData = new ReceiptDataDto(
-                StoreName: order.Store?.Name ?? string.Empty,
-                StoreAddress: order.Store?.Address,
-                StorePhone: order.Store?.Phone,
-                OrderNo: order.Id.ToString("N")[..8].ToUpper(),
-                CashierName: employee.Name,
-                CreatedAt: new DateTimeOffset(order.CreatedAt, TimeSpan.Zero),
-                Items: itemsDto,
-                Subtotal: order.Subtotal,
-                DiscountTotal: order.DiscountTotal,
-                TaxTotal: order.TaxTotal,
-                GrandTotal: order.GrandTotal,
-                AmountPaid: totalPaid,
-                ChangeAmount: changeAmount,
-                ReceiptHeader: store.ReceiptHeader,
-                ReceiptFooter: store.ReceiptFooter
-            );
-        }
-
-        var paymentDtos = order.Payments.Select(p => new OrderPaymentDto(
-            Id: p.Id,
-            Method: p.Method.ToString(),
-            Amount: p.Amount,
-            ChangeAmount: p.ChangeAmount,
-            TransactionRef: p.TransactionRef,
-            Status: p.Status.ToString(),
-            PaidAt: p.PaidAt.HasValue ? new DateTimeOffset(p.PaidAt.Value, TimeSpan.Zero) : null
-        )).ToList();
-
-        return new CheckoutDto(
-            OrderId: order.Id,
-            GrandTotal: order.GrandTotal,
-            TotalPaid: totalPaid,
-            ChangeAmount: changeAmount,
-            Status: order.Status.ToString(),
-            Payments: paymentDtos,
-            ReceiptData: receiptData
-        );
     }
 }

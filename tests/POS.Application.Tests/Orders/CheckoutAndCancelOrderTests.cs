@@ -19,6 +19,7 @@ using POS.Domain.Orders;
 using POS.Domain.Orders.Enums;
 using POS.Domain.Products;
 using POS.Domain.Promotions;
+using POS.Domain.Promotions.Enums;
 using POS.Domain.Promotions.Services.Models;
 using POS.Domain.Rbac;
 using POS.Domain.Rbac.Constants;
@@ -640,6 +641,138 @@ public partial class CheckoutAndCancelOrderTests
     // Assert
     result.IsFailure.Should().BeTrue();
     result.Error.Code.Should().Be(OrderErrors.CannotCancelPaidOrder.Code);
+    order.Status.Should().Be(OrderStatus.Paid);
+  }
+
+  [Fact]
+  public async Task CancelOrder_ShouldFail_WhenOrderHasSuccessfulPayments()
+  {
+    // Arrange
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
+    order.Confirm();
+    order.ProcessPayments([(PaymentMethod.Cash, 50_000, null)]);
+    order.Status.Should().Be(OrderStatus.Confirmed);
+
+    _currentUser.EmployeeId.Returns(_managerEmployee.Id);
+    _employeeRepository.GetByIdAsync(_managerEmployee.Id, Arg.Any<CancellationToken>()).Returns(_managerEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+
+    var handler = new CancelOrderCommandHandler(
+        _orderRepository,
+        _employeeRepository,
+        _employeeStoreAccessRepository,
+        _unitOfWork,
+        _currentUser);
+
+    var command = new CancelOrderCommand(_orderId, "Hủy đơn có thanh toán một phần");
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsFailure.Should().BeTrue();
+    result.Error.Code.Should().Be(OrderErrors.CannotCancelOrderWithPayments.Code);
+    order.Status.Should().Be(OrderStatus.Confirmed);
+  }
+
+  [Fact]
+  public async Task CheckoutOrder_ShouldRecordVoucherUse_EvenForGuestCustomer()
+  {
+    // Arrange
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
+    var promotion = new Promotion(_storeId, "Promo", PromotionType.CartFixed, 20_000, validFrom: DateTime.UtcNow.AddDays(-1), createdBy: _cashierEmployee.Id);
+    var voucher = new Voucher(promotion.Id, "GUEST20K", maxUses: 10, expiresAt: DateTime.UtcNow.AddDays(1));
+    typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
+
+    order.SetAppliedVoucher(voucher.Id, voucher.Code);
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    _voucherRepository.GetByIdWithPromotionAsync(voucher.Id, Arg.Any<CancellationToken>()).Returns(voucher);
+
+    var handler = CreateCheckoutHandler();
+    var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]);
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    voucher.UsedCount.Should().Be(1);
+    await _voucherUsageRepository.DidNotReceive().AddAsync(Arg.Any<VoucherUsage>(), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task CheckoutOrder_ShouldSetCustomerOnDraft_WhenProvidedInCommand()
+  {
+    // Arrange
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
+    var newCustomerId = Guid.NewGuid();
+    var customer = new Customer("Khách Mới", "0933445566", Guid.NewGuid(), isActive: true, id: newCustomerId);
+    _customerRepository.GetByIdAsync(newCustomerId, Arg.Any<CancellationToken>())
+        .Returns(new CustomerWithPoints(customer, PointsBalance: 0));
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+
+    var handler = CreateCheckoutHandler();
+    var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)], newCustomerId);
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    order.CustomerId.Should().Be(newCustomerId);
+  }
+
+  [Fact]
+  public async Task CheckoutOrder_ShouldFail_WhenCustomerIsInactive()
+  {
+    // Arrange
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
+    var inactiveCustomer = new Customer("Inactive Customer", "0988776655", Guid.NewGuid(), isActive: false);
+    order.SetCustomer(inactiveCustomer.Id);
+    typeof(Order).GetProperty(nameof(Order.Customer))!.SetValue(order, inactiveCustomer);
+
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+
+    var handler = CreateCheckoutHandler();
+    var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]);
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsFailure.Should().BeTrue();
+    result.Error.Code.Should().Be(POS.Domain.Customers.Errors.CustomerErrors.Inactive.Code);
+    order.Status.Should().Be(OrderStatus.Draft);
+  }
+
+  [Fact]
+  public async Task CheckoutOrder_ShouldSucceed_WhenGrandTotalIsZeroAndPaymentsListIsEmpty()
+  {
+    // Arrange
+    var order = CreateDraftOrderWithItems(itemPrice: 0, qty: 1);
+    order.GrandTotal.Should().Be(0);
+
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+
+    var handler = CreateCheckoutHandler();
+    var command = new CheckoutOrderCommand(_orderId, []);
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    result.Value!.Status.Should().Be("Paid");
+    result.Value.TotalPaid.Should().Be(0);
+    result.Value.Payments.Should().BeEmpty();
     order.Status.Should().Be(OrderStatus.Paid);
   }
 }
