@@ -108,7 +108,7 @@ public partial class CheckoutAndCancelOrderTests
         .Returns(Result.Success());
 
     _invoiceRepository.ExistsForOrderAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
-    _invoiceRepository.GetNextSequenceAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(1);
+    _invoiceRepository.GetNextSequenceAsync(Arg.Any<Guid>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns(1);
 
     var strategies = new IPaymentStrategy[]
     {
@@ -235,6 +235,33 @@ public partial class CheckoutAndCancelOrderTests
     // Verify side effects
     await _stockEntryRepository.Received(1).DeductStockWithBatchesAsync(Arg.Any<Guid>(), _storeId, 1, Arg.Any<CancellationToken>());
     await _stockTransactionRepository.Received(1).AddAsync(Arg.Any<StockTransaction>(), Arg.Any<CancellationToken>());
+    await _invoiceRepository.Received(1).AddAsync(
+        Arg.Is<Invoice>(i => i.InvoiceNo.StartsWith($"HD-{_store.Code}-")
+            && i.InvoiceNo.EndsWith("-000001")), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Checkout_ShouldReplayWholeDecisionAfterSerializableConflict()
+  {
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000);
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    var attempts = 0;
+    _unitOfWork.ExecuteSerializableAsync(Arg.Any<Func<CancellationToken, Task<Result<CheckoutDto>>>>(),
+        Arg.Any<CancellationToken>()).Returns(async ci =>
+    {
+      attempts++;
+      if (attempts == 1)
+        return Result<CheckoutDto>.Failure(new Error(ErrorType.Invalid, "Persistence.ConcurrentModification"));
+      return await ci.Arg<Func<CancellationToken, Task<Result<CheckoutDto>>>>()(ci.Arg<CancellationToken>());
+    });
+
+    var result = await CreateCheckoutHandler().Handle(
+        new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]), default);
+
+    result.IsSuccess.Should().BeTrue();
+    attempts.Should().Be(2);
     await _invoiceRepository.Received(1).AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
   }
 

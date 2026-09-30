@@ -42,9 +42,12 @@ public class CheckoutOrderCommandHandler(
     {
         try
         {
-            // Every read used for a payment decision belongs to the same snapshot.
-            return await unitOfWork.ExecuteSerializableAsync<CheckoutDto>(async ct =>
+            // Replay the complete decision after a PostgreSQL serialization conflict.
+            // UnitOfWork rolls back and clears tracked entities before the next attempt.
+            for (var attempt = 0; ; attempt++)
             {
+                var result = await unitOfWork.ExecuteSerializableAsync<CheckoutDto>(async ct =>
+                {
                 var authResult = await ValidateEmployeeAuthAsync(ct);
                 if (authResult.IsFailure) return authResult.Error;
                 var employee = authResult.Value!;
@@ -91,12 +94,24 @@ public class CheckoutOrderCommandHandler(
 
                 await unitOfWork.SaveChangesAsync(ct);
                 return Result<CheckoutDto>.Success(order.ToCheckoutDto(employee, store));
-            }, cancellationToken);
+                }, cancellationToken);
+                if (attempt < 2 && result.IsFailure && result.Error.Code == "Persistence.ConcurrentModification")
+                    continue;
+                return result;
+            }
         }
         catch (PersistenceConflictException ex) when (ex.ConstraintName == "IX_payments_method_transaction_ref")
         {
             // Includes a duplicate that won a concurrent race after our existence check.
             return OrderErrors.DuplicatePayment;
+        }
+        catch (PersistenceConflictException ex) when (ex.ConstraintName is
+            "IX_invoices_invoice_no" or "IX_invoices_order_id")
+        {
+            // Database uniqueness remains the final guard if another writer bypasses
+            // the application precheck or an invoice number was inserted externally.
+            return new Error(ErrorType.Invalid, "Persistence.ConcurrentModification",
+                "Hóa đơn đã thay đổi đồng thời. Hãy tải lại đơn hàng và thử lại.");
         }
     }
 
@@ -316,9 +331,10 @@ public class CheckoutOrderCommandHandler(
         // 4. Tạo Invoice nếu chưa có
         if (!await invoiceRepository.ExistsForOrderAsync(order.Id, ct))
         {
-            var seq = await invoiceRepository.GetNextSequenceAsync(order.StoreId, DateTime.UtcNow, ct);
-            var storeCode = (store.TaxCode ?? order.StoreId.ToString("N")[..6]).ToUpper();
-            var invoiceNo = $"HD-{storeCode}-{DateTime.UtcNow:yyyyMMdd}-{seq:D4}";
+            var localDate = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(
+                DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(store.Timezone)).Date);
+            var seq = await invoiceRepository.GetNextSequenceAsync(order.StoreId, localDate, ct);
+            var invoiceNo = $"HD-{store.Code}-{localDate:yyyyMMdd}-{seq:D6}";
             var invoice = Invoice.Create(
                 orderId: order.Id,
                 invoiceNo: invoiceNo,

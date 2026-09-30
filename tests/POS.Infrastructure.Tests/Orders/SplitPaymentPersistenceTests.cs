@@ -95,6 +95,85 @@ public class SplitPaymentPersistenceTests
     }
 
     [PostgresFact]
+    public async Task PaidOrders_ShouldReceiveSequentialStoreLocalInvoiceNumbers()
+    {
+        await using var fixture = await PaymentDatabase.CreateAsync();
+        await using (var first = fixture.Db())
+            Assert.True((await fixture.Handler(first).Handle(new(fixture.OrderId, [new("Cash", 100)]), default)).IsSuccess);
+        await using (var second = fixture.Db())
+            Assert.True((await fixture.Handler(second).Handle(new(fixture.SecondOrderId, [new("Cash", 100)]), default)).IsSuccess);
+
+        await using var verify = fixture.Db();
+        var store = await verify.Stores.SingleAsync();
+        var invoices = await verify.Invoices.OrderBy(i => i.InvoiceNo).ToListAsync();
+        Assert.Equal(2, invoices.Count);
+        var date = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow,
+            TimeZoneInfo.FindSystemTimeZoneById(store.Timezone)).ToString("yyyyMMdd");
+        Assert.Equal($"HD-{store.Code}-{date}-000001", invoices[0].InvoiceNo);
+        Assert.Equal($"HD-{store.Code}-{date}-000002", invoices[1].InvoiceNo);
+        Assert.Equal(store.Id.ToString("N").ToUpperInvariant(), store.Code);
+        Assert.Equal(2, (await verify.InvoiceSequences.SingleAsync()).LastValue);
+    }
+
+    [PostgresFact]
+    public async Task ConcurrentPaidOrders_ShouldRetrySerializableConflict_AndGetDistinctNumbers()
+    {
+        await using var fixture = await PaymentDatabase.CreateAsync(confirmed: true);
+        var results = await RunRace(fixture, fixture.OrderId, fixture.SecondOrderId,
+            "invoice-one", "invoice-two", amount: 100);
+        Assert.All(results, result => Assert.True(result.IsSuccess, result.Error.Code));
+        await using var verify = fixture.Db();
+        var invoices = await verify.Invoices.ToListAsync();
+        Assert.Equal(2, invoices.Count);
+        Assert.Equal(2, invoices.Select(i => i.InvoiceNo).Distinct().Count());
+        Assert.Contains(invoices, i => i.InvoiceNo.EndsWith("-000001"));
+        Assert.Contains(invoices, i => i.InvoiceNo.EndsWith("-000002"));
+    }
+
+    [PostgresFact]
+    public async Task InvoiceSequence_ShouldRestartForAnotherStoreAndBusinessDate()
+    {
+        await using var fixture = await PaymentDatabase.CreateAsync();
+        await using var db = fixture.Db();
+        var secondStore = new Store("Another store");
+        db.Stores.Add(secondStore);
+        await db.SaveChangesAsync();
+        var firstStoreId = (await db.Stores.SingleAsync(s => s.Id != secondStore.Id)).Id;
+        var repository = new InvoiceRepository(db);
+        var today = new DateOnly(2026, 9, 30);
+        Assert.Equal(1, await repository.GetNextSequenceAsync(firstStoreId, today));
+        Assert.Equal(2, await repository.GetNextSequenceAsync(firstStoreId, today));
+        Assert.Equal(1, await repository.GetNextSequenceAsync(secondStore.Id, today));
+        Assert.Equal(1, await repository.GetNextSequenceAsync(firstStoreId, today.AddDays(1)));
+    }
+
+    [PostgresFact]
+    public async Task InvoiceUniqueIndexes_ShouldRejectDuplicateNumberAndOrder()
+    {
+        await using var fixture = await PaymentDatabase.CreateAsync();
+        var number = "HD-TEST-20260930-000001";
+        await using (var first = fixture.Db())
+        {
+            first.Invoices.Add(Invoice.Create(fixture.OrderId, number, 100, 0, 100));
+            await new UnitOfWork(first).SaveChangesAsync();
+        }
+        await using (var duplicateNumber = fixture.Db())
+        {
+            duplicateNumber.Invoices.Add(Invoice.Create(fixture.SecondOrderId, number, 100, 0, 100));
+            var error = await Assert.ThrowsAsync<PersistenceConflictException>(() =>
+                new UnitOfWork(duplicateNumber).SaveChangesAsync());
+            Assert.Equal("IX_invoices_invoice_no", error.ConstraintName);
+        }
+        await using (var duplicateOrder = fixture.Db())
+        {
+            duplicateOrder.Invoices.Add(Invoice.Create(fixture.OrderId, "HD-OTHER-20260930-000001", 100, 0, 100));
+            var error = await Assert.ThrowsAsync<PersistenceConflictException>(() =>
+                new UnitOfWork(duplicateOrder).SaveChangesAsync());
+            Assert.Equal("IX_invoices_order_id", error.ConstraintName);
+        }
+    }
+
+    [PostgresFact]
     public async Task Split_ShouldRollbackPaymentOrderPointsAndStock_WhenSaveFailsAfterWriting()
     {
         await using var fixture = await PaymentDatabase.CreateAsync();
@@ -108,6 +187,7 @@ public class SplitPaymentPersistenceTests
         Assert.Equal(200, (await verify.LoyaltyAccounts.SingleAsync()).PointsBalance);
         Assert.Equal(10, (await verify.StockEntries.SingleAsync()).QtyOnHand);
         Assert.Empty(await verify.Invoices.ToListAsync());
+        Assert.Empty(await verify.InvoiceSequences.ToListAsync());
         Assert.Empty(await verify.StockTransactions.ToListAsync());
     }
 
@@ -130,7 +210,7 @@ public class SplitPaymentPersistenceTests
         await using var fixture = await PaymentDatabase.CreateAsync(confirmed: true);
         var results = await RunRace(fixture, fixture.OrderId, fixture.OrderId, "one", "two");
         Assert.Single(results, r => r.IsSuccess);
-        Assert.Equal("Persistence.ConcurrentModification", results.Single(r => r.IsFailure).Error.Code);
+        Assert.Equal("ORDER.NON_CASH_OVERPAYMENT", results.Single(r => r.IsFailure).Error.Code);
         await using var verify = fixture.Db();
         Assert.Single(await verify.Payments.ToListAsync());
         Assert.Equal(60, await verify.Payments.SumAsync(p => p.Amount));
@@ -163,7 +243,7 @@ public class SplitPaymentPersistenceTests
         }
         var results = await RunRace(fixture, fixture.OrderId, fixture.SecondOrderId, "points-a", "points-b", "Points");
         Assert.Single(results, r => r.IsSuccess);
-        Assert.Equal("Persistence.ConcurrentModification", results.Single(r => r.IsFailure).Error.Code);
+        Assert.Equal("ORDER.INSUFFICIENT_POINTS", results.Single(r => r.IsFailure).Error.Code);
         await using var verify = fixture.Db();
         Assert.Equal(40, (await verify.LoyaltyAccounts.SingleAsync()).PointsBalance);
         Assert.Single(await verify.Payments.ToListAsync());
@@ -200,15 +280,16 @@ public class SplitPaymentPersistenceTests
     }
 
     private static async Task<POS.Domain.Common.Result<POS.Application.UseCases.Orders.DTOs.CheckoutDto>[]> RunRace(
-        PaymentDatabase fixture, Guid firstId, Guid secondId, string firstRef, string secondRef, string method = "Card")
+        PaymentDatabase fixture, Guid firstId, Guid secondId, string firstRef, string secondRef,
+        string method = "Card", decimal amount = 60)
     {
         await using var a = fixture.Db();
         await using var b = fixture.Db();
         var readA = new PausedOrderRepository(new OrderRepository(a));
         var readB = new PausedOrderRepository(new OrderRepository(b));
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var taskA = fixture.Handler(a, readA).Handle(new(firstId, [new(method, 60, firstRef)]), timeout.Token);
-        var taskB = fixture.Handler(b, readB).Handle(new(secondId, [new(method, 60, secondRef)]), timeout.Token);
+        var taskA = fixture.Handler(a, readA).Handle(new(firstId, [new(method, amount, firstRef)]), timeout.Token);
+        var taskB = fixture.Handler(b, readB).Handle(new(secondId, [new(method, amount, secondRef)]), timeout.Token);
         try
         {
             await Task.WhenAll(readA.Read.Task, readB.Read.Task).WaitAsync(timeout.Token);
