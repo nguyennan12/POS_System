@@ -69,8 +69,9 @@ public class EmployeeRepository : IEmployeeRepository
         return _context.Employees
               .Include(e => e.Role)
               .Include(e => e.Store)
+              .OrderByDescending(e => e.StoreId == storeId)
               .FirstOrDefaultAsync(
-                e => e.PinLookupHash == pinLookupHash && e.StoreId == storeId,
+                e => e.PinLookupHash == pinLookupHash && (e.StoreId == storeId || e.IsChainOwner),
                 cancellationToken
               );
     }
@@ -90,10 +91,20 @@ public class EmployeeRepository : IEmployeeRepository
               .FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
-    public Task<bool> HasPinConflictAsync(Guid employeeId, Guid storeId, string pinLookupHash, CancellationToken cancellationToken = default)
+    public Task<bool> HasPinConflictAsync(Guid employeeId, Guid? storeId, string pinLookupHash, CancellationToken cancellationToken = default)
     {
+        if (storeId.HasValue)
+        {
+            // Nhân viên chi nhánh: Không được trùng với nhân viên cùng chi nhánh VÀ không được trùng với Owner
+            return _context.Employees.AnyAsync(
+              e => e.Id != employeeId && (e.StoreId == storeId.Value || e.IsChainOwner) && e.PinLookupHash == pinLookupHash,
+              cancellationToken
+            );
+        }
+
+        // Owner (không gán storeId cố định): Không được trùng với BẤT KỲ nhân viên nào trong TOÀN BỘ hệ thống
         return _context.Employees.AnyAsync(
-          e => e.Id != employeeId && e.StoreId == storeId && e.PinLookupHash == pinLookupHash,
+          e => e.Id != employeeId && e.PinLookupHash == pinLookupHash,
           cancellationToken
         );
     }

@@ -82,11 +82,12 @@ public class EmployeeLoginWithPinCommandHandler : ICommandHandler<EmployeeLoginW
     await _pinLoginRateLimiter.ResetAsync(command.StoreId, command.DeviceId, cancellationToken);
 
     var permissions = await _permissionRepository.GetPermissionCodesAsync(employee.RoleId, cancellationToken);
+    var effectiveStoreId = employee.StoreId ?? command.StoreId;
     var subject = new TokenSubject(
       employee.Id,
       "Employee",
       employee.RoleId,
-      employee.StoreId,
+      effectiveStoreId,
       employee.IsChainOwner,
       permissions
     );
