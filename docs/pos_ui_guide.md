@@ -282,34 +282,36 @@ Grid (Padding: 24)
 
 ## 10. MVVM & WPF/WPFUI CODE CONVENTIONS
 
-### 10.1. Naming Conventions
-- **Views**: Đặt trong `src/POS.WinUI/Views/<Feature>/<Name>View.xaml` (Ví dụ: `LoginView.xaml`, `PosMainView.xaml`).
-- **ViewModels**: Đặt trong `src/POS.WinUI/ViewModels/<Feature>/<Name>ViewModel.cs` (Ví dụ: `LoginViewModel.cs`).
-- **Shared Components**: Đặt trong `src/POS.WinUI/Views/Shared/<ComponentName>.xaml` (Ví dụ: `TextInputField.xaml`).
-- **Styles**: Đặt trong `src/POS.WinUI/Styles/` với hậu tố `Style` (Ví dụ: `PrimaryButtonStyle`, `NumpadButtonStyle`).
-- **Brushes**: Định nghĩa trong `Colors.xaml` với hậu tố `Brush` (Ví dụ: `PrimaryBrush`, `InputBackgroundBrush`).
-- **Converters**: Đặt trong `src/POS.WinUI/Converters/` và đăng ký tại `Converters.xaml` (Ví dụ: `BoolToVis`, `NullOrEmptyToVis`).
+### 10.1. Naming & Folder Conventions
+- **Views**: Đặt trong `src/POS.WinUI/Views/<Feature>/<Name>View.xaml` (Ví dụ: `LoginView.xaml`, `OrdersView.xaml`, `ProductsView.xaml`).
+- **ViewModels**: Đặt trong `src/POS.WinUI/ViewModels/<Feature>/<Name>ViewModel.cs` (Ví dụ: `LoginViewModel.cs`, `OrdersViewModel.cs`, `ProductsViewModel.cs`).
+- **Shared Components**: Đặt trong `src/POS.WinUI/Views/Shared/<ComponentName>.xaml` (Ví dụ: `TextInputField.xaml`, `AppHeaderBar.xaml`).
+- **Core (Hạ tầng & Logic)**: Đặt trong `src/POS.WinUI/Core/` gồm `ApiClients/`, `Constants/`, `Extensions/`, `Models/`, `Services/`.
+- **Resources**: Đặt trong `src/POS.WinUI/Resources/` gồm `Assets/`, `Converters/`, `Markup/`, `Styles/`.
+- **Styles**: Đặt trong `src/POS.WinUI/Resources/Styles/` với hậu tố `Style` (Ví dụ: `PrimaryButtonStyle`, `NumpadButtonStyle`).
+- **Brushes**: Định nghĩa trong `Resources/Styles/Colors.xaml` với hậu tố `Brush` (Ví dụ: `PrimaryBrush`, `InputBackgroundBrush`).
+- **Converters**: Đặt trong `src/POS.WinUI/Resources/Converters/` và đăng ký tại `Resources/Styles/Converters.xaml` (Ví dụ: `BoolToVis`, `NullOrEmptyToVis`).
 
 ### 10.2. Reusable Shared Assets Registry
 | Tên Resource / Component | Vị trí tập tin | Mục đích & Cách tái sử dụng |
 | :--- | :--- | :--- |
-| `PrimaryButtonStyle` | `Styles/Styles.xaml` | Nút hành động chính (`Style="{StaticResource PrimaryButtonStyle}"`) |
-| `NumpadButtonStyle` | `Styles/Styles.xaml` | Phím số cảm ứng có hiệu ứng nhấn nhún |
-| `SegmentedTabButtonStyle` | `Styles/Styles.xaml` | Nút tab chọn chế độ |
-| `PinDotStyle` | `Styles/Styles.xaml` | Chấm hiển thị trạng thái số PIN |
+| `PrimaryButtonStyle` | `Resources/Styles/Styles.xaml` | Nút hành động chính (`Style="{StaticResource PrimaryButtonStyle}"`) |
+| `NumpadButtonStyle` | `Resources/Styles/Styles.xaml` | Phím số cảm ứng có hiệu ứng nhấn nhún |
+| `SegmentedTabButtonStyle` | `Resources/Styles/Styles.xaml` | Nút tab chọn chế độ |
+| `PinDotStyle` | `Resources/Styles/Styles.xaml` | Chấm hiển thị trạng thái số PIN |
 | `TextInputField` | `Views/Shared/TextInputField.xaml` | Ô nhập text chuẩn kèm icon và placeholder |
 | `PasswordInputField` | `Views/Auth/Components/PasswordInputField.xaml` | Ô nhập mật khẩu có sẵn nút ẩn/hiện |
 | `PinInput` | `Views/Auth/Components/PinInput.xaml` | Cụm 6 chấm PIN + bàn phím số 3x4 |
 | `NetworkStatusBar` | `Views/Shared/NetworkStatusBar.xaml` | Thanh trạng thái kết nối server và nút retry |
 | `ToastNotification` | `Views/Shared/ToastNotification.xaml` | Toast thông báo thành công có hoạt cảnh trượt mượt mà |
-| `BoolToVis` | `Styles/Converters.xaml` | Chuyển đổi `bool` sang `Visibility.Visible/Collapsed` |
-| `InverseBoolToVis` | `Styles/Converters.xaml` | Chuyển đổi `!bool` sang `Visibility.Visible/Collapsed` |
-| `NullOrEmptyToVis` | `Styles/Converters.xaml` | Ẩn/hiện dựa trên chuỗi rỗng hoặc `null` |
-| `RoleToVis` / `InverseRoleToVis` | `Styles/Converters.xaml` | Converter kiểm tra vai trò (ConverterParameter="Owner,StoreManager") |
-| `PermissionToVis` / `InversePermissionToVis` | `Styles/Converters.xaml` | Converter kiểm tra mã quyền chi tiết (ConverterParameter="orders:delete") |
-| `{auth:HasRole}` | `Markup/HasRoleExtension.cs` | Markup Extension phân quyền XAML theo Role hoặc MinLevel |
-| `{auth:HasPermission}` | `Markup/HasPermissionExtension.cs` | Markup Extension phân quyền XAML theo mã quyền chi tiết |
-| `ManagementTabViewModelBase` | `ViewModels/Management/` | Lớp cơ sở tích hợp sẵn RBAC và tự động phản ứng `OnStoreChanged` |
+| `BoolToVis` | `Resources/Styles/Converters.xaml` | Chuyển đổi `bool` sang `Visibility.Visible/Collapsed` |
+| `InverseBoolToVis` | `Resources/Styles/Converters.xaml` | Chuyển đổi `!bool` sang `Visibility.Visible/Collapsed` |
+| `NullOrEmptyToVis` | `Resources/Styles/Converters.xaml` | Ẩn/hiện dựa trên chuỗi rỗng hoặc `null` |
+| `RoleToVis` / `InverseRoleToVis` | `Resources/Styles/Converters.xaml` | Converter kiểm tra vai trò (ConverterParameter="Owner,StoreManager") |
+| `PermissionToVis` / `InversePermissionToVis` | `Resources/Styles/Converters.xaml` | Converter kiểm tra mã quyền chi tiết (ConverterParameter="orders:delete") |
+| `{auth:HasRole}` | `Resources/Markup/HasRoleExtension.cs` | Markup Extension phân quyền XAML theo Role hoặc MinLevel |
+| `{auth:HasPermission}` | `Resources/Markup/HasPermissionExtension.cs` | Markup Extension phân quyền XAML theo mã quyền chi tiết |
+| `ManagementTabViewModelBase` | `ViewModels/Common/` | Lớp cơ sở tích hợp sẵn RBAC và tự động phản ứng `OnStoreChanged` |
 
 ---
 
@@ -456,7 +458,7 @@ Các thuộc tính có sẵn từ `ManagementTabViewModelBase`:
 Khi tạo mới bất kỳ màn hình hoặc component XAML nào, AI **bắt buộc** phải tuân thủ nghiêm ngặt 16 nguyên tắc sau:
 
 1. **Đọc Style Guide này trước**: Không tự đoán hay tự chế style mới nếu chưa đọc file này.
-2. **Kiểm tra kho tài nguyên**: Luôn kiểm tra `Styles/Styles.xaml`, `Styles/Colors.xaml` và thư mục `Views/Shared/` trước khi viết XAML.
+2. **Kiểm tra kho tài nguyên**: Luôn kiểm tra `Resources/Styles/Styles.xaml`, `Resources/Styles/Colors.xaml` và thư mục `Views/Shared/` trước khi viết XAML.
 3. **Tuyệt đối không đổi màu hệ thống**: Chỉ dùng các Brush đã khai báo (`PrimaryBrush`, `TextPrimaryBrush`, `CardBackgroundBrush`...).
 4. **Không tự ý thêm font**: Chỉ dùng font mặc định của WPF-UI (Segoe UI / Segoe UI Variable).
 5. **Tuân thủ Spacing Scale**: Chỉ sử dụng các bước khoảng cách: `4`, `8`, `12`, `16`, `24`, `32`, `48`.

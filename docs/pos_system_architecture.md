@@ -277,96 +277,49 @@ POS.sln
 │   │   └── PdfReportService.cs          ← QuestPDF
 │   └── DependencyInjection.cs           ← Extension method đăng ký services
 │
-├── 🖥️ POS.WinUI/                     (.NET 10 WPF + Fluent WPF-UI)
+├── 🖥️ POS.WinUI/                     (.NET 10 WPF + Fluent WPF-UI - Kiến trúc Module-by-Layer)
 │   ├── App.xaml / App.xaml.cs       ← Host bootstrap, DI registration, Theme resources
 │   ├── appsettings.json             ← Config BaseUrl, Logging
-│   ├── Views/                       ← XAML Views (Fluent UI)
-│   │   ├── Shell/
-│   │   │   └── MainWindow.xaml      ← Cửa sổ chính chứa TitleBar & Navigation
-│   │   ├── Auth/
-│   │   │   └── LoginView.xaml       ← Đăng nhập Username/Password & PIN 6 số
-│   │   ├── Dashboard/
-│   │   │   └── DashboardView.xaml   ← Màn hình tổng quan sau đăng nhập
-│   │   ├── Sales/
-│   │   │   ├── PosMainView.xaml     ← Màn hình bán hàng / thu ngân
-│   │   │   ├── CartView.xaml        ← Component giỏ hàng real-time
-│   │   │   ├── PaymentDialog.xaml   ← Modal chọn thanh toán & hiển thị VietQR / MoMo
-│   │   │   └── InvoiceHistoryView.xaml ← Tra cứu / in lại hóa đơn
-│   │   ├── Employees/
-│   │   │   ├── EmployeeListView.xaml
-│   │   │   └── EmployeeEditDialog.xaml
-│   │   ├── Stores/
-│   │   │   ├── StoreListView.xaml
-│   │   │   └── StoreEditDialog.xaml
-│   │   ├── Products/
-│   │   │   ├── ProductListView.xaml
-│   │   │   └── ProductEditDialog.xaml
-│   │   ├── Inventory/
-│   │   │   ├── StockInView.xaml
-│   │   │   ├── StockTakeView.xaml
-│   │   │   └── StockAlertView.xaml
-│   │   ├── Customers/
-│   │   │   ├── CustomerLookupDialog.xaml
-│   │   │   └── CustomerEditDialog.xaml
-│   │   ├── Promotions/
-│   │   │   └── PromotionListView.xaml
-│   │   ├── Shifts/
-│   │   │   ├── OpenShiftDialog.xaml
-│   │   │   └── CloseShiftDialog.xaml
-│   │   ├── Reports/
-│   │   │   └── ReportView.xaml
-│   │   └── Settings/
-│   │       └── SettingsView.xaml
-│   ├── ViewModels/                  ← MVVM ViewModels (CommunityToolkit.Mvvm)
-│   │   ├── Shell/
-│   │   │   └── MainWindowViewModel.cs
-│   │   ├── Auth/
-│   │   │   └── LoginViewModel.cs
-│   │   ├── Dashboard/
-│   │   │   └── DashboardViewModel.cs
-│   │   ├── Sales/
-│   │   │   ├── PosMainViewModel.cs
-│   │   │   └── PaymentViewModel.cs
-│   │   ├── Employees/
-│   │   │   └── EmployeeListViewModel.cs
-│   │   ├── Stores/
-│   │   │   └── StoreListViewModel.cs
-│   │   ├── Products/
-│   │   │   └── ProductListViewModel.cs
-│   │   ├── Inventory/
-│   │   │   └── InventoryViewModel.cs
-│   │   ├── Customers/
-│   │   │   └── CustomerViewModel.cs
-│   │   ├── Shifts/
-│   │   │   └── ShiftViewModel.cs
-│   │   └── Reports/
-│   │       └── ReportViewModel.cs
-│   ├── Converters/                  ← XAML Value Converters
-│   │   ├── BoolToVisibilityConverter.cs
-│   │   ├── CurrencyFormatterConverter.cs
-│   │   └── StatusToColorConverter.cs
-│   ├── ApiClients/                      ← Gọi REST API
-│   │   ├── BaseApiClient.cs             ← HttpClient base + token management
-│   │   ├── ProductApiClient.cs
-│   │   ├── OrderApiClient.cs
-│   │   ├── PaymentApiClient.cs
-│   │   ├── InvoiceApiClient.cs
-│   │   ├── EmployeeApiClient.cs
-│   │   ├── StoreApiClient.cs
-│   │   ├── InventoryApiClient.cs
-│   │   ├── CustomerApiClient.cs
-│   │   ├── PromotionApiClient.cs
-│   │   ├── ShiftApiClient.cs
-│   │   └── ReportApiClient.cs
-│   ├── Services/
-│   │   ├── BarcodeService.cs            ← Xử lý input từ barcode scanner
-│   │   ├── PrinterService.cs            ← In hóa đơn nhiệt ESC/POS
-│   │   ├── QRDisplayService.cs          ← Hiển thị QR payment
-│   │   ├── SignalRClientService.cs      ← Nhận real-time từ server
-│   │   ├── OfflineCacheService.cs       ← SQLite local
-│   │   ├── SessionService.cs            ← Quản lý token, thông tin user
-│   │   └── AutoUpdateService.cs         ← Tự cập nhật app
-│   └── Program.cs                       ← DI setup
+│   ├── POS.WinUI.csproj             ← Project config, Assets packing
+│   ├── Core/                        ← Hạ tầng, logic cốt lõi & client
+│   │   ├── ApiClients/              ← BaseApiClient, AuthApiClient, ShiftApiClient, StoreApiClient, NetworkStatusHandler...
+│   │   ├── Constants/               ← ApiRoutes, AppRoles, AppPermissions
+│   │   ├── Extensions/              ← ServiceCollectionExtensions (DI registration)
+│   │   ├── Models/                  ← StoreItem, Session models...
+│   │   └── Services/                ← SessionService, NavigationService, NetworkStatusService...
+│   ├── Resources/                   ← Tài nguyên UI dùng chung
+│   │   ├── Assets/                  ← login_bg.jpg, logo.png, icons...
+│   │   ├── Converters/              ← BoolToVisibilityConverter, NullOrEmptyToVisibilityConverter, RoleToVisibilityConverter, PermissionToVisibilityConverter...
+│   │   ├── Markup/                  ← Markup Extensions: HasRoleExtension, HasPermissionExtension
+│   │   └── Styles/                  ← Colors.xaml, Styles.xaml, Converters.xaml
+│   ├── ViewModels/                  ← MVVM ViewModels phân tách theo từng module độc lập
+│   │   ├── Auth/                    ← LoginViewModel.cs
+│   │   ├── Cashier/                 ← PosCashierMainViewModel.cs (Màn hình bán hàng / thu ngân POS)
+│   │   ├── Common/                  ← ManagementTabViewModelBase.cs, NavigationItemViewModel.cs
+│   │   ├── Customers/               ← CustomersViewModel.cs
+│   │   ├── Dashboard/               ← DashboardViewModel.cs
+│   │   ├── Employees/               ← EmployeesViewModel.cs
+│   │   ├── Inventory/               ← InventoryViewModel.cs
+│   │   ├── Orders/                  ← OrdersViewModel.cs
+│   │   ├── Products/                ← ProductsViewModel.cs
+│   │   ├── Promotions/              ← PromotionsViewModel.cs
+│   │   ├── Reports/                 ← ReportsViewModel.cs
+│   │   ├── Settings/                ← SettingsViewModel.cs
+│   │   └── Shell/                   ← ManagementMainViewModel.cs (Khung quản lý 9 tab, điều hướng tổng)
+│   └── Views/                       ← XAML Views tương ứng 1-1 với ViewModels
+│       ├── Auth/                    ← LoginView.xaml
+│       ├── Cashier/                 ← PosCashierMainView.xaml & Components (Cart, Catalog, HeaderBar...)
+│       ├── Customers/               ← CustomersView.xaml
+│       ├── Dashboard/               ← DashboardView.xaml
+│       ├── Employees/               ← EmployeesView.xaml
+│       ├── Inventory/               ← InventoryView.xaml
+│       ├── Orders/                  ← OrdersView.xaml
+│       ├── Products/                ← ProductsView.xaml
+│       ├── Promotions/              ← PromotionsView.xaml
+│       ├── Reports/                 ← ReportsView.xaml
+│       ├── Settings/                ← SettingsView.xaml
+│       ├── Shared/                  ← Components dùng chung (AppHeaderBar, TextInputField, NetworkStatusBar, ToastNotification...)
+│       └── Shell/                   ← ManagementMainView.xaml, ManagementSidebar.xaml, SplashScreenWindow.xaml
 │
 ├── 📦 POS.Contracts/                    (Public API Contracts dùng chung cho API client)
 │   ├── V1/
