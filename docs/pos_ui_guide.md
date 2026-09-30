@@ -305,10 +305,138 @@ Grid (Padding: 24)
 | `BoolToVis` | `Styles/Converters.xaml` | Chuyển đổi `bool` sang `Visibility.Visible/Collapsed` |
 | `InverseBoolToVis` | `Styles/Converters.xaml` | Chuyển đổi `!bool` sang `Visibility.Visible/Collapsed` |
 | `NullOrEmptyToVis` | `Styles/Converters.xaml` | Ẩn/hiện dựa trên chuỗi rỗng hoặc `null` |
+| `RoleToVis` / `InverseRoleToVis` | `Styles/Converters.xaml` | Converter kiểm tra vai trò (ConverterParameter="Owner,StoreManager") |
+| `PermissionToVis` / `InversePermissionToVis` | `Styles/Converters.xaml` | Converter kiểm tra mã quyền chi tiết (ConverterParameter="orders:delete") |
+| `{auth:HasRole}` | `Markup/HasRoleExtension.cs` | Markup Extension phân quyền XAML theo Role hoặc MinLevel |
+| `{auth:HasPermission}` | `Markup/HasPermissionExtension.cs` | Markup Extension phân quyền XAML theo mã quyền chi tiết |
+| `ManagementTabViewModelBase` | `ViewModels/Management/` | Lớp cơ sở tích hợp sẵn RBAC và tự động phản ứng `OnStoreChanged` |
 
 ---
 
-## 11. DOs AND DON'Ts
+## 11. ROLE-BASED UI AUTHORIZATION (QUY CHUẨN PHÂN QUYỀN GIAO DIỆN)
+
+### 11.1. Cấp bậc & Ma trận vai trò (Role Hierarchy)
+Hệ thống quản lý 3 vai trò chuẩn với cấp bậc phân quyền giảm dần:
+1. **`Owner` (Chủ chuỗi - Level 3):** Toàn quyền cấu hình chính sách, quản lý tất cả chi nhánh, đối soát tài chính, phân quyền nhân sự.
+2. **`StoreManager` (Quản lý cửa hàng - Level 2):** Quản lý vận hành nội bộ tại 01 chi nhánh được phân công (nhập hàng, kiểm kê, hủy đơn ca, thêm nhân viên thu ngân).
+3. **`Cashier` (Thu ngân - Level 1):** Chỉ thao tác bán hàng, quét mã, thu tiền tại quầy POS.
+
+### 11.2. Ma trận phân quyền 9 Tab giao diện Quản lý
+| Tab Giao diện | Quyền hạn `Owner` (Chủ chuỗi) | Quyền hạn `StoreManager` (Quản lý cửa hàng) | Quy chuẩn thao tác trên UI |
+| :--- | :--- | :--- | :--- |
+| **1. Tổng quan** *(Dashboard)* | Xem KPI, doanh thu, lợi nhuận toàn chuỗi hoặc lọc từng store. Đối soát doanh số giữa các chi nhánh. | Chỉ xem số liệu doanh thu, số đơn, trạng thái ca và cảnh báo tồn kho của **duy nhất chi nhánh mình**. | • `Owner`: Có Dropdown chọn Chi nhánh / Toàn chuỗi trên Header.<br>• `StoreManager`: Ẩn bộ chọn, chỉ hiển thị số liệu nội bộ store. |
+| **2. Đơn hàng & Hóa đơn** *(Orders)* | Xem/lọc đơn hàng toàn chuỗi. Tra cứu lịch sử, đối soát cổng thanh toán. | Xem danh sách đơn **chỉ tại chi nhánh mình**. Hủy đơn (`orders:delete`), duyệt trả hàng/hoàn tiền theo ca. | Cả 2 đều thao tác được đơn hàng, nhưng StoreManager bị giới hạn danh sách đơn trong phạm vi `StoreId`. |
+| **3. Sản phẩm & Danh mục** *(Products)* | Tạo mới, cập nhật giá niêm yết, định mức giá vốn (COGS). Quản lý danh mục chung toàn chuỗi. Xóa/ngừng kinh doanh. | Xem danh sách sản phẩm, quét mã vạch, in tem mã vạch. Cập nhật nhanh thông tin cục bộ nếu được phân quyền, không sửa giá niêm yết chuỗi. | • `Owner`: Nút Thêm sản phẩm/danh mục, sửa giá bán, xóa.<br>• `StoreManager`: Chỉ xem, in tem mã vạch sản phẩm. Ô giá bán bị khóa `IsEnabled="False"`. |
+| **4. Kho hàng & Nhập xuất** *(Inventory)* | Quản lý kho tổng và tất cả chi nhánh. Tạo và duyệt lệnh **điều chuyển hàng liên chi nhánh** *(Transfer)*. Xem giá vốn bình quân. | Tạo/xác nhận **phiếu nhập từ nhà cung cấp** về chi nhánh. Phiếu kiểm kê cân bằng kho chi nhánh. Phiếu xuất hủy hàng lỗi/hỏng nội bộ. | • `Owner`: Tab Điều chuyển liên chi nhánh, xem giá nhập/giá vốn tổng.<br>• `StoreManager`: Nút Nhập kho, Kiểm kê kho chi nhánh, Xuất hủy hàng hỏng. |
+| **5. Khách hàng & Hội viên** *(Customers)* | Quản lý tệp khách hàng chuỗi. **Cấu hình chính sách hạng thành viên** (Bạc, Vàng, Kim Cương, tỷ lệ tích điểm). | Tìm kiếm khách hàng theo SĐT, thêm mới khách hàng tại quầy. Cập nhật thông tin cá nhân, xem lịch sử mua và điểm tích lũy. | • `Owner`: Mục thiết lập chính sách Hạng thành viên & Đổi điểm.<br>• `StoreManager`: Chỉ có form Thêm mới/Cập nhật thông tin khách và lịch sử mua. |
+| **6. Khuyến mãi & Voucher** *(Promotions)* | Tạo chương trình khuyến mãi quy mô chuỗi. Phát hành mã Voucher/Coupon. Kích hoạt / Hủy bỏ khuyến mãi. | Tra cứu danh sách voucher, khuyến mãi đang hiệu lực để áp dụng cho khách. Không tự ý tạo khuyến mãi làm thay đổi doanh thu. | • `Owner`: Các nút Tạo khuyến mãi mới, Phát hành voucher, Ngừng áp dụng.<br>• `StoreManager`: Chỉ xem danh sách khuyến mãi khả dụng và điều kiện áp dụng. |
+| **7. Nhân viên & Phân quyền** *(Employees)* | Tạo/sửa/xóa nhân viên mọi chi nhánh, bổ nhiệm `StoreManager`. Điều chuyển nhân viên. Quản lý Roles & Permissions. | Chỉ quản lý nhân viên cấp thấp hơn (`Cashier`, Level 1) trong cùng chi nhánh. Tạo tài khoản mới **cố định role Cashier**. Cấp/đổi mã PIN thu ngân. | • `Owner`: Nút Tạo nhân viên (chọn role/store), tab Phân quyền Role.<br>• `StoreManager`: Thêm nhân viên (role cố định `Cashier`, store cố định chi nhánh mình), nút Đổi PIN; **ẩn hoàn toàn tab Phân quyền (Roles)**. |
+| **8. Báo cáo & Thống kê** *(Reports)* | Báo cáo P&L, đối soát tài chính toàn chuỗi, so sánh tăng trưởng giữa các chi nhánh. Xuất file kế toán. | Báo cáo doanh thu ngày/tháng của chi nhánh. Báo cáo đối soát tiền mặt/chuyển khoản theo từng ca thu ngân. Báo cáo bán chạy/tồn chậm nội bộ. | • `Owner`: Thống kê tài chính nâng cao, so sánh đa chi nhánh.<br>• `StoreManager`: Báo cáo ca thu ngân, báo cáo bán hàng cửa hàng. |
+| **9. Cài đặt hệ thống** *(Settings)* | Thêm mới chi nhánh (`stores:create`), xóa chi nhánh (`stores:delete`). Cài đặt tài khoản ngân hàng thụ hưởng VietQR chuỗi. | Xem thông tin chi nhánh mình quản lý (`stores:read`). Cập nhật hotline, địa chỉ, cấu hình máy in bill quầy. **Cấm:** Thêm/Xóa chi nhánh. | • `Owner`: Quản lý danh sách chi nhánh (Thêm/Sửa/Xóa), cấu hình thanh toán chuỗi.<br>• `StoreManager`: Chỉ có form thông tin chi nhánh hiện tại và cấu hình máy in/phần cứng. |
+
+### 11.3. Ba Nguyên tắc UX Phân quyền Bắt buộc
+1. **Hành động bị cấm hoàn toàn:** Dùng `Visibility="Collapsed"` (Ẩn hoàn toàn khỏi giao diện, không chiếm diện tích khoảng trống).
+   * Ví dụ: StoreManager không thấy nút "Thêm chi nhánh", nút "Tạo khuyến mãi", tab "Phân quyền Roles".
+2. **Hành động bị giới hạn phạm vi:** Khóa cứng giá trị bằng `IsEnabled="False"` hoặc `IsReadOnly="True"`.
+   * Ví dụ: Khi StoreManager tạo nhân viên mới, ComboBox Role bị disable và cố định là `Cashier`; ô Chi nhánh cố định là chi nhánh của Manager.
+3. **Phạm vi dữ liệu (Scope):**
+   * `Owner`: Hiển thị Dropdown chọn Chi nhánh trên Header (`IsOwnerRole = True`).
+   * `StoreManager`: Ẩn dropdown, hiển thị Badge tĩnh tên chi nhánh hiện hành.
+
+### 11.4. Hướng dẫn Lập trình Phân quyền XAML Declarative
+
+Thêm namespace vào đầu file XAML:
+```xaml
+xmlns:auth="clr-namespace:POS.WinUI.Markup"
+```
+
+#### Ví dụ 1: Ẩn/Hiện phần tử theo Vai trò (Role)
+```xaml
+<!-- Chỉ Owner mới thấy -->
+<Button Content="Tạo mới chi nhánh"
+        Style="{StaticResource PrimaryButtonStyle}"
+        Visibility="{auth:HasRole 'Owner'}" />
+
+<!-- Cả Owner và StoreManager đều thấy (Cashier bị ẩn) -->
+<Button Content="Đổi mã PIN thu ngân"
+        Visibility="{auth:HasRole 'Owner,StoreManager'}" />
+
+<!-- Kiểm tra theo cấp bậc tối thiểu (Level >= 2: StoreManager trở lên) -->
+<Button Content="Kiểm kê kho"
+        Visibility="{auth:HasRole MinLevel=2}" />
+
+<!-- Đảo ngược điều kiện: Ẩn với Owner, chỉ hiện cho cấp dưới -->
+<TextBlock Text="Dữ liệu nội bộ chi nhánh"
+           Visibility="{auth:HasRole 'Owner', Inverse=True}" />
+```
+
+#### Ví dụ 2: Kiểm tra theo Mã Quyền Chi Tiết (Granular Permission)
+Sử dụng các hằng số từ `AppPermissions` (`stores:create`, `orders:delete`, `products:update`, ...):
+```xaml
+<!-- Nút hủy đơn yêu cầu quyền orders:delete -->
+<Button Content="Hủy đơn hàng"
+        Visibility="{auth:HasPermission 'orders:delete'}" />
+
+<!-- Khóa trường giá vốn nếu không có quyền products:update -->
+<TextBox Text="{Binding CostPrice}"
+         IsEnabled="{auth:HasPermission 'products:update'}" />
+```
+
+#### Ví dụ 3: Sử dụng qua Converter (Data Binding)
+```xaml
+<!-- Dùng RoleToVis converter đăng ký sẵn trong Converters.xaml -->
+<StackPanel Visibility="{Binding Path=., Converter={StaticResource RoleToVis}, ConverterParameter='Owner'}">
+    <!-- Nội dung chỉ dành cho Owner -->
+</StackPanel>
+```
+
+### 11.5. Hướng dẫn Lập trình trong C# ViewModel
+
+Mọi ViewModel của Tab quản lý **phải kế thừa `ManagementTabViewModelBase`**:
+
+```csharp
+public sealed partial class InventoryTabViewModel : ManagementTabViewModelBase
+{
+    public override string TabId => "Inventory";
+    public override string Title => "Quản lý Kho & Nhập hàng";
+    public override string Subtitle => "Kiểm soát số lượng tồn kho và tạo phiếu nhập xuất";
+    public override SymbolRegular Icon => SymbolRegular.Archive24;
+
+    [RelayCommand]
+    private async Task CreateStockTransferAsync()
+    {
+        // Kiểm tra quyền nghiệp vụ trước khi thực thi lệnh
+        if (!IsOwner)
+        {
+            // Báo lỗi: Chỉ Chủ chuỗi mới có quyền tạo lệnh điều chuyển hàng giữa các chi nhánh
+            return;
+        }
+
+        // Logic điều chuyển hàng liên chi nhánh
+    }
+
+    // Tự động kích hoạt khi Owner chuyển chi nhánh trên Header Bar!
+    protected override void OnStoreChanged(string newStoreId, string? storeName)
+    {
+        // Nạp lại số liệu tồn kho theo chi nhánh mới
+        _ = LoadInventoryDataAsync(newStoreId);
+    }
+}
+```
+
+Các thuộc tính có sẵn từ `ManagementTabViewModelBase`:
+* `IsOwner`: `true` nếu là Chủ chuỗi.
+* `IsStoreManager`: `true` nếu là Quản lý cửa hàng.
+* `IsCashier`: `true` nếu là Thu ngân.
+* `RoleLevel`: Cấp bậc phân quyền (1: Cashier, 2: StoreManager, 3: Owner).
+* `CurrentStoreId`: Mã chi nhánh hiện hành.
+* `CurrentStoreName`: Tên chi nhánh hiện hành.
+* `HasPermission(string code)`: Hàm kiểm tra quyền chi tiết.
+* `IsInRole(string roles)`: Hàm kiểm tra danh sách vai trò.
+
+---
+
+## 12. DOs AND DON'Ts
 
 | DO (Nên làm) | DON'T (Tuyệt đối không làm) |
 | :--- | :--- |
@@ -317,13 +445,15 @@ Grid (Padding: 24)
 | ✅ Sử dụng `INavigationService` để điều hướng màn hình. | ❌ Không tự ý tạo `new Window().Show()` rời rạc làm vỡ cấu trúc FluentWindow. |
 | ✅ Bọc các ô nhập liệu bằng chiều cao chuẩn (`50px`) và bo góc (`12px`). | ❌ Không tạo input vuông vức `Height="25"` gây khó thao tác cảm ứng. |
 | ✅ Bind dữ liệu thông qua ViewModel với `CommunityToolkit.Mvvm`. | ❌ Không viết code xử lý nghiệp vụ/API trực tiếp trong code-behind (`.xaml.cs`). |
+| ✅ Dùng `{auth:HasRole}` hoặc `{auth:HasPermission}` để phân quyền trực tiếp trên XAML. | ❌ Không tạo hàng loạt biến boolean rời rạc trong ViewModel (`CanAddProduct`, `CanDeleteStore`...) chỉ để bind ẩn/hiện nút. |
+| ✅ Kế thừa `ManagementTabViewModelBase` cho tất cả các ViewModel của Tab quản lý. | ❌ Không tự subscribe sự kiện `StoreChanged` thủ công ở từng tab gây nguy cơ rò rỉ bộ nhớ. |
 | ✅ Xử lý đầy đủ các trạng thái: Default, Hover, Pressed, Loading, Disabled, Error. | ❌ Không để nút bấm trơ khi người dùng click (thiếu hiệu ứng phản hồi). |
 
 ---
 
-## 12. RULES FOR AI UI GENERATION
+## 13. RULES FOR AI UI GENERATION
 
-Khi tạo mới bất kỳ màn hình hoặc component XAML nào, AI **bắt buộc** phải tuân thủ nghiêm ngặt 15 nguyên tắc sau:
+Khi tạo mới bất kỳ màn hình hoặc component XAML nào, AI **bắt buộc** phải tuân thủ nghiêm ngặt 16 nguyên tắc sau:
 
 1. **Đọc Style Guide này trước**: Không tự đoán hay tự chế style mới nếu chưa đọc file này.
 2. **Kiểm tra kho tài nguyên**: Luôn kiểm tra `Styles/Styles.xaml`, `Styles/Colors.xaml` và thư mục `Views/Shared/` trước khi viết XAML.
@@ -335,15 +465,16 @@ Khi tạo mới bất kỳ màn hình hoặc component XAML nào, AI **bắt bu�
 8. **Đảm bảo tính nhất quán (Visually Consistent)**: Giao diện mới phải trông giống như cùng một tác giả thiết kế với `LoginView.xaml`.
 9. **Kích thước tối thiểu cho cảm ứng POS**: Các nút và ô bấm phải có chiều cao tối thiểu `44px - 50px`.
 10. **Tách biệt Component**: Nếu một cụm UI xuất hiện ở >= 2 màn hình, tạo UserControl trong `Views/Shared/`.
-11. **Sử dụng đúng Converter**: Dùng `BoolToVis`, `InverseBoolToVis`, `NullOrEmptyToVis` từ `Converters.xaml`.
+11. **Sử dụng đúng Converter & Auth Markup**: Dùng `BoolToVis`, `InverseBoolToVis`, `{auth:HasRole}`, `{auth:HasPermission}`.
 12. **Không phá vỡ Shell**: Mọi view chính phải là `UserControl` để đưa vào `ContentControl` của `MainWindow`.
-13. **Báo cáo lý do nếu cần style mới**: Nếu thực sự cần style mới, phải giải thích rõ tại sao các style hiện tại không đáp ứng được.
-14. **Hỗ trợ xử lý lỗi trực quan**: Mọi form phải có vùng hiển thị Error Banner dùng `DangerBgBrush` + `DangerBorderBrush`.
-15. **Kiểm tra nghiệm thu (Self-Check)**: Sau khi sinh mã XAML, đối chiếu lại với bảng Quick Reference dưới đây.
+13. **Tuân thủ ma trận phân quyền 9 Tab**: Luôn tra cứu Mục 11.2 trước khi đặt nút hoặc form trên bất kỳ Tab nào.
+14. **Báo cáo lý do nếu cần style mới**: Nếu thực sự cần style mới, phải giải thích rõ tại sao các style hiện tại không đáp ứng được.
+15. **Hỗ trợ xử lý lỗi trực quan**: Mọi form phải có vùng hiển thị Error Banner dùng `DangerBgBrush` + `DangerBorderBrush`.
+16. **Kiểm tra nghiệm thu (Self-Check)**: Sau khi sinh mã XAML, đối chiếu lại với bảng Quick Reference dưới đây.
 
 ---
 
-## 13. FUTURE IMPROVEMENTS & STANDARDIZATION PROPOSALS
+## 14. FUTURE IMPROVEMENTS & STANDARDIZATION PROPOSALS
 
 Trong quá trình phát triển các Sprint tiếp theo (Màn hình bán hàng chính, Quản lý kho, Khách hàng, Báo cáo), nhóm phát triển đề xuất mở rộng chuẩn hoá như sau:
 
@@ -357,7 +488,7 @@ Trong quá trình phát triển các Sprint tiếp theo (Màn hình bán hàng c
 
 ---
 
-## 14. QUICK REFERENCE
+## 15. QUICK REFERENCE
 
 Tra cứu nhanh các thông số thiết kế:
 
@@ -370,6 +501,10 @@ Tra cứu nhanh các thông số thiết kế:
 | **Text Muted & Placeholder** | `#64748B` (`TextMutedBrush`) & `#94A3B8` (`TextPlaceholderBrush`) |
 | **Error Colors** | Nền `#FEF2F2`, Viền `#FECACA`, Chữ `#B91C1C`, Icon `#DC2626` |
 | **Success Color** | `#10B981` (`SuccessBrush`) |
+| **Auth Markup Namespace** | `xmlns:auth="clr-namespace:POS.WinUI.Markup"` |
+| **Auth Extensions** | `{auth:HasRole 'Owner'}`, `{auth:HasPermission 'orders:delete'}` |
+| **Auth Converters** | `RoleToVis`, `InverseRoleToVis`, `PermissionToVis`, `InversePermissionToVis` |
+| **Base ViewModel Tab** | `ManagementTabViewModelBase` (tự động hook `OnStoreChanged`) |
 | **Main Window Size** | Width: `1200`, Height: `800`, MinWidth: `1000`, MinHeight: `680` |
 | **Input Field Height** | `50px`, CornerRadius `12px` |
 | **Primary Button Height** | `48px` - `50px`, CornerRadius `12px` |
