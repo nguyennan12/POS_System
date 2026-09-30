@@ -49,7 +49,7 @@
                             Margin="0,0,14,0" 
                             VerticalAlignment="Center"
                             Visibility="{Binding ElementName=RootHeader, Path=IsPosMode, Converter={StaticResource BoolToVis}}">
-                    <Image Source="/Assets/logo.png" Width="30" Height="30" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <Image Source="/Resources/Assets/logo.png" Width="30" Height="30" RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock Text="OraPOS" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 

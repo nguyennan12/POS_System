@@ -2,11 +2,11 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using POS.WinUI.ApiClients;
-using POS.WinUI.Models;
-using POS.WinUI.Services;
+using POS.WinUI.Core.ApiClients;
+using POS.WinUI.Core.Models;
+using POS.WinUI.Core.Services;
 using POS.WinUI.Views.Cashier;
-using POS.WinUI.Views.Management;
+using POS.WinUI.Views.Shell;
 
 namespace POS.WinUI.ViewModels.Auth;
 

@@ -1,4 +1,4 @@
-using POS.WinUI.ViewModels.Management;
+using POS.WinUI.ViewModels.Common;
 using Wpf.Ui.Controls;
 
 namespace POS.WinUI.ViewModels.Dashboard;

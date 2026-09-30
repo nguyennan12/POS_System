@@ -5,9 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using POS.WinUI.ApiClients;
-using POS.WinUI.Extensions;
-using POS.WinUI.Services;
+using POS.WinUI.Core.ApiClients;
+using POS.WinUI.Core.Extensions;
+using POS.WinUI.Core.Services;
 using POS.WinUI.Views.Auth;
 using POS.WinUI.Views.Shell;
 
