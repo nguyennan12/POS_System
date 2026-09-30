@@ -111,6 +111,11 @@ public static class OrderErrors
         "ORDER.CANNOT_CANCEL_PAID",
         "Không thể hủy đơn hàng đã thanh toán.");
 
+    public static readonly Error CannotCancelOrderWithPayments = new(
+        ErrorType.Invalid,
+        "ORDER.CANNOT_CANCEL_WITH_PAYMENTS",
+        "Không thể hủy đơn hàng đã phát sinh thanh toán thành công.");
+
     public static readonly Error ManagerOnly = new(
         ErrorType.Forbidden,
         "ORDER.MANAGER_ONLY",

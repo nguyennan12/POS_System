@@ -20,8 +20,7 @@ public sealed class ResetPinCommandHandler(IEmployeeRepository employees, IStore
             var storeError = await EmployeeMutationSupport.ValidateStoreAsync(target.StoreId, target.IsChainOwner, stores, ct);
             if (storeError != Error.None) return storeError;
             var lookup = pinLookupHasher.ComputeHash(command.NewPin);
-            if (target.StoreId is Guid storeId &&
-                await employees.HasPinConflictAsync(target.Id, storeId, lookup, ct))
+            if (await employees.HasPinConflictAsync(target.Id, target.StoreId, lookup, ct))
                 return EmployeeErrors.PinExists;
             target.ResetCredentialPin(passwordHasher.Hash(command.NewPin), lookup);
             await refreshTokens.RevokeAllByEmployeeIdAsync(target.Id, DateTime.UtcNow, ct);

@@ -54,6 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\**\*" />
+    <Resource Include="Resources\Assets\**\*" />
   </ItemGroup>
 </Project>

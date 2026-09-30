@@ -11,8 +11,7 @@ public class CheckoutOrderCommandValidator : AbstractValidator<CheckoutOrderComm
             .NotEmpty().WithMessage("Mã đơn hàng không được để trống.");
 
         RuleFor(x => x.Payments)
-            .NotNull().WithMessage("Danh sách phương thức thanh toán không được để trống.")
-            .Must(p => p != null && p.Count > 0).WithMessage("Vui lòng cung cấp ít nhất một phương thức thanh toán.");
+            .NotNull().WithMessage("Danh sách phương thức thanh toán không được để trống.");
 
         RuleForEach(x => x.Payments).ChildRules(p =>
         {

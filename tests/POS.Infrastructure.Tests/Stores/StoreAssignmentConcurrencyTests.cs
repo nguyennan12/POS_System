@@ -177,7 +177,7 @@ public class StoreAssignmentConcurrencyTests
             inner.GetByStoreAndPinLookupHashWithRoleAndStoreAsync(
                 storeId, pinLookupHash, cancellationToken);
 
-        public Task<bool> HasPinConflictAsync(Guid employeeId, Guid storeId, string pinLookupHash, CancellationToken cancellationToken = default) =>
+        public Task<bool> HasPinConflictAsync(Guid employeeId, Guid? storeId, string pinLookupHash, CancellationToken cancellationToken = default) =>
             inner.HasPinConflictAsync(employeeId, storeId, pinLookupHash, cancellationToken);
         public Task<bool> HasMissingPinLookupAsync(Guid storeId, CancellationToken cancellationToken = default) =>
             inner.HasMissingPinLookupAsync(storeId, cancellationToken);

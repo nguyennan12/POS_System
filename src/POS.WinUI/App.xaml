@@ -7,9 +7,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
-                <ResourceDictionary Source="/Styles/Colors.xaml" />
-                <ResourceDictionary Source="/Styles/Converters.xaml" />
-                <ResourceDictionary Source="/Styles/Styles.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/Converters.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

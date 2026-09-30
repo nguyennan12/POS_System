@@ -122,6 +122,24 @@ public class PaymentStrategyTests
     }
 
     [Fact]
+    public async Task PointsPaymentStrategy_ShouldFail_WhenCustomerIsInactive()
+    {
+        var customerId = Guid.NewGuid();
+        _dummyOrder.SetCustomer(customerId);
+
+        var customer = new Customer("Khách Inactive", "0911223344", Guid.NewGuid(), null, null, null, isActive: false, customerId);
+        _customerRepository.GetByIdAsync(customerId, Arg.Any<CancellationToken>())
+            .Returns(new CustomerWithPoints(customer, PointsBalance: 100_000));
+
+        var strategy = new PointsPaymentStrategy(_customerRepository);
+        var payment = new PaymentSplitInputDto("Points", 50_000);
+        var result = await strategy.ValidateAsync(payment, _dummyOrder);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error.Code.Should().Be(POS.Domain.Customers.Errors.CustomerErrors.Inactive.Code);
+    }
+
+    [Fact]
     public void PaymentStrategyFactory_ShouldReturnCorrectStrategy_ForEachMethod()
     {
         var strategies = new IPaymentStrategy[]

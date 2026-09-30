@@ -262,6 +262,8 @@ public class Order : BaseEntity
             throw new InvalidOperationException("Không thể hủy đơn hàng đã thanh toán.");
         if (Status == OrderStatus.Cancelled)
             throw new InvalidOperationException("Đơn hàng đã bị hủy trước đó.");
+        if (Payments.Any(p => p.Status == PaymentStatus.Success))
+            throw new InvalidOperationException("Không thể hủy đơn hàng đã phát sinh thanh toán thành công.");
 
         Status = OrderStatus.Cancelled;
         CancelReason = reason;

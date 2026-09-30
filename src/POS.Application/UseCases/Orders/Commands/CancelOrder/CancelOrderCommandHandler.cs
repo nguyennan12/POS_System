@@ -45,6 +45,9 @@ public class CancelOrderCommandHandler(
         if (order.Status == OrderStatus.Cancelled)
             return OrderErrors.AlreadyCancelled;
 
+        if (order.Payments.Any(p => p.Status == PaymentStatus.Success))
+            return OrderErrors.CannotCancelOrderWithPayments;
+
         order.Cancel(command.Reason);
         orderRepository.Update(order);
         await unitOfWork.SaveChangesAsync(cancellationToken);

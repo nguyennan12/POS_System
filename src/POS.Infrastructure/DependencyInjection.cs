@@ -48,6 +48,7 @@ public static class DependencyInjection
         services.AddScoped<IMigrationService, MigrationService>();
 
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<ISkuRepository, SkuRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
