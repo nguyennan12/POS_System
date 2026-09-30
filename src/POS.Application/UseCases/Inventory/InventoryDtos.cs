@@ -12,7 +12,9 @@ public record StockInVoucherItemDto(
     string ProductName,
     decimal Qty,
     decimal UnitPrice,
-    decimal TotalPrice
+    decimal TotalPrice,
+    string? BatchNo,
+    DateOnly? ExpiryDate
 );
 
 public record StockInVoucherSummaryDto(
@@ -126,7 +128,9 @@ public static class InventoryDtoExtensions
         i.Sku?.Product?.Name ?? string.Empty,
         i.Qty,
         i.UnitPrice,
-        i.TotalPrice
+        i.TotalPrice,
+        i.BatchNo,
+        i.ExpiryDate
     );
 
     public static StockEntryDto ToDto(this StockEntry e) => new(

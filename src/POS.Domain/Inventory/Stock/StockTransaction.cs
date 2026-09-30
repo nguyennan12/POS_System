@@ -73,13 +73,14 @@ public class StockTransaction : BaseEntity
         Guid skuId,
         decimal qty,
         Guid createdBy,
-        string note)
+        string note,
+        decimal? unitCost = null)
     {
         if (qty <= 0)
             throw new ArgumentOutOfRangeException(nameof(qty), "Số lượng xuất hủy phải lớn hơn 0.");
         if (string.IsNullOrWhiteSpace(note))
             throw new ArgumentException("Ghi chú bắt buộc khi xuất hủy.", nameof(note));
-        return new StockTransaction(storeId, skuId, StockTransactionType.Dispose, qty, createdBy, note: note);
+        return new StockTransaction(storeId, skuId, StockTransactionType.Dispose, qty, createdBy, note: note, unitCost: unitCost);
     }
 
     public Guid StoreId { get; private set; }

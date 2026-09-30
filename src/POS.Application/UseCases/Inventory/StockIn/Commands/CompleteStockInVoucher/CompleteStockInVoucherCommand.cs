@@ -1,4 +1,4 @@
-using POS.Application.Abstractions.Auth;
+﻿using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Inventory;
 
@@ -9,3 +9,4 @@ public record CompleteStockInVoucherCommand(Guid VoucherId)
 {
     public string RequiredPermission => "inventory:update";
 }
+

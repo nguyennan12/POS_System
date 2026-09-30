@@ -3,18 +3,21 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using POS.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace POS.Infrastructure.Migrations
+namespace POS.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929162115_FIX01_BatchNoExpiryOnVoucherItem")]
+    partial class FIX01_BatchNoExpiryOnVoucherItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1234,8 +1237,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<string>("InvoiceNo")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("invoice_no");
 
                     b.Property<DateTime>("IssuedAt")
@@ -1267,25 +1270,6 @@ namespace POS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("invoices", (string)null);
-                });
-
-            modelBuilder.Entity("POS.Domain.Orders.InvoiceSequence", b =>
-                {
-                    b.Property<Guid>("StoreId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("store_id");
-
-                    b.Property<DateOnly>("InvoiceDate")
-                        .HasColumnType("date")
-                        .HasColumnName("invoice_date");
-
-                    b.Property<long>("LastValue")
-                        .HasColumnType("bigint")
-                        .HasColumnName("last_value");
-
-                    b.HasKey("StoreId", "InvoiceDate");
-
-                    b.ToTable("invoice_sequences", (string)null);
                 });
 
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>
@@ -2303,12 +2287,6 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("address");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("code");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -2368,9 +2346,6 @@ namespace POS.Infrastructure.Migrations
                         .HasDefaultValueSql("TIMEZONE('utc', now())");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
 
                     b.ToTable("stores", (string)null);
                 });
@@ -2743,15 +2718,6 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("POS.Domain.Orders.InvoiceSequence", b =>
-                {
-                    b.HasOne("POS.Domain.Stores.Store", null)
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>

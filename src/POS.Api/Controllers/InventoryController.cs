@@ -9,6 +9,7 @@ using POS.Application.UseCases.Inventory.Stock.Queries.GetInventorySummary;
 using POS.Application.UseCases.Inventory.Stock.Queries.GetStockAlerts;
 using POS.Application.UseCases.Inventory.Stock.Queries.GetStockBatches;
 using POS.Application.UseCases.Inventory.Stock.Queries.GetStockTransactions;
+using POS.Application.UseCases.Inventory.StockIn.Commands.CancelStockInVoucher;
 using POS.Application.UseCases.Inventory.StockIn.Commands.CompleteStockInVoucher;
 using POS.Application.UseCases.Inventory.StockIn.Commands.CreateStockInVoucher;
 using POS.Application.UseCases.Inventory.StockIn.Queries.GetStockInVoucherById;
@@ -77,7 +78,7 @@ public class InventoryController(ISender mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var items = request.Items
-            .Select(i => new StockInItemInput(i.SkuId, i.Qty, i.UnitPrice))
+            .Select(i => new StockInItemInput(i.SkuId, i.Qty, i.UnitPrice, i.BatchNo, i.ExpiryDate))
             .ToList()
             .AsReadOnly();
 
@@ -102,6 +103,20 @@ public class InventoryController(ISender mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new CompleteStockInVoucherCommand(id), cancellationToken);
+
+        if (result.IsFailure) return this.ToActionResult(result);
+        return Ok(ApiResponse<StockInVoucherDetailResponse>.Ok(result.Value!.ToResponse()));
+    }
+
+    /// <summary>
+    /// [FIX-01] Hủy phiếu nhập kho ở trạng thái Draft sang Cancelled.
+    /// </summary>
+    [HttpPost("stock-in/{id:guid}/cancel")]
+    public async Task<ActionResult<ApiResponse<StockInVoucherDetailResponse>>> CancelStockInVoucher(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CancelStockInVoucherCommand(id), cancellationToken);
 
         if (result.IsFailure) return this.ToActionResult(result);
         return Ok(ApiResponse<StockInVoucherDetailResponse>.Ok(result.Value!.ToResponse()));
@@ -231,7 +246,7 @@ public class InventoryController(ISender mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new DisposeStockCommand(request.SkuId, request.Qty, request.Note),
+            new DisposeStockCommand(request.SkuId, request.Qty, request.Note, request.BatchId),
             cancellationToken);
 
         if (result.IsFailure) return this.ToActionResult(result);

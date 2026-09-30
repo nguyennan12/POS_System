@@ -37,7 +37,8 @@ public class StockInVoucher : BaseEntity
         return new StockInVoucher(storeId, supplierId, createdBy, note);
     }
 
-    public Result AddItem(Guid skuId, decimal qty, decimal unitPrice)
+    public Result AddItem(Guid skuId, decimal qty, decimal unitPrice,
+        string? batchNo = null, DateOnly? expiryDate = null)
     {
         if (Status != StockInVoucherStatus.Draft)
             return new Error(ErrorType.Invalid, "StockIn.VoucherNotDraft",
@@ -48,7 +49,7 @@ public class StockInVoucher : BaseEntity
         if (unitPrice < 0)
             return new Error(ErrorType.Validation, "StockIn.InvalidUnitPrice", "Đơn giá không được âm.");
 
-        var item = new StockInVoucherItem(Id, skuId, qty, unitPrice);
+        var item = new StockInVoucherItem(Id, skuId, qty, unitPrice, batchNo, expiryDate);
         Items.Add(item);
         TotalAmount += item.TotalPrice;
         return Result.Success();

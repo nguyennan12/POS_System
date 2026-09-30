@@ -1,4 +1,4 @@
-using POS.Application.Abstractions.Auth;
+﻿using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Inventory;
 
@@ -12,7 +12,7 @@ public record GetInventorySummaryQuery(
     int PageSize
 ) : IQuery<PagedStockEntryList>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:stock:read";
+    public string RequiredPermission => "inventory:read";
 }
 
 public record PagedStockEntryList(
@@ -21,3 +21,4 @@ public record PagedStockEntryList(
     int PageNumber,
     int PageSize
 );
+

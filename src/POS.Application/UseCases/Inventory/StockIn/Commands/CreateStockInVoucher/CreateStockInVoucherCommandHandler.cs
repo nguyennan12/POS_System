@@ -65,7 +65,7 @@ public class CreateStockInVoucherCommandHandler(
 
         foreach (var item in command.Items)
         {
-            var addResult = voucher.AddItem(item.SkuId, item.Qty, item.UnitPrice);
+            var addResult = voucher.AddItem(item.SkuId, item.Qty, item.UnitPrice, item.BatchNo, item.ExpiryDate);
             if (addResult.IsFailure) return addResult.Error;
         }
 
