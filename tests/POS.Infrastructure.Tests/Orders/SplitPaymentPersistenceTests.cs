@@ -31,6 +31,29 @@ namespace POS.Infrastructure.Tests.Orders;
 public class SplitPaymentPersistenceTests
 {
     [PostgresFact]
+    public async Task PaymentRepository_ReadsPaymentAndOrderWithoutTracking()
+    {
+        await using var fixture = await PaymentDatabase.CreateAsync();
+        var payment = new Payment(fixture.OrderId, PaymentMethod.Card, 40, "status-ref", PaymentStatus.Pending);
+        await using (var seed = fixture.Db())
+        {
+            seed.Payments.Add(payment);
+            await seed.SaveChangesAsync();
+        }
+
+        await using var db = fixture.Db();
+        var repository = new PaymentRepository(db);
+        var found = await repository.GetByIdWithOrderAsync(payment.Id);
+
+        Assert.NotNull(found);
+        Assert.Equal(fixture.OrderId, found.OrderId);
+        Assert.Equal(fixture.OrderId, found.Order.Id);
+        Assert.Equal(PaymentStatus.Pending, found.Status);
+        Assert.Empty(db.ChangeTracker.Entries());
+        Assert.Null(await repository.GetByIdWithOrderAsync(Guid.NewGuid()));
+    }
+
+    [PostgresFact]
     public async Task Split_ShouldUseRealPromotionTotal_AndPersistRecalculatedDiscounts()
     {
         await using var fixture = await PaymentDatabase.CreateAsync();
