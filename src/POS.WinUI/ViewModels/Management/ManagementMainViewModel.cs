@@ -267,23 +267,56 @@ public partial class ManagementMainViewModel : ObservableObject
 
         var tabs = new List<NavigationItemViewModel>
         {
-            new() { Id = "Dashboard", Title = "Tổng quan", Icon = SymbolRegular.Grid24 },
-            new() { Id = "Orders", Title = "Đơn hàng & Hóa đơn", Icon = SymbolRegular.Receipt24 },
-            new() { Id = "Products", Title = "Sản phẩm & Danh mục", Icon = SymbolRegular.Box24 },
-            new() { Id = "Inventory", Title = "Quản lý Kho & Nhập hàng", Icon = SymbolRegular.Archive24 },
-            new() { Id = "Customers", Title = "Khách hàng & Hội viên", Icon = SymbolRegular.People24 },
-            new() { Id = "Employees", Title = "Nhân viên & Phân quyền", Icon = SymbolRegular.PersonAccounts24 },
-            new() { Id = "Reports", Title = "Báo cáo & Thống kê", Icon = SymbolRegular.DataPie24 },
-            new() { Id = "Settings", Title = "Cài đặt hệ thống", Icon = SymbolRegular.Settings24 }
+            new() { Id = "Dashboard", Title = "Tổng quan", Icon = SymbolRegular.Grid24, MinRoleLevel = 2 },
+            new() { Id = "Orders", Title = "Đơn hàng & Hóa đơn", Icon = SymbolRegular.Receipt24, MinRoleLevel = 2 },
+            new() { Id = "Products", Title = "Sản phẩm & Danh mục", Icon = SymbolRegular.Box24, MinRoleLevel = 2 },
+            new() { Id = "Inventory", Title = "Quản lý Kho & Nhập hàng", Icon = SymbolRegular.Archive24, MinRoleLevel = 2 },
+            new() { Id = "Customers", Title = "Khách hàng & Hội viên", Icon = SymbolRegular.People24, MinRoleLevel = 2 },
+            new() { Id = "Promotions", Title = "Khuyến mãi & Voucher", Icon = SymbolRegular.TicketDiagonal24, MinRoleLevel = 2 },
+            new() { Id = "Employees", Title = "Nhân viên & Phân quyền", Icon = SymbolRegular.PersonAccounts24, MinRoleLevel = 2 },
+            new() { Id = "Reports", Title = "Báo cáo & Thống kê", Icon = SymbolRegular.DataPie24, MinRoleLevel = 2 },
+            new() { Id = "Settings", Title = "Cài đặt hệ thống", Icon = SymbolRegular.Settings24, MinRoleLevel = 2 }
         };
 
         foreach (var tab in tabs)
         {
-            NavTabs.Add(tab);
+            if (IsTabAllowed(tab))
+            {
+                NavTabs.Add(tab);
+            }
         }
 
-        // Mặc định chọn tab Tổng quan
-        SelectTab(NavTabs[0]);
+        // Mặc định chọn tab đầu tiên khả dụng
+        if (NavTabs.Count > 0)
+        {
+            SelectTab(NavTabs[0]);
+        }
+    }
+
+    private bool IsTabAllowed(NavigationItemViewModel tab)
+    {
+        if (tab.MinRoleLevel > 0 && _sessionService.RoleLevel < tab.MinRoleLevel)
+        {
+            return false;
+        }
+
+        if (tab.AllowedRoles != null && tab.AllowedRoles.Length > 0)
+        {
+            if (!_sessionService.IsInRole(string.Join(',', tab.AllowedRoles)))
+            {
+                return false;
+            }
+        }
+
+        if (tab.RequiredPermissions != null && tab.RequiredPermissions.Length > 0)
+        {
+            if (!_sessionService.HasAnyPermission(tab.RequiredPermissions))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     [RelayCommand]
@@ -311,6 +344,7 @@ public partial class ManagementMainViewModel : ObservableObject
                 "Products"  => _serviceProvider.GetRequiredService<ProductsTabViewModel>(),
                 "Inventory" => _serviceProvider.GetRequiredService<InventoryTabViewModel>(),
                 "Customers" => _serviceProvider.GetRequiredService<CustomersTabViewModel>(),
+                "Promotions"=> _serviceProvider.GetRequiredService<PromotionsTabViewModel>(),
                 "Employees" => _serviceProvider.GetRequiredService<EmployeesTabViewModel>(),
                 "Reports"   => _serviceProvider.GetRequiredService<ReportsTabViewModel>(),
                 "Settings"  => _serviceProvider.GetRequiredService<SettingsTabViewModel>(),

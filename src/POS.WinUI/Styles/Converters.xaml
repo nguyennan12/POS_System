@@ -6,5 +6,9 @@
     <converters:BoolToVisibilityConverter    x:Key="InverseBoolToVis"          Invert="True" />
     <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVis" />
     <converters:NullOrEmptyToVisibilityConverter x:Key="InverseNullOrEmptyToVis" Invert="True" />
+    <converters:RoleToVisibilityConverter        x:Key="RoleToVis" />
+    <converters:RoleToVisibilityConverter        x:Key="InverseRoleToVis"          Invert="True" />
+    <converters:PermissionToVisibilityConverter  x:Key="PermissionToVis" />
+    <converters:PermissionToVisibilityConverter  x:Key="InversePermissionToVis"    Invert="True" />
 
 </ResourceDictionary>

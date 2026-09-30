@@ -233,7 +233,9 @@ public partial class LoginViewModel : ObservableObject
                     auth.User.Name,
                     auth.User.RoleName,
                     storeId,
-                    storeName);
+                    storeName,
+                    auth.User.IsChainOwner,
+                    auth.User.Permissions);
 
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
                 await Task.Delay(400);
@@ -297,7 +299,9 @@ public partial class LoginViewModel : ObservableObject
                     auth.User.Name,
                     auth.User.RoleName,
                     storeId,
-                    storeName);
+                    storeName,
+                    auth.User.IsChainOwner,
+                    auth.User.Permissions);
 
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
                 await Task.Delay(400);

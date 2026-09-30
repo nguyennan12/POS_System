@@ -35,6 +35,14 @@ public sealed class CustomersTabViewModel : ManagementTabViewModelBase
     public override SymbolRegular Icon => SymbolRegular.People24;
 }
 
+public sealed class PromotionsTabViewModel : ManagementTabViewModelBase
+{
+    public override string TabId => "Promotions";
+    public override string Title => "Khuyến mãi & Voucher";
+    public override string Subtitle => "Quản lý chương trình khuyến mãi tự động, giảm giá hóa đơn và phát hành mã Voucher";
+    public override SymbolRegular Icon => SymbolRegular.TicketDiagonal24;
+}
+
 public sealed class EmployeesTabViewModel : ManagementTabViewModelBase
 {
     public override string TabId => "Employees";

@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.ProductsTabViewModel>();
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.InventoryTabViewModel>();
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.CustomersTabViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.PromotionsTabViewModel>();
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.EmployeesTabViewModel>();
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.ReportsTabViewModel>();
         services.AddTransient<POS.WinUI.ViewModels.Management.Tabs.SettingsTabViewModel>();
