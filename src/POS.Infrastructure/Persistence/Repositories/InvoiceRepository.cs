@@ -12,13 +12,20 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
             .AnyAsync(i => i.OrderId == orderId, cancellationToken);
     }
 
-    public async Task<int> GetNextSequenceAsync(Guid storeId, DateTime date, CancellationToken cancellationToken = default)
+    public async Task<long> GetNextSequenceAsync(Guid storeId, DateOnly date, CancellationToken cancellationToken = default)
     {
-        var dateStart = date.Date;
-        var dateEnd = dateStart.AddDays(1);
-        return await dbContext.Invoices
-            .Where(i => i.Order.StoreId == storeId && i.IssuedAt >= dateStart && i.IssuedAt < dateEnd)
-            .CountAsync(cancellationToken) + 1;
+        // The UPSERT locks this store/day row until the UnitOfWork commits.
+        // Serializable conflicts must replay the whole checkout decision.
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO invoice_sequences (store_id, invoice_date, last_value)
+            VALUES ({storeId}, {date}, 1)
+            ON CONFLICT (store_id, invoice_date)
+            DO UPDATE SET last_value = invoice_sequences.last_value + 1
+            """, cancellationToken);
+        return await dbContext.InvoiceSequences.AsNoTracking()
+            .Where(s => s.StoreId == storeId && s.InvoiceDate == date)
+            .Select(s => s.LastValue)
+            .SingleAsync(cancellationToken);
     }
 
     public async Task AddAsync(Invoice invoice, CancellationToken cancellationToken = default)

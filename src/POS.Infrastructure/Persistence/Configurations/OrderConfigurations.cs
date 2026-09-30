@@ -91,7 +91,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
     {
         builder.ToTable("invoices");
         builder.ConfigureUuidPrimaryKey();
-        builder.Property(i => i.InvoiceNo).IsRequired().HasMaxLength(30);
+        builder.Property(i => i.InvoiceNo).IsRequired().HasMaxLength(64);
         builder.Property(i => i.BuyerName).HasMaxLength(200);
         builder.Property(i => i.BuyerTaxCode).HasMaxLength(20);
         builder.Property(i => i.BuyerAddress).HasMaxLength(500);
@@ -102,5 +102,17 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.HasIndex(i => i.OrderId).IsUnique();
         builder.HasIndex(i => i.InvoiceNo).IsUnique();
         builder.HasOne(i => i.Order).WithOne().HasForeignKey<Invoice>(i => i.OrderId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class InvoiceSequenceConfiguration : IEntityTypeConfiguration<InvoiceSequence>
+{
+    public void Configure(EntityTypeBuilder<InvoiceSequence> builder)
+    {
+        builder.ToTable("invoice_sequences");
+        builder.HasKey(s => new { s.StoreId, s.InvoiceDate });
+        builder.Property(s => s.InvoiceDate).HasColumnType("date");
+        builder.HasOne<POS.Domain.Stores.Store>().WithMany().HasForeignKey(s => s.StoreId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

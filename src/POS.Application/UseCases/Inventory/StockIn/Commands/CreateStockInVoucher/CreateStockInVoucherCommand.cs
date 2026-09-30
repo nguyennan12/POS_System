@@ -12,6 +12,6 @@ public record CreateStockInVoucherCommand(
     string? Note = null
 ) : ICommand<StockInVoucherDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:stockin:create";
+    public string RequiredPermission => "inventory:create";
 }
 

@@ -7,5 +7,5 @@ namespace POS.Application.UseCases.Inventory.StockIn.Commands.CompleteStockInVou
 public record CompleteStockInVoucherCommand(Guid VoucherId)
     : ICommand<StockInVoucherDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:stockin:complete";
+    public string RequiredPermission => "inventory:update";
 }

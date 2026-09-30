@@ -22,6 +22,8 @@ public class Store : BaseEntity
         Guid? id = null)
         : base(id)
     {
+        // Existing stores have no short code convention; use their stable UUID representation.
+        Code = Id.ToString("N").ToUpperInvariant();
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Address = address;
         Phone = phone;
@@ -36,6 +38,7 @@ public class Store : BaseEntity
     }
 
     public string Name { get; private set; } = default!;
+    public string Code { get; private set; } = default!;
     public void UpdateInfo(string name, string? address, string? phone, string timezone,
         string currencyCode, string? taxCode, string? receiptHeader, string? receiptFooter)
     {

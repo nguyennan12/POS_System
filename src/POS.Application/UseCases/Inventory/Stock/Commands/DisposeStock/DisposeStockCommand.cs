@@ -10,5 +10,5 @@ public record DisposeStockCommand(
     string Note
 ) : ICommand<StockTransactionDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:stock:dispose";
+    public string RequiredPermission => "inventory:update";
 }
