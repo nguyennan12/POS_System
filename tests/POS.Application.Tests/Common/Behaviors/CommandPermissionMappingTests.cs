@@ -26,6 +26,7 @@ public sealed class CommandPermissionMappingTests
             ["ResetPinCommand"] = "employees:update",
             ["CreateStockInVoucherCommand"] = "inventory:create",
             ["CompleteStockInVoucherCommand"] = "inventory:update",
+            ["CancelStockInVoucherCommand"] = "inventory:delete",
             ["DisposeStockCommand"] = "inventory:update",
             ["CreateOrderCommand"] = "orders:create",
             ["AddOrderItemCommand"] = "orders:update",
