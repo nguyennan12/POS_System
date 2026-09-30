@@ -17,6 +17,17 @@ public sealed class SessionService
     public string? ShiftName { get; private set; }
     public bool IsLoggedIn => !string.IsNullOrEmpty(AccessToken);
 
+    public bool IsManager => string.Equals(Role, "StoreManager", StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(Role, "Owner", StringComparison.OrdinalIgnoreCase)
+                          || string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsOwner => string.Equals(Role, "Owner", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(Role, "Admin", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsCashier => string.Equals(Role, "Cashier", StringComparison.OrdinalIgnoreCase);
+
+    public event Action<string, string?>? StoreChanged;
+
     public void SetSession(string accessToken, string refreshToken,
         string employeeId, string employeeName, string role, string storeId, string? storeName = null)
     {
@@ -39,6 +50,7 @@ public sealed class SessionService
         {
             StoreName = storeName;
         }
+        StoreChanged?.Invoke(storeId, storeName);
     }
 
     public void SetShift(string shiftId, string? shiftName = null)

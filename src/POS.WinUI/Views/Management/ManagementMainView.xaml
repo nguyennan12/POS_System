@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:components="clr-namespace:POS.WinUI.Views.Management.Components"
+             xmlns:sharedComp="clr-namespace:POS.WinUI.Views.Shared.Components"
              xmlns:tabs="clr-namespace:POS.WinUI.Views.Management.Tabs"
              xmlns:dashboard="clr-namespace:POS.WinUI.Views.Dashboard"
              xmlns:dashVm="clr-namespace:POS.WinUI.ViewModels.Dashboard"
@@ -42,7 +43,7 @@
         </Grid.RowDefinitions>
 
         <!-- ════════════════════ 1. TOP HEADER ════════════════════ -->
-        <components:ManagementHeaderBar Grid.Row="0"/>
+        <sharedComp:AppHeaderBar Grid.Row="0" IsPosMode="False" ShowSidebarToggle="True"/>
 
         <!-- ════════════════════ 2. MAIN BODY ═════════════════════ -->
         <Grid Grid.Row="1">
@@ -101,6 +102,6 @@
         </Grid>
 
         <!-- ════════════════════ 3. BOTTOM FOOTER ════════════════════ -->
-        <components:ManagementFooterBar Grid.Row="2"/>
+        <sharedComp:AppFooterBar Grid.Row="2" IsPosMode="False"/>
     </Grid>
 </UserControl>

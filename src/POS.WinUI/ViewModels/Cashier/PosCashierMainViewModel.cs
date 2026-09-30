@@ -1,24 +1,18 @@
-using System.Collections.ObjectModel;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.ApiClients;
 using POS.WinUI.Services;
-using POS.WinUI.ViewModels.Dashboard;
-using POS.WinUI.ViewModels.Management.Tabs;
 using POS.WinUI.Views.Auth;
-using POS.WinUI.Views.Cashier;
-using Wpf.Ui.Controls;
+using POS.WinUI.Views.Management;
 
-namespace POS.WinUI.ViewModels.Management;
+namespace POS.WinUI.ViewModels.Cashier;
 
 /// <summary>
-/// ViewModel chính cho khung layout quản lý (StoreManager / Owner)
+/// ViewModel chính cho Màn hình Bán hàng / Quầy thu ngân (Cashier POS)
 /// </summary>
-public partial class ManagementMainViewModel : ObservableObject
+public partial class PosCashierMainViewModel : ObservableObject
 {
-    private readonly IServiceProvider _serviceProvider;
     private readonly SessionService _sessionService;
     private readonly NetworkStatusService _networkStatusService;
     private readonly INavigationService _navigationService;
@@ -26,11 +20,6 @@ public partial class ManagementMainViewModel : ObservableObject
     private readonly StoreApiClient _storeApiClient;
     private readonly AuthApiClient _authApiClient;
     private readonly DispatcherTimer _clockTimer;
-
-    private readonly Dictionary<string, object> _tabViewModelCache = new();
-
-    [ObservableProperty]
-    private object? _currentTabViewModel;
 
     [ObservableProperty]
     private string _storeName = "Chi nhánh Chưa chọn";
@@ -44,25 +33,25 @@ public partial class ManagementMainViewModel : ObservableObject
     [ObservableProperty]
     private POS.WinUI.Models.StoreItem? _selectedStore;
 
-    public ObservableCollection<POS.WinUI.Models.StoreItem> Stores { get; } = new();
+    public System.Collections.ObjectModel.ObservableCollection<POS.WinUI.Models.StoreItem> Stores { get; } = new();
 
     [ObservableProperty]
     private string _shiftName = "Đang kiểm tra ca...";
 
     [ObservableProperty]
-    private string _employeeName = "Nhân viên";
+    private string _employeeName = "Thu ngân";
 
     [ObservableProperty]
-    private string _roleName = "Quản lý cửa hàng";
+    private string _roleName = "Thu ngân";
 
     [ObservableProperty]
-    private string _avatarInitials = "NA";
+    private string _avatarInitials = "TN";
 
     [ObservableProperty]
     private string _currentLanguage = "VI";
 
     [ObservableProperty]
-    private int _unreadNotificationCount = 3;
+    private int _unreadNotificationCount = 0;
 
     [ObservableProperty]
     private bool _isConnected = true;
@@ -77,30 +66,9 @@ public partial class ManagementMainViewModel : ObservableObject
     private string _appVersion = "OraPOS v1.0.0";
 
     [ObservableProperty]
-    private bool _isManagerRole = true;
+    private bool _isManagerRole = false;
 
-    [ObservableProperty]
-    private NavigationItemViewModel? _selectedTab;
-
-    [ObservableProperty]
-    private string _activeTabTitle = "Tổng quan";
-
-    [ObservableProperty]
-    private SymbolRegular _activeTabIcon = SymbolRegular.Grid24;
-
-    [ObservableProperty]
-    private string _activeTabBadgeText = "Đang ở: Tổng quan";
-
-    [ObservableProperty]
-    private bool _isSidebarExpanded = true;
-
-    [ObservableProperty]
-    private bool _isLoadingShift = false;
-
-    public ObservableCollection<NavigationItemViewModel> NavTabs { get; } = new();
-
-    public ManagementMainViewModel(
-        IServiceProvider serviceProvider,
+    public PosCashierMainViewModel(
         SessionService sessionService,
         NetworkStatusService networkStatusService,
         INavigationService navigationService,
@@ -108,7 +76,6 @@ public partial class ManagementMainViewModel : ObservableObject
         StoreApiClient storeApiClient,
         AuthApiClient authApiClient)
     {
-        _serviceProvider = serviceProvider;
         _sessionService = sessionService;
         _networkStatusService = networkStatusService;
         _navigationService = navigationService;
@@ -117,7 +84,6 @@ public partial class ManagementMainViewModel : ObservableObject
         _authApiClient = authApiClient;
 
         LoadUserInfo();
-        InitializeNavigationTabs();
         _ = LoadCurrentShiftAsync();
 
         if (IsOwnerRole)
@@ -125,7 +91,7 @@ public partial class ManagementMainViewModel : ObservableObject
             _ = LoadStoresAsync();
         }
 
-        // Đồng bộ trạng thái mạng
+        // Đồng bộ mạng
         _isConnected = _networkStatusService.IsOnline;
         _statusText = _networkStatusService.StatusText;
         _networkStatusService.StatusChanged += (isOnline) =>
@@ -143,10 +109,7 @@ public partial class ManagementMainViewModel : ObservableObject
         };
 
         // Đồng hồ thời gian thực
-        _clockTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1)
-        };
+        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => CurrentTime = DateTime.Now.ToString("HH:mm:ss");
         _clockTimer.Start();
     }
@@ -172,12 +135,6 @@ public partial class ManagementMainViewModel : ObservableObject
 
         IsManagerRole = _sessionService.IsManager;
         IsOwnerRole = _sessionService.IsOwner;
-        if (!_sessionService.IsManager && _sessionService.IsCashier)
-        {
-            _clockTimer.Stop();
-            _navigationService.NavigateTo<PosCashierMainView>();
-            return;
-        }
 
         if (!string.IsNullOrWhiteSpace(_sessionService.StoreName))
         {
@@ -222,7 +179,7 @@ public partial class ManagementMainViewModel : ObservableObject
         }
         catch
         {
-            // Ignore — network handler covers errors
+            // Ignore
         }
         finally
         {
@@ -241,14 +198,6 @@ public partial class ManagementMainViewModel : ObservableObject
 
         _sessionService.SetStore(value.Id.ToString(), value.Name);
         StoreName = value.Name;
-
-        // Xóa cache các tab để nạp lại dữ liệu cho chi nhánh mới
-        _tabViewModelCache.Clear();
-        if (SelectedTab != null)
-        {
-            SelectTab(SelectedTab);
-        }
-
         _ = LoadCurrentShiftAsync();
     }
 
@@ -261,84 +210,6 @@ public partial class ManagementMainViewModel : ObservableObject
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    private void InitializeNavigationTabs()
-    {
-        NavTabs.Clear();
-
-        var tabs = new List<NavigationItemViewModel>
-        {
-            new() { Id = "Dashboard", Title = "Tổng quan", Icon = SymbolRegular.Grid24 },
-            new() { Id = "Orders", Title = "Đơn hàng & Hóa đơn", Icon = SymbolRegular.Receipt24 },
-            new() { Id = "Products", Title = "Sản phẩm & Danh mục", Icon = SymbolRegular.Box24 },
-            new() { Id = "Inventory", Title = "Quản lý Kho & Nhập hàng", Icon = SymbolRegular.Archive24 },
-            new() { Id = "Customers", Title = "Khách hàng & Hội viên", Icon = SymbolRegular.People24 },
-            new() { Id = "Employees", Title = "Nhân viên & Phân quyền", Icon = SymbolRegular.PersonAccounts24 },
-            new() { Id = "Reports", Title = "Báo cáo & Thống kê", Icon = SymbolRegular.DataPie24 },
-            new() { Id = "Settings", Title = "Cài đặt hệ thống", Icon = SymbolRegular.Settings24 }
-        };
-
-        foreach (var tab in tabs)
-        {
-            NavTabs.Add(tab);
-        }
-
-        // Mặc định chọn tab Tổng quan
-        SelectTab(NavTabs[0]);
-    }
-
-    [RelayCommand]
-    private void SelectTab(NavigationItemViewModel? tab)
-    {
-        if (tab == null) return;
-
-        foreach (var item in NavTabs)
-        {
-            item.IsSelected = (item.Id == tab.Id);
-        }
-
-        SelectedTab = tab;
-        ActiveTabTitle = tab.Title;
-        ActiveTabIcon = tab.Icon;
-        ActiveTabBadgeText = $"Đang ở: {tab.Title}";
-
-        // ── Dynamic Sub-ViewModel Switch with Cache ──
-        if (!_tabViewModelCache.TryGetValue(tab.Id, out var subVm))
-        {
-            subVm = tab.Id switch
-            {
-                "Dashboard" => _serviceProvider.GetRequiredService<DashboardViewModel>(),
-                "Orders"    => _serviceProvider.GetRequiredService<OrdersTabViewModel>(),
-                "Products"  => _serviceProvider.GetRequiredService<ProductsTabViewModel>(),
-                "Inventory" => _serviceProvider.GetRequiredService<InventoryTabViewModel>(),
-                "Customers" => _serviceProvider.GetRequiredService<CustomersTabViewModel>(),
-                "Employees" => _serviceProvider.GetRequiredService<EmployeesTabViewModel>(),
-                "Reports"   => _serviceProvider.GetRequiredService<ReportsTabViewModel>(),
-                "Settings"  => _serviceProvider.GetRequiredService<SettingsTabViewModel>(),
-                _ => null
-            };
-
-            if (subVm != null)
-            {
-                _tabViewModelCache[tab.Id] = subVm;
-            }
-        }
-
-        CurrentTabViewModel = subVm;
-    }
-
-    [RelayCommand]
-    private void ToggleSidebar()
-    {
-        IsSidebarExpanded = !IsSidebarExpanded;
-    }
-
-    [RelayCommand]
-    private void OpenPosCashier()
-    {
-        _clockTimer.Stop();
-        _navigationService.NavigateTo<PosCashierMainView>();
-    }
-
     [RelayCommand]
     public async Task LoadCurrentShiftAsync()
     {
@@ -348,14 +219,12 @@ public partial class ManagementMainViewModel : ObservableObject
             return;
         }
 
-        IsLoadingShift = true;
         try
         {
             var res = await _shiftApiClient.GetCurrentShiftAsync(storeId);
             if (res?.Success == true && res.Data != null)
             {
                 var shift = res.Data;
-                _sessionService.SetShift(shift.ShiftId.ToString(), "Ca đang mở");
                 var localTime = shift.OpenedAt.ToLocalTime();
                 ShiftName = $"Ca mở lúc {localTime:HH:mm} (Tiền đầu ca: {shift.OpeningCash:N0}đ)";
             }
@@ -368,9 +237,16 @@ public partial class ManagementMainViewModel : ObservableObject
         {
             ShiftName = "Chưa mở ca";
         }
-        finally
+    }
+
+    [RelayCommand]
+    private void OpenManagement()
+    {
+        // Chỉ cho phép nếu user là StoreManager hoặc Owner
+        if (_sessionService.IsManager)
         {
-            IsLoadingShift = false;
+            _clockTimer.Stop();
+            _navigationService.NavigateTo<ManagementMainView>();
         }
     }
 

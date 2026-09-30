@@ -1,68 +1,59 @@
-<UserControl x:Class="POS.WinUI.Views.Management.Components.ManagementFooterBar"
+<UserControl x:Class="POS.WinUI.Views.Shared.Components.AppFooterBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             x:Name="RootFooter"
              Height="36">
 
     <Border Background="{StaticResource CardBackgroundBrush}"
             BorderBrush="{StaticResource InputBorderBrush}"
             BorderThickness="0,1,0,0"
             Padding="20,0">
-        <Grid>
-            <!-- ── Left: Trạng thái kết nối Server ───────────────── -->
+        <Grid VerticalAlignment="Center">
+            <!-- ── Left: Trạng thái kết nối Server (Real-time) ────── -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
-                <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                
+                <!-- Chấm trạng thái kết nối -->
+                <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
                     <Ellipse.Style>
                         <Style TargetType="Ellipse">
                             <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect BlurRadius="6" Color="#34D399" Opacity="0.8" ShadowDepth="0"/>
-                                </Setter.Value>
-                            </Setter>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsConnected}" Value="False">
                                     <Setter Property="Fill" Value="{StaticResource DangerBrush}"/>
-                                    <Setter Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect BlurRadius="6" Color="#EF4444" Opacity="0.8" ShadowDepth="0"/>
-                                        </Setter.Value>
-                                    </Setter>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </Ellipse.Style>
                 </Ellipse>
 
+                <!-- Text thông báo kết nối -->
                 <TextBlock Text="{Binding StatusText}" 
                            FontSize="12" 
                            Foreground="{StaticResource TextSecondaryBrush}" 
-                           Margin="8,0,0,0" 
                            VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- ── Center: Phím tắt nhanh ────────────────────────── -->
-            <TextBlock HorizontalAlignment="Center" 
-                       VerticalAlignment="Center"
-                       Text="[F1] Mở bán hàng   •   [F5] Tải lại   •   [F11] Toàn màn hình" 
-                       FontSize="11.5" 
-                       Foreground="{StaticResource TextMutedBrush}"/>
-
-            <!-- ── Right: Đồng hồ thực & Phiên bản ───────────────── -->
+            <!-- ── Right: Đồng hồ thực tế & Phiên bản ứng dụng ──────── -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <!-- Icon đồng hồ & Thời gian -->
                 <ui:SymbolIcon Symbol="Clock24" 
                                FontSize="13" 
                                Foreground="{StaticResource TextMutedBrush}" 
-                               Margin="0,0,5,0" 
+                               Margin="0,0,6,0" 
                                VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding CurrentTime}" 
                            FontSize="12" 
-                           FontWeight="Medium"
-                           Foreground="{StaticResource TextSecondaryBrush}" 
-                           Margin="0,0,16,0" 
-                           VerticalAlignment="Center"/>
+                           FontWeight="Medium" 
+                           Foreground="{StaticResource TextPrimaryBrush}" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,16,0"/>
+
+                <TextBlock Text="|" FontSize="11" Foreground="{StaticResource InputBorderBrush}" Margin="0,0,16,0" VerticalAlignment="Center"/>
+
+                <!-- Phiên bản App -->
                 <TextBlock Text="{Binding AppVersion}" 
-                           FontSize="12" 
+                           FontSize="11.5" 
                            Foreground="{StaticResource TextMutedBrush}" 
                            VerticalAlignment="Center"/>
             </StackPanel>

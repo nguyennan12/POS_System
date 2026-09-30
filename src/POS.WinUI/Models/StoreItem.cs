@@ -5,5 +5,5 @@ public class StoreItem
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public string DisplayText => $"Chi nhánh: {Name}";
+    public string DisplayText => Name;
 }

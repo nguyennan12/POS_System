@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using POS.WinUI.ApiClients;
 using POS.WinUI.Models;
 using POS.WinUI.Services;
+using POS.WinUI.Views.Cashier;
 using POS.WinUI.Views.Management;
 
 namespace POS.WinUI.ViewModels.Auth;
@@ -236,7 +237,15 @@ public partial class LoginViewModel : ObservableObject
 
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
                 await Task.Delay(400);
-                _navigationService.NavigateTo<ManagementMainView>();
+
+                if (_sessionService.IsCashier)
+                {
+                    _navigationService.NavigateTo<PosCashierMainView>();
+                }
+                else
+                {
+                    _navigationService.NavigateTo<ManagementMainView>();
+                }
             }
             else
             {
@@ -292,7 +301,15 @@ public partial class LoginViewModel : ObservableObject
 
                 _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
                 await Task.Delay(400);
-                _navigationService.NavigateTo<ManagementMainView>();
+
+                if (_sessionService.IsCashier)
+                {
+                    _navigationService.NavigateTo<PosCashierMainView>();
+                }
+                else
+                {
+                    _navigationService.NavigateTo<ManagementMainView>();
+                }
             }
             else
             {

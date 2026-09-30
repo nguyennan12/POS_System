@@ -171,7 +171,7 @@
                                                    VerticalAlignment="Center"/>
                                     <ComboBox ItemsSource="{Binding Stores}"
                                               SelectedItem="{Binding SelectedStore}"
-                                              DisplayMemberPath="DisplayText"
+                                              DisplayMemberPath="Name"
                                               Background="Transparent" BorderThickness="0"
                                               FontSize="13" FontWeight="SemiBold"
                                               Foreground="{StaticResource TextSecondaryBrush}"

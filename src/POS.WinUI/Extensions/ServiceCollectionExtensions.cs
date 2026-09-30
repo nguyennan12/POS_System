@@ -35,6 +35,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<ManagementMainViewModel>();
+        services.AddTransient<POS.WinUI.ViewModels.Cashier.PosCashierMainViewModel>();
 
         // ── Management Tab / Feature ViewModels ───────────────────
         services.AddTransient<POS.WinUI.ViewModels.Dashboard.DashboardViewModel>();
@@ -50,6 +51,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MainWindow>();
         services.AddTransient<LoginView>();
         services.AddTransient<ManagementMainView>();
+        services.AddTransient<POS.WinUI.Views.Cashier.PosCashierMainView>();
 
         return services;
     }
