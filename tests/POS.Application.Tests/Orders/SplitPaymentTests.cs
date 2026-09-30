@@ -1,6 +1,9 @@
 using FluentAssertions;
 using NSubstitute;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Persistence;
+using POS.Application.Common.Behaviors;
 using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
@@ -13,6 +16,52 @@ namespace POS.Application.Tests.Orders;
 
 public partial class CheckoutAndCancelOrderTests
 {
+    [Fact]
+    public void Checkout_ShouldRequireSeededOrderUpdatePermission()
+    {
+        var command = new CheckoutOrderCommand(_orderId, [new("Cash", 100)]);
+
+        var permissionRequest = Assert.IsAssignableFrom<IRequirePermission>(command);
+        permissionRequest.RequiredPermission.Should().Be("orders:update");
+    }
+
+    [Theory]
+    [InlineData(false, false, ErrorType.Unauthorized)]
+    [InlineData(true, false, ErrorType.Forbidden)]
+    [InlineData(true, true, ErrorType.None)]
+    public async Task Checkout_Authorization_ShouldGateHandler(
+        bool authenticated, bool hasPermission, ErrorType expectedError)
+    {
+        var user = Substitute.For<ICurrentUser>();
+        user.IsAuthenticated.Returns(authenticated);
+        user.EmployeeId.Returns(_employeeId);
+
+        var cache = Substitute.For<ICacheService>();
+        cache.GetAsync<string[]>($"perm:{_employeeId}", Arg.Any<CancellationToken>())
+            .Returns(hasPermission ? ["orders:update"] : ["orders:read"]);
+
+        var services = Substitute.For<IServiceProvider>();
+        services.GetService(typeof(ICacheService)).Returns(cache);
+        services.GetService(typeof(IEmployeeRepository)).Returns(_employeeRepository);
+        services.GetService(typeof(IPermissionRepository)).Returns(Substitute.For<IPermissionRepository>());
+
+        var called = false;
+        var command = new CheckoutOrderCommand(_orderId, [new("Cash", 100)]);
+        var behavior = new AuthorizationBehavior<CheckoutOrderCommand, Result<CheckoutDto>>(user, services);
+
+        var result = await behavior.Handle(command, () =>
+        {
+            called = true;
+            return Task.FromResult(Result<CheckoutDto>.Success(default!));
+        }, default);
+
+        called.Should().Be(hasPermission && authenticated);
+        if (hasPermission && authenticated)
+            result.IsSuccess.Should().BeTrue();
+        else
+            result.Error.Type.Should().Be(expectedError);
+    }
+
     private Order SetUpPaymentOrder(decimal due = 500_000)
     {
         var order = CreateDraftOrderWithItems(due);
