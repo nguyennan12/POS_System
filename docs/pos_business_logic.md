@@ -79,7 +79,7 @@
 
 ### 2.7 Quan hệ dữ liệu
 
-- `EmployeeStoreAccess` xác định nhân viên được thao tác ở cửa hàng nào.
+- `Employees.store_id` xác định chi nhánh nhân viên làm việc; nếu `is_chain_owner = true`, chủ chuỗi có quyền truy cập toàn bộ các chi nhánh.
 - `RolePermissions` xác định quyền của role.
 - Audit log phải tham chiếu được người thực hiện, cửa hàng liên quan và đối tượng bị tác động nếu có.
 

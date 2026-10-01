@@ -9,7 +9,6 @@ namespace POS.Application.UseCases.Rbac.Queries.GetRoles;
 
 public class GetRolesQueryHandler(
     IRoleRepository roleRepository,
-    IEmployeeStoreAccessRepository accessRepository,
     ICurrentUser currentUser
 ) : IQueryHandler<GetRolesQuery, IReadOnlyList<RoleDto>>
 {
@@ -21,10 +20,7 @@ public class GetRolesQueryHandler(
         {
             if (request.StoreId.HasValue)
             {
-                var canAccess = currentUser.StoreId == request.StoreId.Value ||
-                    (currentUser.EmployeeId.HasValue &&
-                     await accessRepository.ExistsAsync(currentUser.EmployeeId.Value, request.StoreId.Value, cancellationToken));
-
+                var canAccess = currentUser.StoreId == request.StoreId.Value;
                 if (!canAccess)
                 {
                     return RoleErrors.Forbidden;

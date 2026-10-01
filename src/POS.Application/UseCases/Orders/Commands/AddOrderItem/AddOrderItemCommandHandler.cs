@@ -17,7 +17,6 @@ public class AddOrderItemCommandHandler(
     ISkuRepository skuRepository,
     IShiftRepository shiftRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     IVoucherRepository voucherRepository,
     ICartCalculationService cartCalculationService,
     IUnitOfWork unitOfWork,
@@ -44,9 +43,7 @@ public class AddOrderItemCommandHandler(
         // Kiểm tra quyền cửa hàng của nhân viên
         if (!employee.IsChainOwner && employee.StoreId != order.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(employee.Id, order.StoreId, cancellationToken);
-            if (!hasAccess)
-                return OrderErrors.InvalidStore;
+            return OrderErrors.InvalidStore;
         }
 
         var shift = await shiftRepository.GetByIdAsync(order.ShiftId, cancellationToken);

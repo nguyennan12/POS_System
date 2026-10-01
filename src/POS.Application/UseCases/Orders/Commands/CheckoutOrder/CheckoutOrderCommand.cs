@@ -12,7 +12,8 @@ public record PaymentSplitInputDto(
 
 public record CheckoutOrderCommand(
     Guid OrderId,
-    IReadOnlyList<PaymentSplitInputDto> Payments
+    IReadOnlyList<PaymentSplitInputDto> Payments,
+    Guid? CustomerId = null
 ) : ICommand<CheckoutDto>, IRequirePermission
 {
     public string RequiredPermission => "orders:update";

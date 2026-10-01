@@ -16,11 +16,13 @@ public class StockEntryConfiguration : IEntityTypeConfiguration<StockEntry>
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.QtyOnHand).HasQuantityPrecision();
     builder.Property(s => s.MinStock).HasQuantityPrecision();
+    builder.Property(s => s.AverageCost).HasMoneyPrecision().HasDefaultValue(0m);
     builder.Property(s => s.LastUpdated).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasIndex(s => new { s.StoreId, s.SkuId }).IsUnique();
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.Sku).WithMany().HasForeignKey(s => s.SkuId).OnDelete(DeleteBehavior.Restrict);
     builder.HasTableCheckConstraint("ck_stock_entries_qty_on_hand", "qty_on_hand >= 0");
+    builder.HasTableCheckConstraint("ck_stock_entries_average_cost", "average_cost >= 0");
   }
 }
 
@@ -49,6 +51,7 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.Type).HasConversion<string>().IsRequired().HasMaxLength(20);
     builder.Property(s => s.Qty).HasQuantityPrecision();
+    builder.Property(s => s.UnitCost).HasMoneyPrecision();
     builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasIndex(s => new { s.SkuId, s.CreatedAt });
     builder.HasIndex(s => new { s.StoreId, s.CreatedAt });
@@ -102,7 +105,7 @@ public class StockInVoucherConfiguration : IEntityTypeConfiguration<StockInVouch
     builder.ToTable("stock_in_vouchers");
     builder.ConfigureUuidPrimaryKey();
     builder.Property(s => s.TotalAmount).HasMoneyPrecision();
-    builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(StockInVoucherStatus.Completed);
+    builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(StockInVoucherStatus.Draft);
     builder.Property(s => s.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
     builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
     builder.HasOne(s => s.Supplier).WithMany().HasForeignKey(s => s.SupplierId).OnDelete(DeleteBehavior.Restrict);
@@ -121,6 +124,7 @@ public class StockInVoucherItemConfiguration : IEntityTypeConfiguration<StockInV
     builder.Property(s => s.Qty).HasQuantityPrecision();
     builder.Property(s => s.UnitPrice).HasMoneyPrecision();
     builder.Property(s => s.TotalPrice).HasMoneyPrecision();
+    builder.Property(s => s.BatchNo).HasMaxLength(50);
     builder.HasOne(s => s.Voucher).WithMany(v => v.Items).HasForeignKey(s => s.VoucherId).OnDelete(DeleteBehavior.Cascade);
     builder.HasOne(s => s.Sku).WithMany().HasForeignKey(s => s.SkuId).OnDelete(DeleteBehavior.Restrict);
     builder.HasTableCheckConstraint("ck_stock_in_voucher_items_qty", "qty > 0");

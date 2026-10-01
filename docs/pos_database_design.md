@@ -14,7 +14,7 @@
   riêng từng cửa hàng) — dùng EF Core Global Query Filter để tự động lọc
   theo `store_id` ở tầng Infrastructure.
 - **Tách bạch 2 khái niệm độc lập, không gộp chung**:
-  - **Tenant Scope** (được thấy dữ liệu của cửa hàng nào) → `EmployeeStoreAccess`
+  - **Tenant Scope** (được thấy dữ liệu của cửa hàng nào) → Dựa vào `Employees.store_id` (nhân viên chi nhánh) hoặc `Employees.is_chain_owner = true` (Chủ chuỗi có quyền truy cập toàn bộ chi nhánh).
   - **Permission Scope** (được làm hành động gì) → `Roles`/`Permissions` (RBAC động, mục 4)
 - **Không hard-delete dữ liệu giao dịch** (Orders, Payments, StockTransactions,
   AuditLogs...) — chỉ soft-delete (`is_active`) cho dữ liệu chủ (Products,
@@ -38,7 +38,7 @@
 ## 2. Sơ đồ tổng quan các nhóm bảng
 
 ```
-CORE            : Stores, Employees, EmployeeStoreAccess, Shifts, RefreshTokens
+CORE            : Stores, Employees, Shifts, RefreshTokens
 RBAC            : Roles, Resources, Permissions, RolePermissions
 PRODUCT         : Categories, Products, SKUs, UnitConversions, PriceLists
 INVENTORY       : StockEntries, StockBatches, StockTransactions, Suppliers,
@@ -111,15 +111,6 @@ Employees
   UNIQUE (store_id, pin_lookup_hash)  -- PIN duy nhất trong 1 cửa hàng
   CHECK (store_id IS NOT NULL OR is_chain_owner = 1)
         -- chỉ Chain Owner mới được để store_id NULL
-
-EmployeeStoreAccess     -- Tenant Scope: Owner được xem/quản lý cửa hàng nào
-  id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
-  employee_id   UNIQUEIDENTIFIER NOT NULL REFERENCES Employees(id) ON DELETE CASCADE
-  store_id      UNIQUEIDENTIFIER NOT NULL REFERENCES Stores(id) ON DELETE CASCADE
-  granted_by    UNIQUEIDENTIFIER NULL REFERENCES Employees(id) ON DELETE NO ACTION
-  granted_at    DATETIMEOFFSET NOT NULL DEFAULT SYSUTCDATETIME()
-
-  UNIQUE (employee_id, store_id)
 
 RefreshTokens
   id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()

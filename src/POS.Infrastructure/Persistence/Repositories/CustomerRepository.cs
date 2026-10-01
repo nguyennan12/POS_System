@@ -6,6 +6,9 @@ namespace POS.Infrastructure.Persistence.Repositories;
 
 public class CustomerRepository(AppDbContext context) : ICustomerRepository
 {
+    public Task<LoyaltyAccount?> GetLoyaltyAccountAsync(Guid customerId, CancellationToken cancellationToken = default) =>
+        context.LoyaltyAccounts.SingleOrDefaultAsync(a => a.CustomerId == customerId, cancellationToken);
+
     public async Task<CustomerWithPoints?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var query = from c in context.Customers.Include(c => c.MemberTier)

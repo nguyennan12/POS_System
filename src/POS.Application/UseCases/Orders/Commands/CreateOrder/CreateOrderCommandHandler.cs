@@ -14,7 +14,6 @@ public class CreateOrderCommandHandler(
     IOrderRepository orderRepository,
     IShiftRepository shiftRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     ICustomerRepository customerRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser) : ICommandHandler<CreateOrderCommand, OrderDetailDto>
@@ -37,12 +36,10 @@ public class CreateOrderCommandHandler(
         if (shift.Status != ShiftStatus.Open)
             return OrderErrors.ShiftClosed;
 
-        // Kiểm tra quyền cửa hàng (ChainOwner, Cửa hàng chính, hoặc được cấp quyền đa chi nhánh)
+        // Kiểm tra quyền cửa hàng (ChainOwner hoặc cùng cửa hàng)
         if (!employee.IsChainOwner && employee.StoreId != shift.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(employee.Id, shift.StoreId, cancellationToken);
-            if (!hasAccess)
-                return OrderErrors.InvalidStore;
+            return OrderErrors.InvalidStore;
         }
 
         if (command.CustomerId.HasValue)

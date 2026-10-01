@@ -20,7 +20,6 @@ public partial class AppDbContext
 {
   public DbSet<Store> Stores => Set<Store>();
   public DbSet<Employee> Employees => Set<Employee>();
-  public DbSet<EmployeeStoreAccess> EmployeeStoreAccesses => Set<EmployeeStoreAccess>();
   public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
   public DbSet<Shift> Shifts => Set<Shift>();
 
@@ -63,6 +62,7 @@ public partial class AppDbContext
   public DbSet<OrderDiscount> OrderDiscounts => Set<OrderDiscount>();
   public DbSet<Payment> Payments => Set<Payment>();
   public DbSet<Invoice> Invoices => Set<Invoice>();
+  public DbSet<InvoiceSequence> InvoiceSequences => Set<InvoiceSequence>();
 
   public DbSet<SystemConfig> SystemConfigs => Set<SystemConfig>();
   public DbSet<Translation> Translations => Set<Translation>();

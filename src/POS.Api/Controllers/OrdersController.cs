@@ -81,7 +81,7 @@ public class OrdersController(ISender mediator) : ControllerBase
         new PaymentSplitInputDto(p.Method, p.Amount, p.TransactionRef)).ToList();
 
     var result = await mediator.Send(
-        new CheckoutOrderCommand(id, paymentInputs),
+        new CheckoutOrderCommand(id, paymentInputs, request.CustomerId),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);

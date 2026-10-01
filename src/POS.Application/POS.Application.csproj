@@ -12,5 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\POS.Domain\POS.Domain.csproj" />
+    <ProjectReference Include="..\POS.Contracts\POS.Contracts.csproj" />
   </ItemGroup>
 </Project>

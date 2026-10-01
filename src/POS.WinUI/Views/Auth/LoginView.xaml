@@ -13,7 +13,7 @@
     <!-- NỀN GRADIENT ẢNH TỔNG THỂ -->
     <Grid>
         <Grid.Background>
-            <ImageBrush ImageSource="/Assets/login_bg.jpg" Stretch="UniformToFill"/>
+            <ImageBrush ImageSource="/Resources/Assets/login_bg.jpg" Stretch="UniformToFill"/>
         </Grid.Background>
 
         <!-- Lớp phủ ánh sáng Glass overlay -->
@@ -55,7 +55,7 @@
                         </Ellipse>
 
                         <!-- Logo chính -->
-                        <Image Source="/Assets/logo.png" Width="52" Height="52"
+                        <Image Source="/Resources/Assets/logo.png" Width="52" Height="52"
                                RenderOptions.BitmapScalingMode="HighQuality"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
@@ -171,7 +171,7 @@
                                                    VerticalAlignment="Center"/>
                                     <ComboBox ItemsSource="{Binding Stores}"
                                               SelectedItem="{Binding SelectedStore}"
-                                              DisplayMemberPath="DisplayText"
+                                              DisplayMemberPath="Name"
                                               Background="Transparent" BorderThickness="0"
                                               FontSize="13" FontWeight="SemiBold"
                                               Foreground="{StaticResource TextSecondaryBrush}"

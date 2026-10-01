@@ -42,19 +42,22 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IEmployeeStoreAccessRepository, EmployeeStoreAccessRepository>();
         services.AddScoped<IShiftRepository, ShiftRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IMigrationService, MigrationService>();
 
         services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<ISkuRepository, SkuRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IStockEntryRepository, StockEntryRepository>();
         services.AddScoped<IStockTransactionRepository, StockTransactionRepository>();
+        services.AddScoped<IStockBatchRepository, StockBatchRepository>();
+        services.AddScoped<IStockInVoucherRepository, StockInVoucherRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
+
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();

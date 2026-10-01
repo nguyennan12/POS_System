@@ -122,7 +122,7 @@ internal sealed class EmployeeApiFactory : WebApplicationFactory<AuthController>
     internal async Task<AuthResponse> LoginAsync(HttpClient client, string person)
     {
         client.DefaultRequestHeaders.Authorization = null;
-        using var response = await client.PostAsJsonAsync("/api/v1/auth/employee/login", new LoginRequest(person, Password));
+        using var response = await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(person, Password));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var auth = (await response.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>())!.Data!;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth.AccessToken);

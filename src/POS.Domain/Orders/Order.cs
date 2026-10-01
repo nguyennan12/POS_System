@@ -199,46 +199,61 @@ public class Order : BaseEntity
         if (!Items.Any())
             throw new InvalidOperationException("Giỏ hàng đang trống.");
 
+        // Stage the whole batch before changing the aggregate.
+        var staged = new List<Payment>();
+        var remaining = GrandTotal - GetPaymentTotals().TotalApplied;
+        if (remaining < 0)
+            throw new InvalidOperationException("Tổng thanh toán vượt quá tổng đơn.");
+        var references = Payments.Where(p => p.TransactionRef != null)
+            .Select(p => (p.Method, p.TransactionRef)).ToHashSet();
+
         foreach (var (method, amount, transactionRef) in newPayments)
         {
-            if (amount <= 0)
+            if (amount <= 0 || amount != Math.Round(amount, 2) || amount > 9999999999999999.99m)
                 throw new ArgumentOutOfRangeException(nameof(newPayments), "Số tiền thanh toán phải lớn hơn 0.");
+            if (!Enum.IsDefined(method))
+                throw new ArgumentException("Phương thức thanh toán không hợp lệ.", nameof(newPayments));
+            if (transactionRef != null && !references.Add((method, transactionRef)))
+                throw new InvalidOperationException("Mã giao dịch đã được sử dụng.");
+            if (method != PaymentMethod.Cash && amount > remaining)
+                throw new InvalidOperationException("Thanh toán không dùng tiền mặt vượt số tiền còn lại.");
+
+            var change = method == PaymentMethod.Cash ? Math.Max(0, amount - remaining) : 0;
 
             var payment = Payment.CreateSuccess(
                 orderId: Id,
                 method: method,
                 amount: amount,
-                transactionRef: transactionRef);
+                transactionRef: transactionRef,
+                changeAmount: change > 0 ? change : null);
 
-            Payments.Add(payment);
+            staged.Add(payment);
+            remaining -= amount - change;
         }
 
-        decimal totalRaw = Payments
-            .Where(p => p.Status == PaymentStatus.Success)
-            .Sum(p => p.Amount);
+        foreach (var payment in staged)
+            Payments.Add(payment);
 
-        decimal changeAmount = totalRaw > GrandTotal
-            ? Math.Round(totalRaw - GrandTotal, 2)
-            : 0;
+        AggregatePaymentStatus();
+        var totals = GetPaymentTotals();
+        return (totals.TotalApplied, totals.ChangeAmount, Status);
+    }
 
-        // totalApplied = totalRaw - changeAmount (cash trả lại)
-        decimal totalApplied = Math.Round(totalRaw - changeAmount, 2);
+    public (decimal TotalApplied, decimal ChangeAmount) GetPaymentTotals()
+    {
+        var successful = Payments.Where(p => p.Status == PaymentStatus.Success).ToList();
+        var change = successful.Sum(p => p.ChangeAmount ?? 0);
+        return (successful.Sum(p => p.Amount) - change, change);
+    }
 
-        if (totalApplied == GrandTotal)
+    public void AggregatePaymentStatus()
+    {
+        // Pending, Failed and Timeout never contribute to settlement.
+        if (Status == OrderStatus.Confirmed && GetPaymentTotals().TotalApplied == GrandTotal)
         {
-            if (changeAmount > 0)
-            {
-                var lastCashPayment = Payments
-                    .Where(p => p.Method == PaymentMethod.Cash && p.Status == PaymentStatus.Success)
-                    .LastOrDefault();
-                lastCashPayment?.SetChangeAmount(changeAmount);
-            }
             Status = OrderStatus.Paid;
             PaidAt = DateTime.UtcNow;
         }
-        // Nếu chưa đủ: giữ Confirmed, không chuyển trạng thái
-
-        return (totalApplied, changeAmount, Status);
     }
 
     public void Cancel(string? reason = null)
@@ -247,6 +262,8 @@ public class Order : BaseEntity
             throw new InvalidOperationException("Không thể hủy đơn hàng đã thanh toán.");
         if (Status == OrderStatus.Cancelled)
             throw new InvalidOperationException("Đơn hàng đã bị hủy trước đó.");
+        if (Payments.Any(p => p.Status == PaymentStatus.Success))
+            throw new InvalidOperationException("Không thể hủy đơn hàng đã phát sinh thanh toán thành công.");
 
         Status = OrderStatus.Cancelled;
         CancelReason = reason;

@@ -30,8 +30,7 @@ public sealed class CreateEmployeeCommandHandler(IEmployeeRepository employees, 
         var username = command.Username.Trim();
         if (await employees.ExistsByUsernameAsync(username, cancellationToken)) return EmployeeErrors.UsernameExists;
         var lookup = pinLookupHasher.ComputeHash(command.Pin);
-        if (command.StoreId is Guid storeId &&
-            await employees.HasPinConflictAsync(Guid.Empty, storeId, lookup, cancellationToken))
+        if (await employees.HasPinConflictAsync(Guid.Empty, command.StoreId, lookup, cancellationToken))
             return EmployeeErrors.PinExists;
         var employee = new Employee(command.Name.Trim(), username, passwordHasher.Hash(command.Password),
             passwordHasher.Hash(command.Pin), role.Id, command.IsChainOwner, command.StoreId);

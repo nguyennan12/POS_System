@@ -21,9 +21,7 @@ public class StoreRepository : IStoreRepository
 
     public Task<List<Store>> GetAccessibleAsync(Guid employeeId, bool isChainOwner, Guid? storeId, CancellationToken cancellationToken = default) =>
         _context.Stores.AsNoTracking()
-            .Where(s => isChainOwner
-                ? _context.EmployeeStoreAccesses.Any(a => a.EmployeeId == employeeId && a.StoreId == s.Id)
-                : s.Id == storeId)
+            .Where(s => isChainOwner || s.Id == storeId)
             .OrderBy(s => s.Name).ThenBy(s => s.Id)
             .ToListAsync(cancellationToken);
 

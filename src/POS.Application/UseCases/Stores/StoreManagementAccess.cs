@@ -30,8 +30,6 @@ internal static class StoreManagementAccess
         role.Id == employee.RoleId && role.Name == roleName;
 
     internal static Task<bool> CanAccessAsync(
-        Employee owner, Guid storeId, IEmployeeStoreAccessRepository access, CancellationToken cancellationToken) =>
-        owner.IsChainOwner
-            ? access.ExistsAsync(owner.Id, storeId, cancellationToken)
-            : Task.FromResult(owner.StoreId == storeId);
+        Employee owner, Guid storeId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(owner.IsChainOwner || HasSystemRole(owner, RoleNames.Owner) || owner.StoreId == storeId);
 }

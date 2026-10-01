@@ -33,4 +33,29 @@ public static class AuthErrors
       ErrorType.Unauthorized,
       "AUTH.REFRESH_TOKEN_REVOKED",
       "Refresh token đã bị thu hồi.");
+
+  public static readonly Error InvalidCurrentPassword = new(
+      ErrorType.Unauthorized,
+      "AUTH.INVALID_CURRENT_PASSWORD",
+      "Mật khẩu hiện tại không chính xác.");
+
+  public static readonly Error InvalidCurrentPin = new(
+      ErrorType.Unauthorized,
+      "AUTH.INVALID_CURRENT_PIN",
+      "Mã PIN hiện tại không chính xác.");
+
+  public static readonly Error NewPasswordMustBeDifferent = new(
+      ErrorType.Validation,
+      "AUTH.PASSWORD_SAME_AS_OLD",
+      "Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+
+  public static readonly Error NewPinMustBeDifferent = new(
+      ErrorType.Validation,
+      "AUTH.PIN_SAME_AS_OLD",
+      "Mã PIN mới không được trùng với mã PIN hiện tại.");
+
+  public static readonly Error Unauthorized = new(
+      ErrorType.Unauthorized,
+      "AUTH.UNAUTHORIZED",
+      "Yêu cầu xác thực danh tính.");
 }

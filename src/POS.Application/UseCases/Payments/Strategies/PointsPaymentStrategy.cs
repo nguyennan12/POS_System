@@ -3,6 +3,7 @@ using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
 using POS.Application.UseCases.Orders.Errors;
 using POS.Domain.Common;
+using POS.Domain.Customers.Errors;
 using POS.Domain.Orders;
 using POS.Domain.Orders.Enums;
 
@@ -24,6 +25,9 @@ public class PointsPaymentStrategy(ICustomerRepository customerRepository) : IPa
         var loyalty = await customerRepository.GetByIdAsync(order.CustomerId.Value, cancellationToken);
         if (loyalty is null)
             return OrderErrors.CustomerNotFound;
+
+        if (!loyalty.Customer.IsActive)
+            return CustomerErrors.Inactive;
 
         if (loyalty.PointsBalance < payment.Amount)
             return OrderErrors.InsufficientPoints;

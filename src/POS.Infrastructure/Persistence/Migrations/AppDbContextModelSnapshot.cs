@@ -542,44 +542,6 @@ namespace POS.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("POS.Domain.Employees.EmployeeStoreAccess", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<Guid>("EmployeeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("employee_id");
-
-                    b.Property<DateTime>("GrantedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("granted_at")
-                        .HasDefaultValueSql("TIMEZONE('utc', now())");
-
-                    b.Property<Guid?>("GrantedBy")
-                        .HasColumnType("uuid")
-                        .HasColumnName("granted_by");
-
-                    b.Property<Guid>("StoreId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("store_id");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GrantedBy");
-
-                    b.HasIndex("StoreId");
-
-                    b.HasIndex("EmployeeId", "StoreId")
-                        .IsUnique();
-
-                    b.ToTable("employee_store_access", (string)null);
-                });
-
             modelBuilder.Entity("POS.Domain.Employees.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -753,6 +715,13 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<decimal>("AverageCost")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("average_cost");
+
                     b.Property<DateTime>("LastUpdated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -786,6 +755,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.ToTable("stock_entries", null, t =>
                         {
+                            t.HasCheckConstraint("ck_stock_entries_average_cost", "average_cost >= 0");
+
                             t.HasCheckConstraint("ck_stock_entries_qty_on_hand", "qty_on_hand >= 0");
                         });
                 });
@@ -839,6 +810,11 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("type");
 
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("unit_cost");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
@@ -884,7 +860,7 @@ namespace POS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasDefaultValue("Completed")
+                        .HasDefaultValue("Draft")
                         .HasColumnName("status");
 
                     b.Property<Guid>("StoreId")
@@ -923,6 +899,15 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("BatchNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("batch_no");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expiry_date");
 
                     b.Property<decimal>("Qty")
                         .HasPrecision(18, 3)
@@ -1211,8 +1196,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<string>("InvoiceNo")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("invoice_no");
 
                     b.Property<DateTime>("IssuedAt")
@@ -1244,6 +1229,25 @@ namespace POS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("invoices", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.Orders.InvoiceSequence", b =>
+                {
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.Property<DateOnly>("InvoiceDate")
+                        .HasColumnType("date")
+                        .HasColumnName("invoice_date");
+
+                    b.Property<long>("LastValue")
+                        .HasColumnType("bigint")
+                        .HasColumnName("last_value");
+
+                    b.HasKey("StoreId", "InvoiceDate");
+
+                    b.ToTable("invoice_sequences", (string)null);
                 });
 
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>
@@ -2261,6 +2265,12 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("address");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("code");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -2320,6 +2330,9 @@ namespace POS.Infrastructure.Migrations
                         .HasDefaultValueSql("TIMEZONE('utc', now())");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.ToTable("stores", (string)null);
                 });
@@ -2434,32 +2447,6 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Role");
-
-                    b.Navigation("Store");
-                });
-
-            modelBuilder.Entity("POS.Domain.Employees.EmployeeStoreAccess", b =>
-                {
-                    b.HasOne("POS.Domain.Employees.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("POS.Domain.Employees.Employee", "GrantedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("GrantedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("POS.Domain.Stores.Store", "Store")
-                        .WithMany()
-                        .HasForeignKey("StoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("GrantedByEmployee");
 
                     b.Navigation("Store");
                 });
@@ -2692,6 +2679,15 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("POS.Domain.Orders.InvoiceSequence", b =>
+                {
+                    b.HasOne("POS.Domain.Stores.Store", null)
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>

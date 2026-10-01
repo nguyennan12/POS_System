@@ -113,7 +113,6 @@ public class StoresControllerTests
     [InlineData(nameof(StoresController.Update), "PUT", "{id:guid}")]
     [InlineData(nameof(StoresController.UpdateStatus), "PUT", "{id:guid}/status")]
     [InlineData(nameof(StoresController.AssignAdmin), "POST", "{id:guid}/assign-admin")]
-    [InlineData(nameof(StoresController.GrantOwnerAccess), "POST", "{id:guid}/grant-owner-access")]
     public void Store_routes_keep_contract_paths_and_require_authentication(string action, string verb, string? path)
     {
         Assert.NotNull(typeof(StoresController).GetCustomAttribute<AuthorizeAttribute>());

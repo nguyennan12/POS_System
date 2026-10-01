@@ -27,7 +27,6 @@ public class OrderCartRecalculationTests
     private readonly ISkuRepository _skuRepository = Substitute.For<ISkuRepository>();
     private readonly IShiftRepository _shiftRepository = Substitute.For<IShiftRepository>();
     private readonly IEmployeeRepository _employeeRepository = Substitute.For<IEmployeeRepository>();
-    private readonly IEmployeeStoreAccessRepository _employeeStoreAccessRepository = Substitute.For<IEmployeeStoreAccessRepository>();
     private readonly ICustomerRepository _customerRepository = Substitute.For<ICustomerRepository>();
     private readonly IVoucherRepository _voucherRepository = Substitute.For<IVoucherRepository>();
     private readonly IPromotionRepository _promotionRepository = Substitute.For<IPromotionRepository>();
@@ -81,7 +80,6 @@ public class OrderCartRecalculationTests
             _orderRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _customerRepository,
             _unitOfWork,
             _currentUser);
@@ -135,7 +133,6 @@ public class OrderCartRecalculationTests
             _orderRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _customerRepository,
             _unitOfWork,
             _currentUser);
@@ -221,7 +218,6 @@ public class OrderCartRecalculationTests
             _skuRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _voucherRepository,
             _cartCalculationService,
             _unitOfWork,
@@ -300,7 +296,6 @@ public class OrderCartRecalculationTests
             _skuRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _voucherRepository,
             _cartCalculationService,
             _unitOfWork,
@@ -358,7 +353,6 @@ public class OrderCartRecalculationTests
             _orderRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _voucherRepository,
             _cartCalculationService,
             _unitOfWork,
@@ -446,7 +440,6 @@ public class OrderCartRecalculationTests
             _orderRepository,
             _shiftRepository,
             _employeeRepository,
-            _employeeStoreAccessRepository,
             _voucherRepository,
             _cartCalculationService,
             _unitOfWork,

@@ -11,7 +11,6 @@ using POS.Application.UseCases.Stores.Queries.GetAllStores;
 using POS.Application.UseCases.Stores.Commands.UpdateStore;
 using POS.Application.UseCases.Stores.Commands.UpdateStoreStatus;
 using POS.Application.UseCases.Stores.Commands.AssignAdminToStore;
-using POS.Application.UseCases.Stores.Commands.GrantOwnerAccess;
 
 namespace POS.Api.Controllers;
 
@@ -64,16 +63,6 @@ public class StoresController(ISender mediator) : ControllerBase
     var result = await mediator.Send(new AssignAdminToStoreCommand(id, request.EmployeeId), cancellationToken);
     if (result.IsFailure) return this.ToActionResult(result);
     return Ok(ApiResponse<StoreDetailResponse>.Ok(result.Value!.ToResponse()));
-  }
-
-  [HttpPost("{id:guid}/grant-owner-access")]
-  public async Task<ActionResult<ApiResponse<StoreDetailResponse>>> GrantOwnerAccess(
-      Guid id, [FromBody] StoreOwnerAccessRequest request, CancellationToken cancellationToken)
-  {
-    var result = await mediator.Send(new GrantOwnerAccessCommand(id, request.EmployeeId), cancellationToken);
-    if (result.IsFailure) return this.ToActionResult(result);
-    return Ok(ApiResponse<StoreDetailResponse>.Ok(result.Value!.ToResponse()));
-
   }
 
   [HttpGet("{id:guid}")]

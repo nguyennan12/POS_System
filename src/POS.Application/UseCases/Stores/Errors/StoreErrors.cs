@@ -63,14 +63,4 @@ public static class StoreErrors
         ErrorType.AlreadyExists,
         "STORE.EMPLOYEE_PIN_ALREADY_EXISTS",
         "EmployeePin đã tồn tại.");
-
-    public static readonly Error OwnerAccessRecipientInvalid = new(
-        ErrorType.Invalid,
-        "STORE.INVALID_OWNER_ACCESS_RECIPIENT",
-        "OwnerAccessRecipient không hợp lệ.");
-
-    public static readonly Error EmployeeStoreAccessAlreadyExists = new(
-        ErrorType.AlreadyExists,
-        "STORE.EMPLOYEE_ACCESS_ALREADY_EXISTS",
-        "EmployeeStoreAccess đã tồn tại.");
 }
