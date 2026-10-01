@@ -27,6 +27,7 @@ public interface ICustomerRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task AddAsync(Customer customer, LoyaltyAccount loyaltyAccount, CancellationToken cancellationToken = default);
+    Task AddLoyaltyAccountAsync(LoyaltyAccount loyaltyAccount, CancellationToken cancellationToken = default);
     /// <summary>
     /// Adds a point transaction to the unit of work for persistence when changes are saved.
     /// </summary>

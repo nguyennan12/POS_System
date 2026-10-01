@@ -35,7 +35,7 @@ public class AccruePointsCommandHandler(
         if (loyaltyAccount is null)
         {
             loyaltyAccount = new LoyaltyAccount(request.CustomerId, 0);
-            await customerRepository.AddAsync(customer, loyaltyAccount, cancellationToken);
+            await customerRepository.AddLoyaltyAccountAsync(loyaltyAccount, cancellationToken);
         }
 
         loyaltyAccount.AddPoints(request.Points);

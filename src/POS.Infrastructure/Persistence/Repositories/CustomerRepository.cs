@@ -123,6 +123,11 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
         await context.LoyaltyAccounts.AddAsync(loyaltyAccount, cancellationToken);
     }
 
+    public async Task AddLoyaltyAccountAsync(LoyaltyAccount loyaltyAccount, CancellationToken cancellationToken = default)
+    {
+        await context.LoyaltyAccounts.AddAsync(loyaltyAccount, cancellationToken);
+    }
+
     /// <summary>
     /// Adds a point transaction to the unit of work for persistence when changes are saved.
     /// </summary>
