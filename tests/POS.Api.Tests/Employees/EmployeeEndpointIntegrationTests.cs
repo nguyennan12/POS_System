@@ -243,7 +243,7 @@ public class EmployeeEndpointIntegrationTests
         var target = f.People["cashier"];
         using var locked = await client.PutAsJsonAsync($"/api/v1/employees/{target.Id}/lock", new LockEmployeeRequest(false));
         await Expect(locked, HttpStatusCode.OK);
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login", new LoginRequest(target.Username, EmployeeApiFactory.Password));
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(target.Username, EmployeeApiFactory.Password));
         await Expect(login, HttpStatusCode.Unauthorized);
         await using (var db = f.Db())
         {

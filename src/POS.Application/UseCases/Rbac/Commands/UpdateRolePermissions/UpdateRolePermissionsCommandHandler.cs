@@ -12,7 +12,6 @@ namespace POS.Application.UseCases.Rbac.Commands.UpdateRolePermissions;
 public class UpdateRolePermissionsCommandHandler(
     IRoleRepository roleRepository,
     IPermissionRepository permissionRepository,
-    IEmployeeStoreAccessRepository accessRepository,
     ICacheService cacheService,
     ICurrentUser currentUser,
     IUnitOfWork unitOfWork,
@@ -32,8 +31,7 @@ public class UpdateRolePermissionsCommandHandler(
             return RoleErrors.SystemRoleCannotBeModified;
         }
 
-        var canManage = await RoleAccessControl.CanManageStoreAsync(
-            currentUser, role.StoreId, accessRepository, cancellationToken);
+        var canManage = RoleAccessControl.CanManageStore(currentUser, role.StoreId);
         if (!canManage)
         {
             return RoleErrors.Forbidden;

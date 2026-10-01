@@ -11,7 +11,6 @@ namespace POS.Application.UseCases.Invoices.Queries.GetInvoiceById;
 public class GetInvoiceByIdQueryHandler(
     IInvoiceRepository invoiceRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     ICurrentUser currentUser) : IQueryHandler<GetInvoiceByIdQuery, InvoiceDetailResponse>
 {
     public async Task<Result<InvoiceDetailResponse>> Handle(GetInvoiceByIdQuery query, CancellationToken cancellationToken)
@@ -22,8 +21,7 @@ public class GetInvoiceByIdQueryHandler(
 
         var invoice = await invoiceRepository.GetByIdWithDetailsAsync(query.Id, cancellationToken);
         if (invoice is null) return InvoiceReadErrors.InvoiceNotFound;
-        if (!employee.IsChainOwner && employee.StoreId != invoice.Order.StoreId &&
-            !await employeeStoreAccessRepository.ExistsAsync(employee.Id, invoice.Order.StoreId, cancellationToken))
+        if (!employee.IsChainOwner && employee.StoreId != invoice.Order.StoreId)
             return InvoiceReadErrors.InvalidStore;
 
         return invoice.ToDetailResponse();

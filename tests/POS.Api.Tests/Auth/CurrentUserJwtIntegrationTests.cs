@@ -51,11 +51,11 @@ public class CurrentUserJwtIntegrationTests
         Assert.Equal(HttpStatusCode.Unauthorized, invalid.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
 
-        using var wrongPassword = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var wrongPassword = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(factory.Employee.Username, "Incorrect-password"));
         Assert.Equal(HttpStatusCode.Unauthorized, wrongPassword.StatusCode);
 
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(factory.Employee.Username, LoginApplicationFactory.Password));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         var envelope = await login.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();

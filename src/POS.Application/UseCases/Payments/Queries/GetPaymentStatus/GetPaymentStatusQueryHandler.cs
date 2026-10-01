@@ -10,7 +10,6 @@ namespace POS.Application.UseCases.Payments.Queries.GetPaymentStatus;
 public class GetPaymentStatusQueryHandler(
     IPaymentRepository paymentRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     ICurrentUser currentUser) : IQueryHandler<GetPaymentStatusQuery, PaymentStatusResponse>
 {
     public async Task<Result<PaymentStatusResponse>> Handle(
@@ -29,10 +28,7 @@ public class GetPaymentStatusQueryHandler(
 
         if (!employee.IsChainOwner && employee.StoreId != payment.Order.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(
-                employee.Id, payment.Order.StoreId, cancellationToken);
-            if (!hasAccess)
-                return PaymentErrors.InvalidStore;
+            return PaymentErrors.InvalidStore;
         }
 
         return new PaymentStatusResponse(

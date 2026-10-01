@@ -35,7 +35,6 @@ public partial class CheckoutAndCancelOrderTests
   private readonly IOrderRepository _orderRepository = Substitute.For<IOrderRepository>();
   private readonly IShiftRepository _shiftRepository = Substitute.For<IShiftRepository>();
   private readonly IEmployeeRepository _employeeRepository = Substitute.For<IEmployeeRepository>();
-  private readonly IEmployeeStoreAccessRepository _employeeStoreAccessRepository = Substitute.For<IEmployeeStoreAccessRepository>();
   private readonly IStoreRepository _storeRepository = Substitute.For<IStoreRepository>();
   private readonly IStockEntryRepository _stockEntryRepository = Substitute.For<IStockEntryRepository>();
   private readonly IStockTransactionRepository _stockTransactionRepository = Substitute.For<IStockTransactionRepository>();
@@ -137,7 +136,6 @@ public partial class CheckoutAndCancelOrderTests
       _orderRepository,
       _shiftRepository,
       _employeeRepository,
-      _employeeStoreAccessRepository,
       _storeRepository,
       _stockEntryRepository,
       _stockTransactionRepository,
@@ -631,7 +629,6 @@ public partial class CheckoutAndCancelOrderTests
     var handler = new CancelOrderCommandHandler(
         _orderRepository,
         _employeeRepository,
-        _employeeStoreAccessRepository,
         _unitOfWork,
         _currentUser);
 
@@ -664,7 +661,6 @@ public partial class CheckoutAndCancelOrderTests
     var handler = new CancelOrderCommandHandler(
         _orderRepository,
         _employeeRepository,
-        _employeeStoreAccessRepository,
         _unitOfWork,
         _currentUser);
 
@@ -695,7 +691,6 @@ public partial class CheckoutAndCancelOrderTests
     var handler = new CancelOrderCommandHandler(
         _orderRepository,
         _employeeRepository,
-        _employeeStoreAccessRepository,
         _unitOfWork,
         _currentUser);
 

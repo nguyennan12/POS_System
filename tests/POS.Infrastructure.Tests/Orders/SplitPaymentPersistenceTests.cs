@@ -586,7 +586,7 @@ public class SplitPaymentPersistenceTests
             var provider = services.BuildServiceProvider();
             providers.Add(provider);
             return new(orders ?? new OrderRepository(db), new ShiftRepository(db), new EmployeeRepository(db),
-                new EmployeeStoreAccessRepository(db), new StoreRepository(db), new StockEntryRepository(db),
+                new StoreRepository(db), new StockEntryRepository(db),
                 new StockTransactionRepository(db), provider.GetRequiredService<ISender>(), vouchers, new VoucherUsageRepository(db),
                 strategies, new CartCalculationService(new SkuRepository(db), new PromotionRepository(db), vouchers,
                     customers, new PromotionEngine()), new UnitOfWork(db), user, customers);

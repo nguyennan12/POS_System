@@ -154,7 +154,7 @@ public class InvoiceReadPersistenceTests
                 fixture.EmployeeId = employee.Id;
                 fixture.PrimaryStoreId = stores[0].Id;
                 db.AddRange(stores);
-                db.AddRange(role, employee, new EmployeeStoreAccess(employee.Id, stores[1].Id, employee.Id));
+                db.AddRange(role, employee);
                 var start = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
                 for (var storeIndex = 0; storeIndex < stores.Length; storeIndex++)
                 {

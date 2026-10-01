@@ -13,7 +13,6 @@ namespace POS.Application.UseCases.Orders.Commands.CancelOrder;
 public class CancelOrderCommandHandler(
     IOrderRepository orderRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser) : ICommandHandler<CancelOrderCommand, OrderDetailDto>
 {
@@ -34,9 +33,7 @@ public class CancelOrderCommandHandler(
 
         if (!employee.IsChainOwner && employee.StoreId != order.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(employee.Id, order.StoreId, cancellationToken);
-            if (!hasAccess)
-                return OrderErrors.InvalidStore;
+            return OrderErrors.InvalidStore;
         }
 
         if (order.Status == OrderStatus.Paid)

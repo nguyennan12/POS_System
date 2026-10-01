@@ -110,12 +110,11 @@ public class GetPaymentStatusQueryTests
     {
         var payments = Substitute.For<IPaymentRepository>();
         var employees = Substitute.For<IEmployeeRepository>();
-        var accesses = Substitute.For<IEmployeeStoreAccessRepository>();
         var user = Substitute.For<ICurrentUser>();
         var employee = new Employee("Employee", "employee", "hash", "hash", Guid.NewGuid(),
             storeId: Guid.NewGuid());
         user.EmployeeId.Returns(employee.Id);
         employees.GetByIdAsync(employee.Id, Arg.Any<CancellationToken>()).Returns(employee);
-        return (new(payments, employees, accesses, user), payments, employee, user);
+        return (new(payments, employees, user), payments, employee, user);
     }
 }

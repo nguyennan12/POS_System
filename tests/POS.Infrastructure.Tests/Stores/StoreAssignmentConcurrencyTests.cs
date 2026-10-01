@@ -64,11 +64,6 @@ public class StoreAssignmentConcurrencyTests
                 seed.Stores.AddRange(source, targetA, targetB);
                 seed.Employees.AddRange(ownerA, ownerB, employee);
                 seed.Entry(employee).Property(e => e.PinLookupHash).CurrentValue = new string('a', 64);
-                seed.EmployeeStoreAccesses.AddRange(
-                    new EmployeeStoreAccess(ownerA.Id, source.Id, ownerA.Id),
-                    new EmployeeStoreAccess(ownerA.Id, targetA.Id, ownerA.Id),
-                    new EmployeeStoreAccess(ownerB.Id, source.Id, ownerB.Id),
-                    new EmployeeStoreAccess(ownerB.Id, targetB.Id, ownerB.Id));
                 await seed.SaveChangesAsync();
             }
 
@@ -105,10 +100,10 @@ public class StoreAssignmentConcurrencyTests
                 Assert.Equal(managerRole.Id, persisted.RoleId);
                 Assert.Equal(pinHash, persisted.PinHash);
 
-                // A does not have access to S3. A fresh request must now return Forbidden.
+                // A fresh request from ownerA now succeeds to transfer from targetB to targetA.
                 var retry = await CreateHandler(verify, new EmployeeRepository(verify), ownerA.Id, cacheA)
                     .Handle(new(targetA.Id, employee.Id), timeout.Token);
-                Assert.Equal(ErrorType.Forbidden, retry.Error.Type);
+                Assert.True(retry.IsSuccess);
             }
             finally
             {
@@ -136,7 +131,7 @@ public class StoreAssignmentConcurrencyTests
         currentUser.IsAuthenticated.Returns(true);
         currentUser.EmployeeId.Returns(callerId);
         return new(new StoreRepository(context), employees, new RoleRepository(context),
-            new EmployeeStoreAccessRepository(context), currentUser, new UnitOfWork(context), cache,
+            currentUser, new UnitOfWork(context), cache,
             NullLogger<AssignAdminToStoreCommandHandler>.Instance);
     }
 

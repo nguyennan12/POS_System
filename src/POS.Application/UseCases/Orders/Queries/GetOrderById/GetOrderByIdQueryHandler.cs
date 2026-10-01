@@ -11,7 +11,6 @@ namespace POS.Application.UseCases.Orders.Queries.GetOrderById;
 public class GetOrderByIdQueryHandler(
     IOrderRepository orderRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     ICurrentUser currentUser) : IQueryHandler<GetOrderByIdQuery, OrderDetailDto>
 {
     public async Task<Result<OrderDetailDto>> Handle(
@@ -31,9 +30,7 @@ public class GetOrderByIdQueryHandler(
 
         if (!employee.IsChainOwner && employee.StoreId != order.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(employee.Id, order.StoreId, cancellationToken);
-            if (!hasAccess)
-                return OrderErrors.InvalidStore;
+            return OrderErrors.InvalidStore;
         }
 
         return Result<OrderDetailDto>.Success(order.ToDetailDto());

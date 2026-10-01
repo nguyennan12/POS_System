@@ -20,7 +20,6 @@ public partial class AppDbContext
 {
   public DbSet<Store> Stores => Set<Store>();
   public DbSet<Employee> Employees => Set<Employee>();
-  public DbSet<EmployeeStoreAccess> EmployeeStoreAccesses => Set<EmployeeStoreAccess>();
   public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
   public DbSet<Shift> Shifts => Set<Shift>();
 

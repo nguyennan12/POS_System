@@ -10,7 +10,6 @@ namespace POS.Application.UseCases.Rbac.Queries.GetRolePermissions;
 public class GetRolePermissionsQueryHandler(
     IRoleRepository roleRepository,
     IPermissionRepository permissionRepository,
-    IEmployeeStoreAccessRepository accessRepository,
     ICurrentUser currentUser
 ) : IQueryHandler<GetRolePermissionsQuery, IReadOnlyList<PermissionDto>>
 {
@@ -22,7 +21,7 @@ public class GetRolePermissionsQueryHandler(
             return RoleErrors.NotFound;
         }
 
-        var canRead = await RoleAccessControl.CanReadRoleAsync(currentUser, role, accessRepository, cancellationToken);
+        var canRead = RoleAccessControl.CanReadRole(currentUser, role);
         if (!canRead)
         {
             return RoleErrors.Forbidden;

@@ -29,8 +29,8 @@ public class EmployeeLoginHistoryIntegrationTests
             await db.SaveChangesAsync();
         }
         using var failed = pin
-            ? await client.PostAsJsonAsync("/api/v1/auth/employee/pin", new PinLoginRequest("100006", f.A.Id))
-            : await client.PostAsJsonAsync("/api/v1/auth/employee/login", new LoginRequest(target.Username, "wrong-password"));
+            ? await client.PostAsJsonAsync("/api/v1/auth/pin", new PinLoginRequest("100006", f.A.Id))
+            : await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(target.Username, "wrong-password"));
         await Expect(failed, HttpStatusCode.Unauthorized);
         if (pin)
         {
@@ -40,8 +40,8 @@ public class EmployeeLoginHistoryIntegrationTests
             await db.SaveChangesAsync();
         }
         using var success = pin
-            ? await client.PostAsJsonAsync("/api/v1/auth/employee/pin", new PinLoginRequest("100006", f.A.Id))
-            : await client.PostAsJsonAsync("/api/v1/auth/employee/login", new LoginRequest(target.Username, EmployeeApiFactory.Password));
+            ? await client.PostAsJsonAsync("/api/v1/auth/pin", new PinLoginRequest("100006", f.A.Id))
+            : await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(target.Username, EmployeeApiFactory.Password));
         await Expect(success, HttpStatusCode.OK);
         var auth = (await success.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>())!.Data!;
         using var logout = await client.PostAsJsonAsync("/api/v1/auth/logout", new LogoutRequest(auth.RefreshToken));
@@ -74,8 +74,8 @@ public class EmployeeLoginHistoryIntegrationTests
         using var client = f.Client();
         client.DefaultRequestHeaders.Add("X-Device-Id", "employee-history-tests");
         using var failed = pin
-            ? await client.PostAsJsonAsync("/api/v1/auth/employee/pin", new PinLoginRequest("999999", f.A.Id))
-            : await client.PostAsJsonAsync("/api/v1/auth/employee/login", new LoginRequest("unknown-account", "secret"));
+            ? await client.PostAsJsonAsync("/api/v1/auth/pin", new PinLoginRequest("999999", f.A.Id))
+            : await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest("unknown-account", "secret"));
         await Expect(failed, HttpStatusCode.Unauthorized);
         await using var db = f.Db();
         var audit = await db.AuditLogs.SingleAsync();

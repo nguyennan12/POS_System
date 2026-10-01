@@ -25,7 +25,6 @@ public class CheckoutOrderCommandHandler(
     IOrderRepository orderRepository,
     IShiftRepository shiftRepository,
     IEmployeeRepository employeeRepository,
-    IEmployeeStoreAccessRepository employeeStoreAccessRepository,
     IStoreRepository storeRepository,
     IStockEntryRepository stockEntryRepository,
     IStockTransactionRepository stockTransactionRepository,
@@ -150,9 +149,7 @@ public class CheckoutOrderCommandHandler(
         // Quyền truy cập cửa hàng
         if (!employee.IsChainOwner && employee.StoreId != order.StoreId)
         {
-            var hasAccess = await employeeStoreAccessRepository.ExistsAsync(employee.Id, order.StoreId, ct);
-            if (!hasAccess)
-                return OrderErrors.InvalidStore;
+            return OrderErrors.InvalidStore;
         }
 
         // Ca làm việc

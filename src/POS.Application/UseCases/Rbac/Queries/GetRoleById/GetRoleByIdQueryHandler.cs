@@ -9,7 +9,6 @@ namespace POS.Application.UseCases.Rbac.Queries.GetRoleById;
 
 public class GetRoleByIdQueryHandler(
     IRoleRepository roleRepository,
-    IEmployeeStoreAccessRepository accessRepository,
     ICurrentUser currentUser
 ) : IQueryHandler<GetRoleByIdQuery, RoleDetailDto>
 {
@@ -21,7 +20,7 @@ public class GetRoleByIdQueryHandler(
             return RoleErrors.NotFound;
         }
 
-        var canRead = await RoleAccessControl.CanReadRoleAsync(currentUser, role, accessRepository, cancellationToken);
+        var canRead = RoleAccessControl.CanReadRole(currentUser, role);
         if (!canRead)
         {
             return RoleErrors.Forbidden;

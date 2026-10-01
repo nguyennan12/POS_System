@@ -9,7 +9,7 @@ using POS.Domain.Common;
 namespace POS.Application.UseCases.Employees.Commands.UpdateEmployee;
 
 public sealed class UpdateEmployeeCommandHandler(IEmployeeRepository employees, IRoleRepository roles,
-    IStoreRepository stores, IEmployeeStoreAccessRepository accesses, IAuditLogRepository audits,
+    IStoreRepository stores, IAuditLogRepository audits,
     IUnitOfWork unitOfWork, ICurrentUser currentUser, ICacheService cache, ILogger<UpdateEmployeeCommandHandler> logger)
     : ICommandHandler<UpdateEmployeeCommand, EmployeeDto>
 {
@@ -46,8 +46,6 @@ public sealed class UpdateEmployeeCommandHandler(IEmployeeRepository employees, 
             }
             permissionChanged = target.RoleId != command.RoleId || target.StoreId != command.StoreId ||
                 target.IsChainOwner != command.IsChainOwner;
-            if (target.IsChainOwner && !command.IsChainOwner)
-                await accesses.RemoveAllByEmployeeIdAsync(target.Id, ct);
             target.UpdateProfile(command.Name.Trim(), command.RoleId, command.StoreId, command.IsChainOwner);
             return await EmployeeMutationSupport.SaveAsync(target, caller.Id, "Employee.Updated", employees, audits, unitOfWork, ct);
         }, true, cancellationToken);

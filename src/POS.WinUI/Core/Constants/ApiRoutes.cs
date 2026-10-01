@@ -10,8 +10,8 @@ public static class ApiRoutes
 
     public static class Auth
     {
-        public const string Login   = "api/v1/auth/employee/login";
-        public const string PinLogin = "api/v1/auth/employee/pin";
+        public const string Login   = "api/v1/auth/login";
+        public const string PinLogin = "api/v1/auth/pin";
         public const string Refresh  = "api/v1/auth/refresh";
         public const string Logout   = "api/v1/auth/logout";
     }

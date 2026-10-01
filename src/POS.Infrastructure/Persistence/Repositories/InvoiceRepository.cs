@@ -23,8 +23,7 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
         // Apply the same scope as GetPaymentStatus before counting/paging, so neither
         // rows nor TotalCount disclose invoices from inaccessible stores.
         if (!isChainOwner)
-            query = query.Where(i => i.Order.StoreId == storeId || dbContext.EmployeeStoreAccesses
-                .Any(a => a.EmployeeId == employeeId && a.StoreId == i.Order.StoreId));
+            query = query.Where(i => i.Order.StoreId == storeId);
         if (orderId.HasValue) query = query.Where(i => i.OrderId == orderId.Value);
         if (from.HasValue)
         {

@@ -20,7 +20,6 @@ public class InvoiceReadQueryTests
 {
     private readonly IInvoiceRepository invoices = Substitute.For<IInvoiceRepository>();
     private readonly IEmployeeRepository employees = Substitute.For<IEmployeeRepository>();
-    private readonly IEmployeeStoreAccessRepository accesses = Substitute.For<IEmployeeStoreAccessRepository>();
     private readonly ICurrentUser user = Substitute.For<ICurrentUser>();
     private readonly Employee employee = new("Employee", "employee", "hash", "hash", Guid.NewGuid(), storeId: Guid.NewGuid());
 
@@ -31,7 +30,7 @@ public class InvoiceReadQueryTests
     }
 
     private GetInvoicesQueryHandler ListHandler() => new(invoices, employees, user);
-    private GetInvoiceByIdQueryHandler DetailHandler() => new(invoices, employees, accesses, user);
+    private GetInvoiceByIdQueryHandler DetailHandler() => new(invoices, employees, user);
 
     [Theory]
     [InlineData(1, 20, 25, 20)]
@@ -134,16 +133,13 @@ public class InvoiceReadQueryTests
         Assert.True(validator.Validate(new GetInvoiceByIdQuery(Guid.NewGuid())).IsValid);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Detail_ChecksExplicitAccessToAnotherStore(bool allowed)
+    [Fact]
+    public async Task Detail_ChecksStoreAccess()
     {
         var invoice = SetUpInvoice(Guid.NewGuid());
-        accesses.ExistsAsync(employee.Id, invoice.Order.StoreId, Arg.Any<CancellationToken>()).Returns(allowed);
         var result = await DetailHandler().Handle(new(invoice.Id), default);
-        Assert.Equal(allowed, result.IsSuccess);
-        if (!allowed) Assert.Equal(InvoiceReadErrors.InvalidStore, result.Error);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(InvoiceReadErrors.InvalidStore, result.Error);
     }
 
     [Fact]
@@ -153,7 +149,6 @@ public class InvoiceReadQueryTests
         employees.GetByIdAsync(employee.Id, Arg.Any<CancellationToken>()).Returns(owner);
         var invoice = SetUpInvoice(Guid.NewGuid());
         Assert.True((await DetailHandler().Handle(new(invoice.Id), default)).IsSuccess);
-        await accesses.DidNotReceive().ExistsAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         invoices.GetPagedAsync(owner.Id, null, true, null, null, null, 1, 20, default)
             .Returns((new List<InvoiceSummaryResponse>(), 0));
         Assert.True((await ListHandler().Handle(new(new()), default)).IsSuccess);

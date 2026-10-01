@@ -1,4 +1,3 @@
-
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
@@ -10,10 +9,9 @@ using POS.Application.UseCases.Stores.Errors;
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
 
 public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOfWork unitOfWork,
-    IEmployeeRepository employees, IEmployeeStoreAccessRepository access, ICurrentUser currentUser)
+    IEmployeeRepository employees, ICurrentUser currentUser)
     : ICommandHandler<CreateStoreCommand, CreateStoreDto>
 {
-
   public async Task<Result<CreateStoreDto>> Handle(
         CreateStoreCommand command,
         CancellationToken cancellationToken)
@@ -31,8 +29,6 @@ public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOf
       isActive: true);
 
     await storeRepository.AddAsync(store, cancellationToken);
-    // The creator must be able to read/manage the new store; save both rows atomically.
-    await access.AddAsync(new EmployeeStoreAccess(caller.Value.Id, store.Id, caller.Value.Id), cancellationToken);
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return new CreateStoreDto(
@@ -46,5 +42,4 @@ public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOf
       new DateTimeOffset(store.CreatedAt),
       new DateTimeOffset(store.UpdatedAt));
   }
-
 }

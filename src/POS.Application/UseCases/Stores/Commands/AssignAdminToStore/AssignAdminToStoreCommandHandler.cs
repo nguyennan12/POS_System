@@ -11,7 +11,7 @@ using POS.Domain.Rbac.Constants;
 namespace POS.Application.UseCases.Stores.Commands.AssignAdminToStore;
 
 public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployeeRepository employees,
-    IRoleRepository roles, IEmployeeStoreAccessRepository access, ICurrentUser currentUser,
+    IRoleRepository roles, ICurrentUser currentUser,
     IUnitOfWork unitOfWork, ICacheService cache, ILogger<AssignAdminToStoreCommandHandler> logger)
     : ICommandHandler<AssignAdminToStoreCommand, StoreDetailDto>
 {
@@ -37,7 +37,7 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
     {
         var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
         if (caller.IsFailure) return caller.Error;
-        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, access, cancellationToken))
+        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, cancellationToken))
             return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);
@@ -55,7 +55,7 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
 
         if (employee.StoreId is not Guid sourceStoreId)
             return StoreErrors.InvalidEmployeeStore;
-        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, sourceStoreId, access, cancellationToken))
+        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, sourceStoreId, cancellationToken))
             return StoreErrors.Forbidden;
 
         var managerRoles = await roles.GetSystemRolesByNameAsync(RoleNames.StoreManager, cancellationToken);

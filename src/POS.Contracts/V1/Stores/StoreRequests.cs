@@ -26,7 +26,3 @@ public record UpdateStoreStatusRequest(
 public record StoreAdminAssignmentRequest(
     Guid EmployeeId
 );
-
-public record StoreOwnerAccessRequest(
-    Guid EmployeeId
-);

@@ -80,17 +80,10 @@ public class EmployeeRulesIntegrationTests
                 target = f.People[allowed ? "cashier" : "owner"];
                 response = await Update(client, target, store: f.B.Id);
                 break;
-            case 9: // Demotion deletes access rows in the same transaction.
+            case 9: // Demotion
                 target = f.People["chain2"];
-                await using (var db = f.Db())
-                {
-                    db.EmployeeStoreAccesses.Add(new EmployeeStoreAccess(target.Id, f.B.Id, f.People["chain"].Id));
-                    await db.SaveChangesAsync();
-                }
                 await f.LoginAsync(client, allowed ? "chain" : "owner");
                 response = await Update(client, target, chain: false);
-                await using (var verify = f.Db())
-                    Assert.Equal(!allowed, await verify.EmployeeStoreAccesses.AnyAsync(a => a.EmployeeId == target.Id));
                 break;
             case 10: // Store must be active.
                 await f.LoginAsync(client, "chain");
@@ -116,12 +109,7 @@ public class EmployeeRulesIntegrationTests
                 response = await Create(client, f, pin: "100006", store: allowed ? f.B.Id : f.A.Id);
                 expected = allowed ? HttpStatusCode.Created : HttpStatusCode.Conflict;
                 break;
-            case 13: // Chain owner PIN belongs only to the primary store, not access rows.
-                await using (var db = f.Db())
-                {
-                    db.EmployeeStoreAccesses.Add(new EmployeeStoreAccess(f.People["chain2"].Id, f.B.Id, f.People["chain"].Id));
-                    await db.SaveChangesAsync();
-                }
+            case 13: // Chain owner PIN belongs only to the primary store
                 await f.LoginAsync(client, "chain");
                 response = await Create(client, f, pin: "100002", store: allowed ? f.B.Id : f.A.Id);
                 expected = allowed ? HttpStatusCode.Created : HttpStatusCode.Conflict;
@@ -263,7 +251,7 @@ public class EmployeeRulesIntegrationTests
             using var refresh = await client.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshTokenRequest(old));
             await Expect(refresh, HttpStatusCode.Unauthorized);
         }
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(target.Username, pin ? EmployeeApiFactory.Password : "New-password!"));
         await Expect(login, HttpStatusCode.OK);
     }

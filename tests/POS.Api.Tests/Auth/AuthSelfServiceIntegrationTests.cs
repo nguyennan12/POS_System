@@ -33,7 +33,7 @@ public class AuthSelfServiceIntegrationTests
         Assert.Equal(HttpStatusCode.Unauthorized, anonResponse.StatusCode);
 
         // 2. Login
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(factory.Employee.Username, SelfServiceApplicationFactory.Password));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         var envelope = await login.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();
@@ -61,7 +61,7 @@ public class AuthSelfServiceIntegrationTests
         using var client = factory.CreateClient();
 
         // Login
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(factory.Employee.Username, SelfServiceApplicationFactory.Password));
         var envelope = await login.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", envelope!.Data!.AccessToken);
@@ -88,7 +88,7 @@ public class AuthSelfServiceIntegrationTests
         using var client = factory.CreateClient();
 
         // Login
-        using var login = await client.PostAsJsonAsync("/api/v1/auth/employee/login",
+        using var login = await client.PostAsJsonAsync("/api/v1/auth/login",
             new LoginRequest(factory.Employee.Username, SelfServiceApplicationFactory.Password));
         var envelope = await login.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", envelope!.Data!.AccessToken);

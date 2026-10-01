@@ -165,7 +165,6 @@ public class InvoicesControllerTests
             builder.Services.AddSingleton(employees);
             builder.Services.AddSingleton(fixture.Invoices);
             builder.Services.AddSingleton(fixture.Cache);
-            builder.Services.AddSingleton(Substitute.For<IEmployeeStoreAccessRepository>());
             builder.Services.AddSingleton(Substitute.For<IPermissionRepository>());
             builder.Services.AddControllers().AddApplicationPart(typeof(InvoicesController).Assembly);
             builder.Services.AddAuthentication("Test")

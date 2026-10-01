@@ -42,7 +42,6 @@ public sealed class CommandPermissionMappingTests
             ["UpdateStoreCommand"] = "stores:update",
             ["UpdateStoreStatusCommand"] = "stores:update",
             ["AssignAdminToStoreCommand"] = "stores:update",
-            ["GrantOwnerAccessCommand"] = "stores:update",
             ["CreateSupplierCommand"] = "suppliers:create",
             ["UpdateSupplierCommand"] = "suppliers:update",
             ["DeleteSupplierCommand"] = "suppliers:delete",

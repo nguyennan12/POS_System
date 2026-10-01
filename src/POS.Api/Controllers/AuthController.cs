@@ -31,7 +31,7 @@ public class AuthController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<CurrentUserResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  [HttpPost("employee/login")]
+  [HttpPost("login")]
   public async Task<ActionResult<ApiResponse<AuthResponse>>> PasswordLogin(
     [FromBody] LoginRequest request,
     CancellationToken cancellationToken
@@ -47,7 +47,7 @@ public class AuthController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<AuthResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  [HttpPost("employee/pin")]
+  [HttpPost("pin")]
   public async Task<ActionResult<ApiResponse<AuthResponse>>> PinLogin(
     [FromBody] PinLoginRequest request,
     CancellationToken cancellationToken
