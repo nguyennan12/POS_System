@@ -55,6 +55,8 @@ public sealed class CommandPermissionMappingTests
         "EmployeeLoginWithPinCommand",
         "RefreshTokenCommand",
         "LogoutCommand",
+        "ChangePasswordCommand",
+        "ChangePinCommand",
     ];
 
     // Invoked by checkout after its authorization, inside its existing transaction.

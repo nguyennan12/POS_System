@@ -12,16 +12,22 @@ public static class AuthMapping
       dto.AccessToken,
       dto.RefreshToken,
       dto.ExpiresAt,
-      new CurrentUserResponse(
-        dto.User.Id,
-        dto.User.Name,
-        dto.User.Username,
-        dto.User.RoleId,
-        dto.User.RoleName,
-        dto.User.StoreId,
-        dto.User.StoreName,
-        dto.User.IsChainOwner,
-        dto.User.Permissions)
+      dto.User.ToResponse()
+    );
+  }
+
+  public static CurrentUserResponse ToResponse(this CurrentUserDto dto)
+  {
+    return new CurrentUserResponse(
+      dto.Id,
+      dto.Name,
+      dto.Username,
+      dto.RoleId,
+      dto.RoleName,
+      dto.StoreId,
+      dto.StoreName,
+      dto.IsChainOwner,
+      dto.Permissions
     );
   }
 }
