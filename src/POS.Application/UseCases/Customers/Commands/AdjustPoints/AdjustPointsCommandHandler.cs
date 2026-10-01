@@ -7,11 +7,17 @@ using POS.Domain.Customers.Errors;
 
 namespace POS.Application.UseCases.Customers.Commands.AdjustPoints;
 
+/// <summary>
+/// Initializes the AdjustPoints handler with customer persistence and a unit of work.
+/// </summary>
 public class AdjustPointsCommandHandler(
     ICustomerRepository customerRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AdjustPointsCommand, Result<LoyaltyAccountDto>>
 {
+    /// <summary>
+    /// Applies a signed adjustment for an active customer, rejects insufficient balances, and saves the adjustment transaction.
+    /// </summary>
     public async Task<Result<LoyaltyAccountDto>> Handle(AdjustPointsCommand request, CancellationToken cancellationToken)
     {
         var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId, cancellationToken);

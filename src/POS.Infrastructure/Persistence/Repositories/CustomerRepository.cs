@@ -10,6 +10,9 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
     public Task<LoyaltyAccount?> GetLoyaltyAccountAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         context.LoyaltyAccounts.SingleOrDefaultAsync(a => a.CustomerId == customerId, cancellationToken);
 
+    /// <summary>
+    /// Loads the customer's loyalty account with its customer and membership tier, or returns null if absent.
+    /// </summary>
     public Task<LoyaltyAccount?> GetLoyaltyAccountWithTierAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         context.LoyaltyAccounts
             .Include(a => a.Customer)
@@ -120,11 +123,17 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
         await context.LoyaltyAccounts.AddAsync(loyaltyAccount, cancellationToken);
     }
 
+    /// <summary>
+    /// Adds a point transaction to the unit of work for persistence when changes are saved.
+    /// </summary>
     public async Task AddPointTransactionAsync(PointTransaction transaction, CancellationToken cancellationToken = default)
     {
         await context.PointTransactions.AddAsync(transaction, cancellationToken);
     }
 
+    /// <summary>
+    /// Returns a page of customer transactions ordered newest first and the total matching count, with optional inclusive date and type filters.
+    /// </summary>
     public async Task<(List<PointTransaction> Items, int TotalCount)> GetPointTransactionsPagedAsync(
         Guid customerId,
         DateTimeOffset? from,

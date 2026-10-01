@@ -20,6 +20,9 @@ public class LoyaltyPointsTests
 
     private readonly MemberTier defaultTier = new(MemberTierName.Normal, 0m, 0.01m, 0m, "#808080");
 
+    /// <summary>
+    /// Verifies that accrual increases the balance and saves an earn transaction with its note.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_Valid_ShouldIncreaseBalanceAndRecordPointTransaction()
     {
@@ -47,6 +50,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that accrual for a missing customer returns a not-found error without saving changes.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_WhenCustomerNotFound_ShouldReturnNotFoundError()
     {
@@ -66,6 +72,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that accrual for an inactive customer returns an inactive error without saving changes.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_WhenCustomerInactive_ShouldReturnInactiveError()
     {
@@ -87,6 +96,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that redemption decreases the balance and saves a redeem transaction with its note.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_Valid_ShouldDecreaseBalanceAndRecordPointTransaction()
     {
@@ -114,6 +126,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that redemption exceeding the balance preserves points and returns an insufficient-points error without saving.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_WhenPointsExceedBalance_ShouldReturnInsufficientPointsError()
     {
@@ -137,6 +152,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that a positive adjustment increases the balance and saves an adjustment transaction.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_Positive_ShouldIncreaseBalanceAndRecordPointTransaction()
     {
@@ -164,6 +182,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that a negative adjustment decreases the balance and saves the signed adjustment transaction.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_Negative_ShouldDecreaseBalanceAndRecordPointTransaction()
     {
@@ -191,6 +212,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that an excessive negative adjustment preserves the balance and returns an error without saving.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_NegativeExceedingBalance_ShouldReturnInsufficientPointsError()
     {
@@ -214,6 +238,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that the loyalty query returns the requested customer and point balance.
+    /// </summary>
     [Fact]
     public async Task GetLoyaltyAccount_Valid_ShouldReturnAccountDetailsAndTier()
     {
@@ -236,6 +263,9 @@ public class LoyaltyPointsTests
         result.Value.PointsBalance.Should().Be(120);
     }
 
+    /// <summary>
+    /// Verifies that the transaction query returns the expected count, items, and transaction type names.
+    /// </summary>
     [Fact]
     public async Task GetPointTransactions_Valid_ShouldReturnPagedTransactions()
     {

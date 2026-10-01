@@ -7,11 +7,17 @@ using POS.Domain.Customers.Errors;
 
 namespace POS.Application.UseCases.Customers.Commands.RedeemPoints;
 
+/// <summary>
+/// Initializes the RedeemPoints handler with customer persistence and a unit of work.
+/// </summary>
 public class RedeemPointsCommandHandler(
     ICustomerRepository customerRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<RedeemPointsCommand, Result<LoyaltyAccountDto>>
 {
+    /// <summary>
+    /// Debits an active customer's existing loyalty account when sufficient points are available and saves the redemption transaction.
+    /// </summary>
     public async Task<Result<LoyaltyAccountDto>> Handle(RedeemPointsCommand request, CancellationToken cancellationToken)
     {
         var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId, cancellationToken);

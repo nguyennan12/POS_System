@@ -4,6 +4,9 @@ namespace POS.Application.UseCases.Customers.Commands.AdjustPoints;
 
 public class AdjustPointsCommandValidator : AbstractValidator<AdjustPointsCommand>
 {
+    /// <summary>
+    /// Configures a required customer ID, nonzero points, and a required note of at most 500 characters.
+    /// </summary>
     public AdjustPointsCommandValidator()
     {
         RuleFor(x => x.CustomerId)

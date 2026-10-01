@@ -29,6 +29,9 @@ namespace POS.Api.Tests.Customers;
 
 public class CustomersLoyaltyControllerTests
 {
+    /// <summary>
+    /// Starts an in-memory HTTP host with the supplied mediator and a synthetic authenticated employee.
+    /// </summary>
     private static Task<IHost> CreateBindingHostAsync(ISender mediator) => new HostBuilder()
         .ConfigureWebHost(builder => builder.UseTestServer()
             .ConfigureServices(services =>
@@ -51,6 +54,9 @@ public class CustomersLoyaltyControllerTests
                 app.UseEndpoints(endpoints => endpoints.MapControllers());
             })).StartAsync();
 
+    /// <summary>
+    /// Verifies that the customers controller requires authorization and uses the expected API route.
+    /// </summary>
     [Fact]
     public void Customers_controller_has_authorize_and_correct_route()
     {
@@ -58,6 +64,9 @@ public class CustomersLoyaltyControllerTests
         typeof(CustomersController).GetCustomAttribute<RouteAttribute>()!.Template.Should().Be("api/v1/customers");
     }
 
+    /// <summary>
+    /// Verifies that the loyalty account endpoint dispatches its query and returns the account balance.
+    /// </summary>
     [Fact]
     public async Task GetLoyaltyAccount_DispatchesQuery_AndReturnsOk()
     {
@@ -82,6 +91,9 @@ public class CustomersLoyaltyControllerTests
         content.Data.TierName.Should().Be("Gold");
     }
 
+    /// <summary>
+    /// Verifies that the transaction endpoint dispatches its query and returns paginated results.
+    /// </summary>
     [Fact]
     public async Task GetPointTransactions_DispatchesQuery_AndReturnsPagedResponse()
     {
@@ -113,6 +125,9 @@ public class CustomersLoyaltyControllerTests
         content.Data.TotalCount.Should().Be(2);
     }
 
+    /// <summary>
+    /// Verifies that the accrual endpoint binds the point amount and returns the updated balance.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_DispatchesCommand_AndReturnsOk()
     {
@@ -134,6 +149,9 @@ public class CustomersLoyaltyControllerTests
         content!.Data!.PointsBalance.Should().Be(200);
     }
 
+    /// <summary>
+    /// Verifies that the redemption endpoint binds the point amount and returns the updated balance.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_DispatchesCommand_AndReturnsOk()
     {
@@ -155,6 +173,9 @@ public class CustomersLoyaltyControllerTests
         content!.Data!.PointsBalance.Should().Be(80);
     }
 
+    /// <summary>
+    /// Verifies that the adjustment endpoint binds the signed amount and note and returns the updated balance.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_DispatchesCommand_AndReturnsOk()
     {
@@ -176,6 +197,9 @@ public class CustomersLoyaltyControllerTests
         content!.Data!.PointsBalance.Should().Be(110);
     }
 
+    /// <summary>
+    /// Verifies that insufficient points are returned as an HTTP 400 response with the loyalty error code.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_InsufficientPoints_Returns400()
     {

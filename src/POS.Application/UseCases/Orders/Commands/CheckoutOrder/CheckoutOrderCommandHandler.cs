@@ -39,6 +39,9 @@ public class CheckoutOrderCommandHandler(
     ICurrentUser currentUser,
     ICustomerRepository customerRepository) : ICommandHandler<CheckoutOrderCommand, CheckoutDto>
 {
+    /// <summary>
+    /// Validates and processes checkout in a serializable transaction, recording point redemptions and applying side effects when the order is paid.
+    /// </summary>
     public async Task<Result<CheckoutDto>> Handle(
         CheckoutOrderCommand command,
         CancellationToken cancellationToken)

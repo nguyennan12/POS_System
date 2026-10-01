@@ -4,6 +4,9 @@ namespace POS.Application.UseCases.Customers.Commands.RedeemPoints;
 
 public class RedeemPointsCommandValidator : AbstractValidator<RedeemPointsCommand>
 {
+    /// <summary>
+    /// Configures a required customer ID, positive points, and a maximum note length of 500 characters.
+    /// </summary>
     public RedeemPointsCommandValidator()
     {
         RuleFor(x => x.CustomerId)

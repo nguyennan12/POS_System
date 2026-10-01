@@ -7,11 +7,17 @@ using POS.Domain.Customers.Errors;
 
 namespace POS.Application.UseCases.Customers.Commands.AccruePoints;
 
+/// <summary>
+/// Initializes the AccruePoints handler with customer persistence and a unit of work.
+/// </summary>
 public class AccruePointsCommandHandler(
     ICustomerRepository customerRepository,
     IUnitOfWork unitOfWork)
     : IRequestHandler<AccruePointsCommand, Result<LoyaltyAccountDto>>
 {
+    /// <summary>
+    /// Credits an active customer, creates a loyalty account if needed, and saves the earn transaction and updated balance.
+    /// </summary>
     public async Task<Result<LoyaltyAccountDto>> Handle(AccruePointsCommand request, CancellationToken cancellationToken)
     {
         var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId, cancellationToken);

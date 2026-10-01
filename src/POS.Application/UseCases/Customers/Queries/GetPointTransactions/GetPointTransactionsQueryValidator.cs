@@ -5,6 +5,9 @@ namespace POS.Application.UseCases.Customers.Queries.GetPointTransactions;
 
 public class GetPointTransactionsQueryValidator : AbstractValidator<GetPointTransactionsQuery>
 {
+    /// <summary>
+    /// Configures customer, pagination, transaction type, and date range validation rules.
+    /// </summary>
     public GetPointTransactionsQueryValidator()
     {
         RuleFor(x => x.CustomerId)

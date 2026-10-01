@@ -6,9 +6,15 @@ using POS.Domain.Customers.Errors;
 
 namespace POS.Application.UseCases.Customers.Queries.GetPointTransactions;
 
+/// <summary>
+/// Initializes the query handler with the customer repository.
+/// </summary>
 public class GetPointTransactionsQueryHandler(ICustomerRepository customerRepository)
     : IRequestHandler<GetPointTransactionsQuery, Result<PagedPointTransactionList>>
 {
+    /// <summary>
+    /// Returns filtered point transaction DTOs and pagination metadata, or an error if the customer is missing.
+    /// </summary>
     public async Task<Result<PagedPointTransactionList>> Handle(GetPointTransactionsQuery request, CancellationToken cancellationToken)
     {
         var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId, cancellationToken);
