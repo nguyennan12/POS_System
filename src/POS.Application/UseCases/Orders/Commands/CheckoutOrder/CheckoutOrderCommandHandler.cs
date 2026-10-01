@@ -9,6 +9,8 @@ using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Mappings;
 using POS.Application.UseCases.Orders.Services;
 using POS.Domain.Common;
+using POS.Domain.Customers;
+using POS.Domain.Customers.Enums;
 using POS.Domain.Customers.Errors;
 using POS.Domain.Employees;
 using POS.Domain.Employees.Enums;
@@ -37,6 +39,9 @@ public class CheckoutOrderCommandHandler(
     ICurrentUser currentUser,
     ICustomerRepository customerRepository) : ICommandHandler<CheckoutOrderCommand, CheckoutDto>
 {
+    /// <summary>
+    /// Validates and processes checkout in a serializable transaction, recording point redemptions and applying side effects when the order is paid.
+    /// </summary>
     public async Task<Result<CheckoutDto>> Handle(
         CheckoutOrderCommand command,
         CancellationToken cancellationToken)
@@ -84,6 +89,15 @@ public class CheckoutOrderCommandHandler(
                     var account = await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
                     if (account is null || !account.DeductPoints(points))
                         return OrderErrors.InsufficientPoints;
+
+                    var pointTx = new PointTransaction(
+                        customerId: order.CustomerId!.Value,
+                        points: points,
+                        type: PointTransactionType.Redeem,
+                        orderId: order.Id,
+                        note: "Thanh toán điểm cho đơn hàng"
+                    );
+                    await customerRepository.AddPointTransactionAsync(pointTx, ct);
                 }
 
                 var previousIds = order.Payments.Select(p => p.Id).ToHashSet();

@@ -1,13 +1,18 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
 using POS.Api.Mappings;
+using POS.Application.UseCases.Customers.Commands.AccruePoints;
+using POS.Application.UseCases.Customers.Commands.AdjustPoints;
 using POS.Application.UseCases.Customers.Commands.CreateCustomer;
 using POS.Application.UseCases.Customers.Commands.DeleteCustomer;
+using POS.Application.UseCases.Customers.Commands.RedeemPoints;
 using POS.Application.UseCases.Customers.Commands.UpdateCustomer;
 using POS.Application.UseCases.Customers.Queries.GetCustomerById;
 using POS.Application.UseCases.Customers.Queries.GetCustomers;
+using POS.Application.UseCases.Customers.Queries.GetLoyaltyAccount;
+using POS.Application.UseCases.Customers.Queries.GetPointTransactions;
 using POS.Contracts.V1.Common;
 using POS.Contracts.V1.Customers;
 
@@ -122,5 +127,126 @@ public class CustomersController(ISender mediator) : ControllerBase
         }
 
         return Ok(ApiResponse<bool>.Ok(result.Value));
+    }
+
+    /// <summary>
+    /// Returns the customer's loyalty balance and membership tier benefits.
+    /// </summary>
+    [HttpGet("{id:guid}/loyalty")]
+    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> GetLoyaltyAccount(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetLoyaltyAccountQuery(id), cancellationToken);
+        if (result.IsFailure)
+        {
+            return this.ToActionResult(result);
+        }
+
+        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+    }
+
+    /// <summary>
+    /// Returns a filtered page of the customer's point transactions.
+    /// </summary>
+    [HttpGet("{id:guid}/loyalty/transactions")]
+    public async Task<ActionResult<ApiResponse<PagedResponse<PointTransactionResponse>>>> GetPointTransactions(
+        Guid id,
+        [FromQuery] LoyaltyTransactionFilterRequest request,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetPointTransactionsQuery(
+            id,
+            request.From,
+            request.To,
+            request.Type,
+            request.PageNumber,
+            request.PageSize);
+
+        var result = await mediator.Send(query, cancellationToken);
+        if (result.IsFailure)
+        {
+            return this.ToActionResult(result);
+        }
+
+        var paged = result.Value!;
+        var response = new PagedResponse<PointTransactionResponse>(
+            paged.Items.Select(x => x.ToResponse()).ToList().AsReadOnly(),
+            paged.PageNumber,
+            paged.PageSize,
+            paged.TotalCount);
+
+        return Ok(ApiResponse<PagedResponse<PointTransactionResponse>>.Ok(response));
+    }
+
+    /// <summary>
+    /// Accrues points for the customer and returns the updated loyalty account.
+    /// </summary>
+    [HttpPost("{id:guid}/loyalty/accrue")]
+    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AccruePoints(
+        Guid id,
+        [FromBody] AccruePointsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new AccruePointsCommand(
+            id,
+            request.Points,
+            request.OrderId,
+            request.Note);
+
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return this.ToActionResult(result);
+        }
+
+        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+    }
+
+    /// <summary>
+    /// Redeems points for the customer and returns the updated loyalty account.
+    /// </summary>
+    [HttpPost("{id:guid}/loyalty/redeem")]
+    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> RedeemPoints(
+        Guid id,
+        [FromBody] RedeemPointsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new RedeemPointsCommand(
+            id,
+            request.Points,
+            request.OrderId,
+            request.Note);
+
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return this.ToActionResult(result);
+        }
+
+        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+    }
+
+    /// <summary>
+    /// Applies a signed point adjustment with a note and returns the updated loyalty account.
+    /// </summary>
+    [HttpPost("{id:guid}/loyalty/adjust")]
+    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AdjustPoints(
+        Guid id,
+        [FromBody] AdjustPointsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new AdjustPointsCommand(
+            id,
+            request.Points,
+            request.EffectiveNote);
+
+        var result = await mediator.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return this.ToActionResult(result);
+        }
+
+        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
     }
 }

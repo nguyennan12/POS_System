@@ -10,6 +10,25 @@ public class PointTransaction : BaseEntity
     {
     }
 
+    /// <summary>
+    /// Creates a point transaction with the supplied amount, type, and optional references, timestamped in UTC.
+    /// </summary>
+    public PointTransaction(
+        Guid customerId,
+        decimal points,
+        PointTransactionType type,
+        Guid? orderId = null,
+        string? note = null,
+        Guid? id = null) : base(id)
+    {
+        CustomerId = customerId;
+        Points = points;
+        Type = type;
+        OrderId = orderId;
+        Note = note;
+        CreatedAt = DateTime.UtcNow;
+    }
+
     public Guid CustomerId { get; private set; }
     public Customer Customer { get; private set; } = default!;
     public decimal Points { get; private set; }
