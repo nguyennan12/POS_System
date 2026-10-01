@@ -3,16 +3,16 @@
 ```
 Base: https://api.yourpos.com/api/v1
 Auth: Bearer JWT  |  Header: X-Store-Id
-(role=Owner: thay X-Store-Id bằng query param ?storeIds=1,2,3 để chọn phạm vi
-nhiều cửa hàng, hoặc bỏ trống để lấy tất cả cửa hàng được cấp quyền)
+(role=Owner: có thể truyền X-Store-Id / ?storeId= để chọn phạm vi
+1 cửa hàng cụ thể, hoặc bỏ trống để xem/quản lý toàn bộ chuỗi)
 
 ━━━ AUTH ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-POST   /auth/employee/login              { username, password }
-POST   /auth/employee/pin                { pin }
-POST   /auth/refresh            { refreshToken }
-POST   /auth/logout             { refreshToken }
-POST   /auth/employee/change-pin         { oldPin, newPin }
-POST   /auth/employee/change-password    { oldPassword, newPassword }
+POST   /auth/login                       { username, password }
+POST   /auth/pin                         { pin }
+POST   /auth/refresh                     { refreshToken }
+POST   /auth/logout                      { refreshToken }
+POST   /auth/change-pin                  { oldPin, newPin }
+POST   /auth/change-password             { oldPassword, newPassword }
 GET    /auth/me
 
 ━━━ EMPLOYEES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -26,14 +26,13 @@ POST   /employees/{id}/reset-pin       { newPin }
 GET    /employees/{id}/login-history   (audit log đăng nhập — từ AuditLogs)
 
 ━━━ STORES (chỉ Owner) ━━━━━━━━━━━━━━━━━━━━━━━━━━
+GET    /stores/public           (danh sách store cơ bản không cần auth cho app POS)
 GET    /stores
 POST   /stores                  { name, address, phone, timezone, currencyCode }
 GET    /stores/{id}
 PUT    /stores/{id}
 PUT    /stores/{id}/status      { isActive }
 POST   /stores/{id}/assign-admin       { employeeId }
-POST   /stores/{id}/grant-owner-access { employeeId }  (EmployeeStoreAccess)
-DELETE /stores/{id}/revoke-owner-access/{employeeId}
 
 ━━━ RBAC (chỉ Owner / Admin) ━━━━━━━━━━━━━━━━━━━━
 GET    /roles                   ?storeId=  (bao gồm system roles + custom roles)

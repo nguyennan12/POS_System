@@ -88,7 +88,7 @@ POS-System
 │   └── Feature 1.3: Employee & Store Access Management
 │       ├── [BE] Complete Store Management (Update, Status, Assign Admin) (T19)
 │       ├── [BE] Implement Employee Management (CRUD, Lock, PIN Reset) (T20)
-│       ├── [ARCH/BE] Extract Store Access Control into Policy Pattern (T63)
+│       ├── [ARCH/BE] Extract Store & Role Access Control into Policy Pattern (T63)
 │       └── [FE] Implement Employee Management Screen (T21)
 │
 ├── EPIC 02: Product Catalog & Pricing Management
@@ -229,7 +229,7 @@ POS-System
 | **T60** | Configure Production Docker Stack (Nginx SSL + Loki/Prometheus)             | DEVOPS   | DEVOPS    | MISSING       | P1 - High     | T14, T02           |
 | **T61** | Apply `IRequirePermission` to API Commands                                    | FEATURE  | BE        | MISSING       | P1 - High     | T16, T17           |
 | **T62** | Seed Default Store Category Tree                                        | FEATURE  | DB        | MISSING       | P1 - High     | T03, T08           |
-| **T63** | Extract Store Access Control into Policy Pattern                         | REFACTOR | BE        | MISSING       | P1 - High     | T16, T17, T19      |
+| **T63** | Extract Store & Role Access Control into Policy Pattern                  | REFACTOR | ARCH/BE   | MISSING       | P2 - Medium   | T16, T17, T19      |
 
 ---
 
@@ -1025,15 +1025,15 @@ POS-System
 
 ---
 
-### T63 — [ARCH/BE][REFACTOR] Extract Store Access Control into Policy Pattern
+### T63 — [ARCH/BE][REFACTOR] Extract Store & Role Access Control into Policy Pattern
 
-- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** ARCH / BE
-- **Description:** Tách logic kiểm tra quyền Store và RBAC khỏi handler bằng Policy Pattern để dễ mock khi test và dễ thay đổi cách phân quyền.
+- **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** ARCH / BE
+- **Description:** Chuyển đổi các logic kiểm tra quyền Owner và phạm vi chi nhánh (Tenant Scope) từ các static helper class (`StoreManagementAccess`, `RoleAccessControl`) sang Policy Pattern (`IStoreAccessPolicy`). Mục tiêu: Tuân thủ Dependency Inversion Principle (DIP), tập trung hóa quy tắc ủy quyền cửa hàng và giúp các UseCase Handler dễ dàng mock khi viết Unit Test.
 - **Implementation:**
-  - Tạo `IStoreAccessPolicy` trong `POS.Application/Abstractions/Auth/`.
-  - Tạo `StoreAccessPolicy` để gom logic từ `StoreManagementAccess` và `RoleAccessControl`.
-  - Inject policy vào các Store/RBAC handlers thay cho việc gọi static class.
-  - Đăng ký `IStoreAccessPolicy` với lifetime `Scoped` trong `DependencyInjection.cs`.
+  - Tạo Interface `IStoreAccessPolicy` trong `POS.Application/Abstractions/Auth/` với các method: `GetAuthenticatedOwnerAsync()`, `CanAccessStore(targetStoreId)`, `CanAccessRole(role)`.
+  - Tạo Service `StoreAccessPolicy : IStoreAccessPolicy` hiện thực hóa logic phân quyền Store và RBAC in-memory dựa trên `ICurrentUser` và load Owner.
+  - Đăng ký `IStoreAccessPolicy` với lifetime `Scoped` trong `POS.Application/DependencyInjection.cs`.
+  - Inject `IStoreAccessPolicy` vào các Store/RBAC handlers thay cho việc gọi static class.
   - Xóa `StoreManagementAccess.cs` và `RoleAccessControl.cs` sau khi refactor.
 - **Dependencies:** T16, T17, T19
 - **API Contracts:** Không thay đổi public API contract; chỉ thay đổi dependency và implementation boundary trong Application layer.
@@ -1042,7 +1042,7 @@ POS-System
   - Giữ nguyên kết quả kiểm tra `Unauthorized`, `Forbidden`, Owner và quyền truy cập Store/RBAC.
   - Unit test có thể mock `IStoreAccessPolicy` bằng `Substitute.For<IStoreAccessPolicy>()`.
   - Solution build thành công và toàn bộ test pass.
-- **Estimated Size:** L
+- **Estimated Size:** S
 
 ---
 
