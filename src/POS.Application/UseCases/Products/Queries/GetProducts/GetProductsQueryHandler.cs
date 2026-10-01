@@ -30,7 +30,7 @@ internal sealed class GetProductsQueryHandler(
         var dtos = rows.Select(row => new ProductSummaryDto(
             row.Product.Id,
             row.Product.CategoryId,
-            row.Product.Category?.Name ?? string.Empty,
+            row.CategoryName,
             row.Product.Name,
             row.Product.Brand,
             row.Product.BaseUnit,

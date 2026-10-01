@@ -11,17 +11,20 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
 {
     private readonly IProductRepository _productRepository;
     private readonly ISkuRepository _skuRepository;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
     public CreateProductCommandHandler(
         IProductRepository productRepository,
         ISkuRepository skuRepository,
+        ICategoryRepository categoryRepository,
         IUnitOfWork unitOfWork,
         ICurrentUser currentUser)
     {
         _productRepository = productRepository;
         _skuRepository = skuRepository;
+        _categoryRepository = categoryRepository;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
@@ -34,6 +37,13 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
         }
 
         var storeId = _currentUser.StoreId.Value;
+
+        // Validate CategoryId belongs to this store
+        var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
+        if (category is null || category.StoreId != storeId)
+        {
+            return Result<Guid>.Failure(ProductErrors.CategoryNotFound(request.CategoryId));
+        }
 
         var product = new Product(
             storeId,
@@ -51,6 +61,10 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
         {
             var allowedTaxRates = new[] { 0m, 5m, 8m, 10m };
 
+            // In-memory duplicate check across the request payload itself
+            var requestSkuCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var requestBarcodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var skuInfo in request.Skus)
             {
                 if (skuInfo.SellPrice < 0 || skuInfo.CostPrice < 0)
@@ -63,6 +77,18 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
                     return Result<Guid>.Failure(ProductErrors.InvalidTaxRate);
                 }
 
+                // In-memory duplicate detection within the same request
+                if (!requestSkuCodes.Add(skuInfo.SkuCode))
+                {
+                    return Result<Guid>.Failure(ProductErrors.SkuCodeExists);
+                }
+
+                if (!requestBarcodes.Add(skuInfo.Barcode))
+                {
+                    return Result<Guid>.Failure(ProductErrors.BarcodeExists);
+                }
+
+                // Check against existing DB records
                 if (!await _skuRepository.IsSkuCodeUniqueAsync(skuInfo.SkuCode, storeId, null, cancellationToken))
                 {
                     return Result<Guid>.Failure(ProductErrors.SkuCodeExists);
@@ -73,9 +99,21 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
                     return Result<Guid>.Failure(ProductErrors.BarcodeExists);
                 }
 
-                var attributes = skuInfo.Attributes.HasValue 
-                    ? JsonSerializer.Deserialize<Dictionary<string, string>>(skuInfo.Attributes.Value.GetRawText())
-                    : null;
+                // Safe JSON parse — guard against malformed or complex payloads
+                Dictionary<string, string>? attributes = null;
+                if (skuInfo.Attributes.HasValue)
+                {
+                    try
+                    {
+                        attributes = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                            skuInfo.Attributes.Value.GetRawText());
+                    }
+                    catch (JsonException)
+                    {
+                        // Silently ignore unparseable attribute JSON; treat as no attributes
+                        attributes = null;
+                    }
+                }
 
                 var sku = new Sku(
                     product.Id,

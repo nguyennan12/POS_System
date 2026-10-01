@@ -37,15 +37,24 @@ public class CreatePriceListCommandHandler : ICommandHandler<CreatePriceListComm
             return Result<PriceListDto>.Failure(new Error("ValidFrom", "ValidFrom must be before ValidTo."));
         }
 
+        // EmployeeId must be present — reject instead of falling back to Guid.Empty (FK violation)
+        if (_currentUser.EmployeeId is null)
+        {
+            return Result<PriceListDto>.Failure(ProductErrors.EmployeeRequired);
+        }
+
         var sku = await _skuRepository.GetByIdWithProductAsync(request.SkuId, cancellationToken);
         if (sku == null)
         {
             return Result<PriceListDto>.Failure(new Error("Sku.NotFound", "SKU not found."));
         }
 
-        // Validate overlapping
+        var storeId = _currentUser.StoreId ?? sku.StoreId;
+
+        // Validate overlapping using StoreId + NULL-safe CustomerGroup comparison
         var overlapping = await _priceListRepository.IsOverlappingAsync(
             request.SkuId,
+            storeId,
             request.CustomerGroup,
             request.ValidFrom,
             request.ValidTo,
@@ -53,10 +62,10 @@ public class CreatePriceListCommandHandler : ICommandHandler<CreatePriceListComm
 
         if (overlapping)
         {
-            return Result<PriceListDto>.Failure(new Error("PriceList.Overlapping", "The price list dates overlap with an existing price list for the same SKU and Customer Group."));
+            return Result<PriceListDto>.Failure(new Error(
+                "PriceList.Overlapping",
+                "The price list dates overlap with an existing price list for the same SKU and Customer Group."));
         }
-
-        var storeId = _currentUser.StoreId ?? sku.StoreId;
 
         var priceList = new PriceList(
             storeId,
@@ -65,7 +74,7 @@ public class CreatePriceListCommandHandler : ICommandHandler<CreatePriceListComm
             request.ValidFrom,
             request.ValidTo,
             request.CustomerGroup,
-            _currentUser.EmployeeId ?? Guid.Empty
+            _currentUser.EmployeeId.Value
         );
 
         await _priceListRepository.AddAsync(priceList, cancellationToken);

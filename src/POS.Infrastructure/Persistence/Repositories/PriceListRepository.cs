@@ -13,13 +13,27 @@ internal sealed class PriceListRepository : IPriceListRepository
         _context = context;
     }
 
-    public async Task<bool> IsOverlappingAsync(Guid skuId, string? customerGroup, DateTime validFrom, DateTime? validTo, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Kiểm tra chồng lấn thời gian bảng giá, xử lý đúng NULL CustomerGroup bằng biểu thức điều kiện riêng,
+    /// đồng thời lọc theo StoreId.
+    /// </summary>
+    public async Task<bool> IsOverlappingAsync(
+        Guid skuId,
+        Guid storeId,
+        string? customerGroup,
+        DateTime validFrom,
+        DateTime? validTo,
+        CancellationToken cancellationToken = default)
     {
         return await _context.PriceLists
-            .Where(p => p.SkuId == skuId && p.CustomerGroup == customerGroup)
-            .AnyAsync(p => 
+            .Where(p =>
+                p.SkuId == skuId &&
+                p.StoreId == storeId &&
+                // NULL-safe customerGroup comparison: EF translates to IS NULL / = correctly
+                (customerGroup == null ? p.CustomerGroup == null : p.CustomerGroup == customerGroup))
+            .AnyAsync(p =>
                 (p.ValidTo == null || p.ValidTo > validFrom) &&
-                (validTo == null || validTo > p.ValidFrom), 
+                (validTo == null || validTo > p.ValidFrom),
                 cancellationToken);
     }
 

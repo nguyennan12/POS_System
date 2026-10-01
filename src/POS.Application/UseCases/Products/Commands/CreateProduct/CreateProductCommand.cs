@@ -23,5 +23,5 @@ public record CreateProductCommand(
     IReadOnlyList<CreateSkuInfo>? Skus
 ) : ICommand<Guid>, IRequirePermission
 {
-    public string RequiredPermission => "Products.Create";
+    public string RequiredPermission => "products:create";
 }

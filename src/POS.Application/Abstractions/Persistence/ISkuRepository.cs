@@ -10,4 +10,5 @@ public interface ISkuRepository
     Task<bool> IsSkuCodeUniqueAsync(string skuCode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task<bool> IsBarcodeUniqueAsync(string barcode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Sku sku, CancellationToken cancellationToken = default);
+    void Remove(Sku sku);
 }

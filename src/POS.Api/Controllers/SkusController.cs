@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
 using POS.Api.Mappings;
+using POS.Application.UseCases.Products.Commands.DeleteSku;
 using POS.Application.UseCases.Products.Queries.GetSkuByBarcode;
 using POS.Application.UseCases.Products.Queries.GetSkuById;
 using POS.Contracts.V1.Common;
@@ -56,9 +57,19 @@ public class SkusController(ISender mediator) : ControllerBase
 
     [HttpPost]
     public async Task<ActionResult<ApiResponse<Guid>>> CreateSku(
-        [FromBody] Application.UseCases.Products.Commands.CreateSku.CreateSkuCommand command,
+        [FromBody] CreateSkuRequest request,
         CancellationToken cancellationToken)
     {
+        var command = new Application.UseCases.Products.Commands.CreateSku.CreateSkuCommand(
+            request.ProductId,
+            request.SkuCode,
+            request.Barcode,
+            request.CostPrice,
+            request.SellPrice,
+            request.TaxRate,
+            request.Attributes
+        );
+
         var result = await mediator.Send(command, cancellationToken);
         if (result.IsFailure) return this.ToActionResult(result);
 
@@ -86,5 +97,19 @@ public class SkusController(ISender mediator) : ControllerBase
         if (result.IsFailure) return this.ToActionResult(result);
 
         return Ok(ApiResponse<Guid>.Ok(result.Value));
+    }
+
+    /// <summary>
+    /// [S05] Xóa SKU theo ID. Chỉ cho phép xóa SKU thuộc store hiện tại.
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<object>>> DeleteSku(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new DeleteSkuCommand(id), cancellationToken);
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        return Ok(ApiResponse<object>.Ok(null));
     }
 }

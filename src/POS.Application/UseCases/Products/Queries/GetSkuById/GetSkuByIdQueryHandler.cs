@@ -8,6 +8,7 @@ namespace POS.Application.UseCases.Products.Queries.GetSkuById;
 
 internal sealed class GetSkuByIdQueryHandler(
     ISkuRepository skuRepository,
+    IStockEntryRepository stockEntryRepository,
     ICurrentUser currentUser) : IQueryHandler<GetSkuByIdQuery, SkuDetailDto>
 {
     public async Task<Result<SkuDetailDto>> Handle(
@@ -21,6 +22,11 @@ internal sealed class GetSkuByIdQueryHandler(
         if (sku is null || sku.StoreId != currentUser.StoreId.Value)
             return ProductErrors.SkuNotFound(query.Id);
 
+        // Load real stock quantity
+        var stockEntry = await stockEntryRepository.GetBySkuAndStoreAsync(sku.Id, currentUser.StoreId.Value, cancellationToken);
+        var qtyOnHand = stockEntry?.QtyOnHand ?? 0m;
+
+        // UnitConversions are now eager-loaded by the repository
         var unitConversions = sku.UnitConversions?.Select(uc => new UnitConversionDto(
             uc.Id,
             uc.SkuId,
@@ -29,18 +35,32 @@ internal sealed class GetSkuByIdQueryHandler(
             uc.SellPrice
         )).ToList() ?? new List<UnitConversionDto>();
 
+        // Safe Attributes serialization
+        JsonElement? attributes = null;
+        if (sku.Attributes != null)
+        {
+            try
+            {
+                attributes = JsonSerializer.SerializeToElement(sku.Attributes);
+            }
+            catch (JsonException)
+            {
+                attributes = null;
+            }
+        }
+
         return new SkuDetailDto(
             sku.Id,
             sku.ProductId,
             sku.Product.Name,
             sku.SkuCode,
             sku.Barcode,
-            sku.Attributes != null ? JsonSerializer.SerializeToElement(sku.Attributes) : null,
+            attributes,
             sku.CostPrice,
             sku.SellPrice,
             sku.TaxRate,
             sku.IsActive,
-            0, // QtyOnHand
+            qtyOnHand,
             unitConversions,
             sku.CreatedAt,
             sku.UpdatedAt

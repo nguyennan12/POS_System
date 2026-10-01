@@ -27,4 +27,22 @@ public static class ProductErrors
 
     public static readonly Error BarcodeExists =
         new(ErrorType.Validation, "Sku.BarcodeExists", "Mã vạch này đã tồn tại trong cửa hàng.");
+
+    public static Error CategoryNotFound(Guid id) =>
+        new(ErrorType.NotFound, "Category.NotFound", $"Danh mục với ID '{id}' không tồn tại hoặc không thuộc cửa hàng này.");
+
+    public static readonly Error InvalidStatus =
+        new(ErrorType.Validation, "Product.InvalidStatus", "Trạng thái sản phẩm không hợp lệ. Giá trị hợp lệ: Active, Inactive, Discontinued.");
+
+    public static readonly Error EmployeeRequired =
+        new(ErrorType.Unauthorized, "Employee.Required", "Cần có danh tính nhân viên để thực hiện thao tác này.");
+
+    public static Error SkuInactive(string skuCode) =>
+        new(ErrorType.Validation, "Sku.Inactive", $"SKU '{skuCode}' đang ngừng bán.");
+
+    public static Error ProductInactive(string productName) =>
+        new(ErrorType.Validation, "Product.Inactive", $"Sản phẩm '{productName}' đang không hoạt động.");
+
+    public static Error UnitConversionDuplicate(string unitName) =>
+        new(ErrorType.Validation, "UnitConversion.Duplicate", $"Đơn vị quy đổi '{unitName}' đã tồn tại cho SKU này.");
 }

@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Import;
 using POS.Infrastructure.Auth;
 using POS.Infrastructure.Cache;
+using POS.Infrastructure.Import;
 using POS.Infrastructure.Persistence;
 using POS.Infrastructure.Persistence.Repositories;
 using StackExchange.Redis;
@@ -60,6 +62,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitConversionRepository, UnitConversionRepository>();
         services.AddScoped<IPriceListRepository, PriceListRepository>();
 
+        // ---- Import Services ----
+        services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();

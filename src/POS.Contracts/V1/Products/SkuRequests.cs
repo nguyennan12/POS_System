@@ -3,6 +3,7 @@ using System.Text.Json;
 namespace POS.Contracts.V1.Products;
 
 public record CreateSkuRequest(
+    Guid ProductId,
     string SkuCode,
     string Barcode,
     decimal CostPrice,

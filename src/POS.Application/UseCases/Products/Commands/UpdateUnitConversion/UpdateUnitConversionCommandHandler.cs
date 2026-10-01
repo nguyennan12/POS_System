@@ -24,10 +24,21 @@ public class UpdateUnitConversionCommandHandler : ICommandHandler<UpdateUnitConv
             return Result<UnitConversionDto>.Failure(new Error("ConversionFactor", "Conversion factor must be greater than 0."));
         }
 
+        if (request.SellPrice < 0)
+        {
+            return Result<UnitConversionDto>.Failure(ProductErrors.InvalidPrice);
+        }
+
         var unitConversion = await _unitConversionRepository.GetByIdAsync(request.Id, cancellationToken);
         if (unitConversion == null)
         {
             return Result<UnitConversionDto>.Failure(new Error("UnitConversion.NotFound", "Unit conversion not found."));
+        }
+
+        // Prevent duplicate (SkuId, UnitName) — exclude self from uniqueness check
+        if (!await _unitConversionRepository.IsUnitNameUniqueAsync(unitConversion.SkuId, request.UnitName, request.Id, cancellationToken))
+        {
+            return Result<UnitConversionDto>.Failure(ProductErrors.UnitConversionDuplicate(request.UnitName));
         }
 
         unitConversion.Update(

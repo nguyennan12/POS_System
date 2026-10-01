@@ -14,5 +14,5 @@ public record UpdateProductCommand(
     string Status
 ) : ICommand<Guid>, IRequirePermission
 {
-    public string RequiredPermission => "Products.Update";
+    public string RequiredPermission => "products:update";
 }

@@ -63,9 +63,20 @@ public class CreateSkuCommandHandler : ICommandHandler<CreateSkuCommand, Guid>
             return Result<Guid>.Failure(ProductErrors.BarcodeExists);
         }
 
-        var attributes = request.Attributes.HasValue 
-            ? JsonSerializer.Deserialize<Dictionary<string, string>>(request.Attributes.Value.GetRawText())
-            : null;
+        // Safe JSON Attributes parse — guard against malformed JSON from client
+        Dictionary<string, string>? attributes = null;
+        if (request.Attributes.HasValue)
+        {
+            try
+            {
+                attributes = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                    request.Attributes.Value.GetRawText());
+            }
+            catch (JsonException)
+            {
+                attributes = null;
+            }
+        }
 
         var sku = new Sku(
             product.Id,

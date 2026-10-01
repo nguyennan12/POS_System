@@ -12,5 +12,5 @@ public record CreatePriceListCommand(
     string? CustomerGroup
 ) : ICommand<PriceListDto>, IRequirePermission
 {
-    public string RequiredPermission => "Products.Create";
+    public string RequiredPermission => "products:create";
 }

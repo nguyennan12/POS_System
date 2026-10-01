@@ -28,10 +28,21 @@ public class CreateUnitConversionCommandHandler : ICommandHandler<CreateUnitConv
             return Result<UnitConversionDto>.Failure(new Error("ConversionFactor", "Conversion factor must be greater than 0."));
         }
 
+        if (request.SellPrice < 0)
+        {
+            return Result<UnitConversionDto>.Failure(ProductErrors.InvalidPrice);
+        }
+
         var sku = await _skuRepository.GetByIdWithProductAsync(request.SkuId, cancellationToken);
         if (sku == null)
         {
             return Result<UnitConversionDto>.Failure(new Error("Sku.NotFound", "SKU not found."));
+        }
+
+        // Prevent duplicate (SkuId, UnitName) within the same SKU
+        if (!await _unitConversionRepository.IsUnitNameUniqueAsync(request.SkuId, request.UnitName, null, cancellationToken))
+        {
+            return Result<UnitConversionDto>.Failure(ProductErrors.UnitConversionDuplicate(request.UnitName));
         }
 
         var unitConversion = new UnitConversion(

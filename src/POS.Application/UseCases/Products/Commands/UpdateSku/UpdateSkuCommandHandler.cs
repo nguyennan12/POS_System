@@ -1,5 +1,6 @@
 using System.Text.Json;
 using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
@@ -9,15 +10,18 @@ namespace POS.Application.UseCases.Products.Commands.UpdateSku;
 public class UpdateSkuCommandHandler : ICommandHandler<UpdateSkuCommand, Guid>
 {
     private readonly ISkuRepository _skuRepository;
+    private readonly ICacheService _cacheService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUser _currentUser;
 
     public UpdateSkuCommandHandler(
         ISkuRepository skuRepository,
+        ICacheService cacheService,
         IUnitOfWork unitOfWork,
         ICurrentUser currentUser)
     {
         _skuRepository = skuRepository;
+        _cacheService = cacheService;
         _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
@@ -59,9 +63,22 @@ public class UpdateSkuCommandHandler : ICommandHandler<UpdateSkuCommand, Guid>
             return Result<Guid>.Failure(ProductErrors.BarcodeExists);
         }
 
-        var attributes = request.Attributes.HasValue 
-            ? JsonSerializer.Deserialize<Dictionary<string, string>>(request.Attributes.Value.GetRawText())
-            : null;
+        // Safe JSON Attributes parse
+        Dictionary<string, string>? attributes = null;
+        if (request.Attributes.HasValue)
+        {
+            try
+            {
+                attributes = JsonSerializer.Deserialize<Dictionary<string, string>>(
+                    request.Attributes.Value.GetRawText());
+            }
+            catch (JsonException)
+            {
+                attributes = null;
+            }
+        }
+
+        var oldBarcode = sku.Barcode;
 
         sku.Update(
             request.SkuCode,
@@ -69,11 +86,19 @@ public class UpdateSkuCommandHandler : ICommandHandler<UpdateSkuCommand, Guid>
             request.SellPrice,
             request.CostPrice,
             request.TaxRate,
-            request.IsActive, // This supports soft-delete effectively
+            request.IsActive,
             attributes
         );
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Invalidate Redis barcode cache so the next POS scan gets fresh data
+        var oldCacheKey = $"sku:barcode:{storeId}:{oldBarcode}";
+        var newCacheKey = $"sku:barcode:{storeId}:{request.Barcode}";
+
+        await _cacheService.RemoveRangeAsync(
+            new[] { oldCacheKey, newCacheKey },
+            cancellationToken);
 
         return sku.Id;
     }

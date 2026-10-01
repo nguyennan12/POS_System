@@ -11,6 +11,7 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
         return await dbContext.Skus
             .Include(s => s.Product)
                 .ThenInclude(p => p.Category)
+            .Include(s => s.UnitConversions)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
@@ -19,6 +20,7 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
         return await dbContext.Skus
             .Include(s => s.Product)
                 .ThenInclude(p => p.Category)
+            .Include(s => s.UnitConversions)
             .FirstOrDefaultAsync(s => s.Barcode == barcode && s.StoreId == storeId, cancellationToken);
     }
 
@@ -28,6 +30,7 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
         return await dbContext.Skus
             .Include(s => s.Product)
                 .ThenInclude(p => p.Category)
+            .Include(s => s.UnitConversions)
             .Where(s => idList.Contains(s.Id))
             .ToListAsync(cancellationToken);
     }
@@ -45,5 +48,10 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
     public async Task AddAsync(Sku sku, CancellationToken cancellationToken = default)
     {
         await dbContext.Skus.AddAsync(sku, cancellationToken);
+    }
+
+    public void Remove(Sku sku)
+    {
+        dbContext.Skus.Remove(sku);
     }
 }

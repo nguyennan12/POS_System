@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
 using POS.Api.Mappings;
@@ -112,5 +113,41 @@ public class ProductsController(ISender mediator) : ControllerBase
         if (result.IsFailure) return this.ToActionResult(result);
 
         return Ok(ApiResponse<Guid>.Ok(result.Value));
+    }
+
+    /// <summary>
+    /// [P05] Import danh sách sản phẩm hàng loạt từ file Excel.
+    /// </summary>
+    [HttpPost("bulk-import")]
+    public async Task<ActionResult<ApiResponse<BulkImportResultResponse>>> BulkImport(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<BulkImportResultResponse>.Fail(
+                new ApiError { Code = "BulkImport.FileEmpty", Message = "File không được để trống.", Type = POS.Domain.Common.ErrorType.Validation }));
+        }
+
+        // Đọc file thành mảng byte
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+        var fileBytes = memoryStream.ToArray();
+
+        var command = new Application.UseCases.Products.Commands.BulkImportProducts.BulkImportProductsCommand(fileBytes);
+        
+        var result = await mediator.Send(command, cancellationToken);
+        
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        var responseDto = result.Value!;
+        var response = new BulkImportResultResponse(
+            responseDto.TotalRows,
+            responseDto.SuccessCount,
+            responseDto.FailureCount,
+            responseDto.Errors
+        );
+
+        return Ok(ApiResponse<BulkImportResultResponse>.Ok(response));
     }
 }

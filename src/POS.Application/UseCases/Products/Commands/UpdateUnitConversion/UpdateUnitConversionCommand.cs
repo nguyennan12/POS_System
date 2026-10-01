@@ -11,5 +11,5 @@ public record UpdateUnitConversionCommand(
     decimal SellPrice
 ) : ICommand<UnitConversionDto>, IRequirePermission
 {
-    public string RequiredPermission => "Products.Update";
+    public string RequiredPermission => "products:update";
 }
