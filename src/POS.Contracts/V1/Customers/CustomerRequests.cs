@@ -38,7 +38,23 @@ public record LoyaltyTransactionFilterRequest(
 
 public record AdjustPointsRequest(
     decimal Points,
-    string Note
+    string? Note = null,
+    string? Reason = null
+)
+{
+    public string EffectiveNote => !string.IsNullOrWhiteSpace(Note) ? Note : (Reason ?? string.Empty);
+}
+
+public record AccruePointsRequest(
+    decimal Points,
+    Guid? OrderId = null,
+    string? Note = null
+);
+
+public record RedeemPointsRequest(
+    decimal Points,
+    Guid? OrderId = null,
+    string? Note = null
 );
 
 public record UpdateMemberTierRequest(

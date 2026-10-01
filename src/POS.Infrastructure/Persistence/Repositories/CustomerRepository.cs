@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Customers;
+using POS.Domain.Customers.Enums;
 
 namespace POS.Infrastructure.Persistence.Repositories;
 
@@ -8,6 +9,12 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
 {
     public Task<LoyaltyAccount?> GetLoyaltyAccountAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         context.LoyaltyAccounts.SingleOrDefaultAsync(a => a.CustomerId == customerId, cancellationToken);
+
+    public Task<LoyaltyAccount?> GetLoyaltyAccountWithTierAsync(Guid customerId, CancellationToken cancellationToken = default) =>
+        context.LoyaltyAccounts
+            .Include(a => a.Customer)
+            .ThenInclude(c => c.MemberTier)
+            .SingleOrDefaultAsync(a => a.CustomerId == customerId, cancellationToken);
 
     public async Task<CustomerWithPoints?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -111,6 +118,53 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
     {
         await context.Customers.AddAsync(customer, cancellationToken);
         await context.LoyaltyAccounts.AddAsync(loyaltyAccount, cancellationToken);
+    }
+
+    public async Task AddPointTransactionAsync(PointTransaction transaction, CancellationToken cancellationToken = default)
+    {
+        await context.PointTransactions.AddAsync(transaction, cancellationToken);
+    }
+
+    public async Task<(List<PointTransaction> Items, int TotalCount)> GetPointTransactionsPagedAsync(
+        Guid customerId,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        PointTransactionType? type,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = context.PointTransactions.AsNoTracking()
+            .Where(t => t.CustomerId == customerId);
+
+        if (from.HasValue)
+        {
+            var fromUtc = from.Value.UtcDateTime;
+            query = query.Where(t => t.CreatedAt >= fromUtc);
+        }
+
+        if (to.HasValue)
+        {
+            var toUtc = to.Value.UtcDateTime;
+            query = query.Where(t => t.CreatedAt <= toUtc);
+        }
+
+        if (type.HasValue)
+        {
+            query = query.Where(t => t.Type == type.Value);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var pNum = pageNumber < 1 ? 1 : pageNumber;
+        var pSize = pageSize < 1 ? 20 : pageSize;
+
+        var items = await query.OrderByDescending(t => t.CreatedAt)
+            .Skip((pNum - 1) * pSize)
+            .Take(pSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public Task<bool> HasOrdersAsync(Guid customerId, CancellationToken cancellationToken = default) =>

@@ -1,4 +1,4 @@
-﻿using POS.Application.UseCases.Customers;
+using POS.Application.UseCases.Customers;
 using POS.Contracts.V1.Customers;
 
 namespace POS.Api.Mappings;
@@ -44,5 +44,26 @@ public static class CustomerMappings
             dto.PointRate,
             dto.DiscountRate,
             dto.DisplayColor
+        );
+
+    public static LoyaltyAccountResponse ToResponse(this LoyaltyAccountDto dto) =>
+        new(
+            dto.CustomerId,
+            dto.PointsBalance,
+            dto.TierName,
+            dto.PointRate,
+            dto.DiscountRate,
+            dto.LastUpdated
+        );
+
+    public static PointTransactionResponse ToResponse(this PointTransactionDto dto) =>
+        new(
+            dto.Id,
+            dto.CustomerId,
+            dto.Points,
+            dto.Type,
+            dto.OrderId,
+            dto.Note,
+            dto.CreatedAt
         );
 }

@@ -43,4 +43,19 @@ public static class CustomerErrors
         ErrorType.Validation,
         "MEMBER_TIER.INVALID_ORDER",
         "Mức chi tiêu tối thiểu của hạng cao hơn phải lớn hơn hạng thấp hơn theo thứ tự phân cấp (Normal < Silver < Gold < VIP).");
+
+    public static readonly Error InsufficientPoints = new(
+        ErrorType.Validation,
+        "LOYALTY.INSUFFICIENT_POINTS",
+        "Số điểm thưởng trong tài khoản không đủ để thực hiện giao dịch.");
+
+    public static readonly Error InvalidPoints = new(
+        ErrorType.Validation,
+        "LOYALTY.INVALID_POINTS",
+        "Số điểm không hợp lệ.");
+
+    public static readonly Error LoyaltyAccountNotFound = new(
+        ErrorType.NotFound,
+        "LOYALTY.ACCOUNT_NOT_FOUND",
+        "Tài khoản tích điểm không tồn tại.");
 }
