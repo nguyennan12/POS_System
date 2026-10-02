@@ -36,6 +36,11 @@ cd docker/dev
 docker compose up -d --build
 ```
 
+*(Tùy chọn) Nếu máy có chạy cụm Monitoring (Grafana Alloy / Prometheus):*
+```bash
+docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d --build
+```
+
 **Xem log Hot Reload theo thời gian thực:**
 
 ```bash
@@ -73,6 +78,11 @@ Chế độ này build toàn bộ source code thành image tối ưu cho product
 ```bash
 cd docker/production
 docker compose up -d --build
+```
+
+*(Tùy chọn) Chạy kèm Monitoring trên Production / Staging:*
+```bash
+docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d --build
 ```
 
 **Dừng môi trường Production:**

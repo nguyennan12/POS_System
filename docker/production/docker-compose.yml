@@ -16,9 +16,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks:
-      - default
-      - monitoring_net
 
   redis:
     image: redis:7-alpine
@@ -34,9 +31,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    networks:
-      - default
-      - monitoring_net
 
   pos-api:
     build:
@@ -60,14 +54,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - default
-      - monitoring_net
 
 volumes:
   postgres-data:
   redis-data:
-
-networks:
-  monitoring_net:
-    name: monitoring_net
