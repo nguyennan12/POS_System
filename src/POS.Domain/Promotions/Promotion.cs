@@ -71,6 +71,42 @@ public class Promotion : BaseEntity
     public Employee CreatedByEmployee { get; private set; } = default!;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
+    public void Update(
+        string name,
+        PromotionType type,
+        decimal value,
+        decimal minOrderAmount,
+        decimal? maxDiscountAmount,
+        string? conditionsJson,
+        int priority,
+        bool isStackable,
+        bool isExclusive,
+        PromotionAppliesTo appliesTo,
+        DateTime validFrom,
+        DateTime? validTo,
+        PromotionStatus status)
+    {
+        Name = name;
+        Type = type;
+        Value = value;
+        MinOrderAmount = minOrderAmount;
+        MaxDiscountAmount = maxDiscountAmount;
+        ConditionsJson = conditionsJson;
+        Priority = priority;
+        IsStackable = isStackable;
+        IsExclusive = isExclusive;
+        AppliesTo = appliesTo;
+        ValidFrom = validFrom;
+        ValidTo = validTo;
+        Status = status;
+    }
+
+    /// <summary>Clears existing targets for this promotion.</summary>
+    public void ClearTargets()
+    {
+        _targets.Clear();
+    }
+
     /// <summary>Adds an existing SKU or category target to this promotion.</summary>
     public void AddTarget(PromotionTarget target)
     {
