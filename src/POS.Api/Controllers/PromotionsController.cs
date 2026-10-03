@@ -18,7 +18,7 @@ namespace POS.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/promotions")]
-public class PromotionsController(ISender mediator) : ControllerBase
+public class PromotionsController(ISender mediator, POS.Application.Abstractions.Auth.ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResponse<PromotionSummaryResponse>>>> GetPaged(
@@ -83,7 +83,8 @@ public class PromotionsController(ISender mediator) : ControllerBase
             ValidFrom: request.ValidFrom,
             ValidTo: request.ValidTo,
             TargetCategoryIds: request.TargetCategoryIds,
-            TargetSkuIds: request.TargetSkuIds);
+            TargetSkuIds: request.TargetSkuIds,
+            CreatedBy: currentUser.EmployeeId);
 
         var result = await mediator.Send(command, cancellationToken);
         if (result.IsFailure)

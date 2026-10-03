@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Queries.GetVouchers;
 
@@ -9,4 +9,7 @@ public record GetVouchersQuery(
     int PageNumber = 1,
     int PageSize = 20,
     Guid? PromotionId = null
-) : IRequest<Result<PagedVoucherList>>;
+) : IQuery<PagedVoucherList>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:read";
+}

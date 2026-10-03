@@ -29,6 +29,10 @@ public class GetLoyaltyAccountQueryHandler(ICustomerRepository customerRepositor
         }
 
         var tier = loyaltyAccount.Customer?.MemberTier ?? customer.MemberTier;
+        var rate = tier?.PointRedemptionRate ?? 1000m;
+        var balanceInCurrency = tier != null
+            ? tier.ConvertPointsToCurrency(loyaltyAccount.PointsBalance)
+            : loyaltyAccount.PointsBalance * rate;
 
         return new LoyaltyAccountDto(
             loyaltyAccount.CustomerId,
@@ -36,7 +40,9 @@ public class GetLoyaltyAccountQueryHandler(ICustomerRepository customerRepositor
             tier?.Name.ToString() ?? "Normal",
             tier?.PointRate ?? 0,
             tier?.DiscountRate ?? 0,
-            loyaltyAccount.LastUpdated
+            loyaltyAccount.LastUpdated,
+            rate,
+            balanceInCurrency
         );
     }
 }

@@ -13,6 +13,7 @@ public class UpdateVoucherCommandValidator : AbstractValidator<UpdateVoucherComm
             .GreaterThan(0).WithMessage("Giới hạn lượt dùng (max_uses) phải lớn hơn 0.");
 
         RuleFor(x => x.PerCustomerLimit)
-            .GreaterThan(0).WithMessage("Giới hạn lượt dùng cho mỗi khách hàng phải lớn hơn 0.");
+            .GreaterThan(0).WithMessage("Giới hạn lượt dùng cho mỗi khách hàng phải lớn hơn 0.")
+            .LessThanOrEqualTo(x => x.MaxUses).WithMessage("Giới hạn lượt dùng cho mỗi khách hàng không được vượt quá tổng lượt dùng tối đa.");
     }
 }

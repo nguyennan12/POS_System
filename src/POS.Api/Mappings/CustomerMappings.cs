@@ -43,7 +43,8 @@ public static class CustomerMappings
             dto.MinSpending,
             dto.PointRate,
             dto.DiscountRate,
-            dto.DisplayColor
+            dto.DisplayColor,
+            dto.PointRedemptionRate
         );
 
     /// <summary>
@@ -56,7 +57,9 @@ public static class CustomerMappings
             dto.TierName,
             dto.PointRate,
             dto.DiscountRate,
-            dto.LastUpdated
+            dto.LastUpdated,
+            dto.PointRedemptionRate,
+            dto.AvailableBalanceInCurrency
         );
 
     /// <summary>

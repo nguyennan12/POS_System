@@ -18,6 +18,7 @@ public class VoucherUseCasesTests
 {
     private readonly IVoucherRepository voucherRepository = Substitute.For<IVoucherRepository>();
     private readonly IPromotionRepository promotionRepository = Substitute.For<IPromotionRepository>();
+    private readonly ICustomerRepository customerRepository = Substitute.For<ICustomerRepository>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
 
     [Fact]
@@ -97,7 +98,8 @@ public class VoucherUseCasesTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        voucherRepository.Received(1).Remove(voucher);
+        voucher.IsActive.Should().BeFalse();
+        voucherRepository.DidNotReceive().Remove(Arg.Any<Voucher>());
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -111,7 +113,7 @@ public class VoucherUseCasesTests
 
         voucherRepository.GetByCodeWithPromotionAsync("GIAM10", Arg.Any<CancellationToken>()).Returns(voucher);
 
-        var handler = new ValidateVoucherQueryHandler(voucherRepository);
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
         var query = new ValidateVoucherQuery("GIAM10", 200000);
 
         // Act
@@ -136,7 +138,7 @@ public class VoucherUseCasesTests
 
         voucherRepository.GetByCodeWithPromotionAsync("MAXOUT", Arg.Any<CancellationToken>()).Returns(voucher);
 
-        var handler = new ValidateVoucherQueryHandler(voucherRepository);
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
         var query = new ValidateVoucherQuery("MAXOUT", 100000);
 
         // Act
@@ -157,10 +159,13 @@ public class VoucherUseCasesTests
         var voucher = new Voucher(promotion.Id, "ONCEPERCUST", 100, 1);
         typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
 
+        var customer = new POS.Domain.Customers.Customer("Test Cust", "0901111222", memberTierId: Guid.NewGuid(), isActive: true, id: customerId);
+        customerRepository.GetEntityByIdAsync(customerId, Arg.Any<CancellationToken>()).Returns(customer);
+
         voucherRepository.GetByCodeWithPromotionAsync("ONCEPERCUST", Arg.Any<CancellationToken>()).Returns(voucher);
         voucherRepository.GetCustomerUsageCountAsync(voucher.Id, customerId, Arg.Any<CancellationToken>()).Returns(1);
 
-        var handler = new ValidateVoucherQueryHandler(voucherRepository);
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
         var query = new ValidateVoucherQuery("ONCEPERCUST", 100000, customerId);
 
         // Act
@@ -182,7 +187,7 @@ public class VoucherUseCasesTests
 
         voucherRepository.GetByCodeWithPromotionAsync("MIN150", Arg.Any<CancellationToken>()).Returns(voucher);
 
-        var handler = new ValidateVoucherQueryHandler(voucherRepository);
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
         var query = new ValidateVoucherQuery("MIN150", 100000); // Only 100k, min is 150k
 
         // Act
@@ -200,7 +205,7 @@ public class VoucherUseCasesTests
         // Arrange
         voucherRepository.GetByCodeWithPromotionAsync("UNKNOWN", Arg.Any<CancellationToken>()).Returns((Voucher?)null);
 
-        var handler = new ValidateVoucherQueryHandler(voucherRepository);
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
         var query = new ValidateVoucherQuery("UNKNOWN", 100000);
 
         // Act
@@ -210,5 +215,119 @@ public class VoucherUseCasesTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.IsValid.Should().BeFalse();
         result.Value.ErrorMessage.Should().Be("Mã giảm giá không tồn tại.");
+    }
+
+    [Fact]
+    public async Task UpdateVoucher_WhenMaxUsesLessThanUsedCount_ShouldReturnError()
+    {
+        // Arrange
+        var promoId = Guid.NewGuid();
+        var voucher = new Voucher(promoId, "CODE1", 10, 1);
+        voucher.RecordUse();
+        voucher.RecordUse();
+        voucher.RecordUse(); // UsedCount = 3
+
+        voucherRepository.GetByIdWithPromotionAsync(voucher.Id, Arg.Any<CancellationToken>()).Returns(voucher);
+
+        var handler = new UpdateVoucherCommandHandler(voucherRepository, unitOfWork);
+        var command = new UpdateVoucherCommand(voucher.Id, 2, 1, null, true); // MaxUses = 2 < UsedCount (3)
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(PromotionErrors.VoucherMaxUsesLessThanUsedCount);
+    }
+
+    [Fact]
+    public async Task DeleteVoucher_ShouldSoftDelete_SetIsActiveFalse()
+    {
+        // Arrange
+        var voucher = new Voucher(Guid.NewGuid(), "SOFTDEL", 10, 1);
+        voucherRepository.GetByIdAsync(voucher.Id, Arg.Any<CancellationToken>()).Returns(voucher);
+
+        var handler = new DeleteVoucherCommandHandler(voucherRepository, unitOfWork);
+
+        // Act
+        var result = await handler.Handle(new DeleteVoucherCommand(voucher.Id), CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        voucher.IsActive.Should().BeFalse();
+        voucherRepository.DidNotReceive().Remove(Arg.Any<Voucher>());
+        await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ValidateVoucher_WhenCustomerInactive_ShouldReturnInvalid()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var promotion = new Promotion(Guid.Empty, "Promo", PromotionType.CartFixed, 20000);
+        var voucher = new Voucher(promotion.Id, "INACTIVECUST", 100, 1);
+        typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
+
+        var customer = new POS.Domain.Customers.Customer("Test Cust", "0901111222", memberTierId: Guid.NewGuid(), isActive: false, id: customerId);
+        customerRepository.GetEntityByIdAsync(customerId, Arg.Any<CancellationToken>()).Returns(customer);
+
+        voucherRepository.GetByCodeWithPromotionAsync("INACTIVECUST", Arg.Any<CancellationToken>()).Returns(voucher);
+
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
+        var query = new ValidateVoucherQuery("INACTIVECUST", 100000, customerId);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.IsValid.Should().BeFalse();
+        result.Value.ErrorMessage.Should().Be("Khách hàng không tồn tại hoặc đã bị tạm ngưng.");
+    }
+
+    [Fact]
+    public async Task ValidateVoucher_WhenStoreScopeMismatch_ShouldReturnInvalid()
+    {
+        // Arrange
+        var storeA = Guid.NewGuid();
+        var storeB = Guid.NewGuid();
+        var promotion = new Promotion(storeA, "Promo Store A", PromotionType.CartFixed, 20000);
+        var voucher = new Voucher(promotion.Id, "STOREA_ONLY", 100, 1);
+        typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
+
+        voucherRepository.GetByCodeWithPromotionAsync("STOREA_ONLY", Arg.Any<CancellationToken>()).Returns(voucher);
+
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
+        var query = new ValidateVoucherQuery("STOREA_ONLY", 100000, StoreId: storeB);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.IsValid.Should().BeFalse();
+        result.Value.ErrorMessage.Should().Be("Mã giảm giá không áp dụng cho cửa hàng này.");
+    }
+
+    [Fact]
+    public async Task ValidateVoucher_WhenPercentSku_ShouldReturnZeroDiscountOnOrderSubtotal()
+    {
+        // Arrange
+        var promotion = new Promotion(Guid.Empty, "Promo Sku", PromotionType.PercentSku, 20);
+        var voucher = new Voucher(promotion.Id, "SKU20", 100, 1);
+        typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
+
+        voucherRepository.GetByCodeWithPromotionAsync("SKU20", Arg.Any<CancellationToken>()).Returns(voucher);
+
+        var handler = new ValidateVoucherQueryHandler(voucherRepository, customerRepository);
+        var query = new ValidateVoucherQuery("SKU20", 100000);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.IsValid.Should().BeTrue();
+        result.Value.DiscountAmount.Should().Be(0); // PercentSku does not apply directly to cart subtotal
     }
 }

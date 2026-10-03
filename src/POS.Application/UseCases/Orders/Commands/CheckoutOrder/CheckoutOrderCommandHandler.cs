@@ -83,16 +83,25 @@ public class CheckoutOrderCommandHandler(
                 if (stockResult.IsFailure) return stockResult.Error;
 
                 // Redeem only this request's points, including partial settlements.
-                var points = parsedPayments.Where(p => p.Method == PaymentMethod.Points).Sum(p => p.Amount);
-                if (points > 0)
+                var pointsPaymentAmount = parsedPayments.Where(p => p.Method == PaymentMethod.Points).Sum(p => p.Amount);
+                if (pointsPaymentAmount > 0)
                 {
-                    var account = await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
-                    if (account is null || !account.DeductPoints(points))
+                    var account = await customerRepository.GetLoyaltyAccountWithTierAsync(order.CustomerId!.Value, ct)
+                        ?? await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
+                    if (account is null)
+                        return OrderErrors.InsufficientPoints;
+
+                    var tier = account.Customer?.MemberTier;
+                    decimal pointsToDeduct = tier != null
+                        ? tier.CalculateRequiredPoints(pointsPaymentAmount)
+                        : Math.Ceiling(pointsPaymentAmount / 1000m);
+
+                    if (!account.DeductPoints(pointsToDeduct))
                         return OrderErrors.InsufficientPoints;
 
                     var pointTx = new PointTransaction(
                         customerId: order.CustomerId!.Value,
-                        points: points,
+                        points: pointsToDeduct,
                         type: PointTransactionType.Redeem,
                         orderId: order.Id,
                         note: "Thanh toán điểm cho đơn hàng"

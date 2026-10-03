@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Commands.CreatePromotion;
 
@@ -20,4 +20,7 @@ public record CreatePromotionCommand(
     IReadOnlyList<Guid>? TargetCategoryIds = null,
     IReadOnlyList<Guid>? TargetSkuIds = null,
     Guid? CreatedBy = null
-) : IRequest<Result<PromotionDetailDto>>;
+) : ICommand<PromotionDetailDto>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:create";
+}

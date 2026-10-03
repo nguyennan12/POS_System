@@ -62,6 +62,10 @@ public class RedeemPointsCommandHandler(
                 await unitOfWork.SaveChangesAsync(ct);
 
                 var tier = loyaltyAccount.Customer?.MemberTier ?? customer.MemberTier;
+                var rate = tier?.PointRedemptionRate ?? 1000m;
+                var balanceInCurrency = tier != null
+                    ? tier.ConvertPointsToCurrency(loyaltyAccount.PointsBalance)
+                    : loyaltyAccount.PointsBalance * rate;
 
                 return new LoyaltyAccountDto(
                     loyaltyAccount.CustomerId,
@@ -69,7 +73,9 @@ public class RedeemPointsCommandHandler(
                     tier?.Name.ToString() ?? "Normal",
                     tier?.PointRate ?? 0,
                     tier?.DiscountRate ?? 0,
-                    loyaltyAccount.LastUpdated
+                    loyaltyAccount.LastUpdated,
+                    rate,
+                    balanceInCurrency
                 );
             }, cancellationToken);
             if (attempt < 2 && result.IsFailure && result.Error.Code == "Persistence.ConcurrentModification")

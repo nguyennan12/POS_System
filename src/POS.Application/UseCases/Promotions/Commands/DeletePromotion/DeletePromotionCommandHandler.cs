@@ -18,7 +18,7 @@ public class DeletePromotionCommandHandler(
             return PromotionErrors.NotFound;
         }
 
-        promotionRepository.Remove(promotion);
+        promotion.Deactivate();
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return true;

@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Commands.CreateVoucher;
 
@@ -9,4 +9,7 @@ public record CreateVoucherCommand(
     int MaxUses,
     int PerCustomerLimit = 1,
     DateTimeOffset? ExpiresAt = null
-) : IRequest<Result<VoucherDto>>;
+) : ICommand<VoucherDto>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:create";
+}
