@@ -23,8 +23,8 @@ public class UpdatePromotionCommandValidator : AbstractValidator<UpdatePromotion
             .GreaterThan(0).WithMessage("Giá trị khuyến mãi phải lớn hơn 0.");
 
         RuleFor(x => x)
-            .Must(x => !x.Type.Equals(nameof(PromotionType.PercentSku), StringComparison.OrdinalIgnoreCase) &&
-                       !x.Type.Equals(nameof(PromotionType.CartPercent), StringComparison.OrdinalIgnoreCase) ||
+            .Must(x => !string.Equals(x.Type, nameof(PromotionType.PercentSku), StringComparison.OrdinalIgnoreCase) &&
+                       !string.Equals(x.Type, nameof(PromotionType.CartPercent), StringComparison.OrdinalIgnoreCase) ||
                        x.Value <= 100)
             .WithMessage("Giá trị giảm theo phần trăm không được vượt quá 100%.");
 
@@ -46,11 +46,11 @@ public class UpdatePromotionCommandValidator : AbstractValidator<UpdatePromotion
         RuleFor(x => x)
             .Must(x =>
             {
-                if (x.AppliesTo.Equals("Category", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(x.AppliesTo, "Category", StringComparison.OrdinalIgnoreCase))
                 {
                     return x.TargetCategoryIds != null && x.TargetCategoryIds.Count > 0;
                 }
-                if (x.AppliesTo.Equals("SKU", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(x.AppliesTo, "SKU", StringComparison.OrdinalIgnoreCase))
                 {
                     return x.TargetSkuIds != null && x.TargetSkuIds.Count > 0;
                 }

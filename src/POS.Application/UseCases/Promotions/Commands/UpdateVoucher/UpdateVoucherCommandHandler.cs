@@ -18,6 +18,11 @@ public class UpdateVoucherCommandHandler(
             return PromotionErrors.VoucherNotFound;
         }
 
+        if (request.MaxUses < voucher.UsedCount)
+        {
+            return PromotionErrors.VoucherMaxUsesLessThanUsedCount;
+        }
+
         voucher.Update(
             maxUses: request.MaxUses,
             perCustomerLimit: request.PerCustomerLimit,

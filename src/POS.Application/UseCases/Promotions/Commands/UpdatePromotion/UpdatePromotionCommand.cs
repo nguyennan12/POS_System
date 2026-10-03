@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Commands.UpdatePromotion;
 
@@ -20,4 +20,7 @@ public record UpdatePromotionCommand(
     string Status = "Active",
     IReadOnlyList<Guid>? TargetCategoryIds = null,
     IReadOnlyList<Guid>? TargetSkuIds = null
-) : IRequest<Result<PromotionDetailDto>>;
+) : ICommand<PromotionDetailDto>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:update";
+}

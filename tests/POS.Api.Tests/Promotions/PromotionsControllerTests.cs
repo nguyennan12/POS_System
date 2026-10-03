@@ -33,6 +33,8 @@ public class PromotionsControllerTests
         .ConfigureWebHost(builder => builder.UseTestServer()
             .ConfigureServices(services =>
             {
+                services.AddHttpContextAccessor();
+                services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser, POS.Api.Auth.CurrentUser>();
                 services.AddSingleton(mediator);
                 services.AddAuthentication();
                 services.AddAuthorization();

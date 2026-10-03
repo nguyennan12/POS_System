@@ -29,7 +29,12 @@ public class PointsPaymentStrategy(ICustomerRepository customerRepository) : IPa
         if (!loyalty.Customer.IsActive)
             return CustomerErrors.Inactive;
 
-        if (loyalty.PointsBalance < payment.Amount)
+        var tier = loyalty.Customer.MemberTier;
+        var requiredPoints = tier != null
+            ? tier.CalculateRequiredPoints(payment.Amount)
+            : Math.Ceiling(payment.Amount / 1000m);
+
+        if (loyalty.PointsBalance < requiredPoints)
             return OrderErrors.InsufficientPoints;
 
         return Result.Success();

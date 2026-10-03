@@ -4,22 +4,37 @@ using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
 using POS.Domain.Promotions;
 using POS.Domain.Promotions.Enums;
+using POS.Domain.Promotions.Errors;
 
 namespace POS.Application.UseCases.Promotions.Commands.CreatePromotion;
 
 public class CreatePromotionCommandHandler(
     IPromotionRepository promotionRepository,
+    ICategoryRepository categoryRepository,
+    ISkuRepository skuRepository,
+    IEmployeeRepository employeeRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser)
     : IRequestHandler<CreatePromotionCommand, Result<PromotionDetailDto>>
 {
     public async Task<Result<PromotionDetailDto>> Handle(CreatePromotionCommand request, CancellationToken cancellationToken)
     {
+        var createdBy = request.CreatedBy ?? currentUser.EmployeeId;
+        if (!createdBy.HasValue || createdBy.Value == Guid.Empty)
+        {
+            return PromotionErrors.InvalidCreator;
+        }
+
+        var employee = await employeeRepository.GetByIdAsync(createdBy.Value, cancellationToken);
+        if (employee is null || !employee.IsActive)
+        {
+            return PromotionErrors.InvalidCreator;
+        }
+
         var type = Enum.Parse<PromotionType>(request.Type, true);
         var appliesTo = Enum.Parse<PromotionAppliesTo>(request.AppliesTo, true);
 
         var storeId = request.StoreId ?? (currentUser.IsChainOwner ? Guid.Empty : (currentUser.StoreId ?? Guid.Empty));
-        var createdBy = request.CreatedBy ?? currentUser.EmployeeId ?? Guid.Empty;
 
         var promotion = new Promotion(
             storeId: storeId,
@@ -36,19 +51,32 @@ public class CreatePromotionCommandHandler(
             validFrom: request.ValidFrom?.UtcDateTime,
             validTo: request.ValidTo?.UtcDateTime,
             status: PromotionStatus.Active,
-            createdBy: createdBy
+            createdBy: createdBy.Value
         );
 
         if (appliesTo == PromotionAppliesTo.Category && request.TargetCategoryIds != null)
         {
-            foreach (var categoryId in request.TargetCategoryIds.Distinct())
+            var distinctCategoryIds = request.TargetCategoryIds.Distinct().ToList();
+            foreach (var categoryId in distinctCategoryIds)
             {
+                var category = await categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+                if (category is null)
+                {
+                    return PromotionErrors.CategoryNotFound;
+                }
                 promotion.AddTargetCategory(categoryId);
             }
         }
         else if (appliesTo == PromotionAppliesTo.SKU && request.TargetSkuIds != null)
         {
-            foreach (var skuId in request.TargetSkuIds.Distinct())
+            var distinctSkuIds = request.TargetSkuIds.Distinct().ToList();
+            var existingSkus = await skuRepository.GetByIdsWithProductAsync(distinctSkuIds, cancellationToken);
+            if (existingSkus.Count != distinctSkuIds.Count)
+            {
+                return PromotionErrors.SkuNotFound;
+            }
+
+            foreach (var skuId in distinctSkuIds)
             {
                 promotion.AddTargetSku(skuId);
             }

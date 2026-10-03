@@ -23,6 +23,14 @@ public class UpdatePromotionCommandHandler(
         var appliesTo = Enum.Parse<PromotionAppliesTo>(request.AppliesTo, true);
         var status = Enum.Parse<PromotionStatus>(request.Status, true);
 
+        var effectiveValidFrom = request.ValidFrom?.UtcDateTime ?? promotion.ValidFrom;
+        var effectiveValidTo = request.ValidTo?.UtcDateTime;
+
+        if (effectiveValidTo.HasValue && effectiveValidTo.Value < effectiveValidFrom)
+        {
+            return PromotionErrors.InvalidDateRange;
+        }
+
         promotion.Update(
             name: request.Name,
             type: type,
@@ -34,8 +42,8 @@ public class UpdatePromotionCommandHandler(
             isStackable: request.IsStackable,
             isExclusive: request.IsExclusive,
             appliesTo: appliesTo,
-            validFrom: request.ValidFrom?.UtcDateTime ?? promotion.ValidFrom,
-            validTo: request.ValidTo?.UtcDateTime,
+            validFrom: effectiveValidFrom,
+            validTo: effectiveValidTo,
             status: status
         );
 

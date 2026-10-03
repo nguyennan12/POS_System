@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Queries.GetPromotions;
 
@@ -10,4 +10,7 @@ public record GetPromotionsQuery(
     DateTimeOffset? ActiveAt = null,
     int PageNumber = 1,
     int PageSize = 20
-) : IRequest<Result<PagedPromotionList>>;
+) : IQuery<PagedPromotionList>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:read";
+}
