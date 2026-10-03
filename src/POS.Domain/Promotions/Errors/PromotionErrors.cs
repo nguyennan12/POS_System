@@ -63,4 +63,24 @@ public static class PromotionErrors
         ErrorType.Invalid,
         "PROMOTION.MIN_ORDER_NOT_MET",
         "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng khuyến mãi.");
+
+    public static readonly Error CategoryNotFound = new(
+        ErrorType.NotFound,
+        "PROMOTION.CATEGORY_NOT_FOUND",
+        "Một hoặc nhiều danh mục mục tiêu không tồn tại.");
+
+    public static readonly Error SkuNotFound = new(
+        ErrorType.NotFound,
+        "PROMOTION.SKU_NOT_FOUND",
+        "Một hoặc nhiều sản phẩm mục tiêu (SKU) không tồn tại.");
+
+    public static readonly Error InvalidCreator = new(
+        ErrorType.Unauthorized,
+        "PROMOTION.INVALID_CREATOR",
+        "Nhân viên tạo khuyến mãi không hợp lệ.");
+
+    public static readonly Error VoucherMaxUsesLessThanUsedCount = new(
+        ErrorType.Validation,
+        "VOUCHER.MAX_USES_LESS_THAN_USED_COUNT",
+        "Số lượt dùng tối đa không được nhỏ hơn số lượt đã dùng hiện tại.");
 }

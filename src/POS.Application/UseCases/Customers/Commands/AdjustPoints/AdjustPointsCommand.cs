@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Commands.AdjustPoints;
 
@@ -7,4 +7,7 @@ public record AdjustPointsCommand(
     Guid CustomerId,
     decimal Points,
     string Note
-) : IRequest<Result<LoyaltyAccountDto>>;
+) : ICommand<LoyaltyAccountDto>, IRequirePermission
+{
+    public string RequiredPermission => "customers:update";
+}

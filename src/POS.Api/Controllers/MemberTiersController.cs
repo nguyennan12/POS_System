@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
@@ -38,7 +38,8 @@ public class MemberTiersController(ISender mediator) : ControllerBase
             request.MinSpending,
             request.PointRate,
             request.DiscountRate,
-            request.DisplayColor);
+            request.DisplayColor,
+            request.PointRedemptionRate);
 
         var result = await mediator.Send(command, cancellationToken);
         if (result.IsFailure)

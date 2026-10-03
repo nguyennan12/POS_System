@@ -16,7 +16,7 @@ namespace POS.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/vouchers")]
-public class VouchersController(ISender mediator) : ControllerBase
+public class VouchersController(ISender mediator, POS.Application.Abstractions.Auth.ICurrentUser currentUser) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResponse<VoucherResponse>>>> GetPaged(
@@ -104,7 +104,8 @@ public class VouchersController(ISender mediator) : ControllerBase
         var query = new ValidateVoucherQuery(
             Code: code,
             OrderSubtotal: request.OrderSubtotal,
-            CustomerId: request.CustomerId);
+            CustomerId: request.CustomerId,
+            StoreId: currentUser.StoreId);
 
         var result = await mediator.Send(query, cancellationToken);
         if (result.IsFailure)
@@ -124,7 +125,8 @@ public class VouchersController(ISender mediator) : ControllerBase
         var query = new ValidateVoucherQuery(
             Code: code,
             OrderSubtotal: request.OrderSubtotal,
-            CustomerId: request.CustomerId);
+            CustomerId: request.CustomerId,
+            StoreId: currentUser.StoreId);
 
         var result = await mediator.Send(query, cancellationToken);
         if (result.IsFailure)

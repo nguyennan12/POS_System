@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Commands.AccruePoints;
 
@@ -8,4 +8,7 @@ public record AccruePointsCommand(
     decimal Points,
     Guid? OrderId = null,
     string? Note = null
-) : IRequest<Result<LoyaltyAccountDto>>;
+) : ICommand<LoyaltyAccountDto>, IRequirePermission
+{
+    public string RequiredPermission => "customers:update";
+}

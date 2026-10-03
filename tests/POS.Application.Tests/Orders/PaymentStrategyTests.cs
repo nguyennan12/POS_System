@@ -94,7 +94,7 @@ public class PaymentStrategyTests
 
         var customer = new Customer("Khách B", "0911223344", Guid.NewGuid(), null, null, null, true, customerId);
         _customerRepository.GetByIdAsync(customerId, Arg.Any<CancellationToken>())
-            .Returns(new CustomerWithPoints(customer, PointsBalance: 10_000));
+            .Returns(new CustomerWithPoints(customer, PointsBalance: 10));
 
         var strategy = new PointsPaymentStrategy(_customerRepository);
         var payment = new PaymentSplitInputDto("Points", 50_000);

@@ -17,6 +17,9 @@ namespace POS.Application.Tests.Promotions;
 public class PromotionUseCasesTests
 {
     private readonly IPromotionRepository promotionRepository = Substitute.For<IPromotionRepository>();
+    private readonly ICategoryRepository categoryRepository = Substitute.For<ICategoryRepository>();
+    private readonly ISkuRepository skuRepository = Substitute.For<ISkuRepository>();
+    private readonly IEmployeeRepository employeeRepository = Substitute.For<IEmployeeRepository>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUser currentUser = Substitute.For<ICurrentUser>();
 
@@ -24,11 +27,18 @@ public class PromotionUseCasesTests
     public async Task CreatePromotion_Valid_ShouldCreateAndSave()
     {
         // Arrange
+        var employeeId = Guid.NewGuid();
         currentUser.IsChainOwner.Returns(true);
-        currentUser.EmployeeId.Returns(Guid.NewGuid());
+        currentUser.EmployeeId.Returns(employeeId);
 
-        var handler = new CreatePromotionCommandHandler(promotionRepository, unitOfWork, currentUser);
+        var employee = new POS.Domain.Employees.Employee("Test Employee", "emp", "hash", "pin", Guid.NewGuid(), isChainOwner: true, storeId: Guid.NewGuid(), isActive: true, id: employeeId);
+        employeeRepository.GetByIdAsync(employeeId, Arg.Any<CancellationToken>()).Returns(employee);
+
         var catId = Guid.NewGuid();
+        var category = POS.Domain.Products.Category.Create(Guid.NewGuid(), "Cat");
+        categoryRepository.GetByIdAsync(catId, Arg.Any<CancellationToken>()).Returns(category);
+
+        var handler = new CreatePromotionCommandHandler(promotionRepository, categoryRepository, skuRepository, employeeRepository, unitOfWork, currentUser);
         var command = new CreatePromotionCommand(
             StoreId: null,
             Name: "Giảm giá khai trương",
@@ -149,7 +159,8 @@ public class PromotionUseCasesTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        promotionRepository.Received(1).Remove(promotion);
+        promotion.Status.Should().Be(PromotionStatus.Inactive);
+        promotionRepository.DidNotReceive().Remove(Arg.Any<Promotion>());
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -174,5 +185,111 @@ public class PromotionUseCasesTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.TotalCount.Should().Be(2);
         result.Value.Items.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task CreatePromotion_WhenEmployeeIdNullOrEmpty_ShouldReturnInvalidCreator()
+    {
+        // Arrange
+        currentUser.EmployeeId.Returns((Guid?)null);
+        var handler = new CreatePromotionCommandHandler(promotionRepository, categoryRepository, skuRepository, employeeRepository, unitOfWork, currentUser);
+        var command = new CreatePromotionCommand(
+            StoreId: null,
+            Name: "Promo Test",
+            Type: "CartFixed",
+            Value: 10000);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(PromotionErrors.InvalidCreator);
+    }
+
+    [Fact]
+    public async Task CreatePromotion_WhenCategoryDoesNotExist_ShouldReturnCategoryNotFound()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        currentUser.IsChainOwner.Returns(true);
+        currentUser.EmployeeId.Returns(employeeId);
+
+        var employee = new POS.Domain.Employees.Employee("Test Employee", "emp", "hash", "pin", Guid.NewGuid(), isChainOwner: true, storeId: Guid.NewGuid(), isActive: true, id: employeeId);
+        employeeRepository.GetByIdAsync(employeeId, Arg.Any<CancellationToken>()).Returns(employee);
+
+        var catId = Guid.NewGuid();
+        categoryRepository.GetByIdAsync(catId, Arg.Any<CancellationToken>()).Returns((POS.Domain.Products.Category?)null);
+
+        var handler = new CreatePromotionCommandHandler(promotionRepository, categoryRepository, skuRepository, employeeRepository, unitOfWork, currentUser);
+        var command = new CreatePromotionCommand(
+            StoreId: null,
+            Name: "Promo Cat",
+            Type: "CartPercent",
+            Value: 10,
+            AppliesTo: "Category",
+            TargetCategoryIds: [catId]);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(PromotionErrors.CategoryNotFound);
+    }
+
+    [Fact]
+    public async Task CreatePromotion_WhenSkuDoesNotExist_ShouldReturnSkuNotFound()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        currentUser.IsChainOwner.Returns(true);
+        currentUser.EmployeeId.Returns(employeeId);
+
+        var employee = new POS.Domain.Employees.Employee("Test Employee", "emp", "hash", "pin", Guid.NewGuid(), isChainOwner: true, storeId: Guid.NewGuid(), isActive: true, id: employeeId);
+        employeeRepository.GetByIdAsync(employeeId, Arg.Any<CancellationToken>()).Returns(employee);
+
+        var skuId = Guid.NewGuid();
+        skuRepository.GetByIdsWithProductAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>()).Returns(new List<POS.Domain.Products.Sku>());
+
+        var handler = new CreatePromotionCommandHandler(promotionRepository, categoryRepository, skuRepository, employeeRepository, unitOfWork, currentUser);
+        var command = new CreatePromotionCommand(
+            StoreId: null,
+            Name: "Promo Sku",
+            Type: "PercentSku",
+            Value: 10,
+            AppliesTo: "Sku",
+            TargetSkuIds: [skuId]);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(PromotionErrors.SkuNotFound);
+    }
+
+    [Fact]
+    public async Task UpdatePromotion_WhenValidToBeforeValidFrom_ShouldReturnInvalidDateRange()
+    {
+        // Arrange
+        var promo = new Promotion(Guid.Empty, "Promo", PromotionType.CartFixed, 10000, validFrom: DateTime.UtcNow);
+        promotionRepository.GetByIdWithTargetsAsync(promo.Id, Arg.Any<CancellationToken>()).Returns(promo);
+
+        var handler = new UpdatePromotionCommandHandler(promotionRepository, unitOfWork);
+        var command = new UpdatePromotionCommand(
+            Id: promo.Id,
+            Name: "Promo",
+            Type: "CartFixed",
+            Value: 10000,
+            ValidFrom: DateTimeOffset.UtcNow.AddDays(5),
+            ValidTo: DateTimeOffset.UtcNow.AddDays(2)); // ValidTo < ValidFrom
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(PromotionErrors.InvalidDateRange);
     }
 }

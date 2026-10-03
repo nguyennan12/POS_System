@@ -145,7 +145,7 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
 
         if (to.HasValue)
         {
-            var toUtc = to.Value.UtcDateTime;
+            var toUtc = to.Value.UtcDateTime.Date.AddHours(23).AddMinutes(59).AddSeconds(59).AddMilliseconds(999);
             query = query.Where(t => t.CreatedAt <= toUtc);
         }
 

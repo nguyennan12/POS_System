@@ -21,7 +21,8 @@ public record MemberTierDto(
     decimal MinSpending,
     decimal PointRate,
     decimal DiscountRate,
-    string? DisplayColor
+    string? DisplayColor,
+    decimal PointRedemptionRate = 1000m
 );
 
 public record PagedCustomerList(
@@ -37,7 +38,9 @@ public record LoyaltyAccountDto(
     string TierName,
     decimal PointRate,
     decimal DiscountRate,
-    DateTimeOffset LastUpdated
+    DateTimeOffset LastUpdated,
+    decimal PointRedemptionRate = 1000m,
+    decimal AvailableBalanceInCurrency = 0m
 );
 
 public record PointTransactionDto(

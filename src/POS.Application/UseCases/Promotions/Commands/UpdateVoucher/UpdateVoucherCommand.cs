@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Promotions.Commands.UpdateVoucher;
 
@@ -9,4 +9,7 @@ public record UpdateVoucherCommand(
     int PerCustomerLimit,
     DateTimeOffset? ExpiresAt,
     bool IsActive
-) : IRequest<Result<VoucherDto>>;
+) : ICommand<VoucherDto>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:update";
+}

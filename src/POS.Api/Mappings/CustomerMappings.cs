@@ -43,7 +43,8 @@ public static class CustomerMappings
             dto.MinSpending,
             dto.PointRate,
             dto.DiscountRate,
-            dto.DisplayColor
+            dto.DisplayColor,
+            dto.PointRedemptionRate
         );
 
     public static LoyaltyAccountResponse ToResponse(this LoyaltyAccountDto dto) =>
@@ -53,7 +54,9 @@ public static class CustomerMappings
             dto.TierName,
             dto.PointRate,
             dto.DiscountRate,
-            dto.LastUpdated
+            dto.LastUpdated,
+            dto.PointRedemptionRate,
+            dto.AvailableBalanceInCurrency
         );
 
     public static PointTransactionResponse ToResponse(this PointTransactionDto dto) =>

@@ -18,7 +18,7 @@ public class DeleteVoucherCommandHandler(
             return PromotionErrors.VoucherNotFound;
         }
 
-        voucherRepository.Remove(voucher);
+        voucher.Deactivate();
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return true;

@@ -5,7 +5,9 @@ using POS.Domain.Promotions.Enums;
 
 namespace POS.Application.UseCases.Promotions.Queries.ValidateVoucher;
 
-public class ValidateVoucherQueryHandler(IVoucherRepository voucherRepository)
+public class ValidateVoucherQueryHandler(
+    IVoucherRepository voucherRepository,
+    ICustomerRepository customerRepository)
     : IRequestHandler<ValidateVoucherQuery, Result<ValidateVoucherResultDto>>
 {
     public async Task<Result<ValidateVoucherResultDto>> Handle(ValidateVoucherQuery request, CancellationToken cancellationToken)
@@ -64,6 +66,19 @@ public class ValidateVoucherQueryHandler(IVoucherRepository voucherRepository)
 
         if (request.CustomerId.HasValue)
         {
+            var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId.Value, cancellationToken);
+            if (customer is null || !customer.IsActive)
+            {
+                return new ValidateVoucherResultDto(
+                    IsValid: false,
+                    ErrorMessage: "Khách hàng không tồn tại hoặc đã bị tạm ngưng.",
+                    DiscountAmount: 0,
+                    VoucherCode: voucher.Code,
+                    PromotionId: voucher.PromotionId,
+                    PromotionName: voucher.Promotion?.Name
+                );
+            }
+
             var customerUsageCount = await voucherRepository.GetCustomerUsageCountAsync(
                 voucher.Id, request.CustomerId.Value, cancellationToken);
 
@@ -129,6 +144,10 @@ public class ValidateVoucherQueryHandler(IVoucherRepository voucherRepository)
         else if (promotion.Type == PromotionType.CartFixed)
         {
             discount = Math.Min(promotion.Value, request.OrderSubtotal);
+        }
+        else if (promotion.Type == PromotionType.PercentSku)
+        {
+            discount = 0;
         }
         else
         {

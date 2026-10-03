@@ -1,5 +1,5 @@
-using MediatR;
-using POS.Domain.Common;
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Queries.GetPointTransactions;
 
@@ -10,4 +10,7 @@ public record GetPointTransactionsQuery(
     string? Type = null,
     int PageNumber = 1,
     int PageSize = 20
-) : IRequest<Result<PagedPointTransactionList>>;
+) : IQuery<PagedPointTransactionList>, IRequirePermission
+{
+    public string RequiredPermission => "customers:read";
+}

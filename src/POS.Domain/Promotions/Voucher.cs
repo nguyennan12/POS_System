@@ -45,6 +45,12 @@ public class Voucher : BaseEntity
         IsActive = isActive;
     }
 
+    /// <summary>Deactivates this voucher (soft delete).</summary>
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
     /// <summary>Determines whether the voucher can be used at the specified time.</summary>
     public bool CanBeUsed(DateTime now, int customerUsedCount = 0)
     {

@@ -61,5 +61,6 @@ public record UpdateMemberTierRequest(
     decimal MinSpending,
     decimal PointRate,
     decimal DiscountRate,
-    string? DisplayColor = null
+    string? DisplayColor = null,
+    decimal? PointRedemptionRate = null
 );
