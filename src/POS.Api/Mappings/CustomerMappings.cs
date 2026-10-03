@@ -47,6 +47,9 @@ public static class CustomerMappings
             dto.PointRedemptionRate
         );
 
+    /// <summary>
+    /// Maps a loyalty account and its tier benefits to the API response.
+    /// </summary>
     public static LoyaltyAccountResponse ToResponse(this LoyaltyAccountDto dto) =>
         new(
             dto.CustomerId,
@@ -59,6 +62,9 @@ public static class CustomerMappings
             dto.AvailableBalanceInCurrency
         );
 
+    /// <summary>
+    /// Maps a point transaction to the API response, preserving its type and order reference.
+    /// </summary>
     public static PointTransactionResponse ToResponse(this PointTransactionDto dto) =>
         new(
             dto.Id,

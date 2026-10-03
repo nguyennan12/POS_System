@@ -4,6 +4,9 @@ namespace POS.Application.UseCases.Customers.Commands.AccruePoints;
 
 public class AccruePointsCommandValidator : AbstractValidator<AccruePointsCommand>
 {
+    /// <summary>
+    /// Configures a required customer ID, positive points, and a maximum note length of 500 characters.
+    /// </summary>
     public AccruePointsCommandValidator()
     {
         RuleFor(x => x.CustomerId)

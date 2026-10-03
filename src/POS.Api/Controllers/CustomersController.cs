@@ -129,6 +129,9 @@ public class CustomersController(ISender mediator) : ControllerBase
         return Ok(ApiResponse<bool>.Ok(result.Value));
     }
 
+    /// <summary>
+    /// Returns the customer's loyalty balance and membership tier benefits.
+    /// </summary>
     [HttpGet("{id:guid}/loyalty")]
     public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> GetLoyaltyAccount(
         Guid id,
@@ -143,6 +146,9 @@ public class CustomersController(ISender mediator) : ControllerBase
         return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
     }
 
+    /// <summary>
+    /// Returns a filtered page of the customer's point transactions.
+    /// </summary>
     [HttpGet("{id:guid}/loyalty/transactions")]
     public async Task<ActionResult<ApiResponse<PagedResponse<PointTransactionResponse>>>> GetPointTransactions(
         Guid id,
@@ -173,6 +179,9 @@ public class CustomersController(ISender mediator) : ControllerBase
         return Ok(ApiResponse<PagedResponse<PointTransactionResponse>>.Ok(response));
     }
 
+    /// <summary>
+    /// Accrues points for the customer and returns the updated loyalty account.
+    /// </summary>
     [HttpPost("{id:guid}/loyalty/accrue")]
     public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AccruePoints(
         Guid id,
@@ -194,6 +203,9 @@ public class CustomersController(ISender mediator) : ControllerBase
         return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
     }
 
+    /// <summary>
+    /// Redeems points for the customer and returns the updated loyalty account.
+    /// </summary>
     [HttpPost("{id:guid}/loyalty/redeem")]
     public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> RedeemPoints(
         Guid id,
@@ -215,6 +227,9 @@ public class CustomersController(ISender mediator) : ControllerBase
         return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
     }
 
+    /// <summary>
+    /// Applies a signed point adjustment with a note and returns the updated loyalty account.
+    /// </summary>
     [HttpPost("{id:guid}/loyalty/adjust")]
     public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AdjustPoints(
         Guid id,

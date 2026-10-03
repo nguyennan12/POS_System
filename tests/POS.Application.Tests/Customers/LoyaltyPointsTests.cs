@@ -6,6 +6,8 @@ using POS.Application.UseCases.Customers.Commands.AdjustPoints;
 using POS.Application.UseCases.Customers.Commands.RedeemPoints;
 using POS.Application.UseCases.Customers.Queries.GetLoyaltyAccount;
 using POS.Application.UseCases.Customers.Queries.GetPointTransactions;
+using POS.Application.UseCases.Customers;
+using POS.Domain.Common;
 using POS.Domain.Customers;
 using POS.Domain.Customers.Enums;
 using POS.Domain.Customers.Errors;
@@ -20,6 +22,116 @@ public class LoyaltyPointsTests
 
     private readonly MemberTier defaultTier = new(MemberTierName.Normal, 0m, 0.01m, 0m, "#808080");
 
+    public LoyaltyPointsTests()
+    {
+        unitOfWork.ExecuteSerializableAsync(
+                Arg.Any<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>()(call.Arg<CancellationToken>()));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MissingAccount_ShouldAddOnlyAccount(bool adjust)
+    {
+        var customer = new Customer("Customer", "0901234567", defaultTier.Id);
+        customerRepository.GetEntityByIdAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
+        customerRepository.GetLoyaltyAccountWithTierAsync(customer.Id, Arg.Any<CancellationToken>())
+            .Returns((LoyaltyAccount?)null);
+
+        var result = adjust
+            ? await new AdjustPointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(customer.Id, 25, "Adjustment"), CancellationToken.None)
+            : await new AccruePointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(customer.Id, 25), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.PointsBalance.Should().Be(25);
+        await customerRepository.Received(1).AddLoyaltyAccountAsync(
+            Arg.Is<LoyaltyAccount>(a => a.CustomerId == customer.Id && a.PointsBalance == 25), Arg.Any<CancellationToken>());
+        await customerRepository.DidNotReceive().AddAsync(
+            Arg.Any<Customer>(), Arg.Any<LoyaltyAccount>(), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(false, 20, false)]
+    [InlineData(true, 20, false)]
+    [InlineData(false, 80, true)]
+    [InlineData(true, 80, true)]
+    public async Task SerializationConflict_ShouldReloadAndRecheckBalance(bool adjust, int freshBalance, bool succeeds)
+    {
+        var customer = new Customer("Customer", "0901234567", defaultTier.Id);
+        customerRepository.GetEntityByIdAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(customer);
+        using var cancellation = new CancellationTokenSource();
+        var attempts = 0;
+        var inTransaction = false;
+        customerRepository.GetLoyaltyAccountWithTierAsync(customer.Id, Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                inTransaction.Should().BeTrue();
+                return new LoyaltyAccount(customer.Id, attempts == 1 ? 100 : freshBalance);
+            });
+        unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(_ =>
+        {
+            inTransaction.Should().BeTrue();
+            return 1;
+        });
+        unitOfWork.ExecuteSerializableAsync(
+                Arg.Any<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>(), cancellation.Token)
+            .Returns(async call =>
+            {
+                attempts++;
+                inTransaction = true;
+                var result = await call.Arg<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>()(cancellation.Token);
+                inTransaction = false;
+                // Simulate the first transaction losing a race at commit. The next read
+                // returns the freshly committed balance, as UnitOfWork clears tracking.
+                return attempts == 1
+                    ? Result<LoyaltyAccountDto>.Failure(new Error(ErrorType.Invalid, "Persistence.ConcurrentModification", "Conflict"))
+                    : result;
+            });
+
+        var result = adjust
+            ? await new AdjustPointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(customer.Id, -40, "Adjustment"), cancellation.Token)
+            : await new RedeemPointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(customer.Id, 40), cancellation.Token);
+
+        attempts.Should().Be(2);
+        result.IsSuccess.Should().Be(succeeds);
+        if (succeeds)
+            result.Value!.PointsBalance.Should().Be(freshBalance - 40);
+        else
+            result.Error.Should().Be(CustomerErrors.InsufficientPoints);
+        await customerRepository.Received(2).GetEntityByIdAsync(customer.Id, cancellation.Token);
+        await customerRepository.Received(2).GetLoyaltyAccountWithTierAsync(customer.Id, cancellation.Token);
+        await unitOfWork.Received(succeeds ? 2 : 1).SaveChangesAsync(cancellation.Token);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RepeatedSerializationConflict_ShouldStopAfterThreeAttempts(bool adjust)
+    {
+        var conflict = new Error(ErrorType.Invalid, "Persistence.ConcurrentModification", "Conflict");
+        unitOfWork.ExecuteSerializableAsync(
+                Arg.Any<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>(), Arg.Any<CancellationToken>())
+            .Returns(Result<LoyaltyAccountDto>.Failure(conflict));
+
+        var result = adjust
+            ? await new AdjustPointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(Guid.NewGuid(), -40, "Adjustment"), CancellationToken.None)
+            : await new RedeemPointsCommandHandler(customerRepository, unitOfWork)
+                .Handle(new(Guid.NewGuid(), 40), CancellationToken.None);
+
+        result.Error.Should().Be(conflict);
+        await unitOfWork.Received(3).ExecuteSerializableAsync(
+            Arg.Any<Func<CancellationToken, Task<Result<LoyaltyAccountDto>>>>(), Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// Verifies that accrual increases the balance and saves an earn transaction with its note.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_Valid_ShouldIncreaseBalanceAndRecordPointTransaction()
     {
@@ -47,6 +159,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that accrual for a missing customer returns a not-found error without saving changes.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_WhenCustomerNotFound_ShouldReturnNotFoundError()
     {
@@ -66,6 +181,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that accrual for an inactive customer returns an inactive error without saving changes.
+    /// </summary>
     [Fact]
     public async Task AccruePoints_WhenCustomerInactive_ShouldReturnInactiveError()
     {
@@ -87,6 +205,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that redemption decreases the balance and saves a redeem transaction with its note.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_Valid_ShouldDecreaseBalanceAndRecordPointTransaction()
     {
@@ -114,6 +235,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that redemption exceeding the balance preserves points and returns an insufficient-points error without saving.
+    /// </summary>
     [Fact]
     public async Task RedeemPoints_WhenPointsExceedBalance_ShouldReturnInsufficientPointsError()
     {
@@ -137,6 +261,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that a positive adjustment increases the balance and saves an adjustment transaction.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_Positive_ShouldIncreaseBalanceAndRecordPointTransaction()
     {
@@ -164,6 +291,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that a negative adjustment decreases the balance and saves the signed adjustment transaction.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_Negative_ShouldDecreaseBalanceAndRecordPointTransaction()
     {
@@ -191,6 +321,9 @@ public class LoyaltyPointsTests
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that an excessive negative adjustment preserves the balance and returns an error without saving.
+    /// </summary>
     [Fact]
     public async Task AdjustPoints_NegativeExceedingBalance_ShouldReturnInsufficientPointsError()
     {
@@ -214,6 +347,9 @@ public class LoyaltyPointsTests
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Verifies that the loyalty query returns the requested customer and point balance.
+    /// </summary>
     [Fact]
     public async Task GetLoyaltyAccount_Valid_ShouldReturnAccountDetailsAndTier()
     {
@@ -236,6 +372,9 @@ public class LoyaltyPointsTests
         result.Value.PointsBalance.Should().Be(120);
     }
 
+    /// <summary>
+    /// Verifies that the transaction query returns the expected count, items, and transaction type names.
+    /// </summary>
     [Fact]
     public async Task GetPointTransactions_Valid_ShouldReturnPagedTransactions()
     {

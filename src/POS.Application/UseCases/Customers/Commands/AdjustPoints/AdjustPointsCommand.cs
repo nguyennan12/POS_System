@@ -3,6 +3,9 @@ using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Commands.AdjustPoints;
 
+/// <summary>
+/// Requests a signed point adjustment and its required explanatory note.
+/// </summary>
 public record AdjustPointsCommand(
     Guid CustomerId,
     decimal Points,

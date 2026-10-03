@@ -36,21 +36,33 @@ public record LoyaltyTransactionFilterRequest(
     int PageSize = 20
 ) : PagedRequest(PageNumber, PageSize);
 
+/// <summary>
+/// Supplies a signed point adjustment, using Reason when Note is blank.
+/// </summary>
 public record AdjustPointsRequest(
     decimal Points,
     string? Note = null,
     string? Reason = null
 )
 {
+    /// <summary>
+    /// Gets the nonblank note, falling back to the reason or an empty string.
+    /// </summary>
     public string EffectiveNote => !string.IsNullOrWhiteSpace(Note) ? Note : (Reason ?? string.Empty);
 }
 
+/// <summary>
+/// Supplies a positive point amount to accrue with an optional order reference and note.
+/// </summary>
 public record AccruePointsRequest(
     decimal Points,
     Guid? OrderId = null,
     string? Note = null
 );
 
+/// <summary>
+/// Supplies a positive point amount to redeem with an optional order reference and note.
+/// </summary>
 public record RedeemPointsRequest(
     decimal Points,
     Guid? OrderId = null,
