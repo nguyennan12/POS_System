@@ -20,6 +20,16 @@ public interface IProductRepository
     /// <summary>Lấy sản phẩm theo ID (kèm Category và Skus).</summary>
     Task<Product?> GetByIdWithSkusAsync(Guid id, Guid storeId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// [FIX-7 / BUG-8] Batch pre-fetch: nạp tất cả sản phẩm theo danh sách tên (case-insensitive)
+    /// trong 1 query duy nhất. Dùng để tái sử dụng Product đã tồn tại trong DB thay vì tạo trùng lặp.
+    /// Key trả về: Name.ToUpperInvariant() → Product entity.
+    /// </summary>
+    Task<Dictionary<string, Product>> GetByNamesAsync(
+        IEnumerable<string> names,
+        Guid storeId,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
     void Update(Product product);
     void Remove(Product product);
