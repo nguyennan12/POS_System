@@ -117,27 +117,98 @@ public class ProductsController(ISender mediator) : ControllerBase
 
     /// <summary>
     /// [P05] Import danh sách sản phẩm hàng loạt từ file Excel.
+    /// Endpoint: POST /api/v1/products/bulk-import  (multipart/form-data, field: file)
     /// </summary>
+    /// <remarks>
+    /// Yêu cầu:
+    /// - Content-Type: multipart/form-data
+    /// - Form field: file (IFormFile)
+    /// - Đuôi file: .xlsx hoặc .xls
+    /// - Kích thước tối đa: 10 MB
+    /// </remarks>
     [HttpPost("bulk-import")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB hard-limit ở tầng HTTP server
+    [ProducesResponseType(typeof(ApiResponse<BulkImportResultResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<BulkImportResultResponse>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<BulkImportResultResponse>>> BulkImport(
         IFormFile file,
         CancellationToken cancellationToken)
     {
-        if (file == null || file.Length == 0)
+        // ── [FIX-2] Validation file upload tại Controller ──────────────────────
+
+        if (file is null || file.Length == 0)
         {
             return BadRequest(ApiResponse<BulkImportResultResponse>.Fail(
-                new ApiError { Code = "BulkImport.FileEmpty", Message = "File không được để trống.", Type = POS.Domain.Common.ErrorType.Validation }));
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code    = "BulkImport.FileEmpty",
+                    Message = "File không được để trống.",
+                    Type    = POS.Domain.Common.ErrorType.Validation
+                }));
         }
 
-        // Đọc file thành mảng byte
+        // --- Kiểm tra extension (.xlsx / .xls) ---
+        var ext = Path.GetExtension(file.FileName);
+        if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase) &&
+            !ext.Equals(".xls",  StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(ApiResponse<BulkImportResultResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code    = "BulkImport.InvalidExtension",
+                    Message = "Chỉ chấp nhận file Excel (.xlsx, .xls).",
+                    Type    = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        // --- Kiểm tra MIME type ---
+        // [BUG-6] Bổ sung thêm "application/x-xls" và các MIME phổ biến từ WPS/LibreOffice
+        var allowedMimeTypes = new[]
+        {
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-excel",
+            "application/x-xls",
+            "application/x-excel",
+            "application/octet-stream" // một số client gửi generic MIME
+        };
+        if (!allowedMimeTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            return BadRequest(ApiResponse<BulkImportResultResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code    = "BulkImport.InvalidMimeType",
+                    Message = $"MIME type không hợp lệ ({file.ContentType}). Chỉ chấp nhận file Excel.",
+                    Type    = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        // --- Kiểm tra kích thước tối đa 10 MB ---
+        const long maxSizeBytes = 10L * 1024 * 1024;
+        if (file.Length > maxSizeBytes)
+        {
+            return BadRequest(ApiResponse<BulkImportResultResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code    = "BulkImport.FileTooLarge",
+                    Message = $"Kích thước file vượt quá giới hạn 10 MB (hiện tại: {file.Length / 1024 / 1024} MB).",
+                    Type    = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        // ── Đọc file thành mảng byte ────────────────────────────────────────────
         using var memoryStream = new MemoryStream();
         await file.CopyToAsync(memoryStream, cancellationToken);
         var fileBytes = memoryStream.ToArray();
 
-        var command = new Application.UseCases.Products.Commands.BulkImportProducts.BulkImportProductsCommand(fileBytes);
-        
+        var command = new Application.UseCases.Products.Commands.BulkImportProducts.BulkImportProductsCommand(
+            FileContent: fileBytes,
+            FileName:    file.FileName);
+
         var result = await mediator.Send(command, cancellationToken);
-        
+
         if (result.IsFailure) return this.ToActionResult(result);
 
         var responseDto = result.Value!;

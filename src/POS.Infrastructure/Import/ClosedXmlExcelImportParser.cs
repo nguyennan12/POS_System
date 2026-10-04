@@ -4,17 +4,23 @@ using POS.Application.Abstractions.Import;
 
 namespace POS.Infrastructure.Import;
 
+/// <summary>
+/// Parse file Excel (.xlsx/.xls) thành danh sách ExcelProductRow.
+/// Layout cột (1-indexed):
+///   1=Name  2=CategoryName  3=BaseUnit  4=SkuCode  5=Barcode
+///   6=CostPrice  7=SellPrice  8=TaxRate  9=Brand  10=ImageUrl  11=AttributesJson
+/// </summary>
 internal sealed class ClosedXmlExcelImportParser : IExcelImportParser
 {
     public ExcelParseResult Parse(byte[] fileContent)
     {
-        var rows = new List<ExcelProductRow>();
+        var rows   = new List<ExcelProductRow>();
         var errors = new List<string>();
 
         try
         {
-            using var stream = new MemoryStream(fileContent);
-            using var workbook = new XLWorkbook(stream);
+            using var stream    = new MemoryStream(fileContent);
+            using var workbook  = new XLWorkbook(stream);
             var worksheet = workbook.Worksheets.FirstOrDefault();
 
             if (worksheet == null)
@@ -23,7 +29,6 @@ internal sealed class ClosedXmlExcelImportParser : IExcelImportParser
                 return new ExcelParseResult(rows, errors);
             }
 
-            // Assume header is on row 1, data starts at row 2
             var lastRowUsed = worksheet.LastRowUsed();
             if (lastRowUsed == null || lastRowUsed.RowNumber() < 2)
             {
@@ -31,67 +36,45 @@ internal sealed class ClosedXmlExcelImportParser : IExcelImportParser
                 return new ExcelParseResult(rows, errors);
             }
 
-            // Iterate rows
             for (int r = 2; r <= lastRowUsed.RowNumber(); r++)
             {
                 var row = worksheet.Row(r);
-                
-                // Check if row is completely empty
                 if (row.IsEmpty()) continue;
 
-                var name = GetString(row.Cell(1));
-                var categoryName = GetString(row.Cell(2));
+                var name     = GetString(row.Cell(1));
+                var catName  = GetString(row.Cell(2));
                 var baseUnit = GetString(row.Cell(3));
-                var skuCode = GetString(row.Cell(4));
-                var barcode = GetString(row.Cell(5));
-                var costPriceStr = GetString(row.Cell(6));
-                var sellPriceStr = GetString(row.Cell(7));
-                var taxRateStr = GetString(row.Cell(8));
-                var brand = GetString(row.Cell(9));
-                // cell 10 could be attributes JSON, skipped for MVP based on contract
+                var skuCode  = GetString(row.Cell(4));
+                var barcode  = GetString(row.Cell(5));
 
-                // If all essential fields are empty, might be trailing empty formatting, skip
+                // Bỏ qua dòng hoàn toàn trống (ô Name và SkuCode đều rỗng)
                 if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(skuCode))
                     continue;
 
-                decimal? costPrice = null;
-                if (!string.IsNullOrWhiteSpace(costPriceStr))
-                {
-                    if (decimal.TryParse(costPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var cp))
-                        costPrice = cp;
-                    else
-                        errors.Add($"Dòng {r}: Giá vốn không đúng định dạng số.");
-                }
+                var costPriceStr = GetString(row.Cell(6));
+                var sellPriceStr = GetString(row.Cell(7));
+                var taxRateStr   = GetString(row.Cell(8));
+                var brand        = GetString(row.Cell(9));
+                var imageUrl     = GetString(row.Cell(10));
+                var attributesJson = GetString(row.Cell(11));
 
-                decimal? sellPrice = null;
-                if (!string.IsNullOrWhiteSpace(sellPriceStr))
-                {
-                    if (decimal.TryParse(sellPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var sp))
-                        sellPrice = sp;
-                    else
-                        errors.Add($"Dòng {r}: Giá bán không đúng định dạng số.");
-                }
-
-                decimal? taxRate = null;
-                if (!string.IsNullOrWhiteSpace(taxRateStr))
-                {
-                    if (decimal.TryParse(taxRateStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var tr))
-                        taxRate = tr;
-                    else
-                        errors.Add($"Dòng {r}: Thuế suất không đúng định dạng số.");
-                }
+                decimal? costPrice = ParseDecimal(costPriceStr, r, "Giá vốn (CostPrice)", errors);
+                decimal? sellPrice = ParseDecimal(sellPriceStr, r, "Giá bán (SellPrice)", errors);
+                decimal? taxRate   = ParseDecimal(taxRateStr,   r, "Thuế suất (TaxRate)",  errors);
 
                 rows.Add(new ExcelProductRow(
-                    RowNumber: r,
-                    Name: name,
-                    CategoryName: categoryName,
-                    BaseUnit: baseUnit,
-                    SkuCode: skuCode,
-                    Barcode: barcode,
-                    CostPrice: costPrice,
-                    SellPrice: sellPrice,
-                    TaxRate: taxRate,
-                    Brand: brand
+                    RowNumber:      r,
+                    Name:           name,
+                    CategoryName:   catName,
+                    BaseUnit:       baseUnit,
+                    SkuCode:        skuCode,
+                    Barcode:        barcode,
+                    CostPrice:      costPrice,
+                    SellPrice:      sellPrice,
+                    TaxRate:        taxRate,
+                    Brand:          brand,
+                    ImageUrl:       imageUrl,
+                    AttributesJson: attributesJson
                 ));
             }
         }
@@ -103,8 +86,25 @@ internal sealed class ClosedXmlExcelImportParser : IExcelImportParser
         return new ExcelParseResult(rows, errors);
     }
 
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
     private static string? GetString(IXLCell cell)
+        => cell.Value.ToString()?.Trim();
+
+    /// <summary>
+    /// Cố gắng parse decimal, ghi lỗi vào <paramref name="errors"/> nếu thất bại.
+    /// Trả về null nếu ô rỗng.
+    /// </summary>
+    private static decimal? ParseDecimal(string? raw, int rowNumber, string columnLabel, List<string> errors)
     {
-        return cell.Value.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+
+        if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
+            return val;
+        if (decimal.TryParse(raw, NumberStyles.Any, new CultureInfo("vi-VN"), out val))
+            return val;
+
+        errors.Add($"Dòng {rowNumber}: Cột {columnLabel} không đúng định dạng số (giá trị: '{raw}').");
+        return null;
     }
 }

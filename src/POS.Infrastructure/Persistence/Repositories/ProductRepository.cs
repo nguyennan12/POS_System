@@ -98,6 +98,36 @@ internal sealed class ProductRepository(AppDbContext dbContext) : IProductReposi
     {
         dbContext.Products.Remove(product);
     }
+
+    /// <inheritdoc/>
+    public async Task<Dictionary<string, Product>> GetByNamesAsync(
+        IEnumerable<string> names,
+        Guid storeId,
+        CancellationToken cancellationToken = default)
+    {
+        var nameList = names
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Select(n => n.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (nameList.Count == 0)
+            return new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+
+        // Convert to upper for server-side comparison via EF
+        var upperNames = nameList.Select(n => n.ToUpperInvariant()).ToList();
+
+        var products = await dbContext.Products
+            .Where(p => p.StoreId == storeId && upperNames.Contains(p.Name.ToUpper()))
+            .ToListAsync(cancellationToken);
+
+        // Build case-insensitive dictionary — last-writer wins if two products have same Name
+        var result = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in products)
+            result[p.Name] = p;
+
+        return result;
+    }
 }
 
 /// <summary>
