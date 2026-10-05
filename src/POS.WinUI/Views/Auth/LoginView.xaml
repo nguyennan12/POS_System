@@ -271,7 +271,11 @@
                         <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
                         <shared:TextInputField
+                            Height="50"
+                            CornerRadius="12"
                             Icon="Person24"
+                            IconSize="18"
+                            InputFontSize="14"
                             PlaceholderText="Nhập tên đăng nhập"
                             Text="{Binding Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             Margin="0,0,0,16"/>

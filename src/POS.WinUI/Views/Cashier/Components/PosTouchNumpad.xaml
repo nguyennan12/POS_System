@@ -1,0 +1,127 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.PosTouchNumpad"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <UserControl.Resources>
+        <!-- Numpad Tab Style -->
+        <Style x:Key="NumpadTabStyle" TargetType="Button">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="TabBorder" 
+                                CornerRadius="8" 
+                                Background="{TemplateBinding Background}" 
+                                Padding="8,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#E2E8F0"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- ── BÀN PHÍM CẢM ỨNG NUMPAD ── -->
+    <Border Background="{StaticResource CardBackgroundBrush}" 
+            BorderBrush="{StaticResource InputBorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="14" 
+            Padding="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" Color="#0F172A" Opacity="0.03" ShadowDepth="2" Direction="270"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Row 0: Chế độ Tab Numpad -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 1: Màn hình hiển thị số -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 2: Lưới phím số -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Tab Chế độ Numpad -->
+            <Border Grid.Row="0" Background="#F1F5F9" CornerRadius="8" Padding="2" Margin="0,0,0,6">
+                <UniformGrid Columns="4">
+                    <Button Content="Số lượng" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Số lượng"/>
+                    <Button Content="CK %" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="CK %"/>
+                    <Button Content="Giảm đ" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Giảm đ"/>
+                    <Button Content="Tiền KH" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Tiền KH" FontWeight="Bold"/>
+                </UniformGrid>
+            </Border>
+
+            <!-- Màn hình hiển thị giá trị gõ -->
+            <Border Grid.Row="1" Background="{StaticResource InputBackgroundBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,4" Margin="0,0,0,6">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding NumpadDisplayLabel}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding NumpadDisplaySubLabel}" FontSize="9.5" Foreground="{StaticResource TextPlaceholderBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding NumpadDisplayValue}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Lưới phím số cảm ứng 4x4 -->
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition Height="4"/>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition Height="4"/>
+                    <RowDefinition Height="36"/>
+                    <RowDefinition Height="4"/>
+                    <RowDefinition Height="36"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Hàng 1: 1, 2, 3, Xóa -->
+                <Button Grid.Row="0" Grid.Column="0" Content="1" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="1"/>
+                <Button Grid.Row="0" Grid.Column="2" Content="2" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="2"/>
+                <Button Grid.Row="0" Grid.Column="4" Content="3" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="3"/>
+                <Button Grid.Row="0" Grid.Column="6" Content="Xóa" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="11.5" Foreground="{StaticResource DangerBrush}" Command="{Binding NumpadClearCommand}"/>
+
+                <!-- Hàng 2: 4, 5, 6, Backspace -->
+                <Button Grid.Row="2" Grid.Column="0" Content="4" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="4"/>
+                <Button Grid.Row="2" Grid.Column="2" Content="5" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="5"/>
+                <Button Grid.Row="2" Grid.Column="4" Content="6" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="6"/>
+                <Button Grid.Row="2" Grid.Column="6" Style="{StaticResource NumpadButtonStyle}" Height="36" Command="{Binding NumpadBackspaceCommand}">
+                    <ui:SymbolIcon Symbol="Backspace24" FontSize="15" Foreground="{StaticResource TextSecondaryBrush}"/>
+                </Button>
+
+                <!-- Hàng 3: 7, 8, 9, Áp dụng -->
+                <Button Grid.Row="4" Grid.Column="0" Content="7" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="7"/>
+                <Button Grid.Row="4" Grid.Column="2" Content="8" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="8"/>
+                <Button Grid.Row="4" Grid.Column="4" Content="9" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="9"/>
+                <Button Grid.Row="4" Grid.RowSpan="3" Grid.Column="6" Content="Áp dụng" Height="76" FontSize="12" FontWeight="Bold"
+                        Style="{StaticResource PrimaryButtonStyle}" 
+                        Command="{Binding NumpadApplyCommand}"/>
+
+                <!-- Hàng 4: 00, 0, 000 -->
+                <Button Grid.Row="6" Grid.Column="0" Content="00" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="14" Command="{Binding NumpadDigitCommand}" CommandParameter="00"/>
+                <Button Grid.Row="6" Grid.Column="2" Content="0" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="15" Command="{Binding NumpadDigitCommand}" CommandParameter="0"/>
+                <Button Grid.Row="6" Grid.Column="4" Content="000" Style="{StaticResource NumpadButtonStyle}" Height="36" FontSize="13" Command="{Binding NumpadDigitCommand}" CommandParameter="000"/>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

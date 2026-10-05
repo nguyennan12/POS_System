@@ -5,14 +5,13 @@
              x:Name="Root">
 
     <UserControl.Resources>
-        <!-- Style làm sạch TextBox bên trong: bỏ viền/nền mặc định của WPF-UI, thêm padding trên/dưới rộng rãi -->
+        <!-- Style làm sạch TextBox bên trong: loại bỏ triệt để viền/nền và gạch chân xanh mặc định của WPF-UI -->
         <Style x:Key="CleanInnerTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-            <Setter Property="FontSize" Value="14"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="8,10,8,10"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -29,66 +28,97 @@
         </Style>
     </UserControl.Resources>
 
-    <!-- Khung Input bo góc chuẩn 12px, chiều cao 50px -->
+    <!-- Khung Input dùng chung: bo góc, viền đổi màu cam khi focus, hỗ trợ click focus toàn vùng -->
     <Border x:Name="ContainerBorder"
             Background="{StaticResource InputBackgroundBrush}"
             BorderBrush="{StaticResource InputBorderBrush}"
             BorderThickness="1" 
-            CornerRadius="12" 
-            Height="50">
+            CornerRadius="{Binding CornerRadius, ElementName=Root}"
+            Padding="10,0"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch"
+            MouseLeftButtonDown="OnContainerMouseLeftButtonDown">
         <Border.Style>
             <Style TargetType="Border">
                 <Style.Triggers>
-                    <!-- Đổi màu viền sang màu cam thương hiệu khi người dùng focus vào ô nhập -->
+                    <!-- Đổi màu viền sang cam thương hiệu chuẩn khi người dùng focus vào ô nhập -->
                     <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=Root}" Value="True">
-                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryAccentBrush}"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>
 
-        <Grid Margin="12,0">
+        <Grid VerticalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Icon trái -->
             <ui:SymbolIcon Grid.Column="0"
                            Symbol="{Binding Icon, ElementName=Root}"
-                           FontSize="18"
+                           FontSize="{Binding IconSize, ElementName=Root}"
                            Foreground="{StaticResource TextPlaceholderBrush}"
                            Margin="0,0,8,0"
-                           VerticalAlignment="Center"/>
+                           VerticalAlignment="Center"
+                           Visibility="{Binding ShowIcon, ElementName=Root, Converter={StaticResource BoolToVis}}"/>
 
-            <!-- TextBox + Placeholder -->
+            <!-- Khung nhập Text + Text gợi ý Placeholder nằm cùng vị trí -->
             <Grid Grid.Column="1" VerticalAlignment="Center">
                 <TextBox x:Name="InnerTextBox"
                          Style="{StaticResource CleanInnerTextBoxStyle}"
-                         Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                         FontSize="{Binding InputFontSize, ElementName=Root}"
+                         Text="{Binding Text, ElementName=Root, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         KeyDown="OnInnerTextBoxKeyDown"
+                         VerticalAlignment="Center"/>
 
                 <TextBlock Text="{Binding PlaceholderText, ElementName=Root}"
                            Foreground="{StaticResource TextPlaceholderBrush}"
-                           FontSize="14"
+                           FontSize="{Binding InputFontSize, ElementName=Root}"
                            VerticalAlignment="Center"
                            IsHitTestVisible="False"
-                           Margin="8,0,0,0">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <!-- Hiện placeholder khi TextBox trống -->
-                                <DataTrigger Binding="{Binding Text, ElementName=InnerTextBox}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Text, ElementName=InnerTextBox}" Value="{x:Null}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                           Margin="0,0,0,0"
+                           Visibility="{Binding Text, ElementName=InnerTextBox, Converter={StaticResource InverseNullOrEmptyToVis}}"/>
             </Grid>
+
+            <!-- Nút Clear nhanh (chỉ hiện khi có văn bản và ShowClearButton = True) -->
+            <Button x:Name="ClearButton"
+                    Grid.Column="2" 
+                    Width="20" Height="20" Padding="0" 
+                    Background="Transparent" BorderThickness="0" 
+                    Cursor="Hand" Margin="6,0,0,0"
+                    Click="OnClearButtonClick">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Background="Transparent" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <ui:SymbolIcon x:Name="ClearIcon" Symbol="DismissCircle24" FontSize="14" Foreground="{StaticResource TextPlaceholderBrush}"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ClearIcon" Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding ShowClearButton, ElementName=Root}" Value="True"/>
+                                    <Condition Binding="{Binding Text, ElementName=InnerTextBox, Converter={StaticResource NullOrEmptyToVis}}" Value="Visible"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </Grid>
     </Border>
 </UserControl>

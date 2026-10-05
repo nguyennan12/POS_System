@@ -1,0 +1,150 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.PosCheckoutPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:shared="clr-namespace:POS.WinUI.Views.Shared">
+
+    <!-- ── ƯU ĐÃI & TỔNG KẾT THANH TOÁN ── -->
+    <Border Background="{StaticResource CardBackgroundBrush}" 
+            BorderBrush="{StaticResource InputBorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="14" 
+            Padding="10">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" Color="#0F172A" Opacity="0.03" ShadowDepth="2" Direction="270"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Tiêu đề & Ô Voucher -->
+                <RowDefinition Height="Auto"/>
+                <!-- Tích điểm -->
+                <RowDefinition Height="Auto"/>
+                <!-- Bảng tổng kết tiền -->
+                <RowDefinition Height="*"/>
+                <!-- Cụm nút CTA Thanh toán -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Tiêu đề Ưu đãi & Nhập mã Voucher -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                <TextBlock Text="ƯU ĐÃI" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,3"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="6"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <shared:TextInputField Grid.Column="0"
+                                           Height="34"
+                                           CornerRadius="8"
+                                           Icon="Tag24"
+                                           IconSize="13"
+                                           InputFontSize="12"
+                                           PlaceholderText="Nhập mã voucher"
+                                           ShowClearButton="True"
+                                           EnterCommand="{Binding ApplyVoucherCommand}"
+                                           EnterCommandParameter="{Binding VoucherCode}"
+                                           Text="{Binding VoucherCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <Button Grid.Column="2" Content="Áp dụng" Height="34" Style="{StaticResource SmallOutlineButtonStyle}" Command="{Binding ApplyVoucherCommand}" CommandParameter="{Binding VoucherCode}"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Tích điểm hội viên -->
+            <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="8,3" Margin="0,0,0,6">
+                <Grid>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Dùng điểm tích lũy" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="Chọn khách thành viên để dùng điểm" FontSize="9.5" Foreground="{StaticResource TextPlaceholderBrush}"/>
+                    </StackPanel>
+                    <CheckBox IsChecked="{Binding UseLoyaltyPoints}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Bảng Tổng Kết Tiền -->
+            <StackPanel Grid.Row="2" VerticalAlignment="Bottom" Margin="0,0,0,6">
+                <Grid Margin="0,0,0,3">
+                    <TextBlock Text="Tạm tính" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="{Binding SubTotal, StringFormat='{}{0:N0} đ'}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right"/>
+                </Grid>
+                <Grid Margin="0,0,0,4" Visibility="{Binding TotalDiscount, Converter={StaticResource NullOrEmptyToVis}}">
+                    <TextBlock Text="Giảm giá" FontSize="11.5" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock Text="{Binding TotalDiscount, StringFormat='-{0:N0} đ'}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Right"/>
+                </Grid>
+                <Separator Background="#E2E8F0" Margin="0,1,0,4"/>
+                <Grid>
+                    <TextBlock Text="Tổng cộng" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:N0} đ'}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Right"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Cụm Nút Hành Động (In F6 + Nút Thanh Toán F1) -->
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <!-- Nút In hóa đơn F6 -->
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="6"/>
+                    <!-- Nút Thanh Toán Chính F1 -->
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" 
+                        Height="44" 
+                        Width="44"
+                        Command="{Binding PrintBillCommand}"
+                        Background="{StaticResource InputBackgroundBrush}"
+                        BorderBrush="{StaticResource InputBorderBrush}"
+                        BorderThickness="1"
+                        Cursor="Hand"
+                        ToolTip="In tạm tính / In hóa đơn (F6)">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="10" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Print24" FontSize="16" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Text="F6" FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <!-- Nút CTA Thanh Toán Chính (F1) -->
+                <Button Grid.Column="2" 
+                        Height="44"
+                        Command="{Binding CheckoutCommand}"
+                        Cursor="Hand"
+                        ToolTip="Thanh toán đơn hàng (Phím tắt F1)">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="PayBorder"
+                                    Background="{StaticResource PrimaryBrush}"
+                                    CornerRadius="10"
+                                    Padding="12,0">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="10" Color="{StaticResource BrandPrimaryColor}" Opacity="0.3" ShadowDepth="2" Direction="270"/>
+                                </Border.Effect>
+                                <Grid VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Payment24" FontSize="18" Foreground="White" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Thanh toán" FontSize="15" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                        <Border Background="#33FFFFFF" CornerRadius="5" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="F1" FontSize="10.5" FontWeight="Bold" Foreground="White"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="PayBorder" Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="PayBorder" Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

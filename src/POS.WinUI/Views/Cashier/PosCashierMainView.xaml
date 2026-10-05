@@ -3,83 +3,116 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
              xmlns:sharedComp="clr-namespace:POS.WinUI.Views.Shared.Components"
+             xmlns:cashierComp="clr-namespace:POS.WinUI.Views.Cashier.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="800" d:DesignWidth="1200"
+             d:DesignHeight="850" d:DesignWidth="1400"
              Focusable="True">
 
     <UserControl.InputBindings>
+        <KeyBinding Key="F1" Command="{Binding CheckoutCommand}"/>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
+        <KeyBinding Key="F6" Command="{Binding PrintBillCommand}"/>
     </UserControl.InputBindings>
 
+    <!-- ════════════════════ MAIN SHELL ════════════════════ -->
     <Grid Background="{StaticResource InputBackgroundBrush}">
         <Grid.RowDefinitions>
-            <!-- Row 0: Top Header -->
+            <!-- Row 0: App Header Bar -->
             <RowDefinition Height="Auto"/>
-            <!-- Row 1: Vùng làm việc Bán hàng / Quầy Thu ngân POS -->
+            <!-- Row 1: Vùng làm việc chính Bán Hàng POS (2 Cột Cân Xứng) -->
             <RowDefinition Height="*"/>
-            <!-- Row 2: Bottom Footer -->
+            <!-- Row 2: App Footer Bar -->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- ════════════════════ 1. TOP HEADER (Shared Component) ════════════════════ -->
+
+
+        <!-- ════════════════════ 1. TOP HEADER ════════════════════ -->
         <sharedComp:AppHeaderBar Grid.Row="0" IsPosMode="True" ShowSidebarToggle="False"/>
 
-        <!-- ════════════════════ 2. POS CASHIER MAIN WORKSPACE ═════════════════════ -->
-        <Grid Grid.Row="1" Margin="24,18,24,20">
-            <!-- Khung Card màn hình Quầy thu ngân -->
-            <Border Background="{StaticResource CardBackgroundBrush}" 
+        <!-- ════════════════════ 2. CASHIER MAIN WORKSPACE ════════════════════ -->
+        <Grid Grid.Row="1" Margin="14,10,14,10">
+            <Grid.ColumnDefinitions>
+                <!-- CỘT TRÁI (LEFT): Danh mục & Lưới sản phẩm (~58%) -->
+                <ColumnDefinition Width="58*"/>
+                <ColumnDefinition Width="12"/>
+                <!-- CỘT PHẢI (RIGHT): Giỏ hàng, Bàn phím & Thanh toán (~42%) -->
+                <ColumnDefinition Width="42*"/>
+            </Grid.ColumnDefinitions>
+
+
+            <!-- ── VÙNG BÊN TRÁI: SEARCH, CATEGORIES & PRODUCT GRID ── -->
+            <Border Grid.Column="0" 
+                    Background="{StaticResource CardBackgroundBrush}" 
                     BorderBrush="{StaticResource InputBorderBrush}" 
                     BorderThickness="1" 
                     CornerRadius="16" 
-                    Padding="40">
+                    Padding="14,12,14,12">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="20" Color="#0F172A" Opacity="0.03" ShadowDepth="3" Direction="270"/>
+                    <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.03" ShadowDepth="2" Direction="270"/>
                 </Border.Effect>
 
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <!-- Icon giỏ hàng / quầy bán hàng -->
-                    <Border Width="76" Height="76" CornerRadius="22" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
-                        <ui:SymbolIcon Symbol="Cart24" FontSize="36" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <!-- Row 0: Thanh Tìm kiếm + Nút Quét mã vạch -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Row 1: Thanh Chọn Danh mục Pills -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Row 2: Lưới Danh sách Thẻ Sản Phẩm -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                    <!-- Tag phân hệ -->
-                    <Border Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14,5" HorizontalAlignment="Center" Margin="0,20,0,10">
-                        <TextBlock Text="MÀN HÌNH BÁN HÀNG &amp; THU NGÂN" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-                    </Border>
-
-                    <!-- Tiêu đề -->
-                    <TextBlock Text="Quầy bán lẻ trực tiếp (POS Cashier)" 
-                               FontSize="22" 
-                               FontWeight="Bold" 
-                               Foreground="{StaticResource TextPrimaryBrush}" 
-                               HorizontalAlignment="Center"/>
-                    
-                    <!-- Mô tả -->
-                    <TextBlock Text="Khu vực quét mã vạch sản phẩm, thêm đơn hàng vào giỏ và thanh toán trực tiếp tại quầy thu ngân." 
-                               FontSize="13.5" 
-                               Foreground="{StaticResource TextMutedBrush}" 
-                               HorizontalAlignment="Center" 
-                               TextAlignment="Center"
-                               MaxWidth="520"
-                               TextWrapping="Wrap"
-                               LineHeight="22"
-                               Margin="0,8,0,0"/>
-
-                    <!-- Ghi chú phân quyền an toàn -->
-                    <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="20,12" Margin="0,28,0,0" HorizontalAlignment="Center">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="LockClosed24" FontSize="16" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Phân quyền bảo mật: Nhân viên Thu ngân chỉ hoạt động tại màn hình này và không có quyền truy cập Trang Quản lý." 
-                                       FontSize="12.5" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                    <cashierComp:PosSearchBar Grid.Row="0" Margin="0,0,0,10"/>
+                    <cashierComp:PosCategoryBar Grid.Row="1" Margin="0,0,0,12"/>
+                    <cashierComp:PosProductCatalog Grid.Row="2" ProductCardClicked="OnProductCardClick"/>
+                </Grid>
             </Border>
+
+            <!-- ── VÙNG BÊN PHẢI: KHÁCH HÀNG, GIỎ HÀNG, NUMPAD & CHECKOUT ── -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <!-- Row 0: Khách hàng -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Row 1: Giỏ hàng -->
+                    <RowDefinition Height="*"/>
+                    <!-- Row 2: Bàn phím số Numpad & Ưu đãi / Thanh toán -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Box Khách Hàng -->
+                <cashierComp:PosCustomerSelector Grid.Row="0" Margin="0,0,0,8"/>
+
+                <!-- Box Giỏ Hàng -->
+                <cashierComp:PosCartView x:Name="CartView" Grid.Row="1" Margin="0,0,0,8"/>
+
+                <!-- Box Numpad & Thanh Toán -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <!-- Cột Numpad cảm ứng (50%) -->
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="8"/>
+                        <!-- Cột Ưu đãi & Tổng tiền (50%) -->
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <cashierComp:PosTouchNumpad Grid.Column="0"/>
+                    <cashierComp:PosCheckoutPanel Grid.Column="2"/>
+                </Grid>
+            </Grid>
         </Grid>
 
-        <!-- ════════════════════ 3. BOTTOM FOOTER (Shared Component) ════════════════════ -->
+        <!-- ════════════════════ 3. BOTTOM FOOTER ════════════════════ -->
         <sharedComp:AppFooterBar Grid.Row="2" IsPosMode="True"/>
+
+        <!-- ════════════════════ TOAST NOTIFICATION OVERLAY (TOP-MOST) ════════════════════ -->
+        <shared:ToastNotification Grid.Row="0" Grid.RowSpan="3"
+                                  Message="{Binding ToastMessage}"
+                                  ToastType="{Binding ToastType}"
+                                  Panel.ZIndex="99999"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Top"
+                                  Margin="0,15,0,0"/>
     </Grid>
 </UserControl>
