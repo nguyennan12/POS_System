@@ -12,323 +12,323 @@ namespace POS.WinUI.ViewModels.Auth;
 
 public partial class LoginViewModel : ObservableObject
 {
-    private readonly SessionService _sessionService;
-    private readonly AuthApiClient _authApiClient;
-    private readonly StoreApiClient _storeApiClient;
-    private readonly NetworkStatusService _networkStatusService;
-    private readonly INavigationService _navigationService;
+  private readonly SessionService _sessionService;
+  private readonly AuthApiClient _authApiClient;
+  private readonly StoreApiClient _storeApiClient;
+  private readonly NetworkStatusService _networkStatusService;
+  private readonly INavigationService _navigationService;
 
-    // ── Network ───────────────────────────────────────────────────
-    [ObservableProperty] private bool _isServerConnected;
-    [ObservableProperty] private string _serverStatusText = string.Empty;
+  // ── Network ───────────────────────────────────────────────────
+  [ObservableProperty] private bool _isServerConnected;
+  [ObservableProperty] private string _serverStatusText = string.Empty;
 
-    // ── Stores ────────────────────────────────────────────────────
-    [ObservableProperty] private ObservableCollection<StoreItem> _stores = new();
-    [ObservableProperty] private StoreItem? _selectedStore;
-    [ObservableProperty] private bool _isLoadingStores = false;
+  // ── Stores ────────────────────────────────────────────────────
+  [ObservableProperty] private ObservableCollection<StoreItem> _stores = new();
+  [ObservableProperty] private StoreItem? _selectedStore;
+  [ObservableProperty] private bool _isLoadingStores = false;
 
-    // ── Login form ────────────────────────────────────────────────
-    [ObservableProperty] private string _username = string.Empty;
-    [ObservableProperty] private string _password = string.Empty;
-    [ObservableProperty] private bool _rememberMe = true;
+  // ── Login form ────────────────────────────────────────────────
+  [ObservableProperty] private string _username = string.Empty;
+  [ObservableProperty] private string _password = string.Empty;
+  [ObservableProperty] private bool _rememberMe = true;
 
-    // ── PIN ───────────────────────────────────────────────────────
-    [ObservableProperty] private string _pin = string.Empty;
-    [ObservableProperty] private bool _isPinMode = false;
+  // ── PIN ───────────────────────────────────────────────────────
+  [ObservableProperty] private string _pin = string.Empty;
+  [ObservableProperty] private bool _isPinMode = false;
 
-    /// <summary>True khi đang ở tab Mật khẩu — dùng để set Tag trên SegmentedTabButton.</summary>
-    public bool IsPasswordMode => !IsPinMode;
+  ///  True khi đang ở tab Mật khẩu — dùng để set Tag trên SegmentedTabButton.</summary>
+  public bool IsPasswordMode => !IsPinMode;
 
-    /// <summary>Số ký tự PIN đã nhập — dùng để drive PinInput.PinLength DP.</summary>
-    [ObservableProperty] private int _pinLength;
+  ///  Số ký tự PIN đã nhập — dùng để drive PinInput.PinLength DP.</summary>
+  [ObservableProperty] private int _pinLength;
 
-    /// <summary>Cho phép submit khi đủ 6 số và không đang loading.</summary>
-    public bool CanSubmitPin => Pin.Length == 6 && !IsLoading;
+  ///  Cho phép submit khi đủ 6 số và không đang loading.</summary>
+  public bool CanSubmitPin => Pin.Length == 6 && !IsLoading;
 
-    // ── State ─────────────────────────────────────────────────────
-    [ObservableProperty] private bool _isLoading = false;
-    [ObservableProperty] private string? _errorMessage;
-    [ObservableProperty] private string? _successMessage;
+  // ── State ─────────────────────────────────────────────────────
+  [ObservableProperty] private bool _isLoading = false;
+  [ObservableProperty] private string? _errorMessage;
+  [ObservableProperty] private string? _successMessage;
 
-    public LoginViewModel(
-        SessionService sessionService,
-        AuthApiClient authApiClient,
-        StoreApiClient storeApiClient,
-        NetworkStatusService networkStatusService,
-        INavigationService navigationService)
+  public LoginViewModel(
+      SessionService sessionService,
+      AuthApiClient authApiClient,
+      StoreApiClient storeApiClient,
+      NetworkStatusService networkStatusService,
+      INavigationService navigationService)
+  {
+    _sessionService = sessionService;
+    _authApiClient = authApiClient;
+    _storeApiClient = storeApiClient;
+    _networkStatusService = networkStatusService;
+    _navigationService = navigationService;
+
+    _isServerConnected = _networkStatusService.IsOnline;
+    _serverStatusText = _networkStatusService.StatusText;
+
+    _networkStatusService.StatusChanged += OnNetworkStatusChanged;
+
+    if (_networkStatusService.IsOnline)
+      _ = LoadStoresAsync();
+  }
+
+  private void OnNetworkStatusChanged(bool isOnline)
+  {
+    IsServerConnected = isOnline;
+    ServerStatusText = _networkStatusService.StatusText;
+
+    if (isOnline && Stores.Count == 0)
+      _ = LoadStoresAsync();
+  }
+
+  [RelayCommand]
+  public async Task CheckConnectionAndLoadStoresAsync()
+  {
+    ServerStatusText = "Đang kiểm tra kết nối...";
+    bool isHealthy = await _networkStatusService.CheckHealthAsync();
+    IsServerConnected = isHealthy;
+    ServerStatusText = _networkStatusService.StatusText;
+
+    if (isHealthy && Stores.Count == 0)
+      await LoadStoresAsync();
+  }
+
+  private async Task LoadStoresAsync()
+  {
+    IsLoadingStores = true;
+    try
     {
-        _sessionService = sessionService;
-        _authApiClient = authApiClient;
-        _storeApiClient = storeApiClient;
-        _networkStatusService = networkStatusService;
-        _navigationService = navigationService;
+      var res = await _storeApiClient.GetPublicStoresAsync();
+      if (res?.Success == true && res.Data != null)
+      {
+        Stores.Clear();
+        foreach (var s in res.Data)
+          Stores.Add(new StoreItem { Id = s.Id, Name = s.Name });
 
-        _isServerConnected = _networkStatusService.IsOnline;
-        _serverStatusText = _networkStatusService.StatusText;
+        if (Stores.Count > 0)
+          SelectedStore = Stores[0];
+      }
+    }
+    catch
+    {
+      // NetworkStatusHandler đã tự động bắt lỗi và gọi ReportFailure()
+    }
+    finally
+    {
+      IsLoadingStores = false;
+    }
+  }
 
-        _networkStatusService.StatusChanged += OnNetworkStatusChanged;
+  // ── PIN input handlers ────────────────────────────────────────
 
-        if (_networkStatusService.IsOnline)
-            _ = LoadStoresAsync();
+  partial void OnPinChanged(string value)
+  {
+    PinLength = value.Length;
+    OnPropertyChanged(nameof(CanSubmitPin));
+
+    // Tự động đăng nhập khi nhập đủ 6 số PIN
+    if (value.Length == 6 && !IsLoading)
+      _ = LoginPinAsync();
+  }
+
+  [RelayCommand]
+  private void SwitchToPassword()
+  {
+    IsPinMode = false;
+    ErrorMessage = null;
+  }
+
+  [RelayCommand]
+  private void SwitchToPin()
+  {
+    IsPinMode = true;
+    ErrorMessage = null;
+  }
+
+  partial void OnIsPinModeChanged(bool value) =>
+      OnPropertyChanged(nameof(IsPasswordMode));
+
+  [RelayCommand]
+  private void AddPin(string digit)
+  {
+    if (IsLoading || Pin.Length >= 6) return;
+    ErrorMessage = null;
+    Pin += digit;
+  }
+
+  [RelayCommand]
+  private void BackspacePin()
+  {
+    if (IsLoading || Pin.Length == 0) return;
+    ErrorMessage = null;
+    Pin = Pin[..^1];
+  }
+
+  [RelayCommand]
+  private void ClearPin()
+  {
+    if (IsLoading) return;
+    ErrorMessage = null;
+    Pin = string.Empty;
+  }
+
+  // ── Toast helper ──────────────────────────────────────────────
+
+  private CancellationTokenSource? _toastCts;
+
+  private async Task ShowSuccessToastAsync(string message, int durationMs = 3000)
+  {
+    _toastCts?.Cancel();
+    _toastCts = new CancellationTokenSource();
+    var token = _toastCts.Token;
+
+    SuccessMessage = message;
+    ErrorMessage = null;
+
+    try
+    {
+      await Task.Delay(durationMs, token);
+      if (!token.IsCancellationRequested)
+        SuccessMessage = null;
+    }
+    catch (TaskCanceledException)
+    {
+      // Ignore — another toast was triggered or CTS was disposed
+    }
+  }
+
+  // ── Login commands ────────────────────────────────────────────
+
+  [RelayCommand]
+  private async Task LoginPasswordAsync()
+  {
+    if (IsLoading) return;
+    ErrorMessage = null;
+
+    if (string.IsNullOrWhiteSpace(Username))
+    {
+      ErrorMessage = "Vui lòng nhập tên đăng nhập.";
+      return;
     }
 
-    private void OnNetworkStatusChanged(bool isOnline)
+    if (string.IsNullOrEmpty(Password))
     {
-        IsServerConnected = isOnline;
-        ServerStatusText = _networkStatusService.StatusText;
-
-        if (isOnline && Stores.Count == 0)
-            _ = LoadStoresAsync();
+      ErrorMessage = "Vui lòng nhập mật khẩu.";
+      return;
     }
 
-    [RelayCommand]
-    public async Task CheckConnectionAndLoadStoresAsync()
+    IsLoading = true;
+    try
     {
-        ServerStatusText = "Đang kiểm tra kết nối...";
-        bool isHealthy = await _networkStatusService.CheckHealthAsync();
-        IsServerConnected = isHealthy;
-        ServerStatusText = _networkStatusService.StatusText;
+      var response = await _authApiClient.LoginWithPasswordAsync(Username.Trim(), Password);
+      if (response?.Success == true && response.Data != null)
+      {
+        var auth = response.Data;
+        var storeId = auth.User.StoreId?.ToString() ?? (SelectedStore?.Id.ToString() ?? string.Empty);
+        var storeName = SelectedStore?.Name;
+        _sessionService.SetSession(
+            auth.AccessToken,
+            auth.RefreshToken,
+            auth.User.Id.ToString(),
+            auth.User.Name,
+            auth.User.RoleName,
+            storeId,
+            storeName,
+            auth.User.IsChainOwner,
+            auth.User.Permissions);
 
-        if (isHealthy && Stores.Count == 0)
-            await LoadStoresAsync();
-    }
+        _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
+        await Task.Delay(400);
 
-    private async Task LoadStoresAsync()
-    {
-        IsLoadingStores = true;
-        try
+        if (_sessionService.IsCashier)
         {
-            var res = await _storeApiClient.GetPublicStoresAsync();
-            if (res?.Success == true && res.Data != null)
-            {
-                Stores.Clear();
-                foreach (var s in res.Data)
-                    Stores.Add(new StoreItem { Id = s.Id, Name = s.Name });
-
-                if (Stores.Count > 0)
-                    SelectedStore = Stores[0];
-            }
+          _navigationService.NavigateTo<PosCashierMainView>();
         }
-        catch
+        else
         {
-            // NetworkStatusHandler đã tự động bắt lỗi và gọi ReportFailure()
+          _navigationService.NavigateTo<ManagementMainView>();
         }
-        finally
+      }
+      else
+      {
+        ErrorMessage = response?.Error?.Message ?? response?.Message ?? "Đăng nhập không thành công.";
+      }
+    }
+    catch (Exception ex)
+    {
+      ErrorMessage = ex.Message;
+    }
+    finally
+    {
+      IsLoading = false;
+    }
+  }
+
+  [RelayCommand]
+  private async Task LoginPinAsync()
+  {
+    if (IsLoading) return;
+
+    if (SelectedStore == null)
+    {
+      ErrorMessage = "Vui lòng chọn chi nhánh trước khi đăng nhập bằng PIN.";
+      Pin = string.Empty;
+      return;
+    }
+
+    if (Pin.Length != 6)
+    {
+      ErrorMessage = "Vui lòng nhập đủ 6 số mã PIN.";
+      return;
+    }
+
+    ErrorMessage = null;
+    IsLoading = true;
+    try
+    {
+      var response = await _authApiClient.LoginWithPinAsync(SelectedStore.Id, Pin);
+      if (response?.Success == true && response.Data != null)
+      {
+        var auth = response.Data;
+        var storeId = auth.User.StoreId?.ToString() ?? SelectedStore.Id.ToString();
+        var storeName = SelectedStore.Name;
+        _sessionService.SetSession(
+            auth.AccessToken,
+            auth.RefreshToken,
+            auth.User.Id.ToString(),
+            auth.User.Name,
+            auth.User.RoleName,
+            storeId,
+            storeName,
+            auth.User.IsChainOwner,
+            auth.User.Permissions);
+
+        _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
+        await Task.Delay(400);
+
+        if (_sessionService.IsCashier)
         {
-            IsLoadingStores = false;
+          _navigationService.NavigateTo<PosCashierMainView>();
         }
-    }
-
-    // ── PIN input handlers ────────────────────────────────────────
-
-    partial void OnPinChanged(string value)
-    {
-        PinLength = value.Length;
-        OnPropertyChanged(nameof(CanSubmitPin));
-
-        // Tự động đăng nhập khi nhập đủ 6 số PIN
-        if (value.Length == 6 && !IsLoading)
-            _ = LoginPinAsync();
-    }
-
-    [RelayCommand]
-    private void SwitchToPassword()
-    {
-        IsPinMode = false;
-        ErrorMessage = null;
-    }
-
-    [RelayCommand]
-    private void SwitchToPin()
-    {
-        IsPinMode = true;
-        ErrorMessage = null;
-    }
-
-    partial void OnIsPinModeChanged(bool value) =>
-        OnPropertyChanged(nameof(IsPasswordMode));
-
-    [RelayCommand]
-    private void AddPin(string digit)
-    {
-        if (IsLoading || Pin.Length >= 6) return;
-        ErrorMessage = null;
-        Pin += digit;
-    }
-
-    [RelayCommand]
-    private void BackspacePin()
-    {
-        if (IsLoading || Pin.Length == 0) return;
-        ErrorMessage = null;
-        Pin = Pin[..^1];
-    }
-
-    [RelayCommand]
-    private void ClearPin()
-    {
-        if (IsLoading) return;
-        ErrorMessage = null;
+        else
+        {
+          _navigationService.NavigateTo<ManagementMainView>();
+        }
+      }
+      else
+      {
+        ErrorMessage = response?.Error?.Message ?? response?.Message ?? "Mã PIN không chính xác.";
         Pin = string.Empty;
+      }
     }
-
-    // ── Toast helper ──────────────────────────────────────────────
-
-    private CancellationTokenSource? _toastCts;
-
-    private async Task ShowSuccessToastAsync(string message, int durationMs = 3000)
+    catch (Exception ex)
     {
-        _toastCts?.Cancel();
-        _toastCts = new CancellationTokenSource();
-        var token = _toastCts.Token;
-
-        SuccessMessage = message;
-        ErrorMessage = null;
-
-        try
-        {
-            await Task.Delay(durationMs, token);
-            if (!token.IsCancellationRequested)
-                SuccessMessage = null;
-        }
-        catch (TaskCanceledException)
-        {
-            // Ignore — another toast was triggered or CTS was disposed
-        }
+      ErrorMessage = ex.Message;
+      Pin = string.Empty;
     }
-
-    // ── Login commands ────────────────────────────────────────────
-
-    [RelayCommand]
-    private async Task LoginPasswordAsync()
+    finally
     {
-        if (IsLoading) return;
-        ErrorMessage = null;
-
-        if (string.IsNullOrWhiteSpace(Username))
-        {
-            ErrorMessage = "Vui lòng nhập tên đăng nhập.";
-            return;
-        }
-
-        if (string.IsNullOrEmpty(Password))
-        {
-            ErrorMessage = "Vui lòng nhập mật khẩu.";
-            return;
-        }
-
-        IsLoading = true;
-        try
-        {
-            var response = await _authApiClient.LoginWithPasswordAsync(Username.Trim(), Password);
-            if (response?.Success == true && response.Data != null)
-            {
-                var auth = response.Data;
-                var storeId = auth.User.StoreId?.ToString() ?? (SelectedStore?.Id.ToString() ?? string.Empty);
-                var storeName = SelectedStore?.Name;
-                _sessionService.SetSession(
-                    auth.AccessToken,
-                    auth.RefreshToken,
-                    auth.User.Id.ToString(),
-                    auth.User.Name,
-                    auth.User.RoleName,
-                    storeId,
-                    storeName,
-                    auth.User.IsChainOwner,
-                    auth.User.Permissions);
-
-                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
-                await Task.Delay(400);
-
-                if (_sessionService.IsCashier)
-                {
-                    _navigationService.NavigateTo<PosCashierMainView>();
-                }
-                else
-                {
-                    _navigationService.NavigateTo<ManagementMainView>();
-                }
-            }
-            else
-            {
-                ErrorMessage = response?.Error?.Message ?? response?.Message ?? "Đăng nhập không thành công.";
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+      IsLoading = false;
     }
-
-    [RelayCommand]
-    private async Task LoginPinAsync()
-    {
-        if (IsLoading) return;
-
-        if (SelectedStore == null)
-        {
-            ErrorMessage = "Vui lòng chọn chi nhánh trước khi đăng nhập bằng PIN.";
-            Pin = string.Empty;
-            return;
-        }
-
-        if (Pin.Length != 6)
-        {
-            ErrorMessage = "Vui lòng nhập đủ 6 số mã PIN.";
-            return;
-        }
-
-        ErrorMessage = null;
-        IsLoading = true;
-        try
-        {
-            var response = await _authApiClient.LoginWithPinAsync(SelectedStore.Id, Pin);
-            if (response?.Success == true && response.Data != null)
-            {
-                var auth = response.Data;
-                var storeId = auth.User.StoreId?.ToString() ?? SelectedStore.Id.ToString();
-                var storeName = SelectedStore.Name;
-                _sessionService.SetSession(
-                    auth.AccessToken,
-                    auth.RefreshToken,
-                    auth.User.Id.ToString(),
-                    auth.User.Name,
-                    auth.User.RoleName,
-                    storeId,
-                    storeName,
-                    auth.User.IsChainOwner,
-                    auth.User.Permissions);
-
-                _ = ShowSuccessToastAsync("Đăng nhập thành công!", 1500);
-                await Task.Delay(400);
-
-                if (_sessionService.IsCashier)
-                {
-                    _navigationService.NavigateTo<PosCashierMainView>();
-                }
-                else
-                {
-                    _navigationService.NavigateTo<ManagementMainView>();
-                }
-            }
-            else
-            {
-                ErrorMessage = response?.Error?.Message ?? response?.Message ?? "Mã PIN không chính xác.";
-                Pin = string.Empty;
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = ex.Message;
-            Pin = string.Empty;
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
+  }
 }

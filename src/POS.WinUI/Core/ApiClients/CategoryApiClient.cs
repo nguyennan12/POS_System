@@ -10,17 +10,17 @@ using POS.WinUI.Core.Services;
 
 namespace POS.WinUI.Core.ApiClients;
 
-/// <summary>
+///  
 /// Client gọi REST API cho danh mục sản phẩm (Categories)
 /// </summary>
 public sealed class CategoryApiClient : BaseApiClient
 {
-    public CategoryApiClient(HttpClient http, SessionService session)
-        : base(http, session) { }
+  public CategoryApiClient(HttpClient http, SessionService session)
+      : base(http, session) { }
 
-    /// <summary>
-    /// Lấy cây danh mục sản phẩm đang hiển thị
-    /// </summary>
-    public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(CancellationToken ct = default)
-        => GetAsync<ApiResponse<List<CategoryResponse>>>(ApiRoutes.Categories.Tree, ct);
+
+  /// Lấy cây danh mục sản phẩm đang hiển thị
+  /// </summary>
+  public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(CancellationToken ct = default)
+      => GetAsync<ApiResponse<List<CategoryResponse>>>(ApiRoutes.Categories.Tree, ct);
 }

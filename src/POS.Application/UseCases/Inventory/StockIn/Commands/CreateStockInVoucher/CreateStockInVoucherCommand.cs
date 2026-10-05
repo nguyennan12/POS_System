@@ -3,7 +3,7 @@ using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Inventory.StockIn.Commands.CreateStockInVoucher;
 
-/// <summary>Internal input item â€” API layer maps from StockInVoucherItemRequest.</summary>
+///  Internal input item â€” API layer maps from StockInVoucherItemRequest.</summary>
 public record StockInItemInput(
     Guid SkuId,
     decimal Qty,
@@ -18,7 +18,7 @@ public record CreateStockInVoucherCommand(
     string? Note = null
 ) : ICommand<StockInVoucherDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:create";
+  public string RequiredPermission => "inventory:create";
 }
 
 

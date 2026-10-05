@@ -7,7 +7,7 @@ using POS.Domain.Inventory.Stock;
 
 namespace POS.Application.UseCases.Inventory.Stock.Commands.DisposeStock;
 
-/// <summary>
+///  
 /// Xuất hủy hàng hóa (Dispose):
 /// 1. Kiểm tra tồn kho đủ số lượng hủy.
 /// 2. Nếu có BatchId: kiểm tra và trừ StockBatch.Qty trước.
@@ -24,68 +24,68 @@ public class DisposeStockCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser) : ICommandHandler<DisposeStockCommand, StockTransactionDto>
 {
-    public async Task<Result<StockTransactionDto>> Handle(
-        DisposeStockCommand command,
-        CancellationToken cancellationToken)
+  public async Task<Result<StockTransactionDto>> Handle(
+      DisposeStockCommand command,
+      CancellationToken cancellationToken)
+  {
+    if (currentUser.EmployeeId is null)
+      return InventoryErrors.Unauthorized;
+
+    var employee = await employeeRepository.GetByIdAsync(currentUser.EmployeeId.Value, cancellationToken);
+    if (employee is null || !employee.IsActive)
+      return InventoryErrors.Unauthorized;
+
+    if (currentUser.StoreId is null)
+      return InventoryErrors.StoreRequired;
+
+    if (employee.StoreId != currentUser.StoreId)
+      return InventoryErrors.Unauthorized;
+
+    var store = await storeRepository.GetByIdAsync(currentUser.StoreId.Value, cancellationToken);
+    if (store is null || !store.IsActive)
+      return InventoryErrors.StoreInactive;
+
+    return await unitOfWork.ExecuteSerializableAsync(async ct =>
     {
-        if (currentUser.EmployeeId is null)
-            return InventoryErrors.Unauthorized;
+      var entry = await stockEntryRepository.GetBySkuAndStoreAsync(command.SkuId, currentUser.StoreId.Value, ct);
+      if (entry is null)
+        return InventoryErrors.SkuNotFound(command.SkuId);
 
-        var employee = await employeeRepository.GetByIdAsync(currentUser.EmployeeId.Value, cancellationToken);
-        if (employee is null || !employee.IsActive)
-            return InventoryErrors.Unauthorized;
+      if (entry.QtyOnHand < command.Qty)
+        return InventoryErrors.InsufficientStock(command.SkuId, entry.QtyOnHand, command.Qty);
 
-        if (currentUser.StoreId is null)
-            return InventoryErrors.StoreRequired;
+      // Lấy UnitCost tại thời điểm hủy = AverageCost hiện tại
+      var unitCostAtDispose = entry.AverageCost;
 
-        if (employee.StoreId != currentUser.StoreId)
-            return InventoryErrors.Unauthorized;
+      // Trừ StockBatch nếu có BatchId
+      if (command.BatchId.HasValue)
+      {
+        var batch = await stockBatchRepository.GetByIdAsync(command.BatchId.Value, ct);
+        if (batch is null || batch.SkuId != command.SkuId || batch.StoreId != currentUser.StoreId.Value)
+          return InventoryErrors.BatchNotFound(command.BatchId.Value);
 
-        var store = await storeRepository.GetByIdAsync(currentUser.StoreId.Value, cancellationToken);
-        if (store is null || !store.IsActive)
-            return InventoryErrors.StoreInactive;
+        if (batch.Qty < command.Qty)
+          return InventoryErrors.InsufficientBatchStock(command.BatchId.Value, batch.Qty, command.Qty);
 
-        return await unitOfWork.ExecuteSerializableAsync(async ct =>
-        {
-            var entry = await stockEntryRepository.GetBySkuAndStoreAsync(command.SkuId, currentUser.StoreId.Value, ct);
-            if (entry is null)
-                return InventoryErrors.SkuNotFound(command.SkuId);
+        batch.DeductQty(command.Qty);
+      }
 
-            if (entry.QtyOnHand < command.Qty)
-                return InventoryErrors.InsufficientStock(command.SkuId, entry.QtyOnHand, command.Qty);
+      // Trừ tổng tồn kho atomic (raw SQL)
+      await stockEntryRepository.DeductStockAsync(command.SkuId, currentUser.StoreId.Value, command.Qty, ct);
 
-            // Lấy UnitCost tại thời điểm hủy = AverageCost hiện tại
-            var unitCostAtDispose = entry.AverageCost;
+      // Ghi ledger entry với UnitCost
+      var tx = StockTransaction.CreateDispose(
+              storeId: currentUser.StoreId.Value,
+              skuId: command.SkuId,
+              qty: command.Qty,
+              createdBy: employee.Id,
+              note: command.Note,
+              unitCost: unitCostAtDispose);
 
-            // Trừ StockBatch nếu có BatchId
-            if (command.BatchId.HasValue)
-            {
-                var batch = await stockBatchRepository.GetByIdAsync(command.BatchId.Value, ct);
-                if (batch is null || batch.SkuId != command.SkuId || batch.StoreId != currentUser.StoreId.Value)
-                    return InventoryErrors.BatchNotFound(command.BatchId.Value);
+      await stockTransactionRepository.AddAsync(tx, ct);
+      await unitOfWork.SaveChangesAsync(ct);
 
-                if (batch.Qty < command.Qty)
-                    return InventoryErrors.InsufficientBatchStock(command.BatchId.Value, batch.Qty, command.Qty);
-
-                batch.DeductQty(command.Qty);
-            }
-
-            // Trừ tổng tồn kho atomic (raw SQL)
-            await stockEntryRepository.DeductStockAsync(command.SkuId, currentUser.StoreId.Value, command.Qty, ct);
-
-            // Ghi ledger entry với UnitCost
-            var tx = StockTransaction.CreateDispose(
-                storeId: currentUser.StoreId.Value,
-                skuId: command.SkuId,
-                qty: command.Qty,
-                createdBy: employee.Id,
-                note: command.Note,
-                unitCost: unitCostAtDispose);
-
-            await stockTransactionRepository.AddAsync(tx, ct);
-            await unitOfWork.SaveChangesAsync(ct);
-
-            return Result<StockTransactionDto>.Success(tx.ToDto());
-        }, cancellationToken);
-    }
+      return Result<StockTransactionDto>.Success(tx.ToDto());
+    }, cancellationToken);
+  }
 }

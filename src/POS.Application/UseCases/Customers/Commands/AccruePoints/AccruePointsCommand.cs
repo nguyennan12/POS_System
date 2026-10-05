@@ -3,7 +3,7 @@ using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Customers.Commands.AccruePoints;
 
-/// <summary>
+///  
 /// Requests a positive point accrual with an optional order reference and note.
 /// </summary>
 public record AccruePointsCommand(

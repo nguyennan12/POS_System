@@ -8,31 +8,31 @@ namespace POS.WinUI.Views.Cashier.Components;
 
 public partial class PosCartView : UserControl
 {
-    public FrameworkElement CartTargetBadge => CartBadge;
+  public FrameworkElement CartTargetBadge => CartBadge;
 
-    public PosCartView()
+  public PosCartView()
+  {
+    InitializeComponent();
+  }
+
+
+  /// Hiệu ứng nảy nhẹ biểu tượng giỏ hàng khi thẻ sản phẩm vừa bay tới đích
+  /// </summary>
+  public void PlayBounceAnimation()
+  {
+    if (CartBadge == null) return;
+
+    var scale = new ScaleTransform(1.0, 1.0, CartBadge.ActualWidth / 2, CartBadge.ActualHeight / 2);
+    CartBadge.RenderTransform = scale;
+
+    var bounceAnim = new DoubleAnimationUsingKeyFrames
     {
-        InitializeComponent();
-    }
+      Duration = TimeSpan.FromMilliseconds(220)
+    };
+    bounceAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.28, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(90))));
+    bounceAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(220))));
 
-    /// <summary>
-    /// Hiệu ứng nảy nhẹ biểu tượng giỏ hàng khi thẻ sản phẩm vừa bay tới đích
-    /// </summary>
-    public void PlayBounceAnimation()
-    {
-        if (CartBadge == null) return;
-
-        var scale = new ScaleTransform(1.0, 1.0, CartBadge.ActualWidth / 2, CartBadge.ActualHeight / 2);
-        CartBadge.RenderTransform = scale;
-
-        var bounceAnim = new DoubleAnimationUsingKeyFrames
-        {
-            Duration = TimeSpan.FromMilliseconds(220)
-        };
-        bounceAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.28, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(90))));
-        bounceAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(220))));
-
-        scale.BeginAnimation(ScaleTransform.ScaleXProperty, bounceAnim);
-        scale.BeginAnimation(ScaleTransform.ScaleYProperty, bounceAnim);
-    }
+    scale.BeginAnimation(ScaleTransform.ScaleXProperty, bounceAnim);
+    scale.BeginAnimation(ScaleTransform.ScaleYProperty, bounceAnim);
+  }
 }

@@ -31,7 +31,7 @@ public record PagedCustomerList(
     int PageSize
 );
 
-/// <summary>
+///  
 /// Carries a customer's point balance, membership tier benefits, and last update time.
 /// </summary>
 public record LoyaltyAccountDto(
@@ -43,7 +43,7 @@ public record LoyaltyAccountDto(
     DateTimeOffset LastUpdated
 );
 
-/// <summary>
+///  
 /// Carries a point transaction with its type, optional order reference, note, and creation time.
 /// </summary>
 public record PointTransactionDto(
@@ -56,7 +56,7 @@ public record PointTransactionDto(
     DateTimeOffset CreatedAt
 );
 
-/// <summary>
+///  
 /// Carries a page of point transactions, the total matching count, and pagination values.
 /// </summary>
 public record PagedPointTransactionList(

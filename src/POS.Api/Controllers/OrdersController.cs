@@ -19,7 +19,7 @@ namespace POS.Api.Controllers;
 [Route("api/v1/orders")]
 public class OrdersController(ISender mediator) : ControllerBase
 {
-  /// <summary>
+
   /// Tạo mới đơn hàng ở trạng thái Draft gắn với ca làm việc.
   /// </summary>
   [HttpPost]
@@ -37,7 +37,7 @@ public class OrdersController(ISender mediator) : ControllerBase
         ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Thêm hoặc cập nhật số lượng SKU vào giỏ hàng và tự động tính lại khuyến mãi, thuế, tổng tiền.
   /// </summary>
   [HttpPost("{id:guid}/items")]
@@ -54,7 +54,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Áp dụng voucher giảm giá vào đơn hàng và tự động tính lại toàn bộ giỏ hàng.
   /// </summary>
   [HttpPost("{id:guid}/vouchers")]
@@ -88,7 +88,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<CheckoutResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Hủy đơn hàng. Yêu cầu quyền StoreManager hoặc Owner.
   /// </summary>
   [HttpPost("{id:guid}/cancel")]
@@ -105,7 +105,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Lấy chi tiết đơn hàng theo ID.
   /// </summary>
   [HttpGet("{id:guid}")]
