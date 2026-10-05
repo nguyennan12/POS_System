@@ -23,230 +23,230 @@ namespace POS.Api.Controllers;
 [Route("api/v1/customers")]
 public class CustomersController(ISender mediator) : ControllerBase
 {
-    [HttpGet]
-    public async Task<ActionResult<ApiResponse<PagedResponse<CustomerSummaryResponse>>>> GetPaged(
-        [FromQuery] CustomerFilterRequest request,
-        CancellationToken cancellationToken)
+  [HttpGet]
+  public async Task<ActionResult<ApiResponse<PagedResponse<CustomerSummaryResponse>>>> GetPaged(
+      [FromQuery] CustomerFilterRequest request,
+      CancellationToken cancellationToken)
+  {
+    var query = new GetCustomersQuery(
+        request.Phone,
+        request.Name,
+        request.Barcode,
+        request.MemberTierId,
+        request.PageNumber,
+        request.PageSize);
+
+    var result = await mediator.Send(query, cancellationToken);
+    if (result.IsFailure)
     {
-        var query = new GetCustomersQuery(
-            request.Phone,
-            request.Name,
-            request.Barcode,
-            request.MemberTierId,
-            request.PageNumber,
-            request.PageSize);
-
-        var result = await mediator.Send(query, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        var paged = result.Value!;
-        var response = new PagedResponse<CustomerSummaryResponse>(
-            paged.Items.Select(x => x.ToSummaryResponse()).ToList().AsReadOnly(),
-            paged.PageNumber,
-            paged.PageSize,
-            paged.TotalCount);
-
-        return Ok(ApiResponse<PagedResponse<CustomerSummaryResponse>>.Ok(response));
+      return this.ToActionResult(result);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> GetById(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new GetCustomerByIdQuery(id), cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
+    var paged = result.Value!;
+    var response = new PagedResponse<CustomerSummaryResponse>(
+        paged.Items.Select(x => x.ToSummaryResponse()).ToList().AsReadOnly(),
+        paged.PageNumber,
+        paged.PageSize,
+        paged.TotalCount);
 
-        return Ok(ApiResponse<CustomerDetailResponse>.Ok(result.Value!.ToResponse()));
+    return Ok(ApiResponse<PagedResponse<CustomerSummaryResponse>>.Ok(response));
+  }
+
+  [HttpGet("{id:guid}")]
+  public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> GetById(
+      Guid id,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(new GetCustomerByIdQuery(id), cancellationToken);
+    if (result.IsFailure)
+    {
+      return this.ToActionResult(result);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> Create(
-        [FromBody] CreateCustomerRequest request,
-        CancellationToken cancellationToken)
+    return Ok(ApiResponse<CustomerDetailResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+  [HttpPost]
+  public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> Create(
+      [FromBody] CreateCustomerRequest request,
+      CancellationToken cancellationToken)
+  {
+    var command = new CreateCustomerCommand(
+        request.Name,
+        request.Phone,
+        request.Email,
+        request.Dob,
+        request.Barcode);
+
+    var result = await mediator.Send(command, cancellationToken);
+    if (result.IsFailure)
     {
-        var command = new CreateCustomerCommand(
-            request.Name,
-            request.Phone,
-            request.Email,
-            request.Dob,
-            request.Barcode);
-
-        var result = await mediator.Send(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        var response = result.Value!.ToResponse();
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = response.Id },
-            ApiResponse<CustomerDetailResponse>.Ok(response));
+      return this.ToActionResult(result);
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> Update(
-        Guid id,
-        [FromBody] UpdateCustomerRequest request,
-        CancellationToken cancellationToken)
+    var response = result.Value!.ToResponse();
+    return CreatedAtAction(
+        nameof(GetById),
+        new { id = response.Id },
+        ApiResponse<CustomerDetailResponse>.Ok(response));
+  }
+
+  [HttpPut("{id:guid}")]
+  public async Task<ActionResult<ApiResponse<CustomerDetailResponse>>> Update(
+      Guid id,
+      [FromBody] UpdateCustomerRequest request,
+      CancellationToken cancellationToken)
+  {
+    var command = new UpdateCustomerCommand(
+        id,
+        request.Name,
+        request.Phone,
+        request.Email,
+        request.Dob,
+        request.Barcode,
+        request.IsActive);
+
+    var result = await mediator.Send(command, cancellationToken);
+    if (result.IsFailure)
     {
-        var command = new UpdateCustomerCommand(
-            id,
-            request.Name,
-            request.Phone,
-            request.Email,
-            request.Dob,
-            request.Barcode,
-            request.IsActive);
-
-        var result = await mediator.Send(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        return Ok(ApiResponse<CustomerDetailResponse>.Ok(result.Value!.ToResponse()));
+      return this.ToActionResult(result);
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<bool>>> Delete(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new DeleteCustomerCommand(id), cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
+    return Ok(ApiResponse<CustomerDetailResponse>.Ok(result.Value!.ToResponse()));
+  }
 
-        return Ok(ApiResponse<bool>.Ok(result.Value));
+  [HttpDelete("{id:guid}")]
+  public async Task<ActionResult<ApiResponse<bool>>> Delete(
+      Guid id,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(new DeleteCustomerCommand(id), cancellationToken);
+    if (result.IsFailure)
+    {
+      return this.ToActionResult(result);
     }
 
-    /// <summary>
-    /// Returns the customer's loyalty balance and membership tier benefits.
-    /// </summary>
-    [HttpGet("{id:guid}/loyalty")]
-    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> GetLoyaltyAccount(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new GetLoyaltyAccountQuery(id), cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
+    return Ok(ApiResponse<bool>.Ok(result.Value));
+  }
 
-        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+
+  /// Returns the customer's loyalty balance and membership tier benefits.
+  /// </summary>
+  [HttpGet("{id:guid}/loyalty")]
+  public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> GetLoyaltyAccount(
+      Guid id,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(new GetLoyaltyAccountQuery(id), cancellationToken);
+    if (result.IsFailure)
+    {
+      return this.ToActionResult(result);
     }
 
-    /// <summary>
-    /// Returns a filtered page of the customer's point transactions.
-    /// </summary>
-    [HttpGet("{id:guid}/loyalty/transactions")]
-    public async Task<ActionResult<ApiResponse<PagedResponse<PointTransactionResponse>>>> GetPointTransactions(
-        Guid id,
-        [FromQuery] LoyaltyTransactionFilterRequest request,
-        CancellationToken cancellationToken)
+    return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+
+  /// Returns a filtered page of the customer's point transactions.
+  /// </summary>
+  [HttpGet("{id:guid}/loyalty/transactions")]
+  public async Task<ActionResult<ApiResponse<PagedResponse<PointTransactionResponse>>>> GetPointTransactions(
+      Guid id,
+      [FromQuery] LoyaltyTransactionFilterRequest request,
+      CancellationToken cancellationToken)
+  {
+    var query = new GetPointTransactionsQuery(
+        id,
+        request.From,
+        request.To,
+        request.Type,
+        request.PageNumber,
+        request.PageSize);
+
+    var result = await mediator.Send(query, cancellationToken);
+    if (result.IsFailure)
     {
-        var query = new GetPointTransactionsQuery(
-            id,
-            request.From,
-            request.To,
-            request.Type,
-            request.PageNumber,
-            request.PageSize);
-
-        var result = await mediator.Send(query, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        var paged = result.Value!;
-        var response = new PagedResponse<PointTransactionResponse>(
-            paged.Items.Select(x => x.ToResponse()).ToList().AsReadOnly(),
-            paged.PageNumber,
-            paged.PageSize,
-            paged.TotalCount);
-
-        return Ok(ApiResponse<PagedResponse<PointTransactionResponse>>.Ok(response));
+      return this.ToActionResult(result);
     }
 
-    /// <summary>
-    /// Accrues points for the customer and returns the updated loyalty account.
-    /// </summary>
-    [HttpPost("{id:guid}/loyalty/accrue")]
-    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AccruePoints(
-        Guid id,
-        [FromBody] AccruePointsRequest request,
-        CancellationToken cancellationToken)
+    var paged = result.Value!;
+    var response = new PagedResponse<PointTransactionResponse>(
+        paged.Items.Select(x => x.ToResponse()).ToList().AsReadOnly(),
+        paged.PageNumber,
+        paged.PageSize,
+        paged.TotalCount);
+
+    return Ok(ApiResponse<PagedResponse<PointTransactionResponse>>.Ok(response));
+  }
+
+
+  /// Accrues points for the customer and returns the updated loyalty account.
+  /// </summary>
+  [HttpPost("{id:guid}/loyalty/accrue")]
+  public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AccruePoints(
+      Guid id,
+      [FromBody] AccruePointsRequest request,
+      CancellationToken cancellationToken)
+  {
+    var command = new AccruePointsCommand(
+        id,
+        request.Points,
+        request.OrderId,
+        request.Note);
+
+    var result = await mediator.Send(command, cancellationToken);
+    if (result.IsFailure)
     {
-        var command = new AccruePointsCommand(
-            id,
-            request.Points,
-            request.OrderId,
-            request.Note);
-
-        var result = await mediator.Send(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+      return this.ToActionResult(result);
     }
 
-    /// <summary>
-    /// Redeems points for the customer and returns the updated loyalty account.
-    /// </summary>
-    [HttpPost("{id:guid}/loyalty/redeem")]
-    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> RedeemPoints(
-        Guid id,
-        [FromBody] RedeemPointsRequest request,
-        CancellationToken cancellationToken)
+    return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+
+  /// Redeems points for the customer and returns the updated loyalty account.
+  /// </summary>
+  [HttpPost("{id:guid}/loyalty/redeem")]
+  public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> RedeemPoints(
+      Guid id,
+      [FromBody] RedeemPointsRequest request,
+      CancellationToken cancellationToken)
+  {
+    var command = new RedeemPointsCommand(
+        id,
+        request.Points,
+        request.OrderId,
+        request.Note);
+
+    var result = await mediator.Send(command, cancellationToken);
+    if (result.IsFailure)
     {
-        var command = new RedeemPointsCommand(
-            id,
-            request.Points,
-            request.OrderId,
-            request.Note);
-
-        var result = await mediator.Send(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+      return this.ToActionResult(result);
     }
 
-    /// <summary>
-    /// Applies a signed point adjustment with a note and returns the updated loyalty account.
-    /// </summary>
-    [HttpPost("{id:guid}/loyalty/adjust")]
-    public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AdjustPoints(
-        Guid id,
-        [FromBody] AdjustPointsRequest request,
-        CancellationToken cancellationToken)
+    return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+
+  /// Applies a signed point adjustment with a note and returns the updated loyalty account.
+  /// </summary>
+  [HttpPost("{id:guid}/loyalty/adjust")]
+  public async Task<ActionResult<ApiResponse<LoyaltyAccountResponse>>> AdjustPoints(
+      Guid id,
+      [FromBody] AdjustPointsRequest request,
+      CancellationToken cancellationToken)
+  {
+    var command = new AdjustPointsCommand(
+        id,
+        request.Points,
+        request.EffectiveNote);
+
+    var result = await mediator.Send(command, cancellationToken);
+    if (result.IsFailure)
     {
-        var command = new AdjustPointsCommand(
-            id,
-            request.Points,
-            request.EffectiveNote);
-
-        var result = await mediator.Send(command, cancellationToken);
-        if (result.IsFailure)
-        {
-            return this.ToActionResult(result);
-        }
-
-        return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+      return this.ToActionResult(result);
     }
+
+    return Ok(ApiResponse<LoyaltyAccountResponse>.Ok(result.Value!.ToResponse()));
+  }
 }

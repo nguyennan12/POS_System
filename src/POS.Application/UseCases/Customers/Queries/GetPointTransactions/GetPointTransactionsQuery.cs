@@ -3,7 +3,7 @@ using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Queries.GetPointTransactions;
 
-/// <summary>
+///  
 /// Requests a page of customer point transactions with optional date and type filters.
 /// </summary>
 public record GetPointTransactionsQuery(

@@ -6,27 +6,27 @@ namespace POS.Application;
 
 public static class DependencyInjection
 {
-    /// <summary>Registers application services, pipeline behaviors, and domain services.</summary>
-    public static IServiceCollection AddApplication(this IServiceCollection services)
-    {
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
-        services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+  ///  Registers application services, pipeline behaviors, and domain services.</summary>
+  public static IServiceCollection AddApplication(this IServiceCollection services)
+  {
+    services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+    services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
-        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
+    services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+    services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+    services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
 
-        services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
-        services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
+    services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
+    services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
 
-        // ---- Payment Strategies & Factory ----
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CashPaymentStrategy>();
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.MoMoPaymentStrategy>();
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.VietQrPaymentStrategy>();
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CardPaymentStrategy>();
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.PointsPaymentStrategy>();
-        services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategyFactory, POS.Application.UseCases.Payments.PaymentStrategyFactory>();
+    // ---- Payment Strategies & Factory ----
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CashPaymentStrategy>();
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.MoMoPaymentStrategy>();
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.VietQrPaymentStrategy>();
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CardPaymentStrategy>();
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.PointsPaymentStrategy>();
+    services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategyFactory, POS.Application.UseCases.Payments.PaymentStrategyFactory>();
 
-        return services;
-    }
+    return services;
+  }
 }
