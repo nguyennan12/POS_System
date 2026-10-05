@@ -4,8 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Abstractions.Caching;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Import;
 using POS.Infrastructure.Auth;
 using POS.Infrastructure.Cache;
+using POS.Infrastructure.Import;
 using POS.Infrastructure.Persistence;
 using POS.Infrastructure.Persistence.Repositories;
 using StackExchange.Redis;
@@ -49,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<ISkuRepository, SkuRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IStockEntryRepository, StockEntryRepository>();
@@ -57,6 +60,13 @@ public static class DependencyInjection
         services.AddScoped<IStockInVoucherRepository, StockInVoucherRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
+        services.AddScoped<IUnitConversionRepository, UnitConversionRepository>();
+        services.AddScoped<IPriceListRepository, PriceListRepository>();
+
+        // ---- Excel Services (Reusable Import / Export) ----
+        services.AddScoped<POS.Application.Abstractions.Excel.IExcelReader, POS.Infrastructure.Excel.ClosedXmlExcelReader>();
+        services.AddScoped<POS.Application.Abstractions.Excel.IExcelExporter, POS.Infrastructure.Excel.ClosedXmlExcelExporter>();
+        services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
 
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();

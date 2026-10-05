@@ -55,6 +55,15 @@ public sealed class CommandPermissionMappingTests
             ["AccruePointsCommand"] = "customers:update",
             ["RedeemPointsCommand"] = "customers:update",
             ["AdjustPointsCommand"] = "customers:update",
+            ["CreateProductCommand"] = "products:create",
+            ["UpdateProductCommand"] = "products:update",
+            ["CreateSkuCommand"] = "products:create",
+            ["UpdateSkuCommand"] = "products:update",
+            ["DeleteSkuCommand"] = "products:delete",
+            ["CreateUnitConversionCommand"] = "products:create",
+            ["UpdateUnitConversionCommand"] = "products:update",
+            ["CreatePriceListCommand"] = "products:create",
+            ["BulkImportProductsCommand"] = "products:create",
         };
 
     private static readonly HashSet<string> AuthenticationCommands =
