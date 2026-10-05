@@ -85,3 +85,24 @@ public record PriceListDto(
     string? CustomerGroup,
     Guid CreatedBy,
     DateTime CreatedAt);
+
+public record PosCatalogDto(
+    Guid SkuId,
+    Guid ProductId,
+    string ProductName,
+    string SkuCode,
+    string Barcode,
+    decimal SellPrice,
+    decimal CostPrice,
+    decimal TaxRate,
+    decimal QtyOnHand,
+    string BaseUnit,
+    Guid CategoryId,
+    string CategoryName,
+    string? ImageUrl);
+
+public record PagedPosCatalogList(
+    IReadOnlyList<PosCatalogDto> Items,
+    int TotalCount,
+    int PageNumber,
+    int PageSize);

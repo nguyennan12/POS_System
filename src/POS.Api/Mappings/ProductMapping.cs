@@ -92,4 +92,20 @@ public static class ProductMapping
         dto.BaseUnit,
         dto.UnitConversions.Select(uc => uc.ToResponse()).ToList().AsReadOnly()
     );
+
+    public static PosCatalogItemResponse ToResponse(this PosCatalogDto dto) => new(
+        dto.SkuId,
+        dto.ProductId,
+        dto.ProductName,
+        dto.SkuCode,
+        dto.Barcode,
+        dto.SellPrice,
+        dto.CostPrice,
+        dto.TaxRate,
+        dto.QtyOnHand,
+        dto.BaseUnit,
+        dto.CategoryId,
+        dto.CategoryName,
+        dto.ImageUrl
+    );
 }

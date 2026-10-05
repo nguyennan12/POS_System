@@ -30,4 +30,15 @@ public interface ISkuRepository
     Task<bool> IsBarcodeUniqueAsync(string barcode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Sku sku, CancellationToken cancellationToken = default);
     void Remove(Sku sku);
+
+    /// <summary>
+    /// Lấy danh mục sản phẩm phẳng tối ưu cho màn hình thu ngân POS (kèm giá bán, barcode và tồn kho)
+    /// </summary>
+    Task<(List<POS.Application.UseCases.Products.PosCatalogDto> Items, int TotalCount)> GetPosCatalogAsync(
+        Guid storeId,
+        Guid? categoryId,
+        string? search,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

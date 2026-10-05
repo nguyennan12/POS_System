@@ -34,3 +34,19 @@ public record BulkImportResultResponse(
     int FailureCount,
     IReadOnlyList<string> Errors
 );
+
+public record PosCatalogItemResponse(
+    Guid SkuId,
+    Guid ProductId,
+    string ProductName,
+    string SkuCode,
+    string Barcode,
+    decimal SellPrice,
+    decimal CostPrice,
+    decimal TaxRate,
+    decimal QtyOnHand,
+    string BaseUnit,
+    Guid CategoryId,
+    string CategoryName,
+    string? ImageUrl
+);

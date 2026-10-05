@@ -17,6 +17,36 @@ namespace POS.Api.Controllers;
 public class ProductsController(ISender mediator) : ControllerBase
 {
     /// <summary>
+    /// [P00] Danh mục sản phẩm tối ưu cho quầy bán hàng POS (kèm SKU, giá bán, tồn kho và mã vạch trong 1 request).
+    /// </summary>
+    [HttpGet("pos-catalog")]
+    public async Task<ActionResult<ApiResponse<PagedResponse<PosCatalogItemResponse>>>> GetPosCatalog(
+        [FromQuery] PosCatalogFilterRequest request,
+        CancellationToken cancellationToken)
+    {
+        var pageNumber = Math.Max(1, request.PageNumber);
+        var pageSize   = Math.Min(200, Math.Max(1, request.PageSize));
+
+        var result = await mediator.Send(
+            new POS.Application.UseCases.Products.Queries.GetPosCatalog.GetPosCatalogQuery(
+                request.CategoryId,
+                request.Search,
+                pageNumber,
+                pageSize),
+            cancellationToken);
+
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        var paged = result.Value!;
+        return Ok(ApiResponse<PagedResponse<PosCatalogItemResponse>>.Ok(
+            new PagedResponse<PosCatalogItemResponse>(
+                paged.Items.Select(p => p.ToResponse()).ToList().AsReadOnly(),
+                paged.PageNumber,
+                paged.PageSize,
+                paged.TotalCount)));
+    }
+
+    /// <summary>
     /// [P01] Lấy danh sách sản phẩm phân trang với bộ lọc tên/danh mục/trạng thái.
     /// </summary>
     [HttpGet]

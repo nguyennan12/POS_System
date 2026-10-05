@@ -11,6 +11,13 @@ public record ProductFilterRequest(
     int PageSize = 20
 ) : PagedRequest(PageNumber, PageSize);
 
+public record PosCatalogFilterRequest(
+    string? Search = null,
+    Guid? CategoryId = null,
+    int PageNumber = 1,
+    int PageSize = 100
+) : PagedRequest(PageNumber, PageSize);
+
 public record CreateProductRequest(
     string Name,
     Guid CategoryId,
