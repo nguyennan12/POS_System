@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using POS.Contracts.V1.Orders;
+using POS.WinUI.Core.Models;
 
 namespace POS.WinUI.ViewModels.Cashier;
 
@@ -99,9 +100,60 @@ public partial class PosCashierMainViewModel
     }
 
     [RelayCommand]
-    private void ScanBarcode()
+    private async Task ScanBarcodeAsync()
     {
-        StatusText = "Sẵn sàng quét mã vạch...";
-        ShowInfo("Sẵn sàng quét mã vạch sản phẩm");
+        if (string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            StatusText = "Vui lòng nhập mã vạch vào ô tìm kiếm để quét";
+            ShowInfo("Nhập mã vạch vào ô tìm kiếm rồi nhấn Quét mã vạch");
+            return;
+        }
+
+        var code = SearchQuery.Trim();
+        StatusText = $"Đang tra cứu mã vạch: {code}...";
+
+        try
+        {
+            var res = await _productApiClient.GetSkuByBarcodeAsync(code);
+            if (res?.Success == true && res.Data != null)
+            {
+                var sku = res.Data;
+                var productItem = new PosProductItem
+                {
+                    Id = sku.Id,
+                    Name = sku.ProductName,
+                    Specification = sku.BaseUnit,
+                    Sku = sku.SkuCode,
+                    Barcode = sku.Barcode,
+                    Unit = sku.BaseUnit,
+                    Price = sku.SellPrice,
+                    StockQuantity = (int)sku.QtyOnHand,
+                    CategoryId = string.Empty,
+                    CategoryName = string.Empty
+                };
+
+                var prevQty = CartItems.FirstOrDefault(c => c.ProductId == productItem.Id)?.Quantity ?? 0;
+                AddToCart(productItem);
+                var newQty = CartItems.FirstOrDefault(c => c.ProductId == productItem.Id)?.Quantity ?? 0;
+
+                if (newQty > prevQty)
+                {
+                    SearchQuery = string.Empty;
+                    StatusText = $"Đã thêm {sku.ProductName} ({sku.SellPrice:N0} đ) vào giỏ!";
+                    ShowSuccess($"Đã thêm {sku.ProductName} vào giỏ hàng");
+                }
+            }
+            else
+            {
+                var errMsg = res?.Error?.Message ?? "Không tìm thấy sản phẩm với mã vạch này";
+                StatusText = errMsg;
+                ShowWarning(errMsg);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Lỗi quét mã vạch: {ex.Message}";
+            ShowError($"Lỗi quét mã vạch: {ex.Message}");
+        }
     }
 }

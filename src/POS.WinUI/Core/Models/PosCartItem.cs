@@ -12,6 +12,7 @@ public partial class PosCartItem : ObservableObject
   public string Sku { get; set; } = string.Empty;
   public string Unit { get; set; } = "Cái";
   public decimal Price { get; set; }
+  public int StockQuantity { get; set; }
 
   [ObservableProperty]
   [NotifyPropertyChangedFor(nameof(SubTotal))]

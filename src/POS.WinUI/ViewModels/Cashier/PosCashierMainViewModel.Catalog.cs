@@ -112,37 +112,66 @@ public partial class PosCashierMainViewModel
             catId = parsedCatId;
         }
 
-        var stockRes = await _inventoryApiClient.GetStockAsync(
-            categoryId: catId,
-            search: string.IsNullOrWhiteSpace(SearchQuery) ? null : SearchQuery.Trim(),
-            pageNumber: 1,
-            pageSize: 100);
+        var search = string.IsNullOrWhiteSpace(SearchQuery) ? null : SearchQuery.Trim();
 
         FilteredProducts.Clear();
 
-        if (stockRes?.Success == true && stockRes.Data?.Items != null)
+        // 1. Gọi 1 API duy nhất tối ưu cho POS Catalog (đã có đủ SKU, Giá bán, Tồn kho, Mã vạch)
+        var catalogRes = await _productApiClient.GetPosCatalogAsync(
+            categoryId: catId,
+            search: search,
+            pageNumber: 1,
+            pageSize: 100);
+
+        if (catalogRes?.Success == true && catalogRes.Data?.Items != null && catalogRes.Data.Items.Count > 0)
         {
-            int index = 0;
-            foreach (var item in stockRes.Data.Items)
+            foreach (var item in catalogRes.Data.Items)
             {
-                var (bgTint, iconFg) = GetColorPalette(index++);
-                var productItem = new PosProductItem
+                var unitText = !string.IsNullOrWhiteSpace(item.BaseUnit) ? item.BaseUnit : "Cái";
+
+                FilteredProducts.Add(new PosProductItem
                 {
                     Id = item.SkuId,
                     Name = item.ProductName,
-                    Specification = item.SkuCode,
+                    Specification = unitText,
                     Sku = item.SkuCode,
                     Barcode = item.Barcode,
-                    Unit = "Cái",
-                    Price = 0,
+                    Unit = unitText,
+                    Price = item.SellPrice,
                     StockQuantity = (int)item.QtyOnHand,
-                    CategoryId = item.SkuCode,
-                    CategoryName = "Sản phẩm",
-                    BackgroundTint = bgTint,
-                    IconForeground = iconFg,
-                    IconSymbol = GetIconSymbol(item.ProductName)
-                };
-                FilteredProducts.Add(productItem);
+                    CategoryId = item.CategoryId.ToString(),
+                    CategoryName = item.CategoryName,
+                    ImageUrl = item.ImageUrl
+                });
+            }
+        }
+        else
+        {
+            // 2. Fallback an toàn nếu chưa có bản ghi SKU/Product
+            var stockRes = await _inventoryApiClient.GetStockAsync(
+                categoryId: catId,
+                search: search,
+                pageNumber: 1,
+                pageSize: 100);
+
+            if (stockRes?.Success == true && stockRes.Data?.Items != null)
+            {
+                foreach (var item in stockRes.Data.Items)
+                {
+                    FilteredProducts.Add(new PosProductItem
+                    {
+                        Id = item.SkuId,
+                        Name = item.ProductName,
+                        Specification = "Cái",
+                        Sku = item.SkuCode,
+                        Barcode = item.Barcode,
+                        Unit = "Cái",
+                        Price = 0,
+                        StockQuantity = (int)item.QtyOnHand,
+                        CategoryId = item.SkuCode,
+                        CategoryName = "Sản phẩm"
+                    });
+                }
             }
         }
     }
@@ -220,36 +249,5 @@ public partial class PosCashierMainViewModel
         }
         SelectedSubCategory = subCategory;
         _ = FetchProductsFromApiAsync();
-    }
-
-    private static readonly (string bg, string fg)[] Palette = new[]
-    {
-        ("#FEE2E2", "#DC2626"),
-        ("#DBEAFE", "#2563EB"),
-        ("#DCFCE7", "#16A34A"),
-        ("#FEF9C3", "#CA8A04"),
-        ("#F3E8FF", "#9333EA"),
-        ("#FFEDD5", "#EA580C"),
-        ("#CCFBF1", "#0D9488"),
-        ("#FCE7F3", "#DB2777")
-    };
-
-    private static (string bg, string fg) GetColorPalette(int index)
-    {
-        return Palette[Math.Abs(index) % Palette.Length];
-    }
-
-    private static SymbolRegular GetIconSymbol(string? productName)
-    {
-        var text = (productName ?? string.Empty).ToLowerInvariant();
-        if (text.Contains("uống") || text.Contains("nước") || text.Contains("cà phê") || text.Contains("trà") || text.Contains("cola") || text.Contains("pepsi"))
-            return SymbolRegular.DrinkBeer24;
-        if (text.Contains("bánh") || text.Contains("kẹo") || text.Contains("snack"))
-            return SymbolRegular.Gift24;
-        if (text.Contains("thực phẩm") || text.Contains("mì") || text.Contains("mắm") || text.Contains("gạo") || text.Contains("ăn"))
-            return SymbolRegular.Food24;
-        if (text.Contains("mỹ phẩm") || text.Contains("dầu gội") || text.Contains("kem") || text.Contains("giấy") || text.Contains("rửa"))
-            return SymbolRegular.Sparkle24;
-        return SymbolRegular.Box24;
     }
 }

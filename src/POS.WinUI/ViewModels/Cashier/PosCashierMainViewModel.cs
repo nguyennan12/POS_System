@@ -26,6 +26,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly CustomerApiClient _customerApiClient;
     private readonly VoucherApiClient _voucherApiClient;
     private readonly OrderApiClient _orderApiClient;
+    private readonly ProductApiClient _productApiClient;
 
     private readonly DispatcherTimer _clockTimer;
     private CancellationTokenSource? _searchCts;
@@ -112,7 +113,8 @@ public partial class PosCashierMainViewModel : ObservableObject
         InventoryApiClient inventoryApiClient,
         CustomerApiClient customerApiClient,
         VoucherApiClient voucherApiClient,
-        OrderApiClient orderApiClient)
+        OrderApiClient orderApiClient,
+        ProductApiClient productApiClient)
     {
         _sessionService = sessionService;
         _networkStatusService = networkStatusService;
@@ -125,6 +127,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         _customerApiClient = customerApiClient;
         _voucherApiClient = voucherApiClient;
         _orderApiClient = orderApiClient;
+        _productApiClient = productApiClient;
 
         LoadUserInfo();
         _ = LoadCurrentShiftAsync();

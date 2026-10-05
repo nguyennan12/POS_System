@@ -36,9 +36,21 @@ public partial class PosCashierMainViewModel
     {
         if (product == null) return;
 
+        if (product.StockQuantity <= 0)
+        {
+            ShowWarning($"Sản phẩm '{product.Name}' đã hết hàng trong kho.");
+            return;
+        }
+
         var existing = CartItems.FirstOrDefault(c => c.ProductId == product.Id);
         if (existing != null)
         {
+            if (existing.Quantity >= product.StockQuantity)
+            {
+                ShowWarning($"Sản phẩm '{product.Name}' chỉ còn {product.StockQuantity} trong kho.");
+                return;
+            }
+
             existing.Quantity++;
             SelectedCartItem = existing;
         }
@@ -51,6 +63,7 @@ public partial class PosCashierMainViewModel
                 Sku = product.Sku,
                 Unit = product.Unit,
                 Price = product.Price,
+                StockQuantity = product.StockQuantity,
                 Quantity = 1
             };
             CartItems.Add(newItem);
@@ -64,6 +77,13 @@ public partial class PosCashierMainViewModel
     private void IncreaseQuantity(PosCartItem? item)
     {
         if (item == null) return;
+
+        if (item.StockQuantity > 0 && item.Quantity >= item.StockQuantity)
+        {
+            ShowWarning($"Sản phẩm '{item.Name}' chỉ còn {item.StockQuantity} trong kho.");
+            return;
+        }
+
         item.Quantity++;
         RecalculateTotals();
     }

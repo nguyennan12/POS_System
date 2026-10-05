@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CustomerApiClient>();
         services.AddTransient<VoucherApiClient>();
         services.AddTransient<OrderApiClient>();
+        services.AddTransient<ProductApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();

@@ -128,7 +128,16 @@ public partial class PosCashierMainViewModel
             case "Số lượng":
                 if (SelectedCartItem != null && val > 0)
                 {
-                    SelectedCartItem.Quantity = (int)val;
+                    var targetQty = (int)val;
+                    if (SelectedCartItem.StockQuantity > 0 && targetQty > SelectedCartItem.StockQuantity)
+                    {
+                        SelectedCartItem.Quantity = SelectedCartItem.StockQuantity;
+                        ShowWarning($"Sản phẩm '{SelectedCartItem.Name}' chỉ còn {SelectedCartItem.StockQuantity} trong kho.");
+                    }
+                    else
+                    {
+                        SelectedCartItem.Quantity = targetQty;
+                    }
                     RecalculateTotals();
                 }
                 else if (SelectedCartItem == null)

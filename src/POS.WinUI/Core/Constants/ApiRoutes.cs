@@ -57,6 +57,21 @@ public static class ApiRoutes
     public static string Validate(string code) => $"api/v1/vouchers/{Uri.EscapeDataString(code)}/validate";
   }
 
+  public static class Products
+  {
+    public const string Base = "api/v1/products";
+    public const string PosCatalog = "api/v1/products/pos-catalog";
+    public static string GetById(Guid id) => $"api/v1/products/{id}";
+    public const string BulkImport = "api/v1/products/bulk-import";
+  }
+
+  public static class Skus
+  {
+    public const string Base = "api/v1/skus";
+    public static string GetById(Guid id) => $"api/v1/skus/{id}";
+    public static string GetByBarcode(string code) => $"api/v1/skus/barcode/{Uri.EscapeDataString(code)}";
+  }
+
   public static class Orders
   {
     public const string Base = "api/v1/orders";

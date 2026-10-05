@@ -16,10 +16,9 @@ public class PosProductItem
   public string DisplaySpecification => !string.IsNullOrWhiteSpace(Specification) ? Specification : Unit;
   public decimal Price { get; set; }
   public int StockQuantity { get; set; }
+  public bool IsOutOfStock => StockQuantity <= 0;
+  public string StockBadgeText => IsOutOfStock ? "Hết hàng" : $"Tồn {StockQuantity}";
   public string CategoryId { get; set; } = string.Empty;
   public string CategoryName { get; set; } = string.Empty;
   public string? ImageUrl { get; set; }
-  public string BackgroundTint { get; set; } = "#F8FAFC";
-  public string IconForeground { get; set; } = "#0284C7";
-  public SymbolRegular IconSymbol { get; set; } = SymbolRegular.Box24;
 }

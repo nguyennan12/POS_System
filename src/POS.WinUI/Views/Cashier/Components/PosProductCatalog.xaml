@@ -41,7 +41,7 @@
                                 <!-- Khung Ảnh / Icon sản phẩm -->
                                 <Border Grid.Row="0"
                                         CornerRadius="12"
-                                        Background="{Binding BackgroundTint}"
+                                        Background="#F8FAFC"
                                         HorizontalAlignment="Stretch"
                                         VerticalAlignment="Stretch">
                                     <Grid>
@@ -51,16 +51,11 @@
                                                RenderOptions.BitmapScalingMode="HighQuality"
                                                Visibility="{Binding ImageUrl, Converter={StaticResource NullOrEmptyToVis}}"/>
 
-                                        <!-- Fallback Symbol Icon khi chưa có ảnh -->
-                                        <ui:SymbolIcon Symbol="{Binding IconSymbol}" 
-                                                       FontSize="36" 
-                                                       Foreground="{Binding IconForeground}"
-                                                       HorizontalAlignment="Center" 
-                                                       VerticalAlignment="Center"
-                                                       Visibility="{Binding ImageUrl, Converter={StaticResource InverseNullOrEmptyToVis}}"/>
+
 
                                         <!-- Badge Tồn kho góc trên trái của ảnh -->
-                                        <Border Background="#FFFFFFFF" 
+                                        <Border x:Name="stockBadgeBorder"
+                                                Background="#FFFFFFFF" 
                                                 CornerRadius="8" 
                                                 Padding="7,2.5" 
                                                 Margin="7,7,0,0" 
@@ -69,10 +64,12 @@
                                             <Border.Effect>
                                                 <DropShadowEffect BlurRadius="4" Color="#0F172A" Opacity="0.06" ShadowDepth="1" Direction="270"/>
                                             </Border.Effect>
-                                            <TextBlock FontSize="10.5" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center">
-                                                <Run Text="Tồn "/>
-                                                <Run Text="{Binding StockQuantity, Mode=OneWay}"/>
-                                            </TextBlock>
+                                            <TextBlock x:Name="stockBadgeText"
+                                                       Text="{Binding StockBadgeText, Mode=OneWay}"
+                                                       FontSize="10.5" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#334155" 
+                                                       VerticalAlignment="Center"/>
                                         </Border>
                                     </Grid>
                                 </Border>
@@ -126,6 +123,11 @@
                             </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsOutOfStock}" Value="True">
+                                <Setter TargetName="cardBorder" Property="Opacity" Value="0.55"/>
+                                <Setter TargetName="stockBadgeBorder" Property="Background" Value="#FEE2E2"/>
+                                <Setter TargetName="stockBadgeText" Property="Foreground" Value="#DC2626"/>
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="cardBorder" Property="BorderBrush" Value="#94A3B8"/>
                                 <Setter TargetName="cardBorder" Property="Background" Value="#FFFFFF"/>
