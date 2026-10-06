@@ -6,6 +6,7 @@
              xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
              xmlns:sharedComp="clr-namespace:POS.WinUI.Views.Shared.Components"
              xmlns:cashierComp="clr-namespace:POS.WinUI.Views.Cashier.Components"
+             xmlns:paymentComp="clr-namespace:POS.WinUI.Views.Cashier.Components.Payment"
              mc:Ignorable="d" 
              d:DesignHeight="850" d:DesignWidth="1400"
              Focusable="True">
@@ -14,6 +15,7 @@
         <KeyBinding Key="F1" Command="{Binding CheckoutCommand}"/>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
         <KeyBinding Key="F6" Command="{Binding PrintBillCommand}"/>
+        <KeyBinding Key="Escape" Command="{Binding ClosePaymentModalCommand}"/>
     </UserControl.InputBindings>
 
     <!-- ════════════════════ MAIN SHELL ════════════════════ -->
@@ -27,8 +29,6 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-
-
         <!-- ════════════════════ 1. TOP HEADER ════════════════════ -->
         <sharedComp:AppHeaderBar Grid.Row="0" IsPosMode="True" ShowSidebarToggle="False"/>
 
@@ -41,7 +41,6 @@
                 <!-- CỘT PHẢI (RIGHT): Giỏ hàng, Bàn phím & Thanh toán (~42%) -->
                 <ColumnDefinition Width="42*"/>
             </Grid.ColumnDefinitions>
-
 
             <!-- ── VÙNG BÊN TRÁI: SEARCH, CATEGORIES & PRODUCT GRID ── -->
             <Border Grid.Column="0" 
@@ -105,6 +104,11 @@
 
         <!-- ════════════════════ 3. BOTTOM FOOTER ════════════════════ -->
         <sharedComp:AppFooterBar Grid.Row="2" IsPosMode="True"/>
+
+        <!-- ════════════════════ 4. PAYMENT PROCESSING MODAL OVERLAY ════════════════════ -->
+        <paymentComp:PaymentProcessingModal Grid.Row="0" Grid.RowSpan="3"
+                                            Panel.ZIndex="1000"
+                                            Visibility="{Binding IsPaymentModalOpen, Converter={StaticResource BoolToVis}}"/>
 
         <!-- ════════════════════ TOAST NOTIFICATION OVERLAY (TOP-MOST) ════════════════════ -->
         <shared:ToastNotification Grid.Row="0" Grid.RowSpan="3"

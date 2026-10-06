@@ -38,7 +38,6 @@ public partial class PosCashierMainViewModel
     public async Task LoadCatalogFromApiAsync()
     {
         IsLoadingCatalog = true;
-        StatusText = "Đang tải dữ liệu...";
 
         try
         {
@@ -86,11 +85,10 @@ public partial class PosCashierMainViewModel
 
             // 2. Tải danh sách tồn kho & sản phẩm từ API
             await FetchProductsFromApiAsync();
-            StatusText = "Sẵn sàng";
         }
         catch (Exception ex)
         {
-            StatusText = $"Lỗi kết nối API: {ex.Message}";
+            ShowError($"Lỗi kết nối API: {ex.Message}");
             FilteredProducts.Clear();
         }
         finally

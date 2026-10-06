@@ -1,6 +1,7 @@
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using POS.WinUI.Core.Models;
 
 namespace POS.WinUI.ViewModels.Cashier;
 
@@ -9,13 +10,13 @@ public partial class PosCashierMainViewModel
     // ════════════════════ BÀN PHÍM SỐ CẢM ỨNG (NUMPAD) ════════════════════
 
     [ObservableProperty]
-    private string _numpadMode = "Tiền KH"; // "Số lượng", "CK %", "Giảm đ", "Tiền KH"
+    private string _numpadMode = "Số lượng"; // "Số lượng", "CK %", "Giảm đ"
 
     [ObservableProperty]
-    private string _numpadDisplayLabel = "Tiền khách đưa (đ)";
+    private string _numpadDisplayLabel = "Số lượng món";
 
     [ObservableProperty]
-    private string _numpadDisplaySubLabel = "Cho đơn hiện tại";
+    private string _numpadDisplaySubLabel = "Chọn món trong giỏ để sửa SL";
 
     [ObservableProperty]
     private string _numpadDisplayValue = "0";
@@ -26,31 +27,67 @@ public partial class PosCashierMainViewModel
     [ObservableProperty]
     private decimal _changeAmount = 0;
 
+    partial void OnSelectedCartItemChanged(PosCartItem? value)
+    {
+        if (NumpadMode == "Số lượng")
+        {
+            if (value != null)
+            {
+                NumpadDisplaySubLabel = value.Name;
+                NumpadDisplayValue = value.Quantity.ToString();
+            }
+            else
+            {
+                NumpadDisplaySubLabel = "Chọn món trong giỏ để sửa SL";
+                NumpadDisplayValue = "0";
+            }
+        }
+    }
+
     [RelayCommand]
     private void SetNumpadMode(string mode)
     {
         NumpadMode = mode;
-        NumpadDisplayValue = "0";
 
         switch (mode)
         {
-            case "Tiền KH":
-                NumpadDisplayLabel = "Tiền khách đưa (đ)";
-                NumpadDisplaySubLabel = "Cho đơn hiện tại";
-                break;
             case "Số lượng":
                 NumpadDisplayLabel = "Số lượng món";
-                NumpadDisplaySubLabel = SelectedCartItem != null ? SelectedCartItem.Name : "Chọn món để sửa SL";
+                if (SelectedCartItem != null)
+                {
+                    NumpadDisplaySubLabel = SelectedCartItem.Name;
+                    NumpadDisplayValue = SelectedCartItem.Quantity.ToString();
+                }
+                else
+                {
+                    NumpadDisplaySubLabel = "Chọn món trong giỏ để sửa SL";
+                    NumpadDisplayValue = "0";
+                }
                 break;
             case "CK %":
                 NumpadDisplayLabel = "Chiết khấu (%)";
                 NumpadDisplaySubLabel = "Giảm phần trăm trên đơn";
+                NumpadDisplayValue = "0";
                 break;
             case "Giảm đ":
                 NumpadDisplayLabel = "Giảm trực tiếp (đ)";
                 NumpadDisplaySubLabel = "Trừ tiền mặt trực tiếp";
+                NumpadDisplayValue = "0";
                 break;
         }
+    }
+
+    [RelayCommand]
+    private void NumpadDigit(string key)
+    {
+        NumpadInput(key);
+    }
+
+    [RelayCommand]
+    private void NumpadApply()
+    {
+        ApplyNumpadValue();
+        ShowSuccess("Đã áp dụng giá trị");
     }
 
     [RelayCommand]

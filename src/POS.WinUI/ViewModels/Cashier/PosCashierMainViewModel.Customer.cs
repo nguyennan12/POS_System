@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,19 +63,20 @@ public partial class PosCashierMainViewModel
     [ObservableProperty]
     private decimal _loyaltyDiscount = 0;
 
-    // ════════════════════ ƯU ĐÃI & VOUCHER ════════════════════
+    [ObservableProperty]
+    private string _loyaltyUseDisplayText = "Dùng điểm";
 
     [ObservableProperty]
-    private string _voucherCode = string.Empty;
+    private bool _canUseLoyaltyPoints = false;
 
     [ObservableProperty]
-    private decimal _voucherDiscount = 0;
+    private string _orderNote = string.Empty;
 
-    [ObservableProperty]
-    private string _voucherMessage = string.Empty;
-
-    [ObservableProperty]
-    private bool _isApplyingVoucher = false;
+    [RelayCommand]
+    private void ClearOrderNote()
+    {
+        OrderNote = string.Empty;
+    }
 
     partial void OnCustomerSearchTextChanged(string value)
     {
@@ -119,7 +119,6 @@ public partial class PosCashierMainViewModel
             if (!Regex.IsMatch(query, @"^0[0-9]{9}$"))
             {
                 IsCustomerNotFound = true;
-                StatusText = "Số điện thoại không hợp lệ";
                 ShowError("Số điện thoại không hợp lệ");
                 return;
             }
@@ -167,7 +166,6 @@ public partial class PosCashierMainViewModel
                     CustomerLoyaltyPoints = 0;
                     HasSelectedCustomer = false;
                     IsCustomerNotFound = true;
-                    StatusText = "Số điện thoại không tồn tại";
                     ShowWarning("Số điện thoại không tồn tại");
                 }
             }
@@ -180,7 +178,6 @@ public partial class PosCashierMainViewModel
                 HasSelectedCustomer = false;
                 IsCustomerNotFound = true;
                 string notFoundMsg = isDigitsOnly ? "Số điện thoại không tồn tại" : "Khách hàng không tồn tại";
-                StatusText = notFoundMsg;
                 ShowWarning(notFoundMsg);
             }
         }
@@ -189,7 +186,6 @@ public partial class PosCashierMainViewModel
             SelectedCustomerId = null;
             HasSelectedCustomer = false;
             IsCustomerNotFound = true;
-            StatusText = $"Lỗi tìm kiếm: {ex.Message}";
             ShowError($"Lỗi tìm kiếm: {ex.Message}");
         }
         finally
@@ -214,7 +210,6 @@ public partial class PosCashierMainViewModel
         ShowQuickRegister = false;
         CustomerSearchResults.Clear();
         CustomerSearchText = string.Empty;
-        StatusText = $"Đã chọn: {cust.Name}";
         RecalculateTotals();
     }
 
@@ -232,7 +227,6 @@ public partial class PosCashierMainViewModel
         UseLoyaltyPoints = false;
         ShowQuickRegister = false;
         QuickRegisterError = string.Empty;
-        StatusText = "Đã chuyển về Khách lẻ";
         RecalculateTotals();
     }
 
@@ -308,7 +302,6 @@ public partial class PosCashierMainViewModel
         }
 
         IsCreatingCustomer = true;
-        StatusText = "Đang đăng ký thành viên...";
 
         try
         {
@@ -328,20 +321,17 @@ public partial class PosCashierMainViewModel
                 ShowQuickRegister = false;
                 QuickRegisterError = string.Empty;
                 CustomerSearchText = string.Empty;
-                StatusText = $"Đăng ký thành công: {cust.Name}";
                 ShowSuccess("Đăng ký thành viên thành công");
             }
             else
             {
                 QuickRegisterError = res?.Error?.Message ?? "Số điện thoại đã tồn tại";
-                StatusText = QuickRegisterError;
                 ShowError(QuickRegisterError);
             }
         }
         catch (Exception ex)
         {
             QuickRegisterError = $"Lỗi tạo thành viên: {ex.Message}";
-            StatusText = QuickRegisterError;
             ShowError(QuickRegisterError);
         }
         finally
@@ -354,57 +344,5 @@ public partial class PosCashierMainViewModel
     partial void OnUseLoyaltyPointsChanged(bool value)
     {
         RecalculateTotals();
-    }
-
-    [RelayCommand]
-    private async Task ApplyVoucherAsync(string? code)
-    {
-        var voucher = code ?? VoucherCode;
-        if (string.IsNullOrWhiteSpace(voucher))
-        {
-            ShowWarning("Vui lòng nhập mã voucher");
-            return;
-        }
-
-        IsApplyingVoucher = true;
-        VoucherMessage = string.Empty;
-
-        try
-        {
-            var res = await _voucherApiClient.ValidateVoucherAsync(voucher.Trim(), SubTotal, SelectedCustomerId);
-            if (res?.Success == true && res.Data != null)
-            {
-                if (res.Data.IsValid)
-                {
-                    VoucherDiscount = res.Data.DiscountAmount;
-                    VoucherMessage = $"Áp dụng voucher thành công: -{res.Data.DiscountAmount:N0} đ";
-                    ShowSuccess(VoucherMessage);
-                    RecalculateTotals();
-                }
-                else
-                {
-                    VoucherDiscount = 0;
-                    VoucherMessage = res.Data.ErrorMessage ?? "Mã voucher không hợp lệ";
-                    ShowError(VoucherMessage);
-                    RecalculateTotals();
-                }
-            }
-            else
-            {
-                VoucherDiscount = 0;
-                VoucherMessage = "Không thể kiểm tra voucher";
-                ShowError(VoucherMessage);
-            }
-        }
-        catch (Exception ex)
-        {
-            VoucherDiscount = 0;
-            VoucherMessage = ex.Message;
-            ShowError($"Lỗi áp dụng voucher: {ex.Message}");
-        }
-        finally
-        {
-            IsApplyingVoucher = false;
-        }
     }
 }

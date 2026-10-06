@@ -23,8 +23,12 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
 
         services.AddDbContext<AppDbContext>(options =>
+        {
             options.UseNpgsql(connectionString, npgsql =>
-                npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+                npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+            options.ConfigureWarnings(w =>
+                w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        });
 
         // ---- Redis ----
         var redisConnectionString = configuration["Redis:ConnectionString"]

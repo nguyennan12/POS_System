@@ -53,13 +53,53 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Tab Chế độ Numpad -->
+            <!-- Tab Chế độ Numpad (3 tab chuyên dụng, tự động sáng tab đang chọn) -->
             <Border Grid.Row="0" Background="#F1F5F9" CornerRadius="8" Padding="2" Margin="0,0,0,6">
-                <UniformGrid Columns="4">
-                    <Button Content="Số lượng" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Số lượng"/>
-                    <Button Content="CK %" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="CK %"/>
-                    <Button Content="Giảm đ" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Giảm đ"/>
-                    <Button Content="Tiền KH" Style="{StaticResource NumpadTabStyle}" Command="{Binding SetNumpadModeCommand}" CommandParameter="Tiền KH" FontWeight="Bold"/>
+                <UniformGrid Columns="3">
+                    <!-- Tab Số lượng -->
+                    <Button Content="Số lượng" Command="{Binding SetNumpadModeCommand}" CommandParameter="Số lượng">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NumpadTabStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NumpadMode}" Value="Số lượng">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Tab CK % -->
+                    <Button Content="CK %" Command="{Binding SetNumpadModeCommand}" CommandParameter="CK %">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NumpadTabStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NumpadMode}" Value="CK %">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <!-- Tab Giảm đ -->
+                    <Button Content="Giảm đ" Command="{Binding SetNumpadModeCommand}" CommandParameter="Giảm đ">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NumpadTabStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NumpadMode}" Value="Giảm đ">
+                                        <Setter Property="Background" Value="White"/>
+                                        <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                        <Setter Property="FontWeight" Value="Bold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </UniformGrid>
             </Border>
 

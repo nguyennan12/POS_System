@@ -1,0 +1,186 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.Payment.PaymentProcessingModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:POS.WinUI.Views.Cashier.Components.Payment">
+
+    <!-- Backdrop toàn màn hình (Modal Overlay) -->
+    <Grid Background="#750F172A">
+        
+        <!-- Khung Modal Trung Tâm (Kích thước rộng rãi, trực quan và cân đối) -->
+        <Border Width="1220"
+                MinHeight="680"
+                MaxHeight="760"
+                Background="#FFFFFF"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1"
+                CornerRadius="20"
+                Padding="28,22"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="40" Color="#000000" Opacity="0.25" ShadowDepth="12" Direction="270"/>
+            </Border.Effect>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- Row 0: Header Dialog -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Row 1: 3 Cột Thao Tác Thanh Toán Chính -->
+                    <RowDefinition Height="*"/>
+                    <!-- Row 2: Footer Thanh Toán & Nút Hành Động -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- ════════════════════ 1. HEADER MODAL ════════════════════ -->
+                <Grid Grid.Row="0" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Icon & Tiêu đề -->
+                    <Border Grid.Column="0" Width="44" Height="44" Background="#FFF7ED" BorderBrush="#FFEDD5" BorderThickness="1" CornerRadius="12" Margin="0,0,14,0">
+                        <ui:SymbolIcon Symbol="Receipt24" FontSize="22" Foreground="{StaticResource PrimaryBrush}"/>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Xử lý thanh toán" FontSize="19" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                            <TextBlock Text="Đơn hàng" FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text=" • " FontSize="13" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding CartItems.Count, StringFormat='{}{0} sản phẩm'}" FontSize="13" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Nút Đóng (X) -->
+                    <Button Grid.Column="2"
+                            Width="38" Height="38" Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Command="{Binding ClosePaymentModalCommand}"
+                            ToolTip="Đóng cửa sổ thanh toán (Esc)">
+                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="20" Foreground="{StaticResource TextMutedBrush}"/>
+                    </Button>
+                </Grid>
+
+                <!-- ════════════════════ 2. BODY 3 CỘT ════════════════════ -->
+                <Grid Grid.Row="1" Margin="0,0,0,18">
+                    <Grid.ColumnDefinitions>
+                        <!-- Cột Trái: Danh sách Phương thức (280px) -->
+                        <ColumnDefinition Width="280"/>
+                        <ColumnDefinition Width="18"/>
+                        <!-- Cột Giữa: Trực quan / Danh sách chia tiền (*) -->
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="18"/>
+                        <!-- Cột Phải: Tiền khách đưa & Tóm tắt đơn (360px) -->
+                        <ColumnDefinition Width="360"/>
+                    </Grid.ColumnDefinitions>
+
+                    <local:PaymentMethodSelector Grid.Column="0"/>
+                    
+                    <!-- Cột Giữa: Hiển thị trực quan (Single Mode) hoặc Danh sách phân bổ (Split Mode) -->
+                    <Grid Grid.Column="2">
+                        <local:PaymentCenterDisplay Visibility="{Binding IsSplitPayment, Converter={StaticResource InverseBoolToVis}}"/>
+                        <local:PaymentSplitList Visibility="{Binding IsSplitPayment, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+
+                    <local:PaymentSummaryPanel Grid.Column="4"/>
+                </Grid>
+
+                <!-- ════════════════════ 3. FOOTER HÀNH ĐỘNG ════════════════════ -->
+                <Grid Grid.Row="2" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <!-- Ghi chú in hóa đơn bên trái -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Nút Hủy & Xác nhận bên phải -->
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: In hóa đơn -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Receipt24" FontSize="16" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
+                        <TextBlock Text="Hóa đơn sẽ được in tự động sau khi xác nhận thanh toán thành công" 
+                                   FontSize="13" 
+                                   Foreground="{StaticResource TextMutedBrush}" 
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Right: Nút Hủy & Xác nhận thanh toán -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        
+                        <!-- Nút Hủy bỏ -->
+                        <Button Content="Hủy bỏ"
+                                Style="{StaticResource OutlineButtonStyle}"
+                                Height="46"
+                                Padding="22,0"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Margin="0,0,12,0"
+                                Command="{Binding ClosePaymentModalCommand}"/>
+
+                        <!-- Nút Xác nhận thanh toán -->
+                        <Button Height="46"
+                                Padding="26,0"
+                                Command="{Binding ConfirmPaymentCommand}"
+                                IsEnabled="{Binding IsProcessingCheckout, Converter={StaticResource InverseBoolToVis}}"
+                                Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="ConfirmBorder"
+                                            Background="{StaticResource PrimaryBrush}"
+                                            CornerRadius="10"
+                                            Padding="{TemplateBinding Padding}">
+                                        <Grid VerticalAlignment="Center">
+                                            
+                                             <!-- Trạng thái bình thường -->
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center"
+                                                        Visibility="{Binding IsProcessingCheckout, Converter={StaticResource InverseBoolToVis}}">
+                                                <TextBlock Text="Xác nhận thanh toán" 
+                                                           FontSize="14.5" 
+                                                           FontWeight="Bold" 
+                                                           Foreground="White" 
+                                                           VerticalAlignment="Center"/>
+                                                <ui:SymbolIcon Symbol="ArrowRight24" 
+                                                               FontSize="16" 
+                                                               Foreground="White" 
+                                                               Margin="8,0,0,0" 
+                                                               VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- Trạng thái Loading khi đang gọi API -->
+                                            <StackPanel Orientation="Horizontal"
+                                                        HorizontalAlignment="Center"
+                                                        Visibility="{Binding IsProcessingCheckout, Converter={StaticResource BoolToVis}}">
+                                                <ui:ProgressRing Width="18" Height="18" IsIndeterminate="True" Foreground="White" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Đang xử lý..." 
+                                                           FontSize="14" 
+                                                           FontWeight="SemiBold" 
+                                                           Foreground="White" 
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ConfirmBorder" Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="ConfirmBorder" Property="Background" Value="{StaticResource PrimaryPressedBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter TargetName="ConfirmBorder" Property="Opacity" Value="0.6"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

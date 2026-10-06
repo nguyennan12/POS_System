@@ -197,7 +197,7 @@
                     </Button>
                 </Grid>
 
-                <!-- ════════ TRẠNG THÁI 3: ĐÃ CHỌN KHÁCH HÀNG (CUSTOMER SELECTED BADGE) ════════ -->
+                <!-- ════════ TRẠNG THÁI 3: ĐÃ CHỌN KHÁCH HÀNG (1 HÀNG GỌN GÀNG, CÓ NÚT X & NÚT DÙNG ĐIỂM BÊN PHẢI) ════════ -->
                 <Grid Visibility="{Binding HasSelectedCustomer, Converter={StaticResource BoolToVis}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -205,6 +205,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
+                    <!-- Khối thông tin khách hàng (Có nút X để xóa/bỏ chọn) -->
                     <Border Grid.Column="0"
                             Height="36"
                             Background="#F8FAFC"
@@ -216,10 +217,11 @@
                             <Grid.ColumnDefinitions>
                                 <!-- Icon + Tên + SĐT -->
                                 <ColumnDefinition Width="*"/>
-                                <!-- Điểm tích lũy & Checkbox dùng điểm -->
+                                <!-- Badge Hạng + Badge Điểm + Nút Xóa (X) -->
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
+                            <!-- Cụm Tên & SĐT -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                 <ui:SymbolIcon Symbol="PersonCircle24" FontSize="18" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding SelectedCustomerName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
@@ -227,32 +229,57 @@
                                 <TextBlock Text="{Binding CustomerPhoneNumber}" FontSize="12" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                             </StackPanel>
 
+                            <!-- Cụm Badge Hạng + Điểm + Nút [X] Xóa khách -->
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <!-- Badge Hạng Thành Viên (Normal, Bạc, Vàng, VIP) -->
-                                <shared:MemberTierBadge TierName="{Binding CustomerTierName}" Margin="0,0,8,0"/>
+                                <!-- Badge Hạng Thành Viên -->
+                                <shared:MemberTierBadge TierName="{Binding CustomerTierName}" Margin="0,0,6,0"/>
 
-                                <!-- Badge điểm thưởng -->
-                                <Border Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="8" Padding="6,2" VerticalAlignment="Center">
+                                <!-- Badge Điểm Thưởng -->
+                                <Border Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="8" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <ui:SymbolIcon Symbol="Star24" FontSize="11" Foreground="#EA580C" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding CustomerLoyaltyPoints, StringFormat='{}{0:N0} đ'}" FontSize="11" FontWeight="Bold" Foreground="#EA580C" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding CustomerLoyaltyPoints, StringFormat='{}{0:N0} điểm'}" FontSize="11" FontWeight="Bold" Foreground="#EA580C" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
+
+                                <!-- Nút [X] Xóa / Hủy chọn khách hàng để quay lại ô Search -->
+                                <Button Width="22" Height="22"
+                                        Padding="0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding ClearSelectedCustomerCommand}"
+                                        ToolTip="Bỏ chọn khách hàng này">
+                                    <ui:SymbolIcon Symbol="DismissCircle24" FontSize="15" Foreground="{StaticResource TextPlaceholderBrush}"/>
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Border>
 
-                    <!-- Nút Đổi khách -->
-                    <Button Grid.Column="2"
-                            Height="36"
-                            Style="{StaticResource SmallOutlineButtonStyle}"
-                            Command="{Binding ClearSelectedCustomerCommand}"
-                            ToolTip="Bỏ chọn và quay lại Khách lẻ">
+                    <!-- Nút DÙNG ĐIỂM (Tự động tính giảm tối đa khi tích chọn) -->
+                    <Border Grid.Column="2" 
+                            Height="36" 
+                            Background="#F8FAFC" 
+                            BorderBrush="#E2E8F0" 
+                            BorderThickness="1" 
+                            CornerRadius="10" 
+                            Padding="8,0"
+                            IsEnabled="{Binding CanUseLoyaltyPoints}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <ui:SymbolIcon Symbol="ArrowSwap24" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
-                            <TextBlock Text="Đổi khách" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox IsChecked="{Binding UseLoyaltyPoints}" 
+                                      MinWidth="0"
+                                      Padding="0"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center"
+                                      Cursor="Hand"
+                                      ToolTip="Tích chọn để tự động trừ số điểm tối đa vào đơn"/>
+                            <TextBlock Text="{Binding LoyaltyUseDisplayText}" 
+                                       FontSize="11.5" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" 
+                                       VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Button>
+                    </Border>
                 </Grid>
             </Grid>
         </Grid>

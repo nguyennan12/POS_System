@@ -28,7 +28,7 @@ public class OrdersController(ISender mediator) : ControllerBase
       CancellationToken cancellationToken)
   {
     var result = await mediator.Send(
-        new CreateOrderCommand(request.ShiftId, request.CustomerId),
+        new CreateOrderCommand(request.ShiftId, request.CustomerId, request.Note),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);

@@ -1,0 +1,242 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.Payment.CenterMethods.VietQrCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Grid.RowDefinitions>
+            <!-- Row 0: Standee VietQR / Napas 247 chính hãng -->
+            <RowDefinition Height="Auto"/>
+            <!-- Row 1: Thẻ thông tin chuyển khoản chi tiết -->
+            <RowDefinition Height="Auto"/>
+            <!-- Row 2: Thanh nút thao tác cân đối -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 1. STANDEE VIETQR / NAPAS 247 CHÍNH HÃNG ── -->
+        <Border Grid.Row="0"
+                Width="320"
+                BorderBrush="#CBD5E1"
+                BorderThickness="1"
+                CornerRadius="16"
+                HorizontalAlignment="Center"
+                Margin="0,0,0,8"
+                Padding="12,10"
+                ClipToBounds="True">
+            <Border.Background>
+                <ImageBrush ImageSource="/Resources/Assets/vietqr_standee_bg.png" Stretch="UniformToFill"/>
+            </Border.Background>
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.12" ShadowDepth="4" Direction="270"/>
+            </Border.Effect>
+
+            <StackPanel HorizontalAlignment="Center">
+                <!-- Header: VIETQR & NAPAS 247 Logos trong Badge Trắng bo góc -->
+                <Border Background="#FFFFFF" CornerRadius="8" Padding="12,4" HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <Image Source="/Resources/Assets/vietqr_header.png"
+                           Height="26"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+
+                <!-- Scanner Frame with Blue Corner Brackets & Dynamic QR -->
+                <Border Width="190"
+                        Height="190"
+                        Background="#FFFFFF"
+                        BorderBrush="#E2E8F0"
+                        BorderThickness="1"
+                        CornerRadius="12">
+                    <Grid>
+                        <!-- 4 Blue Corner Brackets -->
+                        <Border Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5"
+                                BorderBrush="#2563EB" BorderThickness="3,3,0,0" CornerRadius="4,0,0,0"/>
+                        <Border Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="5"
+                                BorderBrush="#2563EB" BorderThickness="0,3,3,0" CornerRadius="0,4,0,0"/>
+                        <Border Width="20" Height="20" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5"
+                                BorderBrush="#2563EB" BorderThickness="3,0,0,3" CornerRadius="0,0,0,4"/>
+                        <Border Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="5"
+                                BorderBrush="#2563EB" BorderThickness="0,0,3,3" CornerRadius="0,0,4,0"/>
+
+                        <!-- QR Code Bitmap động do hệ thống render ra -->
+                        <Image Source="{Binding VietQrCodeImage}" 
+                               RenderOptions.BitmapScalingMode="NearestNeighbor" 
+                               Stretch="Uniform" 
+                               Margin="9"/>
+
+                        <!-- Fallback nếu đang khởi tạo QR -->
+                        <Border Background="#F8FAFC" CornerRadius="8" Margin="8">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding VietQrCodeImage}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="QrCode24" FontSize="44" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Đang tạo mã VietQR..." FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Footer: Bank Logos (VPBank, Vietcombank, MB, BIDV) trong Badge Trắng -->
+                <Border Background="#FFFFFF" CornerRadius="8" Padding="10,3" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <Image Source="/Resources/Assets/vietqr_banks_footer.png"
+                           Height="18"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 2. THÔNG TIN CHUYỂN KHOẢN CHI TIẾT & TRẠNG THÁI WEBHOOK ── -->
+        <Border Grid.Row="1"
+                Width="320"
+                Background="#F8FAFC"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="12,8"
+                Margin="0,0,0,8">
+            <StackPanel>
+                <!-- Trạng thái lắng nghe Webhook (Live Pulse Animation - Xanh biển VietQR) -->
+                <Border Background="#EFF6FF" BorderBrush="#DBEAFE" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="0,0,0,6">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Chấm tròn nhấp nháy xanh biển -->
+                        <Ellipse Grid.Column="0" Width="7" Height="7" Fill="#005BAA" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <Ellipse.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.2" Duration="0:0:0.8" AutoReverse="True"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Ellipse.Triggers>
+                        </Ellipse>
+
+                        <TextBlock Grid.Column="1" 
+                                   Text="Đang chờ khách thanh toán..." 
+                                   FontSize="11" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#005BAA" 
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Grid Thông tin chuyển khoản -->
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Row 0: Ngân hàng & STK -->
+                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,4,3">
+                        <TextBlock Text="Ngân hàng" FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding VietQrBankName, FallbackValue='MB Bank'}" FontWeight="SemiBold" FontSize="11.5" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,1,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="4,0,0,3">
+                        <TextBlock Text="Số tài khoản" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding VietQrAccountNo, FallbackValue='0988888888'}" FontWeight="Bold" FontSize="11.5" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                    </StackPanel>
+
+                    <!-- Row 1: Nội dung CK & Số tiền -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,4,0">
+                        <TextBlock Text="Nội dung chuyển khoản" FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{Binding VietQrTransferContent, FallbackValue='HD160334'}" FontWeight="Bold" FontSize="12" Foreground="#005BAA" Margin="0,1,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" Margin="4,0,0,0">
+                        <TextBlock Text="Số tiền cần chuyển" FontSize="10" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right"/>
+                        <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:N0} đ'}" FontWeight="Bold" FontSize="12.5" Foreground="#16A34A" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- ── 3. NÚT THAO TÁC CÂN ĐỐI (Layout 2 Nút Trải Đều) ── -->
+        <Grid Grid.Row="2" Width="320">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Nút 1: Tạo lại mã (Secondary) -->
+            <Button Grid.Column="0"
+                    Command="{Binding RefreshVietQrCommand}"
+                    Height="36"
+                    HorizontalAlignment="Stretch"
+                    Background="#FFFFFF"
+                    BorderBrush="#CBD5E1"
+                    BorderThickness="1"
+                    Cursor="Hand"
+                    Margin="0,0,5,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,5,0"/>
+                                <TextBlock Text="Tạo lại mã" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="btnBorder" Property="BorderBrush" Value="#94A3B8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- Nút 2: Đã nhận tiền (Xanh biển VietQR / Napas Blue) -->
+            <Button Grid.Column="1"
+                    Command="{Binding ConfirmVietQrPaidCommand}"
+                    Height="36"
+                    HorizontalAlignment="Stretch"
+                    Background="#005BAA"
+                    Cursor="Hand"
+                    Margin="5,0,0,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="btnBorder" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Checkmark24" FontSize="14" Foreground="#FFFFFF" Margin="0,0,5,0"/>
+                                <TextBlock Text="Đã nhận tiền" FontSize="12.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#004B8C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="btnBorder" Property="Background" Value="#003B6F"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+    </Grid>
+</UserControl>

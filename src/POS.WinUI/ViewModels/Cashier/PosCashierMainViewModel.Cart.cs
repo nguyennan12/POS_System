@@ -29,6 +29,9 @@ public partial class PosCashierMainViewModel
     private decimal _totalDiscount = 0;
 
     [ObservableProperty]
+    private decimal _taxTotal = 0;
+
+    [ObservableProperty]
     private decimal _grandTotal = 0;
 
     [RelayCommand]
@@ -127,6 +130,7 @@ public partial class PosCashierMainViewModel
         VoucherCode = string.Empty;
         VoucherDiscount = 0;
         VoucherMessage = string.Empty;
+        OrderNote = string.Empty;
         RecalculateTotals();
     }
 
@@ -136,13 +140,28 @@ public partial class PosCashierMainViewModel
         IsCartEmpty = CartItems.Count == 0;
         SubTotal = CartItems.Sum(c => c.SubTotal);
 
-        if (UseLoyaltyPoints && CustomerLoyaltyPoints > 0)
+        // Khách có thể dùng điểm khi có tài khoản, điểm > 0 và giỏ hàng > 0
+        CanUseLoyaltyPoints = HasSelectedCustomer && CustomerLoyaltyPoints > 0 && SubTotal > 0;
+
+        if (UseLoyaltyPoints && CanUseLoyaltyPoints)
         {
-            LoyaltyDiscount = Math.Min(CustomerLoyaltyPoints * 1000m, SubTotal * 0.5m);
+            // Tiền còn lại cần thanh toán sau voucher
+            decimal payableAfterVoucher = Math.Max(0, SubTotal - VoucherDiscount);
+            // Quy đổi điểm sang VNĐ (1 điểm = 1.000đ)
+            decimal maxPointsValue = CustomerLoyaltyPoints * 1000m;
+            // Dùng tối đa không vượt quá số tiền còn lại của đơn hàng
+            LoyaltyDiscount = Math.Min(maxPointsValue, payableAfterVoucher);
+
+            LoyaltyUseDisplayText = LoyaltyDiscount > 0 ? $"Dùng (-{LoyaltyDiscount:N0}đ)" : "Dùng điểm";
         }
         else
         {
             LoyaltyDiscount = 0;
+            if (!CanUseLoyaltyPoints && UseLoyaltyPoints)
+            {
+                UseLoyaltyPoints = false;
+            }
+            LoyaltyUseDisplayText = "Dùng điểm";
         }
 
         TotalDiscount = VoucherDiscount + LoyaltyDiscount;

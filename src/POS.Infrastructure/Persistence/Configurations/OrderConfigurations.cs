@@ -56,7 +56,7 @@ public class OrderDiscountConfiguration : IEntityTypeConfiguration<OrderDiscount
         builder.Property(o => o.DiscountAmount).HasMoneyPrecision();
         builder.Property(o => o.Description).HasMaxLength(300);
         builder.Property(o => o.AppliedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
-        builder.HasOne(o => o.Order).WithMany().HasForeignKey(o => o.OrderId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(o => o.Order).WithMany(o => o.Discounts).HasForeignKey(o => o.OrderId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne(o => o.Promotion).WithMany().HasForeignKey(o => o.PromotionId).OnDelete(DeleteBehavior.ClientSetNull);
         builder.HasOne(o => o.Voucher).WithMany().HasForeignKey(o => o.VoucherId).OnDelete(DeleteBehavior.ClientSetNull);
         builder.HasTableCheckConstraint("ck_order_discounts_amount", "discount_amount >= 0");
