@@ -10,16 +10,16 @@
              d:DataContext="{d:DesignInstance vm:CfdStandbyViewModel}"
              Focusable="True">
 
-    <!-- ════════════════════ 1920x1080 SPLIT SCREEN: LEFT 70% / RIGHT 30% ════════════════════ -->
+    <!-- ════════════════════ 1920x1080 SPLIT SCREEN: LEFT 70% (4 BANNERS) / RIGHT 30% (LOYALTY HUB) ════════════════════ -->
     <Grid Background="#EA580C">
         <Grid.ColumnDefinitions>
-            <!-- Left Side: Vibrant Ambient Orange 4-Banner Showcase (70%) -->
+            <!-- Left Side: Bento 4-Banner Showcase (70%) -->
             <ColumnDefinition Width="70*"/>
-            <!-- Right Side: Clean Pure White Info & Loyalty Hub (30%) -->
+            <!-- Right Side: Clean Loyalty & Membership Hub (30%) -->
             <ColumnDefinition Width="30*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- 1. Full-Screen Seamless Background -->
+        <!-- 1. FULL-SCREEN UNIFIED AMBIENT ORANGE BACKGROUND (100% Seamless) -->
         <Image Grid.Column="0" Grid.ColumnSpan="2"
                Source="pack://application:,,,/Resources/Assets/bg_cfd_unified.png" 
                Stretch="UniformToFill" 
@@ -27,13 +27,13 @@
                VerticalAlignment="Center"
                RenderOptions.BitmapScalingMode="HighQuality"/>
 
-        <!-- 2. Left 70%: 4-Banner Bento Grid Showcase -->
+        <!-- 2. LEFT SIDE: 4-BANNER BENTO SHOWCASE (70%) -->
         <comp:CfdBannerShowcaseControl Grid.Column="0"/>
 
-        <!-- 3. Right 30%: Loyalty, QR Code & Store Info Hub -->
+        <!-- 3. RIGHT SIDE: LOYALTY, MEMBERSHIP QR & WI-FI (30%) -->
         <comp:CfdLoyaltyHubControl Grid.Column="1"/>
 
-        <!-- 4. Ambient Soft Diagonal Light Sweep (Topmost Layer) -->
+        <!-- 4. AMBIENT LIGHT SWEEP (TOP-MOST) -->
         <comp:CfdAmbientSweepOverlay Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="999"/>
     </Grid>
 </UserControl>

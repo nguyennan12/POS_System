@@ -4,6 +4,7 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using POS.WinUI.Core.Models;
+using POS.WinUI.Core.Models.Cfd;
 
 namespace POS.WinUI.ViewModels.Cashier;
 
@@ -67,7 +68,8 @@ public partial class PosCashierMainViewModel
                 Unit = product.Unit,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                Quantity = 1
+                Quantity = 1,
+                ImageUrl = product.ImageUrl
             };
             CartItems.Add(newItem);
             SelectedCartItem = newItem;
@@ -147,8 +149,9 @@ public partial class PosCashierMainViewModel
         {
             // Tiền còn lại cần thanh toán sau voucher
             decimal payableAfterVoucher = Math.Max(0, SubTotal - VoucherDiscount);
-            // Quy đổi điểm sang VNĐ (1 điểm = 1.000đ)
-            decimal maxPointsValue = CustomerLoyaltyPoints * 1000m;
+            // Quy đổi điểm sang VNĐ theo tỷ lệ quy đổi của hạng thành viên (mặc định 1 điểm = 1.000đ)
+            decimal redemptionRate = CustomerPointRedemptionRate > 0 ? CustomerPointRedemptionRate : 1000m;
+            decimal maxPointsValue = CustomerLoyaltyPoints * redemptionRate;
             // Dùng tối đa không vượt quá số tiền còn lại của đơn hàng
             LoyaltyDiscount = Math.Min(maxPointsValue, payableAfterVoucher);
 
@@ -171,5 +174,45 @@ public partial class PosCashierMainViewModel
         {
             UpdateChangeCalculation();
         }
+
+        SyncToCfd();
+    }
+
+    private void SyncToCfd()
+    {
+        if (CartItems.Count == 0)
+        {
+            _ = _cfdSyncService.ShowStandbyAsync();
+            return;
+        }
+
+        decimal pointsEarned = 0;
+        if (HasSelectedCustomer && GrandTotal > 0)
+        {
+            decimal rate = CustomerPointRate > 0 ? CustomerPointRate : 0.01m;
+            decimal redemptionRate = CustomerPointRedemptionRate > 0 ? CustomerPointRedemptionRate : 1000m;
+            // Tính số điểm tích lũy: (GrandTotal * PointRate) / PointRedemptionRate (hỗ trợ số lẻ thập phân chính xác)
+            // Ví dụ:
+            // - Đơn 20.000đ (VIP 3% = 600đ / 1000) => +0.6 điểm
+            // - Đơn 500.000đ (Bạc 1.5% = 7.500đ / 1000) => +7.5 điểm
+            // - Đơn 500.000đ (VIP 3% = 15.000đ / 1000) => +15 điểm
+            pointsEarned = Math.Round((GrandTotal * rate) / redemptionRate, 2, MidpointRounding.AwayFromZero);
+        }
+
+        var dto = new CfdCartStateDto(
+            CartItems.Select(c => new CfdCartItemDto(c.ProductId, c.Sku, c.Name, c.Unit, c.Price, c.Quantity, c.SubTotal, c.ImageUrl)).ToList(),
+            CartItemCount,
+            SubTotal,
+            TotalDiscount,
+            TaxTotal,
+            GrandTotal,
+            HasSelectedCustomer ? SelectedCustomerName : null,
+            HasSelectedCustomer ? CustomerPhoneNumber : null,
+            pointsEarned,
+            HasSelectedCustomer ? CustomerTierName : null,
+            HasSelectedCustomer ? CustomerLoyaltyPoints : 0
+        );
+
+        _ = _cfdSyncService.SyncCartAsync(dto);
     }
 }

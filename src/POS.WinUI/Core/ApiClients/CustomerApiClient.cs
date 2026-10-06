@@ -57,6 +57,13 @@ public sealed class CustomerApiClient : BaseApiClient
       => GetAsync<ApiResponse<LoyaltyAccountResponse>>(ApiRoutes.Customers.Loyalty(id), ct);
 
 
+  /// <summary>
+  /// Lấy danh sách cấu hình tất cả các hạng thành viên từ hệ thống (kèm tỷ lệ tích điểm, chiết khấu, đổi điểm)
+  /// </summary>
+  public Task<ApiResponse<List<MemberTierResponse>>?> GetMemberTiersAsync(CancellationToken ct = default)
+      => GetAsync<ApiResponse<List<MemberTierResponse>>>(ApiRoutes.MemberTiers.Base, ct);
+
+
   /// Tạo mới hồ sơ khách hàng
   /// </summary>
   public Task<ApiResponse<CustomerDetailResponse>?> CreateCustomerAsync(CreateCustomerRequest request, CancellationToken ct = default)

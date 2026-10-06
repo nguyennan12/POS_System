@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<NetworkStatusService>();
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ICfdDisplayService, CfdDisplayService>();
+        services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
 
         // ── ApiClients & Handlers ──────────────────────────────────
         services.AddTransient<NetworkStatusHandler>();
@@ -57,7 +58,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ManagementMainViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<PosCashierMainViewModel>();
-        services.AddTransient<CfdStandbyViewModel>();
+        services.AddSingleton<CfdStandbyViewModel>();
+        services.AddSingleton<CfdLiveCartViewModel>();
 
         // ── 9 Feature ViewModels ──────────────────────────────────
         services.AddTransient<DashboardViewModel>();
@@ -75,7 +77,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ManagementMainView>();
         services.AddTransient<LoginView>();
         services.AddTransient<PosCashierMainView>();
-        services.AddTransient<CfdStandbyView>();
+        services.AddSingleton<CfdStandbyView>();
+        services.AddSingleton<CfdLiveCartView>();
         services.AddTransient<DashboardView>();
         services.AddTransient<OrdersView>();
         services.AddTransient<ProductsView>();

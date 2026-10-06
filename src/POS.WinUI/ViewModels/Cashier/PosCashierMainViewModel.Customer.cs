@@ -26,10 +26,19 @@ public partial class PosCashierMainViewModel
     private string _customerPhoneNumber = string.Empty;
 
     [ObservableProperty]
-    private int _customerLoyaltyPoints = 0;
+    private decimal _customerLoyaltyPoints = 0;
 
     [ObservableProperty]
     private string _customerTierName = "Thành viên";
+
+    [ObservableProperty]
+    private decimal _customerPointRate = 0.01m;
+
+    [ObservableProperty]
+    private decimal _customerDiscountRate = 0m;
+
+    [ObservableProperty]
+    private decimal _customerPointRedemptionRate = 1000m;
 
     [ObservableProperty]
     private bool _hasSelectedCustomer = false;
@@ -94,6 +103,10 @@ public partial class PosCashierMainViewModel
                 SelectedCustomerName = "Khách lẻ";
                 CustomerPhoneNumber = string.Empty;
                 CustomerLoyaltyPoints = 0;
+                CustomerTierName = "Thành viên";
+                CustomerPointRate = 0.01m;
+                CustomerDiscountRate = 0m;
+                CustomerPointRedemptionRate = 1000m;
                 HasSelectedCustomer = false;
                 IsCustomerNotFound = false;
                 ShowQuickRegister = false;
@@ -164,6 +177,10 @@ public partial class PosCashierMainViewModel
                     SelectedCustomerName = "Khách lẻ";
                     CustomerPhoneNumber = string.Empty;
                     CustomerLoyaltyPoints = 0;
+                    CustomerTierName = "Thành viên";
+                    CustomerPointRate = 0.01m;
+                    CustomerDiscountRate = 0m;
+                    CustomerPointRedemptionRate = 1000m;
                     HasSelectedCustomer = false;
                     IsCustomerNotFound = true;
                     ShowWarning("Số điện thoại không tồn tại");
@@ -175,6 +192,10 @@ public partial class PosCashierMainViewModel
                 SelectedCustomerName = "Khách lẻ";
                 CustomerPhoneNumber = string.Empty;
                 CustomerLoyaltyPoints = 0;
+                CustomerTierName = "Thành viên";
+                CustomerPointRate = 0.01m;
+                CustomerDiscountRate = 0m;
+                CustomerPointRedemptionRate = 1000m;
                 HasSelectedCustomer = false;
                 IsCustomerNotFound = true;
                 string notFoundMsg = isDigitsOnly ? "Số điện thoại không tồn tại" : "Khách hàng không tồn tại";
@@ -195,6 +216,25 @@ public partial class PosCashierMainViewModel
         }
     }
 
+    private readonly List<MemberTierResponse> _cachedMemberTiers = new();
+
+    public async Task LoadMemberTiersAsync()
+    {
+        try
+        {
+            var res = await _customerApiClient.GetMemberTiersAsync();
+            if (res?.Success == true && res.Data != null)
+            {
+                _cachedMemberTiers.Clear();
+                _cachedMemberTiers.AddRange(res.Data);
+            }
+        }
+        catch
+        {
+            // Fallback gracefully
+        }
+    }
+
     [RelayCommand]
     public void SelectCustomerFromList(CustomerSummaryResponse? cust)
     {
@@ -203,14 +243,18 @@ public partial class PosCashierMainViewModel
         SelectedCustomerId = cust.Id;
         SelectedCustomerName = cust.Name;
         CustomerPhoneNumber = cust.Phone;
-        CustomerLoyaltyPoints = (int)cust.PointsBalance;
+        CustomerLoyaltyPoints = cust.PointsBalance;
         CustomerTierName = !string.IsNullOrWhiteSpace(cust.MemberTierName) ? cust.MemberTierName : "Thành viên";
+        UpdateRatesFromTier(CustomerTierName, cust.MemberTierId);
         HasSelectedCustomer = true;
         IsCustomerNotFound = false;
         ShowQuickRegister = false;
         CustomerSearchResults.Clear();
         CustomerSearchText = string.Empty;
         RecalculateTotals();
+
+        // Lấy thông tin tài khoản hội viên & rate chính xác từ máy chủ
+        _ = FetchLoyaltyAccountDetailsAsync(cust.Id);
     }
 
     [RelayCommand]
@@ -220,6 +264,10 @@ public partial class PosCashierMainViewModel
         SelectedCustomerName = "Khách lẻ";
         CustomerPhoneNumber = string.Empty;
         CustomerLoyaltyPoints = 0;
+        CustomerTierName = "Thành viên";
+        CustomerPointRate = 0.01m;
+        CustomerDiscountRate = 0m;
+        CustomerPointRedemptionRate = 1000m;
         CustomerSearchText = string.Empty;
         HasSelectedCustomer = false;
         IsCustomerNotFound = false;
@@ -228,6 +276,58 @@ public partial class PosCashierMainViewModel
         ShowQuickRegister = false;
         QuickRegisterError = string.Empty;
         RecalculateTotals();
+    }
+
+    private void UpdateRatesFromTier(string? tierName, Guid? tierId = null)
+    {
+        // 1. Ưu tiên tra cứu trực tiếp từ danh sách cấu hình Member Tiers trong Database (không hardcode)
+        var matched = _cachedMemberTiers.FirstOrDefault(t =>
+            (tierId.HasValue && t.Id == tierId.Value) ||
+            (!string.IsNullOrWhiteSpace(tierName) && string.Equals(t.Name, tierName, StringComparison.OrdinalIgnoreCase)));
+
+        if (matched != null)
+        {
+            CustomerPointRate = matched.PointRate;
+            CustomerDiscountRate = matched.DiscountRate;
+            CustomerPointRedemptionRate = matched.PointRedemptionRate > 0 ? matched.PointRedemptionRate : 1000m;
+            return;
+        }
+
+        // 2. Dự phòng mặc định nếu hệ thống chưa kịp load DB
+        CustomerPointRate = 0.01m;
+        CustomerDiscountRate = 0m;
+        CustomerPointRedemptionRate = 1000m;
+    }
+
+    private async Task FetchLoyaltyAccountDetailsAsync(Guid customerId)
+    {
+        try
+        {
+            var res = await _customerApiClient.GetLoyaltyAccountAsync(customerId);
+            if (res?.Success == true && res.Data != null)
+            {
+                var account = res.Data;
+                CustomerLoyaltyPoints = account.PointsBalance;
+                if (!string.IsNullOrWhiteSpace(account.TierName))
+                {
+                    CustomerTierName = account.TierName;
+                }
+                if (account.PointRate > 0)
+                {
+                    CustomerPointRate = account.PointRate;
+                }
+                if (account.PointRedemptionRate > 0)
+                {
+                    CustomerPointRedemptionRate = account.PointRedemptionRate;
+                }
+                CustomerDiscountRate = account.DiscountRate;
+                RecalculateTotals();
+            }
+        }
+        catch
+        {
+            // Bỏ qua nếu offline, giữ cấu hình mặc định theo tier
+        }
     }
 
     [RelayCommand]

@@ -51,6 +51,11 @@ public static class ApiRoutes
     public static string Loyalty(Guid id) => $"api/v1/customers/{id}/loyalty";
   }
 
+  public static class MemberTiers
+  {
+    public const string Base = "api/v1/member-tiers";
+  }
+
   public static class Vouchers
   {
     public const string Base = "api/v1/vouchers";

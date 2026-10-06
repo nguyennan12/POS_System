@@ -19,6 +19,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly NetworkStatusService _networkStatusService;
     private readonly INavigationService _navigationService;
     private readonly ICfdDisplayService _cfdDisplayService;
+    private readonly ICfdSyncService _cfdSyncService;
     private readonly ShiftApiClient _shiftApiClient;
     private readonly StoreApiClient _storeApiClient;
     private readonly AuthApiClient _authApiClient;
@@ -115,6 +116,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         NetworkStatusService networkStatusService,
         INavigationService navigationService,
         ICfdDisplayService cfdDisplayService,
+        ICfdSyncService cfdSyncService,
         ShiftApiClient shiftApiClient,
         StoreApiClient storeApiClient,
         AuthApiClient authApiClient,
@@ -129,6 +131,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         _networkStatusService = networkStatusService;
         _navigationService = navigationService;
         _cfdDisplayService = cfdDisplayService;
+        _cfdSyncService = cfdSyncService;
         _shiftApiClient = shiftApiClient;
         _storeApiClient = storeApiClient;
         _authApiClient = authApiClient;
@@ -141,6 +144,7 @@ public partial class PosCashierMainViewModel : ObservableObject
 
         LoadUserInfo();
         _ = LoadCurrentShiftAsync();
+        _ = LoadMemberTiersAsync();
 
         if (IsOwnerRole)
         {
@@ -158,6 +162,7 @@ public partial class PosCashierMainViewModel : ObservableObject
             {
                 _ = LoadCurrentShiftAsync();
                 _ = LoadCatalogFromApiAsync();
+                _ = LoadMemberTiersAsync();
                 if (IsOwnerRole && Stores.Count == 0)
                 {
                     _ = LoadStoresAsync();
