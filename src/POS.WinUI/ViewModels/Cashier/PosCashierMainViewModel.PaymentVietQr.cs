@@ -40,6 +40,7 @@ public partial class PosCashierMainViewModel
     {
         VietQrStatus = "✓ Đã nhận thanh toán chuyển khoản";
         ShowSuccess("Đã xác nhận nhận tiền chuyển khoản VietQR thành công!");
+        SyncPaymentToCfd(isCompleted: true);
     }
 
     public async Task GenerateDynamicQrsAsync()
@@ -76,6 +77,7 @@ public partial class PosCashierMainViewModel
 
             if (vQr != null) VietQrCodeImage = vQr;
             if (mQr != null) MoMoQrCodeImage = mQr;
+            SyncPaymentToCfd();
         }
         catch
         {

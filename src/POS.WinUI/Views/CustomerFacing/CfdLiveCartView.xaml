@@ -21,10 +21,10 @@
     <!-- ════════════════════ 1920x1080 SPLIT SCREEN: LEFT 65% (CART) / RIGHT 35% (INFO) ════════════════════ -->
     <Grid Background="#EA580C">
         <Grid.ColumnDefinitions>
-            <!-- Left Side: Live Cart & Bill Summary (65%) -->
-            <ColumnDefinition Width="65*"/>
-            <!-- Right Side: Store Branding, VIP Loyalty & Wi-Fi (35%) -->
-            <ColumnDefinition Width="35*"/>
+            <!-- Left Side: Live Cart & Bill Summary (60%) -->
+            <ColumnDefinition Width="60*"/>
+            <!-- Right Side: Store Branding, VIP Loyalty & Payment Hub (40%) -->
+            <ColumnDefinition Width="40*"/>
         </Grid.ColumnDefinitions>
 
         <!-- 1. Unified Background -->
@@ -256,14 +256,29 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <TextBlock Text="Tạm tính: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium"/>
-                            <TextBlock Text="{Binding SubTotal, StringFormat='{}{0:N0} đ'}" FontSize="13.5" FontWeight="Bold" Foreground="#0F172A"/>
-                            
-                            <TextBlock Text="  •  Giảm giá: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium" Margin="8,0,0,0"/>
-                            <TextBlock Text="{Binding DiscountAmount, StringFormat='-{0:N0} đ'}" FontSize="13.5" FontWeight="Bold" Foreground="#16A34A"/>
-                        </StackPanel>
-                        <TextBlock Text="✨ Quét mã QR bên phải để tích điểm thành viên OraClub" FontSize="11.5" FontWeight="SemiBold" Foreground="#EA580C"/>
+                            <TextBlock Text="{Binding SubTotal, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="Bold" Foreground="#0F172A"/>
+
+                            <!-- Voucher Discount (if any) -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding HasVoucherDiscount, Converter={StaticResource BoolToVis}}" Margin="8,0,0,0">
+                                <TextBlock Text="• Voucher: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium"/>
+                                <TextBlock Text="{Binding VoucherDiscount, StringFormat='-{0:N0} đ'}" FontSize="13" FontWeight="Bold" Foreground="#16A34A"/>
+                            </StackPanel>
+
+                            <!-- Loyalty Points Discount (if any) -->
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding HasPointsDiscount, Converter={StaticResource BoolToVis}}" Margin="8,0,0,0">
+                                <TextBlock Text="• Trừ điểm: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium"/>
+                                <TextBlock Text="{Binding PointsDiscount, StringFormat='-{0:N0} đ'}" FontSize="13" FontWeight="Bold" Foreground="#EA580C"/>
+                                <TextBlock Text="{Binding PointsUsed, StringFormat=' ({0:#,##0.##} điểm)'}" FontSize="11" Foreground="#92400E" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </WrapPanel>
+                        <TextBlock Text="✨ Quét mã QR bên phải để tích điểm thành viên OraClub" 
+                                   FontSize="11.5" FontWeight="SemiBold" Foreground="#EA580C"
+                                   Visibility="{Binding HasCustomerInfo, Converter={StaticResource InverseBoolToVis}}"/>
+                        <TextBlock Text="{Binding CustomerName, StringFormat='👑 Thành viên OraClub: {0}'}" 
+                                   FontSize="11.5" FontWeight="SemiBold" Foreground="#16A34A"
+                                   Visibility="{Binding HasCustomerInfo, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
 
                     <!-- Big Grand Total -->
@@ -280,8 +295,11 @@
             </Border>
         </Grid>
 
-        <!-- ════════════════════ RIGHT SIDE: BRAND, ORACLUB & MEMBERSHIP HUB (35%) ════════════════════ -->
-        <comp:CfdLoyaltyHubControl Grid.Column="1"/>
+        <!-- ════════════════════ RIGHT SIDE: BRAND, ORACLUB & MEMBERSHIP HUB (When NOT in Payment Mode) ════════════════════ -->
+        <comp:CfdLoyaltyHubControl Grid.Column="1" Visibility="{Binding IsPaymentMode, Converter={StaticResource InverseBoolToVis}}"/>
+
+        <!-- ════════════════════ RIGHT SIDE: ACTIVE PAYMENT METHOD HUB (When IN Payment Mode) ════════════════════ -->
+        <comp:CfdPaymentHubControl Grid.Column="1" Visibility="{Binding IsPaymentMode, Converter={StaticResource BoolToVis}}"/>
 
         <!-- Ambient Soft Diagonal Light Sweep (Topmost Layer) -->
         <comp:CfdAmbientSweepOverlay Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="999"/>

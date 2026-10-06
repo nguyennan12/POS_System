@@ -76,6 +76,7 @@ public partial class PosCashierMainViewModel
                 ChangeAmount = 0;
             }
         }
+        SyncPaymentToCfd();
     }
 
     public void UpdatePaymentMethodInfo(string method)
@@ -240,6 +241,8 @@ public partial class PosCashierMainViewModel
         {
             RecalculateSplitTotals();
         }
+
+        SyncPaymentToCfd();
     }
 
     // ── Cash Calculations ──
@@ -249,6 +252,7 @@ public partial class PosCashierMainViewModel
         {
             TenderedCash = 0;
             ChangeAmount = 0;
+            SyncPaymentToCfd();
             return;
         }
 
@@ -276,6 +280,8 @@ public partial class PosCashierMainViewModel
             TenderedCash = 0;
             ChangeAmount = 0;
         }
+
+        SyncPaymentToCfd();
     }
 
     [RelayCommand]
@@ -307,6 +313,8 @@ public partial class PosCashierMainViewModel
             {
                 ChangeAmount = Math.Max(0, TenderedCash - GrandTotal);
             }
+
+            SyncPaymentToCfd();
         }
     }
 
@@ -329,5 +337,7 @@ public partial class PosCashierMainViewModel
             TenderedCashInput = GrandTotal.ToString("N0", CultureInfo.InvariantCulture);
             ChangeAmount = 0;
         }
+
+        SyncPaymentToCfd();
     }
 }

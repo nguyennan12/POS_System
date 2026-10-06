@@ -30,6 +30,18 @@ public sealed class LocalMessengerCfdSyncService : ICfdSyncService
         return Task.CompletedTask;
     }
 
+    public Task SyncPaymentStateAsync(CfdPaymentStateDto paymentState)
+    {
+        WeakReferenceMessenger.Default.Send(new CfdPaymentStateMessage(paymentState));
+        return Task.CompletedTask;
+    }
+
+    public Task ClosePaymentAsync()
+    {
+        WeakReferenceMessenger.Default.Send(new CfdClosePaymentMessage());
+        return Task.CompletedTask;
+    }
+
     public Task ShowPaymentQrAsync(CfdPaymentQrDto paymentInfo)
     {
         WeakReferenceMessenger.Default.Send(new CfdPaymentQrMessage(paymentInfo));

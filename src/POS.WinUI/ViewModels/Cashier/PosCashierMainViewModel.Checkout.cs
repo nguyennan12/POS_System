@@ -8,6 +8,8 @@ using CommunityToolkit.Mvvm.Input;
 using POS.Contracts.V1.Orders;
 using POS.WinUI.Core.Models;
 
+using POS.WinUI.Core.Models.Cfd;
+
 namespace POS.WinUI.ViewModels.Cashier;
 
 public partial class PosCashierMainViewModel
@@ -74,12 +76,72 @@ public partial class PosCashierMainViewModel
         OnPropertyChanged(nameof(HasVoucherDiscount));
 
         IsPaymentModalOpen = true;
+        SyncPaymentToCfd();
     }
 
     [RelayCommand]
     private void ClosePaymentModal()
     {
         IsPaymentModalOpen = false;
+        _ = _cfdSyncService.ClosePaymentAsync();
+        SyncToCfd();
+    }
+
+    public void SyncPaymentToCfd(bool isCompleted = false)
+    {
+        if (!IsPaymentModalOpen && !isCompleted) return;
+
+        var method = SelectedPaymentMethod ?? "Cash";
+        var qrUrl = method switch
+        {
+            "VietQR" => $"https://img.vietqr.io/image/{VietQrBankName}-{VietQrAccountNo}-compact2.png?amount={(long)GrandTotal}&addInfo={VietQrTransferContent}&accountName={Uri.EscapeDataString(VietQrAccountName)}",
+            "MoMo" => $"2|99|{VietQrAccountNo}|{VietQrAccountName}|pos@store.vn|0|0|{(long)GrandTotal}|{VietQrTransferContent}|transfer_myqr",
+            _ => null
+        };
+
+        var statusText = isCompleted
+            ? "Đã nhận thanh toán thành công! ✅"
+            : (method switch
+            {
+                "VietQR" => VietQrStatus,
+                "MoMo" => MoMoStatus,
+                "Card" => CardStatus,
+                _ => "Đang chờ thanh toán tiền mặt..."
+            });
+
+        decimal pointsEarned = 0;
+        if (HasSelectedCustomer && GrandTotal > 0)
+        {
+            decimal rate = CustomerPointRate > 0 ? CustomerPointRate : 0.01m;
+            decimal redemptionRate = CustomerPointRedemptionRate > 0 ? CustomerPointRedemptionRate : 1000m;
+            pointsEarned = Math.Round((GrandTotal * rate) / redemptionRate, 2, MidpointRounding.AwayFromZero);
+        }
+
+        var dto = new CfdPaymentStateDto(
+            PaymentMethod: method,
+            GrandTotal: GrandTotal,
+            TenderedCash: TenderedCash,
+            ChangeAmount: ChangeAmount,
+            QrDataUrl: qrUrl,
+            OrderCode: VietQrTransferContent,
+            BankName: VietQrBankName,
+            AccountNumber: VietQrAccountNo,
+            AccountName: VietQrAccountName,
+            TransferContent: VietQrTransferContent,
+            StatusText: statusText,
+            IsCompleted: isCompleted,
+            PointsUsed: PointsToRedeem,
+            PointsDiscount: PointsDiscountAmount > 0 ? PointsDiscountAmount : LoyaltyDiscount,
+            VoucherDiscount: VoucherDiscount,
+            SubTotal: SubTotal,
+            PointsBalanceRemaining: PointsRemainingAfter,
+            PointsEarned: pointsEarned,
+            CustomerName: HasSelectedCustomer ? SelectedCustomerName : null,
+            CustomerPhone: HasSelectedCustomer ? CustomerPhoneNumber : null,
+            CustomerTier: HasSelectedCustomer ? CustomerTierName : null
+        );
+
+        _ = _cfdSyncService.SyncPaymentStateAsync(dto);
     }
 
     /// <summary>
@@ -206,6 +268,7 @@ public partial class PosCashierMainViewModel
             var checkoutRes = await _orderApiClient.CheckoutAsync(orderId, checkoutReq);
             if (checkoutRes?.Success == true && checkoutRes.Data != null)
             {
+                SyncPaymentToCfd(isCompleted: true);
                 IsPaymentModalOpen = false;
                 ShowSuccess($"Thanh toán thành công! Tổng tiền: {GrandTotal:N0} đ");
                 ClearCart();

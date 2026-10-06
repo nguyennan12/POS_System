@@ -210,7 +210,10 @@ public partial class PosCashierMainViewModel
             HasSelectedCustomer ? CustomerPhoneNumber : null,
             pointsEarned,
             HasSelectedCustomer ? CustomerTierName : null,
-            HasSelectedCustomer ? CustomerLoyaltyPoints : 0
+            HasSelectedCustomer ? CustomerLoyaltyPoints : 0,
+            VoucherDiscount,
+            PointsDiscountAmount > 0 ? PointsDiscountAmount : LoyaltyDiscount,
+            PointsToRedeem
         );
 
         _ = _cfdSyncService.SyncCartAsync(dto);

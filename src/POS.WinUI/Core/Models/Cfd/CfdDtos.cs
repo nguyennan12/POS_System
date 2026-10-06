@@ -22,7 +22,10 @@ public record CfdCartStateDto(
     string? CustomerPhone = null,
     decimal PointsEarned = 0,
     string? CustomerTier = null,
-    decimal CustomerPointsBalance = 0
+    decimal CustomerPointsBalance = 0,
+    decimal VoucherDiscount = 0,
+    decimal PointsDiscount = 0,
+    decimal PointsUsed = 0
 );
 
 public record CfdPaymentQrDto(
@@ -32,4 +35,28 @@ public record CfdPaymentQrDto(
     string BankName,
     string AccountNumber,
     string AccountName
+);
+
+public record CfdPaymentStateDto(
+    string PaymentMethod,
+    decimal GrandTotal,
+    decimal TenderedCash,
+    decimal ChangeAmount,
+    string? QrDataUrl = null,
+    string? OrderCode = null,
+    string? BankName = null,
+    string? AccountNumber = null,
+    string? AccountName = null,
+    string? TransferContent = null,
+    string? StatusText = null,
+    bool IsCompleted = false,
+    decimal PointsUsed = 0,
+    decimal PointsDiscount = 0,
+    decimal VoucherDiscount = 0,
+    decimal SubTotal = 0,
+    decimal PointsBalanceRemaining = 0,
+    decimal PointsEarned = 0,
+    string? CustomerName = null,
+    string? CustomerPhone = null,
+    string? CustomerTier = null
 );

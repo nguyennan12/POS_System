@@ -34,6 +34,7 @@ public partial class PosCashierMainViewModel
     {
         MoMoStatus = "✓ Đã nhận thanh toán ví MoMo";
         ShowSuccess("Đã xác nhận nhận tiền ví MoMo thành công!");
+        SyncPaymentToCfd(isCompleted: true);
     }
 
     [RelayCommand]
@@ -52,6 +53,7 @@ public partial class PosCashierMainViewModel
         {
             MoMoStatus = "Khách đang quét mã QR...";
         }
+        SyncPaymentToCfd();
     }
 
     [RelayCommand]
@@ -61,5 +63,6 @@ public partial class PosCashierMainViewModel
 
         MoMoStatus = "✓ Đã quét mã ví MoMo thành công";
         ShowSuccess($"Đã nhận mã MoMo: {MoMoBarcodeScanInput}");
+        SyncPaymentToCfd(isCompleted: true);
     }
 }
