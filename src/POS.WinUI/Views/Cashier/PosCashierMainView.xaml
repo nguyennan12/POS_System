@@ -15,6 +15,7 @@
         <KeyBinding Key="F1" Command="{Binding CheckoutCommand}"/>
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}"/>
         <KeyBinding Key="F6" Command="{Binding PrintBillCommand}"/>
+        <KeyBinding Key="F7" Command="{Binding ToggleCfdCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding ClosePaymentModalCommand}"/>
     </UserControl.InputBindings>
 

@@ -104,15 +104,23 @@ public partial class App : Application
     var mainWindow = _host.Services.GetRequiredService<MainWindow>();
     MainWindow = mainWindow;
 
-    // 4. Mờ dần Splash Screen và mở MainWindow êm dịu
+    // 4. Mở tự động màn hình phụ cho khách hàng (Customer Facing Display)
+    var cfdService = _host.Services.GetRequiredService<ICfdDisplayService>();
+    cfdService.OpenCfd();
+
+    // 5. Mờ dần Splash Screen và mở MainWindow êm dịu
     await splash.FadeOutAndCloseAsync(200);
     mainWindow.Show();
+    mainWindow.Activate();
   }
 
   protected override async void OnExit(ExitEventArgs e)
   {
     if (_host != null)
     {
+      var cfdService = _host.Services.GetService<ICfdDisplayService>();
+      cfdService?.CloseCfd();
+
       await _host.StopAsync();
       _host.Dispose();
     }

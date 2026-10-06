@@ -18,6 +18,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly SessionService _sessionService;
     private readonly NetworkStatusService _networkStatusService;
     private readonly INavigationService _navigationService;
+    private readonly ICfdDisplayService _cfdDisplayService;
     private readonly ShiftApiClient _shiftApiClient;
     private readonly StoreApiClient _storeApiClient;
     private readonly AuthApiClient _authApiClient;
@@ -27,6 +28,13 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly VoucherApiClient _voucherApiClient;
     private readonly OrderApiClient _orderApiClient;
     private readonly ProductApiClient _productApiClient;
+
+    [RelayCommand]
+    private void ToggleCfd()
+    {
+        _cfdDisplayService.ToggleCfd();
+        ShowInfo(_cfdDisplayService.IsOpen ? "Đã bật Màn hình phụ cho khách (CFD)" : "Đã đóng Màn hình phụ cho khách (CFD)");
+    }
 
     private readonly DispatcherTimer _clockTimer;
     private CancellationTokenSource? _searchCts;
@@ -106,6 +114,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         SessionService sessionService,
         NetworkStatusService networkStatusService,
         INavigationService navigationService,
+        ICfdDisplayService cfdDisplayService,
         ShiftApiClient shiftApiClient,
         StoreApiClient storeApiClient,
         AuthApiClient authApiClient,
@@ -119,6 +128,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         _sessionService = sessionService;
         _networkStatusService = networkStatusService;
         _navigationService = navigationService;
+        _cfdDisplayService = cfdDisplayService;
         _shiftApiClient = shiftApiClient;
         _storeApiClient = storeApiClient;
         _authApiClient = authApiClient;
