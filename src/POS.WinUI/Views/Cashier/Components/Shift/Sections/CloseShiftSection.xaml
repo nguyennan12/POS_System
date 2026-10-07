@@ -1,0 +1,133 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.Shift.Sections.CloseShiftSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="380" d:DesignWidth="480">
+    <!-- ════════════ CHẾ ĐỘ ĐÓNG CA (CLOSE SHIFT) ════════════ -->
+    <StackPanel Visibility="{Binding IsShiftModalCloseMode, Converter={StaticResource BoolToVis}}">
+        <!-- Financial Overview Grid (4 Clean Minimalist Cards) -->
+        <Grid Margin="0,0,0,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="8"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Tiền đầu ca -->
+            <Border Grid.Row="0" Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                <StackPanel>
+                    <TextBlock Text="Tiền đầu ca" FontSize="12" FontWeight="Medium" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding CurrentShiftSummary.OpeningCash, StringFormat='{}{0:N0} đ'}"
+                               FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Doanh thu tiền mặt -->
+            <Border Grid.Row="0" Grid.Column="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                <StackPanel>
+                    <TextBlock Text="Doanh thu Tiền mặt" FontSize="12" FontWeight="Medium" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding CurrentShiftSummary.TotalCashSales, StringFormat='{}{0:N0} đ'}"
+                               FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Doanh thu Thẻ & QR -->
+            <Border Grid.Row="2" Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                <StackPanel>
+                    <TextBlock Text="Doanh thu Thẻ / QR" FontSize="12" FontWeight="Medium" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding CurrentShiftSummary.TotalQrSales, StringFormat='{}{0:N0} đ'}"
+                               FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Số lượng đơn hàng -->
+            <Border Grid.Row="2" Grid.Column="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,10">
+                <StackPanel>
+                    <TextBlock Text="Số đơn đã bán" FontSize="12" FontWeight="Medium" Foreground="#64748B"/>
+                    <TextBlock Text="{Binding CurrentShiftSummary.OrderCount, StringFormat='{}{0} đơn'}"
+                               FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,3,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Tổng tiền mặt ước tính trong két -->
+        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,0,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Tiền mặt ước tính trong két" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569"/>
+                    <TextBlock Text="Tiền đầu ca + Doanh thu tiền mặt" FontSize="11.5" Foreground="#94A3B8" Margin="0,1,0,0"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding ClosingExpectedCash, StringFormat='{}{0:N0} đ'}"
+                           FontSize="18" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Nhập tiền mặt thực tế kiểm kê -->
+        <TextBlock Text="Tiền mặt thực tế kiểm kê trong két:" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"/>
+        <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1.5" CornerRadius="12" Padding="14,8" Margin="0,0,0,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter Property="BorderBrush" Value="#2563EB"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" Symbol="Money24" FontSize="18" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBox Grid.Column="1" 
+                         Style="{StaticResource CleanTextBoxStyle}"
+                         Text="{Binding ClosingActualCashInput, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="20" FontWeight="Bold" Foreground="#0F172A"
+                         VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="VNĐ" FontSize="14" FontWeight="Bold" Foreground="#94A3B8" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Chênh lệch kết ca -->
+        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14,10" Margin="0,0,0,14">
+            <Grid>
+                <TextBlock Text="Chênh lệch (Thực tế - Dự kiến):" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ClosingDifference, StringFormat='{}{0:N0} đ'}" 
+                           HorizontalAlignment="Right"
+                           FontSize="14.5" FontWeight="Bold" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#0F172A"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsClosingDifferenceNegative}" Value="True">
+                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Ghi chú đóng ca -->
+        <TextBlock Text="Ghi chú kết ca (Lý do chênh lệch nếu có):" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"/>
+        <TextBox Style="{StaticResource CleanMultilineTextBoxStyle}"
+                 Text="{Binding CloseShiftNote, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" Height="55"
+                 FontSize="13"/>
+    </StackPanel>
+</UserControl>

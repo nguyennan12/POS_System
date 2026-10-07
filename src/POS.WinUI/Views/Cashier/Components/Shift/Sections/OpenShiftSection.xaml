@@ -1,0 +1,135 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.Shift.Sections.OpenShiftSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="480">
+    <!-- ════════════ CHẾ ĐỘ MỞ CA (OPEN SHIFT) ════════════ -->
+    <StackPanel Visibility="{Binding IsShiftModalOpenMode, Converter={StaticResource BoolToVis}}">
+        <!-- Tiền mặt đầu ca -->
+        <TextBlock Text="Tiền mặt đầu ca (VND):" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"/>
+        <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1.5" CornerRadius="12" Padding="14,8" Margin="0,0,0,12">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Self}}" Value="True">
+                            <Setter Property="BorderBrush" Value="#2563EB"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:SymbolIcon Grid.Column="0" Symbol="Money24" FontSize="18" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBox Grid.Column="1" 
+                         Style="{StaticResource CleanTextBoxStyle}"
+                         Text="{Binding OpeningCashInput, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="20" FontWeight="Bold" Foreground="#0F172A"
+                         VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="VNĐ" FontSize="14" FontWeight="Bold" Foreground="#94A3B8" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Quick Cash Pills (4 Cột Cân Xứng) -->
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Command="{Binding SetQuickOpeningCashCommand}" CommandParameter="0" 
+                    Height="36" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    MinWidth="0" MinHeight="0" Padding="0" Margin="0" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock x:Name="T0" Text="0 đ" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="B0" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="B0" Property="BorderBrush" Value="#93C5FD"/>
+                                <Setter TargetName="T0" Property="Foreground" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <Button Grid.Column="2" Command="{Binding SetQuickOpeningCashCommand}" CommandParameter="500000" 
+                    Height="36" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    MinWidth="0" MinHeight="0" Padding="0" Margin="0" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock x:Name="T1" Text="500,000 đ" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="B1" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="B1" Property="BorderBrush" Value="#93C5FD"/>
+                                <Setter TargetName="T1" Property="Foreground" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <Button Grid.Column="4" Command="{Binding SetQuickOpeningCashCommand}" CommandParameter="1000000" 
+                    Height="36" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    MinWidth="0" MinHeight="0" Padding="0" Margin="0" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock x:Name="T2" Text="1,000,000 đ" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="B2" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="B2" Property="BorderBrush" Value="#93C5FD"/>
+                                <Setter TargetName="T2" Property="Foreground" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <Button Grid.Column="6" Command="{Binding SetQuickOpeningCashCommand}" CommandParameter="2000000" 
+                    Height="36" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                    MinWidth="0" MinHeight="0" Padding="0" Margin="0" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="B3" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock x:Name="T3" Text="2,000,000 đ" FontSize="12.5" FontWeight="SemiBold" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="B3" Property="Background" Value="#EFF6FF"/>
+                                <Setter TargetName="B3" Property="BorderBrush" Value="#93C5FD"/>
+                                <Setter TargetName="T3" Property="Foreground" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </Grid>
+
+        <!-- Ghi chú mở ca -->
+        <TextBlock Text="Ghi chú khi mở ca (Tùy chọn):" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"/>
+        <TextBox Style="{StaticResource CleanMultilineTextBoxStyle}"
+                 Text="{Binding OpenShiftNote, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" Height="65"
+                 FontSize="13"/>
+    </StackPanel>
+</UserControl>
