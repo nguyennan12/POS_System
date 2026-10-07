@@ -10,7 +10,7 @@ internal static class ConfigurationExtensions
         where TEntity : BaseEntity
     {
         builder.HasKey(e => e.Id);
-        builder.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+        builder.Property(e => e.Id).ValueGeneratedNever();
     }
 
     public static PropertyBuilder<decimal> HasMoneyPrecision(this PropertyBuilder<decimal> builder) =>

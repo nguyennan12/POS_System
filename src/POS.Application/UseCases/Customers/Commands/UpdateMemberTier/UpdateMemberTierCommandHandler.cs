@@ -58,7 +58,8 @@ public class UpdateMemberTierCommandHandler(
             minSpending: request.MinSpending,
             pointRate: request.PointRate,
             discountRate: request.DiscountRate,
-            displayColor: request.DisplayColor);
+            displayColor: request.DisplayColor,
+            pointRedemptionRate: request.PointRedemptionRate);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -68,6 +69,7 @@ public class UpdateMemberTierCommandHandler(
             MinSpending: tier.MinSpending,
             PointRate: tier.PointRate,
             DiscountRate: tier.DiscountRate,
-            DisplayColor: tier.DisplayColor);
+            DisplayColor: tier.DisplayColor,
+            PointRedemptionRate: tier.PointRedemptionRate);
     }
 }

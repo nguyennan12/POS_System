@@ -19,6 +19,7 @@ namespace POS.Infrastructure.Persistence;
 public partial class AppDbContext
 {
   public DbSet<Store> Stores => Set<Store>();
+  public DbSet<PosRegister> PosRegisters => Set<PosRegister>();
   public DbSet<Employee> Employees => Set<Employee>();
   public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
   public DbSet<Shift> Shifts => Set<Shift>();

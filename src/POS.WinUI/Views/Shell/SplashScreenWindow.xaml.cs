@@ -5,52 +5,52 @@ namespace POS.WinUI.Views.Shell;
 
 public partial class SplashScreenWindow : Window
 {
-    public SplashScreenWindow()
+  public SplashScreenWindow()
+  {
+    InitializeComponent();
+  }
+
+
+  /// Cập nhật text trạng thái hiển thị trên Splash Screen một cách an toàn trên UI Thread.
+  /// </summary>
+  public void UpdateStatus(string status)
+  {
+    if (Dispatcher.CheckAccess())
     {
-        InitializeComponent();
+      TxtStatus.Text = status;
     }
-
-    /// <summary>
-    /// Cập nhật text trạng thái hiển thị trên Splash Screen một cách an toàn trên UI Thread.
-    /// </summary>
-    public void UpdateStatus(string status)
+    else
     {
-        if (Dispatcher.CheckAccess())
-        {
-            TxtStatus.Text = status;
-        }
-        else
-        {
-            Dispatcher.InvokeAsync(() => TxtStatus.Text = status);
-        }
+      Dispatcher.InvokeAsync(() => TxtStatus.Text = status);
     }
+  }
 
-    /// <summary>
-    /// Hoạt cảnh mờ dần (Fade-out) trong 200ms và đóng cửa sổ mượt mà.
-    /// </summary>
-    public async Task FadeOutAndCloseAsync(int durationMs = 200)
+
+  /// Hoạt cảnh mờ dần (Fade-out) trong 200ms và đóng cửa sổ mượt mà.
+  /// </summary>
+  public async Task FadeOutAndCloseAsync(int durationMs = 200)
+  {
+    var tcs = new TaskCompletionSource();
+
+    await Dispatcher.InvokeAsync(() =>
     {
-        var tcs = new TaskCompletionSource();
+      var fadeOut = new DoubleAnimation
+      {
+        From = 1.0,
+        To = 0.0,
+        Duration = TimeSpan.FromMilliseconds(durationMs),
+        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+      };
 
-        await Dispatcher.InvokeAsync(() =>
-        {
-            var fadeOut = new DoubleAnimation
-            {
-                From = 1.0,
-                To = 0.0,
-                Duration = TimeSpan.FromMilliseconds(durationMs),
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
+      fadeOut.Completed += (s, e) =>
+          {
+          Close();
+          tcs.TrySetResult();
+        };
 
-            fadeOut.Completed += (s, e) =>
-            {
-                Close();
-                tcs.TrySetResult();
-            };
+      BeginAnimation(OpacityProperty, fadeOut);
+    });
 
-            BeginAnimation(OpacityProperty, fadeOut);
-        });
-
-        await tcs.Task;
-    }
+    await tcs.Task;
+  }
 }

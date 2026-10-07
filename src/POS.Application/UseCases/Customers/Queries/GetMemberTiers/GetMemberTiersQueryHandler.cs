@@ -1,4 +1,4 @@
-﻿using POS.Application.Abstractions.Messaging;
+using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
 
@@ -19,7 +19,8 @@ public class GetMemberTiersQueryHandler(IMemberTierRepository memberTierReposito
             MinSpending: t.MinSpending,
             PointRate: t.PointRate,
             DiscountRate: t.DiscountRate,
-            DisplayColor: t.DisplayColor
+            DisplayColor: t.DisplayColor,
+            PointRedemptionRate: t.PointRedemptionRate
         )).ToList();
     }
 }

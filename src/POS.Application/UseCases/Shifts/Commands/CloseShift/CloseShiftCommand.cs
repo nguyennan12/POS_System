@@ -14,6 +14,10 @@ public record CloseShiftCommand(
 
 public record ShiftSummaryDto(
     Guid ShiftId,
+    Guid RegisterId,
+    string RegisterName,
+    Guid EmployeeId,
+    string EmployeeName,
     decimal OpeningCash,
     decimal TotalCashSales,
     decimal TotalCardSales,

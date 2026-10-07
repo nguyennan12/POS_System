@@ -37,6 +37,20 @@ public class Voucher : BaseEntity
     public DateTime? ExpiresAt { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    public void Update(int maxUses, int perCustomerLimit, DateTime? expiresAt, bool isActive)
+    {
+        MaxUses = maxUses;
+        PerCustomerLimit = perCustomerLimit;
+        ExpiresAt = expiresAt;
+        IsActive = isActive;
+    }
+
+    /// <summary>Deactivates this voucher (soft delete).</summary>
+    public void Deactivate()
+    {
+        IsActive = false;
+    }
+
     /// <summary>Determines whether the voucher can be used at the specified time.</summary>
     public bool CanBeUsed(DateTime now, int customerUsedCount = 0)
     {

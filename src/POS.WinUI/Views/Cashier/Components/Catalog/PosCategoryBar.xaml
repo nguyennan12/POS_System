@@ -1,0 +1,256 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.PosCategoryBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:POS.WinUI.Core.Models"
+             Loaded="OnCategoryBarLoaded">
+
+    <UserControl.Resources>
+        <!-- Nút mũi tên điều hướng cuộn danh mục tròn nhỏ tinh tế ở 2 đầu -->
+        <Style x:Key="CategoryNavArrowButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Background" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                CornerRadius="16"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="4" Color="#0F172A" Opacity="0.04" ShadowDepth="1" Direction="270"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#FFF7ED"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryLightBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- ── THANH CHỌN DANH MỤC 2 CẤP (LEVEL 1: CATEGORIES, LEVEL 2: SUB-CATEGORIES) ── -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Dòng 1: Danh mục chính Level 1 -->
+            <RowDefinition Height="Auto"/>
+            <!-- Dòng 2: Danh mục con Level 2 (khi danh mục cha có con) -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ── 1. LEVEL 1: DANH MỤC CHÍNH ── -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <!-- Nút mũi tên lùi trái -->
+                <ColumnDefinition Width="Auto"/>
+                <!-- Vùng cuộn danh mục ẩn thanh cuộn -->
+                <ColumnDefinition Width="*"/>
+                <!-- Nút mũi tên tiến phải -->
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Nút lùi trái -->
+            <Button x:Name="BtnScrollLeft"
+                    Grid.Column="0"
+                    Style="{StaticResource CategoryNavArrowButtonStyle}"
+                    Click="OnScrollLeftClick"
+                    Margin="0,0,6,0"
+                    VerticalAlignment="Center"
+                    ToolTip="Cuộn sang trái">
+                <ui:SymbolIcon Symbol="ChevronLeft24" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"/>
+            </Button>
+
+            <!-- ScrollViewer danh mục chính Level 1 -->
+            <ScrollViewer x:Name="CategoryScrollViewer"
+                          Grid.Column="1"
+                          HorizontalScrollBarVisibility="Hidden" 
+                          VerticalScrollBarVisibility="Disabled"
+                          PanningMode="HorizontalOnly"
+                          PreviewMouseWheel="OnCategoryPreviewMouseWheel"
+                          PreviewMouseDown="OnCategoryPreviewMouseDown"
+                          PreviewMouseMove="OnCategoryPreviewMouseMove"
+                          PreviewMouseUp="OnCategoryPreviewMouseUp"
+                          ScrollChanged="OnCategoryScrollViewerScrollChanged"
+                          Focusable="False"
+                          Padding="0,0,0,2">
+                <ItemsControl ItemsSource="{Binding Categories}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:PosCategoryItem}">
+                            <Button Command="{Binding DataContext.SelectCategoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Margin="0,0,8,0"
+                                    Height="36"
+                                    Cursor="Hand">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="PillBorder"
+                                                            CornerRadius="18"
+                                                            Background="{Binding CurrentBackground}"
+                                                            BorderBrush="{Binding CurrentBorderBrush}"
+                                                            BorderThickness="1"
+                                                            Padding="16,0">
+                                                        <Border.Effect>
+                                                            <DropShadowEffect BlurRadius="6" Color="#0F172A" Opacity="0.03" ShadowDepth="1" Direction="270"/>
+                                                        </Border.Effect>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" 
+                                                                       FontSize="12.5" 
+                                                                       FontWeight="{Binding CurrentFontWeight}" 
+                                                                       Foreground="{Binding CurrentForeground}"
+                                                                       VerticalAlignment="Center"/>
+                                                            <!-- Mũi tên nhỏ tinh tế khi danh mục có con -->
+                                                            <ui:SymbolIcon Symbol="ChevronDown12" 
+                                                                           FontSize="9" 
+                                                                           Foreground="{Binding CurrentForeground}" 
+                                                                           Margin="5,1,0,0" 
+                                                                           VerticalAlignment="Center"
+                                                                           Opacity="0.8"
+                                                                           Visibility="{Binding HasSubCategories, Converter={StaticResource BoolToVis}}"/>
+                                                        </StackPanel>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsSelected}" Value="False"/>
+                                                                <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="PillBorder" Property="Background" Value="#F1F5F9"/>
+                                                            <Setter TargetName="PillBorder" Property="BorderBrush" Value="#CBD5E1"/>
+                                                        </MultiDataTrigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Nút tiến phải -->
+            <Button x:Name="BtnScrollRight"
+                    Grid.Column="2"
+                    Style="{StaticResource CategoryNavArrowButtonStyle}"
+                    Click="OnScrollRightClick"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    ToolTip="Cuộn sang phải">
+                <ui:SymbolIcon Symbol="ChevronRight24" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"/>
+            </Button>
+        </Grid>
+
+        <!-- ── 2. LEVEL 2: KHUNG DANH MỤC CON GỌN GÀNG (SUB-CATEGORIES STRIP) ── -->
+        <Border Grid.Row="1" 
+                Margin="0,8,0,0"
+                Background="#F8FAFC"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1"
+                CornerRadius="10"
+                Padding="8,5"
+                Visibility="{Binding HasSubCategories, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Nhãn phân loại nhỏ gọn -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="2,0,8,0">
+                    <ui:SymbolIcon Symbol="Filter16" FontSize="11" Foreground="#94A3B8" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Phân loại:" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Danh sách các danh mục con (Filter Chips) -->
+                <ScrollViewer Grid.Column="1"
+                              HorizontalScrollBarVisibility="Hidden" 
+                              VerticalScrollBarVisibility="Disabled"
+                              PanningMode="HorizontalOnly"
+                              PreviewMouseWheel="OnCategoryPreviewMouseWheel"
+                              Focusable="False">
+                    <ItemsControl ItemsSource="{Binding SubCategories}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:PosCategoryItem}">
+                                <Button Command="{Binding DataContext.SelectSubCategoryCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Margin="0,0,4,0"
+                                        Height="26"
+                                        Cursor="Hand">
+                                    <Button.Style>
+                                        <Style TargetType="Button">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border x:Name="ChipBorder"
+                                                                CornerRadius="6"
+                                                                Background="Transparent"
+                                                                BorderThickness="1"
+                                                                BorderBrush="Transparent"
+                                                                Padding="10,0">
+                                                            <TextBlock x:Name="ChipText" 
+                                                                       Text="{Binding Name}" 
+                                                                       FontSize="11.5" 
+                                                                       FontWeight="Medium" 
+                                                                       Foreground="#64748B"
+                                                                       VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <!-- Trạng thái được chọn (Selected Chip) -->
+                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                <Setter TargetName="ChipBorder" Property="Background" Value="White"/>
+                                                                <Setter TargetName="ChipBorder" Property="BorderBrush" Value="#EA580C"/>
+                                                                <Setter TargetName="ChipBorder" Property="BorderThickness" Value="1"/>
+                                                                <Setter TargetName="ChipText" Property="Foreground" Value="#EA580C"/>
+                                                                <Setter TargetName="ChipText" Property="FontWeight" Value="Bold"/>
+                                                            </DataTrigger>
+                                                            <!-- Hover khi chưa chọn -->
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsSelected}" Value="False"/>
+                                                                    <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter TargetName="ChipBorder" Property="Background" Value="#E2E8F0"/>
+                                                                <Setter TargetName="ChipText" Property="Foreground" Value="#0F172A"/>
+                                                            </MultiDataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

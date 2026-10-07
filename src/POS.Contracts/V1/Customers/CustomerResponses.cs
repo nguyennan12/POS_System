@@ -6,7 +6,8 @@ public record MemberTierResponse(
     decimal MinSpending,
     decimal PointRate,
     decimal DiscountRate,
-    string? DisplayColor
+    string? DisplayColor,
+    decimal PointRedemptionRate = 1000m
 );
 
 public record CustomerSummaryResponse(
@@ -44,7 +45,9 @@ public record LoyaltyAccountResponse(
     string TierName,
     decimal PointRate,
     decimal DiscountRate,
-    DateTimeOffset LastUpdated
+    DateTimeOffset LastUpdated,
+    decimal PointRedemptionRate = 1000m,
+    decimal AvailableBalanceInCurrency = 0m
 );
 
 public record PointTransactionResponse(

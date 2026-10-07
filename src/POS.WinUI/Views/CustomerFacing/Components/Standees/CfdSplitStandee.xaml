@@ -1,0 +1,320 @@
+<UserControl x:Class="POS.WinUI.Views.CustomerFacing.Components.Standees.CfdSplitStandee"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.CustomerFacing"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:CfdLiveCartViewModel}">
+    <!-- ════════════════════ METHOD 6: SPLIT PAYMENT (THANH TOÁN KẾT HỢP) ════════════════════ -->
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                Visibility="{Binding ShowSplitPayment, Converter={StaticResource BoolToVis}}">
+        
+        <!-- Split Mode Top Pill -->
+        <Border HorizontalAlignment="Center" 
+                Background="#33FFFFFF" 
+                BorderBrush="#66FFFFFF" 
+                BorderThickness="1.5" 
+                CornerRadius="22" 
+                Padding="18,6" 
+                Margin="0,0,0,8">
+            <TextBlock Text="THANH TOÁN KẾT HỢP" FontSize="11" FontWeight="Black" Foreground="White" HorizontalAlignment="Center"/>
+        </Border>
+
+        <!-- Split Payment Breakdown List (Pills showing each allocated method) -->
+        <Border Width="340" Background="#26FFFFFF" BorderBrush="#66FFFFFF" BorderThickness="1" CornerRadius="12" Padding="10,6" Margin="0,0,0,8">
+            <ItemsControl ItemsSource="{Binding SplitItems}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{Binding BadgeBg, TargetNullValue='#FFFFFF'}" CornerRadius="8" Padding="8,4" Margin="3">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold" Foreground="{Binding BadgeFg, TargetNullValue='#1E293B'}"/>
+                                <TextBlock Text=": " FontSize="11" FontWeight="Bold" Foreground="{Binding BadgeFg, TargetNullValue='#1E293B'}"/>
+                                <TextBlock Text="{Binding Amount, StringFormat='{}{0:N0} đ'}" FontSize="11.5" FontWeight="Black" Foreground="{Binding BadgeFg, TargetNullValue='#1E293B'}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <!-- A1. If VietQR is in Split -> Display VietQR Standee + Separate Bank Details Card -->
+        <StackPanel Visibility="{Binding IsSplitVietQr, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Center">
+            <!-- Standee VietQR Napas 247 Chính Hãng -->
+            <Border Width="340"
+                    BorderBrush="#FED7AA"
+                    BorderThickness="1.5"
+                    CornerRadius="18"
+                    HorizontalAlignment="Center"
+                    Margin="0,0,0,8"
+                    Padding="12,10"
+                    ClipToBounds="True">
+                <Border.Background>
+                    <ImageBrush ImageSource="/Resources/Assets/vietqr_standee_bg.png" Stretch="UniformToFill"/>
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="26" Color="#0F172A" Opacity="0.25" ShadowDepth="6" Direction="270"/>
+                </Border.Effect>
+
+                <StackPanel HorizontalAlignment="Center">
+                    <!-- QR Header Logo -->
+                    <Border Background="#FFFFFF" CornerRadius="8" Padding="12,4" HorizontalAlignment="Center" Margin="0,0,0,8">
+                        <Image Source="/Resources/Assets/vietqr_header.png"
+                               Height="24"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+
+                    <!-- Scanner Frame with Dynamic QR -->
+                    <Border Width="170"
+                            Height="170"
+                            Background="#FFFFFF"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CornerRadius="12">
+                        <Grid>
+                            <Border Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4"
+                                    BorderBrush="#2563EB" BorderThickness="3,3,0,0" CornerRadius="4,0,0,0"/>
+                            <Border Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
+                                    BorderBrush="#2563EB" BorderThickness="0,3,3,0" CornerRadius="0,4,0,0"/>
+                            <Border Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="4"
+                                    BorderBrush="#2563EB" BorderThickness="3,0,0,3" CornerRadius="0,0,0,4"/>
+                            <Border Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4"
+                                    BorderBrush="#2563EB" BorderThickness="0,0,3,3" CornerRadius="0,0,4,0"/>
+
+                            <Image Source="{Binding PaymentQrImage}" 
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" 
+                                   Stretch="Uniform" 
+                                   Margin="7"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Footer: Bank Logos trong Badge Trắng -->
+                    <Border Background="#FFFFFF" CornerRadius="6" Padding="10,3" HorizontalAlignment="Center" Margin="0,8,0,0">
+                        <Image Source="/Resources/Assets/vietqr_banks_footer.png"
+                               Height="16"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Bank Transfer Details Card (Dedicated White Box Below QR) -->
+            <Border Width="340"
+                    Background="#FFFFFF"
+                    BorderBrush="#E2E8F0"
+                    BorderThickness="1.5"
+                    CornerRadius="14"
+                    Padding="12,9"
+                    Margin="0,0,0,8">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.12" ShadowDepth="3" Direction="270"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 0: Chủ tài khoản & Số tài khoản -->
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Chủ tài khoản" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                            <TextBlock Text="{Binding PaymentAccountName, FallbackValue='TNHH OraPos', TargetNullValue='TNHH OraPos'}" FontWeight="Black" FontSize="12" Foreground="#0F172A" Margin="0,1,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <TextBlock Text="Số tài khoản" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding PaymentAccountNumber}" FontWeight="Black" FontSize="12" Foreground="#0F172A" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 1: Nội dung CK & Số tiền chuyển -->
+                    <Border Grid.Row="1" Background="#EFF6FF" CornerRadius="8" Padding="10,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Nội dung chuyển khoản" FontSize="9" FontWeight="Bold" Foreground="#1E40AF"/>
+                                <TextBlock Text="{Binding PaymentTransferContent}" FontWeight="Black" FontSize="12" Foreground="#005BAA" Margin="0,1,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="Số tiền cần chuyển" FontSize="9" FontWeight="Bold" Foreground="#1E40AF" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding SplitQrAmount, StringFormat='{}{0:N0} đ'}" FontWeight="Black" FontSize="14" Foreground="#16A34A" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- A2. If MoMo is in Split -> Display MoMo Standee + Separate MoMo Details Card -->
+        <StackPanel Visibility="{Binding IsSplitMoMo, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Center">
+            <!-- Standee MoMo Chính Hãng -->
+            <Grid Width="340" Height="240" HorizontalAlignment="Center" Margin="0,0,0,8">
+                <Border CornerRadius="18" ClipToBounds="True">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="26" Color="#0F172A" Opacity="0.25" ShadowDepth="6" Direction="270"/>
+                    </Border.Effect>
+                    <Image Source="/Resources/Assets/momo_standee_bg.png" 
+                           Stretch="Uniform" 
+                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+
+                <!-- Scanner Frame MoMo Pink -->
+                <Border Width="135" 
+                        Height="135" 
+                        Background="#FFFFFF"
+                        BorderBrush="#FCE7F3"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Top" 
+                        Margin="0,68,0,0">
+                    <Grid>
+                        <Border Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4"
+                                BorderBrush="#A50064" BorderThickness="3,3,0,0" CornerRadius="4,0,0,0"/>
+                        <Border Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4"
+                                BorderBrush="#A50064" BorderThickness="0,3,3,0" CornerRadius="0,4,0,0"/>
+                        <Border Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="4"
+                                BorderBrush="#A50064" BorderThickness="3,0,0,3" CornerRadius="0,0,0,4"/>
+                        <Border Width="16" Height="16" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4"
+                                BorderBrush="#A50064" BorderThickness="0,0,3,3" CornerRadius="0,0,4,0"/>
+
+                        <Image Source="{Binding PaymentQrImage}" 
+                               RenderOptions.BitmapScalingMode="NearestNeighbor" 
+                               Stretch="Uniform" 
+                               Margin="6"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- MoMo Details Card (Dedicated White Box Below QR) -->
+            <Border Width="340"
+                    Background="#FFFFFF"
+                    BorderBrush="#E2E8F0"
+                    BorderThickness="1.5"
+                    CornerRadius="14"
+                    Padding="12,9"
+                    Margin="0,0,0,8">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.12" ShadowDepth="3" Direction="270"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Row 0: Cổng thanh toán & SĐT Ví -->
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Cổng thanh toán" FontSize="9.5" FontWeight="Bold" Foreground="#64748B"/>
+                            <TextBlock Text="Ví MoMo Merchant" FontWeight="Black" FontSize="11.5" Foreground="#A50064" Margin="0,1,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                            <TextBlock Text="Số điện thoại ví" FontSize="9.5" FontWeight="Bold" Foreground="#64748B" HorizontalAlignment="Right"/>
+                            <TextBlock Text="{Binding PaymentAccountNumber}" FontWeight="Black" FontSize="11.5" Foreground="#0F172A" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 1: Mã đơn hàng & Số tiền thanh toán -->
+                    <Border Grid.Row="1" Background="#FDF2F8" CornerRadius="8" Padding="10,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Mã đơn hàng" FontSize="9" FontWeight="Bold" Foreground="#BE185D"/>
+                                <TextBlock Text="{Binding PaymentTransferContent}" FontWeight="Black" FontSize="12" Foreground="#A50064" Margin="0,1,0,0"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="Số tiền thanh toán" FontSize="9" FontWeight="Bold" Foreground="#BE185D" HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding SplitQrAmount, StringFormat='{}{0:N0} đ'}" FontWeight="Black" FontSize="14" Foreground="#16A34A" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- B. If Cash is in Split -> Display Compact Cash Summary Card -->
+        <Border Width="340"
+                Background="#FFFFFF"
+                BorderBrush="#E2E8F0"
+                BorderThickness="1.5"
+                CornerRadius="14"
+                Padding="14,10"
+                Margin="0,0,0,8"
+                Visibility="{Binding HasSplitCash, Converter={StaticResource BoolToVis}}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" Color="#0F172A" Opacity="0.12" ShadowDepth="4" Direction="270"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="💵" FontSize="12" Margin="0,0,6,0"/>
+                        <TextBlock Text="TIỀN MẶT CẦN TRẢ" FontSize="10.5" FontWeight="Black" Foreground="#15803D"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="Khách đưa: " FontSize="10.5" Foreground="#64748B"/>
+                        <TextBlock Text="{Binding PaymentTenderedCash, StringFormat='{}{0:N0} đ'}" FontSize="11" FontWeight="Bold" Foreground="#0F172A"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <TextBlock Text="Tiền thối lại:" FontSize="10" Foreground="#64748B" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding PaymentChangeAmount, StringFormat='{}{0:N0} đ'}" FontSize="16" FontWeight="Black" Foreground="#16A34A" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 👑 Points deduction badge in split mode (if points were used) -->
+        <Border Width="340"
+                Background="#FFFFFF" 
+                BorderBrush="#FDE68A" 
+                BorderThickness="1.5" 
+                CornerRadius="12" 
+                Padding="12,6" 
+                Margin="0,0,0,6"
+                HorizontalAlignment="Center"
+                Visibility="{Binding HasPointsDiscount, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="👑" FontSize="11.5" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding PointsUsed, StringFormat='Đã trừ {0:#,##0.##} điểm OraClub'}" FontSize="11" FontWeight="Black" Foreground="#92400E"/>
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding PointsDiscount, StringFormat='-{0:N0} đ'}" FontSize="13" FontWeight="Black" Foreground="#EA580C" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+    </StackPanel>
+</UserControl>

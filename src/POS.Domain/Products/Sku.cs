@@ -49,4 +49,26 @@ public class Sku : BaseEntity
     public bool IsActive { get; private set; } = true;
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
+
+    /// <summary>Danh sách đơn vị tính quy đổi (lazy-load / eager-load tuỳ query).</summary>
+    public IReadOnlyList<UnitConversion>? UnitConversions { get; private set; }
+
+    public void Update(
+        string skuCode,
+        string barcode,
+        decimal sellPrice,
+        decimal costPrice,
+        decimal taxRate,
+        bool isActive,
+        Dictionary<string, string>? attributes)
+    {
+        SkuCode = skuCode;
+        Barcode = barcode;
+        SellPrice = sellPrice;
+        CostPrice = costPrice;
+        TaxRate = taxRate;
+        IsActive = isActive;
+        Attributes = attributes;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

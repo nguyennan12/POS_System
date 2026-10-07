@@ -3,6 +3,7 @@ using POS.WinUI.Core.ApiClients;
 using POS.WinUI.Core.Services;
 using POS.WinUI.ViewModels.Auth;
 using POS.WinUI.ViewModels.Cashier;
+using POS.WinUI.ViewModels.CustomerFacing;
 using POS.WinUI.ViewModels.Customers;
 using POS.WinUI.ViewModels.Dashboard;
 using POS.WinUI.ViewModels.Employees;
@@ -15,6 +16,7 @@ using POS.WinUI.ViewModels.Settings;
 using POS.WinUI.ViewModels.Shell;
 using POS.WinUI.Views.Auth;
 using POS.WinUI.Views.Cashier;
+using POS.WinUI.Views.CustomerFacing;
 using POS.WinUI.Views.Customers;
 using POS.WinUI.Views.Dashboard;
 using POS.WinUI.Views.Employees;
@@ -33,21 +35,33 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddWinUIServices(this IServiceCollection services)
     {
         // ── Core Services ─────────────────────────────────────────
+        services.AddSingleton<LocalDeviceSettingsService>();
         services.AddSingleton<SessionService>();
         services.AddSingleton<NetworkStatusService>();
         services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<ICfdDisplayService, CfdDisplayService>();
+        services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
 
         // ── ApiClients & Handlers ──────────────────────────────────
         services.AddTransient<NetworkStatusHandler>();
         services.AddTransient<StoreApiClient>();
+        services.AddTransient<RegisterApiClient>();
         services.AddTransient<AuthApiClient>();
         services.AddTransient<ShiftApiClient>();
+        services.AddTransient<CategoryApiClient>();
+        services.AddTransient<InventoryApiClient>();
+        services.AddTransient<CustomerApiClient>();
+        services.AddTransient<VoucherApiClient>();
+        services.AddTransient<OrderApiClient>();
+        services.AddTransient<ProductApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
         services.AddTransient<ManagementMainViewModel>();
         services.AddTransient<LoginViewModel>();
         services.AddTransient<PosCashierMainViewModel>();
+        services.AddSingleton<CfdStandbyViewModel>();
+        services.AddSingleton<CfdLiveCartViewModel>();
 
         // ── 9 Feature ViewModels ──────────────────────────────────
         services.AddTransient<DashboardViewModel>();
@@ -65,6 +79,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ManagementMainView>();
         services.AddTransient<LoginView>();
         services.AddTransient<PosCashierMainView>();
+        services.AddSingleton<CfdStandbyView>();
+        services.AddSingleton<CfdLiveCartView>();
         services.AddTransient<DashboardView>();
         services.AddTransient<OrdersView>();
         services.AddTransient<ProductsView>();

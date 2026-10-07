@@ -1,0 +1,275 @@
+<UserControl x:Class="POS.WinUI.Views.CustomerFacing.Components.CfdBannerShowcaseControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.CustomerFacing"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance vm:CfdStandbyViewModel}">
+
+    <UserControl.Resources>
+        <!-- ── SMOOTH IMAGE TRANSITION STYLE (Crisp 350ms Micro-Settle, Butter-Smooth 60fps) ── -->
+        <Style x:Key="SmoothBannerImageStyle" TargetType="Image">
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality"/>
+            <Setter Property="RenderOptions.EdgeMode" Value="Aliased"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="1.0"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.0" ScaleY="1.0"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                             From="0.985" To="1.0"
+                                             Duration="0:0:0.35">
+                                <DoubleAnimation.EasingFunction>
+                                    <CubicEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                             From="0.985" To="1.0"
+                                             Duration="0:0:0.35">
+                                <DoubleAnimation.EasingFunction>
+                                    <CubicEase EasingMode="EaseOut"/>
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Floating 4-Banner Grid Container -->
+    <Grid Margin="24,20,16,20">
+        <Grid.RowDefinitions>
+            <!-- Top Ribbon Bar -->
+            <RowDefinition Height="Auto"/>
+            <!-- 4-Banner Bento Grid Area -->
+            <RowDefinition Height="*"/>
+            <!-- Bottom Tagline -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Top Ribbon -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Border HorizontalAlignment="Left" Background="#4D0F172A" BorderBrush="#4DFFFFFF" BorderThickness="1" CornerRadius="12" Padding="12,5">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="6" Height="6" Fill="White" Margin="0,0,6,0">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="4" Color="White" Opacity="0.8" ShadowDepth="0"/>
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <TextBlock Text="🔥 SIÊU ƯU ĐÃI NỔI BẬT HÔM NAY" FontSize="11" FontWeight="Black" Foreground="White"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 2. Main 4-Banner Bento Grid -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.RowDefinitions>
+                <!-- Row 1: Top (58% Height) -> Left 35% Portrait / Right 65% Landscape -->
+                <RowDefinition Height="58*"/>
+                <RowDefinition Height="10"/>
+                <!-- Row 2: Bottom (42% Height) -> 50% / 50% Dual Sub-Cards -->
+                <RowDefinition Height="42*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ── ROW 1 (TOP 58%): 35% PORTRAIT (Left) + 65% LANDSCAPE (Right) ── -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <!-- 1. TOP-LEFT: Portrait 35% -->
+                    <ColumnDefinition Width="35*"/>
+                    <ColumnDefinition Width="10"/>
+                    <!-- 2. TOP-RIGHT: Landscape 65% -->
+                    <ColumnDefinition Width="65*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 1. TOP-LEFT (35%): PORTRAIT BANNERS -->
+                <Border Grid.Column="0" 
+                        Background="#F8FFFFFF" 
+                        BorderBrush="#FFFFFF" 
+                        BorderThickness="1.5" 
+                        CornerRadius="20" 
+                        Padding="12,10">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="24" Color="#0F172A" Opacity="0.12" ShadowDepth="4" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top Pill -->
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Border HorizontalAlignment="Left" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="6" Padding="6,2">
+                                <TextBlock Text="{Binding PortraitTag}" FontSize="9.5" FontWeight="Black" Foreground="#92400E"/>
+                            </Border>
+                            <Border HorizontalAlignment="Right" Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6" Padding="6,2">
+                                <TextBlock Text="{Binding PortraitPriceBadge}" FontSize="9.5" FontWeight="Black" Foreground="#DC2626"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Portrait Image Stage -->
+                        <Border Grid.Row="1" Background="#FFFDF8" BorderBrush="#FEF3C7" BorderThickness="1" CornerRadius="14" Padding="3" Margin="0,0,0,6">
+                            <Image Source="{Binding PortraitImagePath, NotifyOnTargetUpdated=True}" 
+                                   Style="{StaticResource SmoothBannerImageStyle}">
+                                <Image.Effect>
+                                    <DropShadowEffect BlurRadius="8" Color="#0F172A" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+                                </Image.Effect>
+                            </Image>
+                        </Border>
+
+                        <!-- Bottom Title -->
+                        <TextBlock Grid.Row="2" Text="{Binding PortraitTitle}" FontSize="11.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </Border>
+
+                <!-- 2. TOP-RIGHT (65%): LANDSCAPE BANNERS -->
+                <Border Grid.Column="2" 
+                        Background="#F8FFFFFF" 
+                        BorderBrush="#FFFFFF" 
+                        BorderThickness="1.5" 
+                        CornerRadius="20" 
+                        Padding="14,10">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="24" Color="#0F172A" Opacity="0.12" ShadowDepth="4" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Top Pill -->
+                        <Grid Grid.Row="0" Margin="0,0,0,6">
+                            <Border HorizontalAlignment="Left" Background="#FFEDD5" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="6" Padding="6,2">
+                                <TextBlock Text="{Binding LandscapeTag}" FontSize="10" FontWeight="Black" Foreground="#9A3412"/>
+                            </Border>
+                            <Border HorizontalAlignment="Right" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="6" Padding="8,2">
+                                <TextBlock Text="{Binding LandscapePriceBadge}" FontSize="10" FontWeight="Black" Foreground="{StaticResource PrimaryBrush}"/>
+                            </Border>
+                        </Grid>
+
+                        <!-- Landscape Image Stage -->
+                        <Border Grid.Row="1" Background="#FFFDF8" BorderBrush="#FEF3C7" BorderThickness="1" CornerRadius="14" Padding="3" Margin="0,0,0,6">
+                            <Image Source="{Binding LandscapeImagePath, NotifyOnTargetUpdated=True}" 
+                                   Style="{StaticResource SmoothBannerImageStyle}">
+                                <Image.Effect>
+                                    <DropShadowEffect BlurRadius="8" Color="#0F172A" Opacity="0.05" ShadowDepth="2" Direction="270"/>
+                                </Image.Effect>
+                            </Image>
+                        </Border>
+
+                        <!-- Bottom Title -->
+                        <TextBlock Grid.Row="2" Text="{Binding LandscapeTitle}" FontSize="12" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ── ROW 2 (BOTTOM 42%): DUAL SUB-BANNERS (50% / 50%) ── -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <!-- Sub-Card 1 (50%) -->
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <!-- Sub-Card 2 (50%) -->
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 3. SUB-CARD 1: (Bottom-Left 50%) -->
+                <Border Grid.Column="0" 
+                        Background="#F4FFFFFF" 
+                        BorderBrush="#FFFFFF" 
+                        BorderThickness="1.5" 
+                        CornerRadius="18" 
+                        Padding="12,8">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.08" ShadowDepth="3" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Border HorizontalAlignment="Left" Background="#FEF3C7" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="5" Padding="5,2">
+                                <TextBlock Text="{Binding SubBanner1Tag}" FontSize="9" FontWeight="Black" Foreground="#92400E"/>
+                            </Border>
+                            <Border HorizontalAlignment="Right" Background="#FEE2E2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="5" Padding="5,2">
+                                <TextBlock Text="{Binding SubBanner1Badge}" FontSize="9" FontWeight="Black" Foreground="#DC2626"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="1" Background="#FFFDF8" BorderBrush="#FEF3C7" BorderThickness="1" CornerRadius="10" Padding="2" Margin="0,0,0,4">
+                            <Image Source="{Binding SubBanner1ImagePath, NotifyOnTargetUpdated=True}" 
+                                   Style="{StaticResource SmoothBannerImageStyle}"/>
+                        </Border>
+
+                        <TextBlock Grid.Row="2" Text="{Binding SubBanner1Title}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </Border>
+
+                <!-- 4. SUB-CARD 2: (Bottom-Right 50%) -->
+                <Border Grid.Column="2" 
+                        Background="#F4FFFFFF" 
+                        BorderBrush="#FFFFFF" 
+                        BorderThickness="1.5" 
+                        CornerRadius="18" 
+                        Padding="12,8">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.08" ShadowDepth="3" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Border HorizontalAlignment="Left" Background="#FFEDD5" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="5" Padding="5,2">
+                                <TextBlock Text="{Binding SubBanner2Tag}" FontSize="9" FontWeight="Black" Foreground="#9A3412"/>
+                            </Border>
+                            <Border HorizontalAlignment="Right" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="5" Padding="5,2">
+                                <TextBlock Text="{Binding SubBanner2Badge}" FontSize="9" FontWeight="Black" Foreground="#047857"/>
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="1" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="10" Padding="2" Margin="0,0,0,4">
+                            <Image Source="{Binding SubBanner2ImagePath, NotifyOnTargetUpdated=True}" 
+                                   Style="{StaticResource SmoothBannerImageStyle}"/>
+                        </Border>
+
+                        <TextBlock Grid.Row="2" Text="{Binding SubBanner2Title}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- 3. Bottom Tagline -->
+        <Grid Grid.Row="2">
+            <TextBlock Text="✨ Ưu đãi đặc biệt áp dụng trực tiếp tại quầy OraPOS" 
+                       FontSize="11" 
+                       FontWeight="SemiBold" 
+                       Foreground="White" 
+                       VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -19,7 +19,7 @@ namespace POS.Api.Controllers;
 [Route("api/v1/orders")]
 public class OrdersController(ISender mediator) : ControllerBase
 {
-  /// <summary>
+
   /// Tạo mới đơn hàng ở trạng thái Draft gắn với ca làm việc.
   /// </summary>
   [HttpPost]
@@ -28,7 +28,7 @@ public class OrdersController(ISender mediator) : ControllerBase
       CancellationToken cancellationToken)
   {
     var result = await mediator.Send(
-        new CreateOrderCommand(request.ShiftId, request.CustomerId),
+        new CreateOrderCommand(request.ShiftId, request.CustomerId, request.Note),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);
@@ -37,7 +37,7 @@ public class OrdersController(ISender mediator) : ControllerBase
         ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Thêm hoặc cập nhật số lượng SKU vào giỏ hàng và tự động tính lại khuyến mãi, thuế, tổng tiền.
   /// </summary>
   [HttpPost("{id:guid}/items")]
@@ -54,7 +54,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Áp dụng voucher giảm giá vào đơn hàng và tự động tính lại toàn bộ giỏ hàng.
   /// </summary>
   [HttpPost("{id:guid}/vouchers")]
@@ -88,7 +88,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<CheckoutResponse>.Ok(result.Value!.ToResponse()));
   }
 
-  /// <summary>
+
   /// Hủy đơn hàng. Yêu cầu quyền StoreManager hoặc Owner.
   /// </summary>
   [HttpPost("{id:guid}/cancel")]
@@ -105,6 +105,7 @@ public class OrdersController(ISender mediator) : ControllerBase
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
   }
 
+
   /// <summary>
   /// Lấy chi tiết đơn hàng theo ID.
   /// </summary>
@@ -119,5 +120,28 @@ public class OrdersController(ISender mediator) : ControllerBase
 
     if (result.IsFailure) return this.ToActionResult(result);
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+  /// <summary>
+  /// Xem danh sách đơn hàng có phân trang và bộ lọc (storeId, shiftId, status, from, to).
+  /// </summary>
+  [HttpGet]
+  public async Task<ActionResult<ApiResponse<PagedResponse<OrderSummaryResponse>>>> GetOrders(
+      [FromQuery] OrderFilterRequest filter,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(
+        new POS.Application.UseCases.Orders.Queries.GetOrders.GetOrdersQuery(filter),
+        cancellationToken);
+
+    if (result.IsFailure) return this.ToActionResult(result);
+
+    var response = new PagedResponse<OrderSummaryResponse>(
+        result.Value!.Items.Select(OrderMapping.ToResponse).ToList(),
+        result.Value.PageNumber,
+        result.Value.PageSize,
+        result.Value.TotalCount);
+
+    return Ok(ApiResponse<PagedResponse<OrderSummaryResponse>>.Ok(response));
   }
 }

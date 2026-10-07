@@ -4,7 +4,7 @@ using POS.Application.UseCases.Inventory;
 
 namespace POS.Application.UseCases.Inventory.Stock.Queries.GetStockAlerts;
 
-/// <summary>
+///  
 /// Láº¥y danh sÃ¡ch cáº£nh bÃ¡o tá»“n kho:
 /// - AlertType = "MinStock": qty_on_hand &lt;= min_stock
 /// - AlertType = "NearExpiry": cÃ³ lÃ´ hÃ ng háº¿t háº¡n trong <see cref="NearExpiryDays"/> ngÃ y tá»›i
@@ -15,7 +15,7 @@ public record GetStockAlertsQuery(
     int PageSize = 20
 ) : IQuery<PagedStockAlertList>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:read";
+  public string RequiredPermission => "inventory:read";
 }
 
 public record PagedStockAlertList(

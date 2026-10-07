@@ -1,29 +1,72 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using POS.WinUI.Core.ApiClients;
-using POS.WinUI.Core.Models;
 using POS.WinUI.Core.Services;
 using POS.WinUI.Views.Auth;
 using POS.WinUI.Views.Shell;
 
 namespace POS.WinUI.ViewModels.Cashier;
 
-/// <summary>
-/// ViewModel chính cho Màn hình Bán hàng / Quầy thu ngân (Cashier POS)
-/// </summary>
 public partial class PosCashierMainViewModel : ObservableObject
 {
     private readonly SessionService _sessionService;
     private readonly NetworkStatusService _networkStatusService;
     private readonly INavigationService _navigationService;
+    private readonly ICfdDisplayService _cfdDisplayService;
+    private readonly ICfdSyncService _cfdSyncService;
     private readonly ShiftApiClient _shiftApiClient;
+    private readonly RegisterApiClient _registerApiClient;
+    private readonly LocalDeviceSettingsService _localDeviceSettingsService;
     private readonly StoreApiClient _storeApiClient;
     private readonly AuthApiClient _authApiClient;
+    private readonly CategoryApiClient _categoryApiClient;
+    private readonly InventoryApiClient _inventoryApiClient;
+    private readonly CustomerApiClient _customerApiClient;
+    private readonly VoucherApiClient _voucherApiClient;
+    private readonly OrderApiClient _orderApiClient;
+    private readonly ProductApiClient _productApiClient;
+
+    [RelayCommand]
+    private void ToggleCfd()
+    {
+        _cfdDisplayService.ToggleCfd();
+        ShowInfo(_cfdDisplayService.IsOpen ? "Đã bật Màn hình phụ cho khách (CFD)" : "Đã đóng Màn hình phụ cho khách (CFD)");
+    }
+
     private readonly DispatcherTimer _clockTimer;
+    private CancellationTokenSource? _searchCts;
+
+    // ════════════════════ THÔNG TIN HEADER & TRẠNG THÁI ════════════════════
 
     [ObservableProperty]
-    private string _storeName = "Chi nhánh Chưa chọn";
+    private string _storeName = "Cửa hàng OraPOS";
+
+    [ObservableProperty]
+    private string _employeeName = "Nhân viên thu ngân";
+
+    [ObservableProperty]
+    private string _roleName = "Thu ngân";
+
+    [ObservableProperty]
+    private string _avatarInitials = "NV";
+
+    [ObservableProperty]
+    private string _shiftName = "Đang kiểm tra ca...";
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasOpenShift))]
+    private Guid? _currentShiftId;
+
+    public bool HasOpenShift => CurrentShiftId.HasValue;
+
+    [ObservableProperty]
+    private string _currentLanguage = "VI";
 
     [ObservableProperty]
     private bool _isOwnerRole = false;
@@ -31,34 +74,16 @@ public partial class PosCashierMainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isLoadingStores = false;
 
-    [ObservableProperty]
-    private StoreItem? _selectedStore;
-
-    public System.Collections.ObjectModel.ObservableCollection<StoreItem> Stores { get; } = new();
+    public ObservableCollection<POS.Contracts.V1.Stores.StoreResponse> Stores { get; } = new();
 
     [ObservableProperty]
-    private string _shiftName = "Đang kiểm tra ca...";
-
-    [ObservableProperty]
-    private string _employeeName = "Thu ngân";
-
-    [ObservableProperty]
-    private string _roleName = "Thu ngân";
-
-    [ObservableProperty]
-    private string _avatarInitials = "TN";
-
-    [ObservableProperty]
-    private string _currentLanguage = "VI";
-
-    [ObservableProperty]
-    private int _unreadNotificationCount = 0;
+    private POS.Contracts.V1.Stores.StoreResponse? _selectedStore;
 
     [ObservableProperty]
     private bool _isConnected = true;
 
     [ObservableProperty]
-    private string _statusText = "Đã kết nối với máy chủ";
+    private string _statusText = "Sẵn sàng";
 
     [ObservableProperty]
     private string _currentTime = DateTime.Now.ToString("HH:mm:ss");
@@ -69,23 +94,66 @@ public partial class PosCashierMainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isManagerRole = false;
 
+    // ════════════════════ TOAST NOTIFICATION ════════════════════
+    [ObservableProperty]
+    private string? _toastMessage;
+
+    [ObservableProperty]
+    private string _toastType = "Info";
+
+    public void ShowToast(string message, string type = "Info")
+    {
+        ToastType = type;
+        if (ToastMessage == message)
+        {
+            ToastMessage = string.Empty;
+        }
+        ToastMessage = message;
+    }
+
+    public void ShowError(string message) => ShowToast(message, "Error");
+    public void ShowSuccess(string message) => ShowToast(message, "Success");
+    public void ShowWarning(string message) => ShowToast(message, "Warning");
+    public void ShowInfo(string message) => ShowToast(message, "Info");
+
     public PosCashierMainViewModel(
         SessionService sessionService,
+        LocalDeviceSettingsService localDeviceSettingsService,
         NetworkStatusService networkStatusService,
         INavigationService navigationService,
+        ICfdDisplayService cfdDisplayService,
+        ICfdSyncService cfdSyncService,
         ShiftApiClient shiftApiClient,
+        RegisterApiClient registerApiClient,
         StoreApiClient storeApiClient,
-        AuthApiClient authApiClient)
+        AuthApiClient authApiClient,
+        CategoryApiClient categoryApiClient,
+        InventoryApiClient inventoryApiClient,
+        CustomerApiClient customerApiClient,
+        VoucherApiClient voucherApiClient,
+        OrderApiClient orderApiClient,
+        ProductApiClient productApiClient)
     {
         _sessionService = sessionService;
+        _localDeviceSettingsService = localDeviceSettingsService;
         _networkStatusService = networkStatusService;
         _navigationService = navigationService;
+        _cfdDisplayService = cfdDisplayService;
+        _cfdSyncService = cfdSyncService;
         _shiftApiClient = shiftApiClient;
+        _registerApiClient = registerApiClient;
         _storeApiClient = storeApiClient;
         _authApiClient = authApiClient;
+        _categoryApiClient = categoryApiClient;
+        _inventoryApiClient = inventoryApiClient;
+        _customerApiClient = customerApiClient;
+        _voucherApiClient = voucherApiClient;
+        _orderApiClient = orderApiClient;
+        _productApiClient = productApiClient;
 
         LoadUserInfo();
-        _ = LoadCurrentShiftAsync();
+        _ = LoadRegistersAndShiftAsync();
+        _ = LoadMemberTiersAsync();
 
         if (IsOwnerRole)
         {
@@ -101,7 +169,9 @@ public partial class PosCashierMainViewModel : ObservableObject
             StatusText = _networkStatusService.StatusText;
             if (isOnline)
             {
-                _ = LoadCurrentShiftAsync();
+                _ = LoadRegistersAndShiftAsync();
+                _ = LoadCatalogFromApiAsync();
+                _ = LoadMemberTiersAsync();
                 if (IsOwnerRole && Stores.Count == 0)
                 {
                     _ = LoadStoresAsync();
@@ -113,6 +183,9 @@ public partial class PosCashierMainViewModel : ObservableObject
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => CurrentTime = DateTime.Now.ToString("HH:mm:ss");
         _clockTimer.Start();
+
+        // Gọi API tải danh mục & sản phẩm thực tế từ backend
+        _ = LoadCatalogFromApiAsync();
     }
 
     private void LoadUserInfo()
@@ -136,20 +209,18 @@ public partial class PosCashierMainViewModel : ObservableObject
 
         IsManagerRole = _sessionService.IsManager;
         IsOwnerRole = _sessionService.IsOwner;
+        IsCashierRole = _sessionService.IsCashier;
+        CanChangeRegister = _sessionService.IsManager || _sessionService.IsOwner;
 
         if (!string.IsNullOrWhiteSpace(_sessionService.StoreName))
         {
             StoreName = _sessionService.StoreName;
         }
-        else if (!string.IsNullOrWhiteSpace(_sessionService.StoreId))
-        {
-            StoreName = "Chi nhánh mặc định";
-        }
     }
 
+    [RelayCommand]
     public async Task LoadStoresAsync()
     {
-        if (!IsOwnerRole) return;
         IsLoadingStores = true;
         try
         {
@@ -157,30 +228,20 @@ public partial class PosCashierMainViewModel : ObservableObject
             if (res?.Success == true && res.Data != null)
             {
                 Stores.Clear();
-                StoreItem? currentSelected = null;
-                foreach (var s in res.Data)
+                foreach (var store in res.Data)
                 {
-                    var item = new StoreItem { Id = s.Id, Name = s.Name };
-                    Stores.Add(item);
-                    if (s.Id.ToString().Equals(_sessionService.StoreId, StringComparison.OrdinalIgnoreCase))
-                    {
-                        currentSelected = item;
-                    }
+                    Stores.Add(store);
                 }
 
-                if (currentSelected != null)
+                if (!string.IsNullOrWhiteSpace(_sessionService.StoreId) && Guid.TryParse(_sessionService.StoreId, out var currentStoreId))
                 {
-                    SelectedStore = currentSelected;
-                }
-                else if (Stores.Count > 0)
-                {
-                    SelectedStore = Stores[0];
+                    SelectedStore = Stores.FirstOrDefault(s => s.Id == currentStoreId);
                 }
             }
         }
         catch
         {
-            // Ignore
+            // Bỏ qua lỗi tải store
         }
         finally
         {
@@ -188,62 +249,20 @@ public partial class PosCashierMainViewModel : ObservableObject
         }
     }
 
-    partial void OnSelectedStoreChanged(StoreItem? value)
+    partial void OnSelectedStoreChanged(POS.Contracts.V1.Stores.StoreResponse? value)
     {
-        if (value == null) return;
-        if (string.Equals(_sessionService.StoreId, value.Id.ToString(), StringComparison.OrdinalIgnoreCase)
-            && string.Equals(StoreName, value.Name, StringComparison.OrdinalIgnoreCase))
+        if (value != null && value.Id.ToString() != _sessionService.StoreId)
         {
-            return;
-        }
-
-        _sessionService.SetStore(value.Id.ToString(), value.Name);
-        StoreName = value.Name;
-        _ = LoadCurrentShiftAsync();
-    }
-
-    private static string GetInitials(string fullName)
-    {
-        var clean = System.Text.RegularExpressions.Regex.Replace(fullName, @"[^\p{L}\s]", "").Trim();
-        var parts = clean.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0) return "POS";
-        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
-        return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
-    }
-
-    [RelayCommand]
-    public async Task LoadCurrentShiftAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_sessionService.StoreId) || !Guid.TryParse(_sessionService.StoreId, out var storeId))
-        {
-            ShiftName = "Chưa mở ca làm việc";
-            return;
-        }
-
-        try
-        {
-            var res = await _shiftApiClient.GetCurrentShiftAsync(storeId);
-            if (res?.Success == true && res.Data != null)
-            {
-                var shift = res.Data;
-                var localTime = shift.OpenedAt.ToLocalTime();
-                ShiftName = $"Ca mở lúc {localTime:HH:mm} (Tiền đầu ca: {shift.OpeningCash:N0}đ)";
-            }
-            else
-            {
-                ShiftName = "Chưa mở ca làm việc";
-            }
-        }
-        catch
-        {
-            ShiftName = "Chưa mở ca";
+            _sessionService.SetStore(value.Id.ToString(), value.Name);
+            StoreName = value.Name;
+            _ = LoadRegistersAndShiftAsync();
+            _ = LoadCatalogFromApiAsync();
         }
     }
 
     [RelayCommand]
     private void OpenManagement()
     {
-        // Chỉ cho phép nếu user là StoreManager hoặc Owner
         if (_sessionService.IsManager)
         {
             _clockTimer.Stop();
@@ -256,6 +275,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     {
         CurrentTime = DateTime.Now.ToString("HH:mm:ss");
         _ = LoadCurrentShiftAsync();
+        _ = LoadCatalogFromApiAsync();
     }
 
     [RelayCommand]
@@ -264,24 +284,32 @@ public partial class PosCashierMainViewModel : ObservableObject
         CurrentLanguage = CurrentLanguage == "VI" ? "EN" : "VI";
     }
 
-
     [RelayCommand]
     private async Task LogoutAsync()
     {
         _clockTimer.Stop();
-        var refreshToken = _sessionService.RefreshToken;
-        if (!string.IsNullOrWhiteSpace(refreshToken))
+        try
         {
-            try
+            var refreshToken = _sessionService.RefreshToken;
+            if (!string.IsNullOrEmpty(refreshToken))
             {
                 await _authApiClient.LogoutAsync(refreshToken);
             }
-            catch
-            {
-                // Bỏ qua lỗi mạng khi logout để người dùng luôn có thể đăng xuất cục bộ
-            }
         }
+        catch
+        {
+            // Bỏ qua lỗi logout API
+        }
+
         _sessionService.Clear();
         _navigationService.NavigateTo<LoginView>();
+    }
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "NV";
+        var parts = name.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1) return parts[0][..Math.Min(2, parts[0].Length)].ToUpperInvariant();
+        return $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant();
     }
 }

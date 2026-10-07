@@ -1,0 +1,39 @@
+<UserControl x:Class="POS.WinUI.Views.CustomerFacing.CfdStandbyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.CustomerFacing"
+             xmlns:comp="clr-namespace:POS.WinUI.Views.CustomerFacing.Components"
+             mc:Ignorable="d" 
+             d:DesignHeight="1080" d:DesignWidth="1920"
+             d:DataContext="{d:DesignInstance vm:CfdStandbyViewModel}"
+             Focusable="True">
+
+    <!-- ════════════════════ 1920x1080 SPLIT SCREEN: LEFT 70% (4 BANNERS) / RIGHT 30% (LOYALTY HUB) ════════════════════ -->
+    <Grid Background="#EA580C">
+        <Grid.ColumnDefinitions>
+            <!-- Left Side: Bento 4-Banner Showcase (70%) -->
+            <ColumnDefinition Width="70*"/>
+            <!-- Right Side: Clean Loyalty & Membership Hub (30%) -->
+            <ColumnDefinition Width="30*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 1. FULL-SCREEN UNIFIED AMBIENT ORANGE BACKGROUND (100% Seamless) -->
+        <Image Grid.Column="0" Grid.ColumnSpan="2"
+               Source="pack://application:,,,/Resources/Assets/bg_cfd_unified.png" 
+               Stretch="UniformToFill" 
+               HorizontalAlignment="Center" 
+               VerticalAlignment="Center"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+
+        <!-- 2. LEFT SIDE: 4-BANNER BENTO SHOWCASE (70%) -->
+        <comp:CfdBannerShowcaseControl Grid.Column="0"/>
+
+        <!-- 3. RIGHT SIDE: LOYALTY, MEMBERSHIP QR & WI-FI (30%) -->
+        <comp:CfdLoyaltyHubControl Grid.Column="1"/>
+
+        <!-- 4. AMBIENT LIGHT SWEEP (TOP-MOST) -->
+        <comp:CfdAmbientSweepOverlay Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="999"/>
+    </Grid>
+</UserControl>

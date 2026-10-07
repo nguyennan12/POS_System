@@ -1,0 +1,27 @@
+<Window x:Class="POS.WinUI.Views.CustomerFacing.CustomerFacingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:cfd="clr-namespace:POS.WinUI.Views.CustomerFacing"
+        mc:Ignorable="d"
+        Title="OraPOS - Customer Facing Display"
+        Height="720" Width="1280"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="#EA580C">
+
+    <Window.InputBindings>
+        <KeyBinding Key="F11" Command="{Binding ToggleFullScreenCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+        <KeyBinding Key="Escape" Command="{Binding CloseWindowCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+    </Window.InputBindings>
+
+    <!-- Tràn viền 100% không để lại bất kỳ khoảng trắng nào trên/dưới khi full màn hình hay resize -->
+    <Grid Background="#EA580C">
+        <ContentControl x:Name="CfdContentControl" 
+                        HorizontalAlignment="Stretch" 
+                        VerticalAlignment="Stretch" 
+                        HorizontalContentAlignment="Stretch" 
+                        VerticalContentAlignment="Stretch"/>
+    </Grid>
+</Window>

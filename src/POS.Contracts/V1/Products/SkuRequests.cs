@@ -8,7 +8,8 @@ public record CreateSkuRequest(
     decimal CostPrice,
     decimal SellPrice,
     decimal TaxRate = 0,
-    JsonElement? Attributes = null
+    JsonElement? Attributes = null,
+    Guid ProductId = default
 );
 
 public record UpdateSkuRequest(

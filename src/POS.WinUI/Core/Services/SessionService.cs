@@ -20,6 +20,8 @@ public sealed class SessionService
     public string? Role { get; private set; }
     public string? StoreId { get; private set; }
     public string? StoreName { get; private set; }
+    public string? RegisterId { get; private set; }
+    public string? RegisterName { get; private set; }
     public string? ShiftId { get; private set; }
     public string? ShiftName { get; private set; }
     public bool IsChainOwner { get; private set; }
@@ -43,6 +45,7 @@ public sealed class SessionService
     public string? EffectiveStoreId => StoreId;
 
     public event Action<string, string?>? StoreChanged;
+    public event Action<string, string?>? RegisterChanged;
 
     public void SetSession(
         string accessToken,
@@ -91,6 +94,16 @@ public sealed class SessionService
         StoreChanged?.Invoke(storeId, storeName);
     }
 
+    public void SetRegister(string registerId, string? registerName = null)
+    {
+        RegisterId = registerId;
+        if (!string.IsNullOrWhiteSpace(registerName))
+        {
+            RegisterName = registerName;
+        }
+        RegisterChanged?.Invoke(registerId, registerName);
+    }
+
     public void SetShift(string shiftId, string? shiftName = null)
     {
         ShiftId = shiftId;
@@ -132,6 +145,8 @@ public sealed class SessionService
         Role = null;
         StoreId = null;
         StoreName = null;
+        RegisterId = null;
+        RegisterName = null;
         ShiftId = null;
         ShiftName = null;
         IsChainOwner = false;

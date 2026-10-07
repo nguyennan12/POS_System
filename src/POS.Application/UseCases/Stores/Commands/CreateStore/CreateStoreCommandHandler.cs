@@ -8,8 +8,12 @@ using POS.Application.UseCases.Stores.Errors;
 
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
 
-public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOfWork unitOfWork,
-    IEmployeeRepository employees, ICurrentUser currentUser)
+public class CreateStoreCommandHandler(
+    IStoreRepository storeRepository,
+    IPosRegisterRepository posRegisterRepository,
+    IUnitOfWork unitOfWork,
+    IEmployeeRepository employees,
+    ICurrentUser currentUser)
     : ICommandHandler<CreateStoreCommand, CreateStoreDto>
 {
   public async Task<Result<CreateStoreDto>> Handle(
@@ -29,6 +33,11 @@ public class CreateStoreCommandHandler(IStoreRepository storeRepository, IUnitOf
       isActive: true);
 
     await storeRepository.AddAsync(store, cancellationToken);
+
+    // Tự động khởi tạo Quầy mặc định (Quầy 01) cho chi nhánh mới
+    var defaultRegister = new PosRegister(store.Id, "Quầy 01", "POS-01", true);
+    await posRegisterRepository.AddAsync(defaultRegister, cancellationToken);
+
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return new CreateStoreDto(

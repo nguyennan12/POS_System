@@ -1,0 +1,220 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.PosProductCatalog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:POS.WinUI.Core.Models"
+             xmlns:cashier="clr-namespace:POS.WinUI.Views.Cashier">
+
+    <UserControl.Resources>
+        <!-- DataTemplate cho Thẻ Sản Phẩm Chuẩn Mẫu -->
+        <DataTemplate x:Key="ProductCardTemplate" DataType="{x:Type models:PosProductItem}">
+            <Button Click="OnCardClick"
+                    Command="{Binding DataContext.AddToCartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Height="210"
+                    Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="cardBorder"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="{StaticResource CardBackgroundBrush}"
+                                BorderBrush="{StaticResource InputBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="16"
+                                Padding="10">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="8" Color="#0F172A" Opacity="0.04" ShadowDepth="1" Direction="270"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <!-- Hàng 0: Khung Ảnh / Icon với Badge Tồn kho góc trên trái -->
+                                    <RowDefinition Height="104"/>
+                                    <!-- Hàng 1: Tên sản phẩm (2 dòng rõ ràng) -->
+                                    <RowDefinition Height="38"/>
+                                    <!-- Hàng 2: Giá bán nổi bật & Nút [+] góc phải -->
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Khung Ảnh / Icon sản phẩm -->
+                                <Border Grid.Row="0"
+                                        CornerRadius="12"
+                                        Background="#F8FAFC"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                    <Grid>
+                                        <!-- Nếu có ImageUrl -->
+                                        <Image Source="{Binding ImageUrl}"
+                                               Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="HighQuality"
+                                               Visibility="{Binding ImageUrl, Converter={StaticResource NullOrEmptyToVis}}"/>
+
+
+
+                                        <!-- Badge Tồn kho góc trên trái của ảnh -->
+                                        <Border x:Name="stockBadgeBorder"
+                                                Background="#FFFFFFFF" 
+                                                CornerRadius="8" 
+                                                Padding="7,2.5" 
+                                                Margin="7,7,0,0" 
+                                                HorizontalAlignment="Left" 
+                                                VerticalAlignment="Top">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="4" Color="#0F172A" Opacity="0.06" ShadowDepth="1" Direction="270"/>
+                                            </Border.Effect>
+                                            <TextBlock x:Name="stockBadgeText"
+                                                       Text="{Binding StockBadgeText, Mode=OneWay}"
+                                                       FontSize="10.5" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#334155" 
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Tên sản phẩm (chữ chính) & Thông số SKU/ĐVT (chữ phụ màu xám) -->
+                                <StackPanel Grid.Row="1" Margin="0,5,0,0" VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="12.5"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"/>
+                                    <TextBlock Text="{Binding DisplaySpecification}"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               Margin="0,1.5,0,0"/>
+                                </StackPanel>
+
+                                <!-- Hàng giá tiền & Nút [+] góc phải -->
+                                <Grid Grid.Row="2" VerticalAlignment="Bottom" Margin="0,0,0,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Giá bán màu cam / đậm nổi bật -->
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Price, StringFormat='{}{0:N0} đ'}"
+                                               FontSize="14"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource PrimaryBrush}"
+                                               VerticalAlignment="Center"/>
+
+                                    <!-- Nút [+] bo tròn góc phải -->
+                                    <Border Grid.Column="1"
+                                            Width="28" 
+                                            Height="28" 
+                                            CornerRadius="8" 
+                                            Background="#F1F5F9"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Right">
+                                        <ui:SymbolIcon Symbol="Add24" 
+                                                       FontSize="14" 
+                                                       Foreground="{StaticResource TextSecondaryBrush}" 
+                                                       HorizontalAlignment="Center" 
+                                                       VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsOutOfStock}" Value="True">
+                                <Setter TargetName="cardBorder" Property="Opacity" Value="0.55"/>
+                                <Setter TargetName="stockBadgeBorder" Property="Background" Value="#FEE2E2"/>
+                                <Setter TargetName="stockBadgeText" Property="Foreground" Value="#DC2626"/>
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="cardBorder" Property="BorderBrush" Value="#94A3B8"/>
+                                <Setter TargetName="cardBorder" Property="Background" Value="#FFFFFF"/>
+                                <Setter TargetName="cardBorder" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="10" Color="#0F172A" Opacity="0.08" ShadowDepth="2" Direction="270"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="cardBorder" Property="Background" Value="#F8FAFC"/>
+                                <Setter TargetName="cardBorder" Property="BorderBrush" Value="#64748B"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <!-- ── VÙNG HIỂN THỊ DANH SÁCH SẢN PHẨM & TRẠNG THÁI LOADING / EMPTY ── -->
+    <Grid>
+        <!-- Trạng thái 1: Đang gọi API lấy danh mục / sản phẩm (Card Load / Loading Spinner) -->
+        <Border Visibility="{Binding IsLoadingCatalog, Converter={StaticResource BoolToVis}}"
+                VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,40">
+            <StackPanel HorizontalAlignment="Center">
+                <ui:ProgressRing IsIndeterminate="True" Width="44" Height="44" Foreground="{StaticResource PrimaryBrush}"/>
+                <TextBlock Text="Đang tải dữ liệu sản phẩm..." FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,14,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Trạng thái 2: Không có dữ liệu sản phẩm từ API (Empty State) -->
+        <Border VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,40">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsLoadingCatalog}" Value="False"/>
+                                <Condition Binding="{Binding FilteredProducts.Count}" Value="0"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel HorizontalAlignment="Center">
+                <Border Width="64" Height="64" CornerRadius="32" Background="#F1F5F9" HorizontalAlignment="Center">
+                    <ui:SymbolIcon Symbol="Box24" FontSize="30" Foreground="{StaticResource TextPlaceholderBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Text="Không có sản phẩm nào" FontSize="14" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+                <TextBlock Text="Chưa có dữ liệu hàng hóa trong danh mục này hoặc từ khóa tìm kiếm" FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Trạng thái 3: Lưới sản phẩm co giãn thích ứng khi có dữ liệu -->
+        <ScrollViewer VerticalScrollBarVisibility="Hidden" 
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False">
+            <ScrollViewer.Style>
+                <Style TargetType="ScrollViewer">
+                    <Setter Property="Visibility" Value="Visible"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsLoadingCatalog}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding FilteredProducts.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ScrollViewer.Style>
+            <ItemsControl ItemsSource="{Binding FilteredProducts}" 
+                          ItemTemplate="{StaticResource ProductCardTemplate}"
+                          VerticalAlignment="Top"
+                          HorizontalAlignment="Stretch">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <cashier:AdaptiveCardPanel MinItemWidth="150" ItemHeight="210" Spacing="10"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

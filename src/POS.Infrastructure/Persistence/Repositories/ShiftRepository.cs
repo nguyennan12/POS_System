@@ -12,15 +12,32 @@ public class ShiftRepository(AppDbContext context) : IShiftRepository
     {
         return await context.Shifts
             .Include(s => s.Employee)
+            .Include(s => s.Register)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
-    public async Task<Shift?> GetOpenShiftAsync(Guid storeId, CancellationToken cancellationToken = default)
+    public async Task<Shift?> GetOpenShiftAsync(Guid storeId, Guid? registerId = null, CancellationToken cancellationToken = default)
+    {
+        var query = context.Shifts
+            .Include(s => s.Employee)
+            .Include(s => s.Register)
+            .Where(s => s.StoreId == storeId && s.Status == ShiftStatus.Open);
+
+        if (registerId.HasValue)
+        {
+            query = query.Where(s => s.RegisterId == registerId.Value);
+        }
+
+        return await query.FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Shift?> GetOpenShiftByRegisterAsync(Guid registerId, CancellationToken cancellationToken = default)
     {
         return await context.Shifts
             .Include(s => s.Employee)
+            .Include(s => s.Register)
             .FirstOrDefaultAsync(
-                s => s.StoreId == storeId && s.Status == ShiftStatus.Open,
+                s => s.RegisterId == registerId && s.Status == ShiftStatus.Open,
                 cancellationToken);
     }
 

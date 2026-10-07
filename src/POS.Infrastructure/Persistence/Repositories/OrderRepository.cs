@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
+using POS.Application.UseCases.Orders.DTOs;
 using POS.Domain.Orders;
 using POS.Domain.Orders.Enums;
 
@@ -39,6 +40,67 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
             .Include(o => o.Discounts)
             .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+    }
+
+    public async Task<(IReadOnlyList<OrderSummaryDto> Items, int TotalCount)> GetPagedAsync(
+        Guid? storeId,
+        Guid? shiftId,
+        OrderStatus? status,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Orders.AsNoTracking();
+
+        if (storeId.HasValue)
+            query = query.Where(o => o.StoreId == storeId.Value);
+
+        if (shiftId.HasValue)
+            query = query.Where(o => o.ShiftId == shiftId.Value);
+
+        if (status.HasValue)
+            query = query.Where(o => o.Status == status.Value);
+
+        if (from.HasValue)
+        {
+            var fromUtc = from.Value.UtcDateTime;
+            query = query.Where(o => o.CreatedAt >= fromUtc);
+        }
+
+        if (to.HasValue)
+        {
+            var toUtc = to.Value.UtcDateTime;
+            query = query.Where(o => o.CreatedAt <= toUtc);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var offset = ((long)pageNumber - 1) * pageSize;
+        if (offset >= total) return (Array.Empty<OrderSummaryDto>(), total);
+
+        var items = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.Id)
+            .Skip((int)offset)
+            .Take(pageSize)
+            .Select(o => new OrderSummaryDto(
+                o.Id,
+                o.StoreId,
+                o.ShiftId,
+                o.CustomerId,
+                o.Customer != null ? o.Customer.Name : null,
+                o.Customer != null ? o.Customer.Phone : null,
+                o.Status.ToString(),
+                o.CurrencyCode,
+                o.GrandTotal,
+                (int)o.Items.Sum(i => i.Qty),
+                new DateTimeOffset(o.CreatedAt, TimeSpan.Zero),
+                o.PaidAt.HasValue ? new DateTimeOffset(o.PaidAt.Value, TimeSpan.Zero) : null
+            ))
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
     }
 
     public async Task AddAsync(Order order, CancellationToken cancellationToken = default)

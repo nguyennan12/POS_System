@@ -59,6 +59,11 @@ try
 
     // ---------- 8. Middleware Pipeline ----------
     app.UseExceptionHandler();
+
+    // Prometheus HTTP Metrics (đặt đầu pipeline để bọc toàn bộ request và đo được mọi status code 2xx, 4xx, 5xx)
+    app.UseHttpMetrics();
+
+    // Serilog Request Logging
     app.UsePosSerilogRequestLogging();
     app.UseRequestResponseLogging();
 
@@ -70,8 +75,7 @@ try
 
     app.MapControllers();
 
-    // Prometheus Metrics & Health Checks
-    app.UseHttpMetrics();
+    // Endpoints: Metrics & Health Checks
     app.MapMetrics();
     app.MapHealthChecks("/health");
     app.MapHealthChecks("/health/db");

@@ -40,14 +40,16 @@
     <Border x:Name="ToastBorder"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-            Margin="0,24,0,0"
+            Margin="0,20,0,0"
             Background="White"
             BorderBrush="#E2E8F0"
             BorderThickness="1"
             CornerRadius="16"
-            Padding="16,10"
+            Padding="14,9"
             Panel.ZIndex="999"
             Opacity="0"
+            Cursor="Hand"
+            MouseLeftButtonDown="OnToastClicked"
             IsHitTestVisible="False">
 
         <Border.RenderTransform>
@@ -55,18 +57,19 @@
         </Border.RenderTransform>
 
         <Border.Effect>
-            <DropShadowEffect BlurRadius="28" Color="#0F172A" Opacity="0.14" ShadowDepth="6" Direction="270"/>
+            <DropShadowEffect BlurRadius="28" Color="#0F172A" Opacity="0.16" ShadowDepth="6" Direction="270"/>
         </Border.Effect>
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-            <Border Width="28" Height="28" CornerRadius="14" Background="#10B981" Margin="0,0,10,0">
-                <ui:SymbolIcon Symbol="Checkmark24" FontSize="16" Foreground="White"
+            <Border x:Name="IconBorder" Width="26" Height="26" CornerRadius="13" Background="#10B981" Margin="0,0,10,0">
+                <ui:SymbolIcon x:Name="ToastIcon" Symbol="Checkmark24" FontSize="15" Foreground="White"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <TextBlock x:Name="ToastText"
                        Foreground="{StaticResource TextPrimaryBrush}"
-                       FontSize="14" FontWeight="Bold"
+                       FontSize="13.5" FontWeight="SemiBold"
                        VerticalAlignment="Center"/>
+            <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" Foreground="#94A3B8" Margin="12,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
     </Border>
 </UserControl>

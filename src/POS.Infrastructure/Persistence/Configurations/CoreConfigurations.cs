@@ -31,7 +31,9 @@ public class ShiftConfiguration : IEntityTypeConfiguration<Shift>
         builder.Property(s => s.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(ShiftStatus.Open);
         builder.Property(s => s.OpenedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(s => new { s.StoreId, s.Status });
+        builder.HasIndex(s => new { s.RegisterId, s.Status });
         builder.HasOne(s => s.Store).WithMany().HasForeignKey(s => s.StoreId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(s => s.Register).WithMany().HasForeignKey(s => s.RegisterId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(s => s.Employee).WithMany().HasForeignKey(s => s.EmployeeId).OnDelete(DeleteBehavior.Restrict);
         builder.HasTableCheckConstraint("ck_shifts_opening_cash", "opening_cash >= 0");
         builder.HasTableCheckConstraint("ck_shifts_closing_cash", "closing_cash IS NULL OR closing_cash >= 0");

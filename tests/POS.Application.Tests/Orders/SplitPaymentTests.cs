@@ -200,12 +200,16 @@ public partial class CheckoutAndCancelOrderTests
 
     private LoyaltyAccount SetUpLoyalty(Order order, decimal balance)
     {
-        var customer = new Customer("Customer", "0123456789", Guid.NewGuid());
+        var tier = new MemberTier(POS.Domain.Customers.Enums.MemberTierName.Normal, 0, 1, 0, null, pointRedemptionRate: 1m);
+        var customer = new Customer("Customer", "0123456789", tier.Id);
+        typeof(Customer).GetProperty(nameof(Customer.MemberTier))!.SetValue(customer, tier);
         order.SetCustomer(customer.Id);
         var account = new LoyaltyAccount(customer.Id, balance);
+        typeof(LoyaltyAccount).GetProperty(nameof(LoyaltyAccount.Customer))!.SetValue(account, customer);
         _customerRepository.GetByIdAsync(customer.Id, Arg.Any<CancellationToken>())
             .Returns(_ => new CustomerWithPoints(customer, account.PointsBalance));
         _customerRepository.GetLoyaltyAccountAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(account);
+        _customerRepository.GetLoyaltyAccountWithTierAsync(customer.Id, Arg.Any<CancellationToken>()).Returns(account);
         return account;
     }
 

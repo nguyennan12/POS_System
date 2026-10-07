@@ -9,6 +9,8 @@ using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Mappings;
 using POS.Application.UseCases.Orders.Services;
 using POS.Domain.Common;
+using POS.Domain.Customers;
+using POS.Domain.Customers.Enums;
 using POS.Domain.Customers.Errors;
 using POS.Domain.Employees;
 using POS.Domain.Employees.Enums;
@@ -37,6 +39,9 @@ public class CheckoutOrderCommandHandler(
     ICurrentUser currentUser,
     ICustomerRepository customerRepository) : ICommandHandler<CheckoutOrderCommand, CheckoutDto>
 {
+    /// <summary>
+    /// Validates and processes checkout in a serializable transaction, recording point redemptions and applying side effects when the order is paid.
+    /// </summary>
     public async Task<Result<CheckoutDto>> Handle(
         CheckoutOrderCommand command,
         CancellationToken cancellationToken)
@@ -78,12 +83,30 @@ public class CheckoutOrderCommandHandler(
                 if (stockResult.IsFailure) return stockResult.Error;
 
                 // Redeem only this request's points, including partial settlements.
-                var points = parsedPayments.Where(p => p.Method == PaymentMethod.Points).Sum(p => p.Amount);
-                if (points > 0)
+                var pointsPaymentAmount = parsedPayments.Where(p => p.Method == PaymentMethod.Points).Sum(p => p.Amount);
+                if (pointsPaymentAmount > 0)
                 {
-                    var account = await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
-                    if (account is null || !account.DeductPoints(points))
+                    var account = await customerRepository.GetLoyaltyAccountWithTierAsync(order.CustomerId!.Value, ct)
+                        ?? await customerRepository.GetLoyaltyAccountAsync(order.CustomerId!.Value, ct);
+                    if (account is null)
                         return OrderErrors.InsufficientPoints;
+
+                    var tier = account.Customer?.MemberTier;
+                    decimal pointsToDeduct = tier != null
+                        ? tier.CalculateRequiredPoints(pointsPaymentAmount)
+                        : Math.Ceiling(pointsPaymentAmount / 1000m);
+
+                    if (!account.DeductPoints(pointsToDeduct))
+                        return OrderErrors.InsufficientPoints;
+
+                    var pointTx = new PointTransaction(
+                        customerId: order.CustomerId!.Value,
+                        points: pointsToDeduct,
+                        type: PointTransactionType.Redeem,
+                        orderId: order.Id,
+                        note: "Thanh toán điểm cho đơn hàng"
+                    );
+                    await customerRepository.AddPointTransactionAsync(pointTx, ct);
                 }
 
                 var previousIds = order.Payments.Select(p => p.Id).ToHashSet();
@@ -163,10 +186,23 @@ public class CheckoutOrderCommandHandler(
         if (shift.StoreId != order.StoreId)
             return OrderErrors.ShiftStoreMismatch;
 
+        // Phân quyền ca làm việc:
+        // 1. Quản lý / Chủ cửa hàng luôn có quyền thanh toán trên mọi ca.
         var isManagerOrAbove = employee.IsChainOwner
             || (employee.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
         if (!isManagerOrAbove && shift.EmployeeId != employee.Id)
-            return OrderErrors.ShiftNotOwned;
+        {
+            // 2. Nếu người thanh toán là Thu ngân khác, kiểm tra xem người mở ca có phải là Quản lý/Owner (mở ca hộ quầy) hay không.
+            var shiftOpener = shift.Employee ?? await employeeRepository.GetByIdAsync(shift.EmployeeId, ct);
+            var isShiftOpenedByManager = shiftOpener != null && (shiftOpener.IsChainOwner || shiftOpener.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
+            if (!isShiftOpenedByManager)
+            {
+                // Nếu ca do một Thu ngân khác (Cashier) mở, không cho phép Cashier này thao tác chèn vào két của người khác
+                return OrderErrors.ShiftNotOwned;
+            }
+        }
 
         // Cửa hàng
         var store = await storeRepository.GetByIdAsync(order.StoreId, ct);

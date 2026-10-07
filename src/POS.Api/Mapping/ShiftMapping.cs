@@ -10,6 +10,8 @@ public static class ShiftMapping
         new(
             dto.Id,
             dto.StoreId,
+            dto.RegisterId,
+            dto.RegisterName,
             dto.EmployeeId,
             dto.EmployeeName,
             dto.OpeningCash,
@@ -23,6 +25,10 @@ public static class ShiftMapping
     public static ShiftSummaryResponse ToResponse(this ShiftSummaryDto dto) =>
         new(
             dto.ShiftId,
+            dto.RegisterId,
+            dto.RegisterName,
+            dto.EmployeeId,
+            dto.EmployeeName,
             dto.OpeningCash,
             dto.TotalCashSales,
             dto.TotalCardSales,

@@ -14,7 +14,8 @@ public record OrderFilterRequest(
 
 public record CreateOrderRequest(
     Guid ShiftId,
-    Guid? CustomerId = null
+    Guid? CustomerId = null,
+    string? Note = null
 );
 
 public record AddOrderItemRequest(

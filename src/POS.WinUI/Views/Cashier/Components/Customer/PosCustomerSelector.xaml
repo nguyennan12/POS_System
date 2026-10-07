@@ -1,0 +1,287 @@
+<UserControl x:Class="POS.WinUI.Views.Cashier.Components.PosCustomerSelector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:shared="clr-namespace:POS.WinUI.Views.Shared">
+
+    <!-- ── THÔNG TIN KHÁCH HÀNG ── -->
+    <Border Background="{StaticResource CardBackgroundBrush}" 
+            BorderBrush="{StaticResource InputBorderBrush}" 
+            BorderThickness="1" 
+            CornerRadius="14" 
+            Padding="12,8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" Color="#0F172A" Opacity="0.03" ShadowDepth="2" Direction="270"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Tiêu đề -->
+                <RowDefinition Height="Auto"/>
+                <!-- Vùng hiển thị chính (In-place swap giữa Search, Quick Register, và Customer Badge) -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- ── 1. HEADER NHÃN ── -->
+            <Grid Grid.Row="0" Margin="0,0,0,5">
+                <TextBlock Text="KHÁCH HÀNG" 
+                           FontSize="10.5" 
+                           FontWeight="Bold" 
+                           Foreground="{StaticResource TextMutedBrush}" 
+                           VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- ── 2. VÙNG HIỂN THỊ CHÍNH (ĐỔI TRẠNG THÁI NGAY TẠI DÒNG) ── -->
+            <Grid Grid.Row="1">
+
+                <!-- ════════ TRẠNG THÁI 1: TÌM KIẾM (SEARCH MODE VỚI DROPDOWN GỢI Ý) ════════ -->
+                <Grid>
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding HasSelectedCustomer}" Value="False"/>
+                                        <Condition Binding="{Binding ShowQuickRegister}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Ô tìm kiếm -->
+                    <shared:TextInputField Grid.Column="0"
+                                           x:Name="CustomerSearchInput"
+                                           Height="36"
+                                           CornerRadius="10"
+                                           Icon="Call24"
+                                           IconSize="14"
+                                           InputFontSize="12.5"
+                                           PlaceholderText="Nhập SĐT hoặc tên khách..."
+                                           ShowClearButton="True"
+                                           EnterCommand="{Binding SearchCustomerCommand}"
+                                           Text="{Binding CustomerSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Nút 1.1: Khi chưa tìm / đang tìm -> Nút Tìm kiếm -->
+                    <Button Grid.Column="2"
+                            Height="36"
+                            Command="{Binding SearchCustomerCommand}"
+                            ToolTip="Tìm kiếm khách hàng (Enter)">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SmallOutlineButtonStyle}">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCustomerNotFound}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Search24" FontSize="14" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0"
+                                           Visibility="{Binding IsSearchingCustomer, Converter={StaticResource InverseBoolToVis}}"/>
+                            <ui:ProgressRing IsIndeterminate="True" Width="14" Height="14" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0"
+                                             Visibility="{Binding IsSearchingCustomer, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Text="Tìm kiếm" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Nút 1.2: Khi Search không thấy thành viên -> Nút "+ Đăng ký" (Cam nổi bật) -->
+                    <Button Grid.Column="2"
+                            Height="36"
+                            Background="{StaticResource PrimaryBrush}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Command="{Binding OpenQuickRegisterCommand}"
+                            ToolTip="Tạo nhanh tài khoản thành viên mới"
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="14,0">
+                                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsCustomerNotFound}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="PersonAdd24" FontSize="15" Foreground="White" Margin="0,0,6,0"/>
+                            <TextBlock Text="+ Đăng ký" FontSize="12" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- ════════ TRẠNG THÁI 2: ĐĂNG KÝ NHANH IN-PLACE (QUICK REGISTER MODE) ════════ -->
+                <Grid Visibility="{Binding ShowQuickRegister, Converter={StaticResource BoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <!-- Ô SĐT (đã điền sẵn) -->
+                        <ColumnDefinition Width="135*"/>
+                        <ColumnDefinition Width="6"/>
+                        <!-- Ô Tên Khách Hàng (Tự động focus) -->
+                        <ColumnDefinition Width="175*"/>
+                        <ColumnDefinition Width="6"/>
+                        <!-- Nút Lưu & Chọn -->
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="4"/>
+                        <!-- Nút Hủy -->
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <shared:TextInputField Grid.Column="0"
+                                           Height="36"
+                                           CornerRadius="10"
+                                           Icon="Call24"
+                                           IconSize="13"
+                                           InputFontSize="12"
+                                           PlaceholderText="SĐT (10 số, 0...)"
+                                           Text="{Binding QuickRegisterPhone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <shared:TextInputField Grid.Column="2"
+                                           Height="36"
+                                           CornerRadius="10"
+                                           Icon="Person24"
+                                           IconSize="13"
+                                           InputFontSize="12"
+                                           PlaceholderText="Nhập họ và tên khách..."
+                                           EnterCommand="{Binding CreateQuickCustomerCommand}"
+                                           Text="{Binding QuickRegisterName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <!-- Nút Lưu & Chọn -->
+                    <Button Grid.Column="4"
+                            Height="36"
+                            Background="{StaticResource PrimaryBrush}"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="12,0"
+                            Command="{Binding CreateQuickCustomerCommand}"
+                            ToolTip="Lưu và chọn khách hàng này vào đơn"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:ProgressRing IsIndeterminate="True" Width="12" Height="12" Foreground="White" Margin="0,0,4,0"
+                                             Visibility="{Binding IsCreatingCustomer, Converter={StaticResource BoolToVis}}"/>
+                            <TextBlock Text="Lưu &amp; Chọn" FontSize="12" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Nút Hủy quay lại ô Search -->
+                    <Button Grid.Column="6"
+                            Width="36" Height="36"
+                            Padding="0"
+                            Style="{StaticResource SmallOutlineButtonStyle}"
+                            Command="{Binding CancelQuickRegisterCommand}"
+                            ToolTip="Hủy đăng ký (Quay lại)">
+                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Button>
+                </Grid>
+
+                <!-- ════════ TRẠNG THÁI 3: ĐÃ CHỌN KHÁCH HÀNG (1 HÀNG GỌN GÀNG, CÓ NÚT X & NÚT DÙNG ĐIỂM BÊN PHẢI) ════════ -->
+                <Grid Visibility="{Binding HasSelectedCustomer, Converter={StaticResource BoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Khối thông tin khách hàng (Có nút X để xóa/bỏ chọn) -->
+                    <Border Grid.Column="0"
+                            Height="36"
+                            Background="#F8FAFC"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="10,0">
+                        <Grid VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <!-- Icon + Tên + SĐT -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Badge Hạng + Badge Điểm + Nút Xóa (X) -->
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Cụm Tên & SĐT -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="PersonCircle24" FontSize="18" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedCustomerName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text=" • " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding CustomerPhoneNumber}" FontSize="12" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Cụm Badge Hạng + Điểm + Nút [X] Xóa khách -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Badge Hạng Thành Viên -->
+                                <shared:MemberTierBadge TierName="{Binding CustomerTierName}" Margin="0,0,6,0"/>
+
+                                <!-- Badge Điểm Thưởng -->
+                                <Border Background="#FFF7ED" BorderBrush="#FDBA74" BorderThickness="1" CornerRadius="8" Padding="6,2" Margin="0,0,6,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Star24" FontSize="11" Foreground="#EA580C" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding CustomerLoyaltyPoints, StringFormat='{}{0:#,##0.##} điểm'}" FontSize="11" FontWeight="Bold" Foreground="#EA580C" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Nút [X] Xóa / Hủy chọn khách hàng để quay lại ô Search -->
+                                <Button Width="22" Height="22"
+                                        Padding="0"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Cursor="Hand"
+                                        Command="{Binding ClearSelectedCustomerCommand}"
+                                        ToolTip="Bỏ chọn khách hàng này">
+                                    <ui:SymbolIcon Symbol="DismissCircle24" FontSize="15" Foreground="{StaticResource TextPlaceholderBrush}"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Nút DÙNG ĐIỂM (Tự động tính giảm tối đa khi tích chọn) -->
+                    <Border Grid.Column="2" 
+                            Height="36" 
+                            Background="#F8FAFC" 
+                            BorderBrush="#E2E8F0" 
+                            BorderThickness="1" 
+                            CornerRadius="10" 
+                            Padding="8,0"
+                            IsEnabled="{Binding CanUseLoyaltyPoints}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <CheckBox IsChecked="{Binding UseLoyaltyPoints}" 
+                                      MinWidth="0"
+                                      Padding="0"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center"
+                                      Cursor="Hand"
+                                      ToolTip="Tích chọn để tự động trừ số điểm tối đa vào đơn"/>
+                            <TextBlock Text="{Binding LoyaltyUseDisplayText}" 
+                                       FontSize="11.5" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

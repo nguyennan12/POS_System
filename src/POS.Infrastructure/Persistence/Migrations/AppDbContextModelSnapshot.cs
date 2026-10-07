@@ -26,10 +26,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Auditing.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Action")
                         .IsRequired()
@@ -85,10 +83,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Chatbot.ChatConversation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid")
@@ -133,10 +129,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Chatbot.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -172,10 +166,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Configuration.SystemConfig", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -209,10 +201,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Configuration.Translation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Key")
                         .IsRequired()
@@ -248,10 +238,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Customers.Customer", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Barcode")
                         .HasMaxLength(50)
@@ -316,10 +304,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Customers.LoyaltyAccount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid")
@@ -350,10 +336,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Customers.MemberTier", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("DiscountRate")
                         .HasPrecision(5, 4)
@@ -381,6 +365,13 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("numeric(5,4)")
                         .HasColumnName("point_rate");
 
+                    b.Property<decimal>("PointRedemptionRate")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasDefaultValue(1000m)
+                        .HasColumnName("point_redemption_rate");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
@@ -395,10 +386,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Customers.PointTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -444,10 +433,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Employees.Employee", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -545,10 +532,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Employees.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -587,10 +572,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Employees.Shift", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal?>("ActualCash")
                         .HasPrecision(18, 2)
@@ -625,6 +608,10 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("opening_cash");
 
+                    b.Property<Guid>("RegisterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("register_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -640,6 +627,8 @@ namespace POS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("RegisterId", "Status");
 
                     b.HasIndex("StoreId", "Status");
 
@@ -658,10 +647,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.Stock.StockBatch", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("BatchNo")
                         .IsRequired()
@@ -710,10 +697,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.Stock.StockEntry", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("AverageCost")
                         .ValueGeneratedOnAdd()
@@ -764,10 +749,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.Stock.StockTransaction", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -836,10 +819,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.StockIn.StockInVoucher", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -895,10 +876,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.StockIn.StockInVoucherItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("BatchNo")
                         .HasMaxLength(50)
@@ -951,10 +930,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.StockTake.StockTake", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("timestamp with time zone")
@@ -1007,10 +984,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.StockTake.StockTakeItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("ActualQty")
                         .HasPrecision(18, 3)
@@ -1053,10 +1028,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.Suppliers.Supplier", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Address")
                         .HasMaxLength(500)
@@ -1114,10 +1087,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Inventory.Suppliers.SupplierPayment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
@@ -1169,10 +1140,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("BuyerAddress")
                         .HasMaxLength(500)
@@ -1253,10 +1222,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.Order", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("AppliedVoucherCode")
                         .HasColumnType("text")
@@ -1356,10 +1323,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.OrderDiscount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("AppliedAt")
                         .ValueGeneratedOnAdd()
@@ -1381,10 +1346,6 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("order_id");
 
-                    b.Property<Guid?>("OrderId1")
-                        .HasColumnType("uuid")
-                        .HasColumnName("order_id1");
-
                     b.Property<Guid?>("PromotionId")
                         .HasColumnType("uuid")
                         .HasColumnName("promotion_id");
@@ -1396,8 +1357,6 @@ namespace POS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("OrderId1");
 
                     b.HasIndex("PromotionId");
 
@@ -1414,10 +1373,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.OrderItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("DiscountAmount")
                         .HasPrecision(18, 2)
@@ -1469,10 +1426,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.Payment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(18, 2)
@@ -1537,10 +1492,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.Category", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -1589,10 +1542,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.PriceList", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -1649,10 +1600,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.Product", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("BaseUnit")
                         .IsRequired()
@@ -1724,10 +1673,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.Sku", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<Dictionary<string, string>>("Attributes")
                         .HasColumnType("jsonb")
@@ -1814,10 +1761,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.UnitConversion", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<decimal>("ConversionFactor")
                         .HasPrecision(18, 4)
@@ -1855,10 +1800,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Promotions.Promotion", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("AppliesTo")
                         .IsRequired()
@@ -1962,10 +1905,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Promotions.PromotionTarget", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
@@ -1996,10 +1937,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Promotions.Voucher", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -2053,10 +1992,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Promotions.VoucherUsage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid")
@@ -2091,10 +2028,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Rbac.Permission", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Action")
                         .IsRequired()
@@ -2134,10 +2069,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Rbac.Resource", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -2161,10 +2094,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Rbac.Role", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -2217,10 +2148,8 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Rbac.RolePermission", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("GrantedAt")
                         .ValueGeneratedOnAdd()
@@ -2252,13 +2181,59 @@ namespace POS.Infrastructure.Migrations
                     b.ToTable("role_permissions", (string)null);
                 });
 
+            modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("pos_registers", (string)null);
+                });
+
             modelBuilder.Entity("POS.Domain.Stores.Store", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnName("id");
 
                     b.Property<string>("Address")
                         .HasMaxLength(500)
@@ -2470,6 +2445,12 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Stores.PosRegister", "Register")
+                        .WithMany()
+                        .HasForeignKey("RegisterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("POS.Domain.Stores.Store", "Store")
                         .WithMany()
                         .HasForeignKey("StoreId")
@@ -2477,6 +2458,8 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+
+                    b.Navigation("Register");
 
                     b.Navigation("Store");
                 });
@@ -2727,14 +2710,10 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Orders.OrderDiscount", b =>
                 {
                     b.HasOne("POS.Domain.Orders.Order", "Order")
-                        .WithMany()
+                        .WithMany("Discounts")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("POS.Domain.Orders.Order", null)
-                        .WithMany("Discounts")
-                        .HasForeignKey("OrderId1");
 
                     b.HasOne("POS.Domain.Promotions.Promotion", "Promotion")
                         .WithMany()
@@ -2848,7 +2827,7 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.Sku", b =>
                 {
                     b.HasOne("POS.Domain.Products.Product", "Product")
-                        .WithMany()
+                        .WithMany("Skus")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2867,7 +2846,7 @@ namespace POS.Infrastructure.Migrations
             modelBuilder.Entity("POS.Domain.Products.UnitConversion", b =>
                 {
                     b.HasOne("POS.Domain.Products.Sku", "Sku")
-                        .WithMany()
+                        .WithMany("UnitConversions")
                         .HasForeignKey("SkuId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3004,6 +2983,17 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
+                {
+                    b.HasOne("POS.Domain.Stores.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("POS.Domain.Inventory.StockIn.StockInVoucher", b =>
                 {
                     b.Navigation("Items");
@@ -3021,6 +3011,16 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Items");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("POS.Domain.Products.Product", b =>
+                {
+                    b.Navigation("Skus");
+                });
+
+            modelBuilder.Entity("POS.Domain.Products.Sku", b =>
+                {
+                    b.Navigation("UnitConversions");
                 });
 
             modelBuilder.Entity("POS.Domain.Promotions.Promotion", b =>

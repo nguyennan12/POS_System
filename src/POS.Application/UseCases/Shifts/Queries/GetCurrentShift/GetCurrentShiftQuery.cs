@@ -4,7 +4,7 @@ using POS.Application.UseCases.Shifts.Commands.CloseShift;
 
 namespace POS.Application.UseCases.Shifts.Queries.GetCurrentShift;
 
-public record GetCurrentShiftQuery(Guid StoreId) : IQuery<ShiftSummaryDto>, IRequirePermission
+public record GetCurrentShiftQuery(Guid StoreId, Guid? RegisterId = null) : IQuery<ShiftSummaryDto>, IRequirePermission
 {
     public string RequiredPermission => "shifts:read";
 }

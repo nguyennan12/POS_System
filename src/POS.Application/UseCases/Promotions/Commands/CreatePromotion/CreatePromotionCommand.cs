@@ -1,0 +1,26 @@
+using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Messaging;
+
+namespace POS.Application.UseCases.Promotions.Commands.CreatePromotion;
+
+public record CreatePromotionCommand(
+    Guid? StoreId,
+    string Name,
+    string Type,
+    decimal Value,
+    decimal MinOrderAmount = 0,
+    decimal? MaxDiscountAmount = null,
+    string? ConditionsJson = null,
+    int Priority = 0,
+    bool IsStackable = false,
+    bool IsExclusive = false,
+    string AppliesTo = "All",
+    DateTimeOffset? ValidFrom = null,
+    DateTimeOffset? ValidTo = null,
+    IReadOnlyList<Guid>? TargetCategoryIds = null,
+    IReadOnlyList<Guid>? TargetSkuIds = null,
+    Guid? CreatedBy = null
+) : ICommand<PromotionDetailDto>, IRequirePermission
+{
+    public string RequiredPermission => "discounts:create";
+}

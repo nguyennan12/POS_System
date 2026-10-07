@@ -58,6 +58,14 @@ public abstract class BaseApiClient
     return await response.Content.ReadFromJsonAsync<T>(_jsonOptions, ct);
   }
 
+  protected async Task<T?> DeleteAsync<T>(string url, CancellationToken ct = default)
+  {
+    AttachToken();
+    var response = await _http.DeleteAsync(url, ct);
+    await HandleFailureResponseAsync(response, ct);
+    return await response.Content.ReadFromJsonAsync<T>(_jsonOptions, ct);
+  }
+
   protected async Task DeleteHttpAsync(string url, CancellationToken ct = default)
   {
     AttachToken();

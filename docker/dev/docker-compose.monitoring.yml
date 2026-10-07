@@ -1,0 +1,19 @@
+services:
+  postgres:
+    networks:
+      - default
+      - monitoring_net
+
+  redis:
+    networks:
+      - default
+      - monitoring_net
+
+  pos-api:
+    networks:
+      - default
+      - monitoring_net
+
+networks:
+  monitoring_net:
+    external: true
