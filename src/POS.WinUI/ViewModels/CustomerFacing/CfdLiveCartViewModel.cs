@@ -59,12 +59,18 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
   [ObservableProperty] private string? _paymentOrderCode;
   [ObservableProperty] private string? _paymentBankName = "MB Bank";
   [ObservableProperty] private string? _paymentAccountNumber = "0988888888";
-  [ObservableProperty] private string? _paymentAccountName = "CỬA HÀNG POS";
+  [ObservableProperty] private string? _paymentAccountName = "TNHH OraPos";
   [ObservableProperty] private string? _paymentTransferContent = "THANHTOAN";
   [ObservableProperty] private string _paymentStatusText = "Đang chờ thanh toán...";
   [ObservableProperty] private bool _isPaymentCompleted;
   [ObservableProperty] private string _paymentSuccessTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
   [ObservableProperty] private BitmapSource? _paymentQrImage;
+
+  // ════════════════════ SPLIT PAYMENT STATE ON CFD ════════════════════
+  [ObservableProperty] private bool _isSplitPayment;
+  [ObservableProperty] private string? _activeSplitQrMethod;
+  [ObservableProperty] private decimal _splitQrAmount;
+  public ObservableCollection<CfdSplitPaymentItemDto> SplitItems { get; } = new();
 
   // Helper flags for payment methods & discounts
   public bool IsVietQr => string.Equals(PaymentMethod, "VietQR", StringComparison.OrdinalIgnoreCase);
@@ -73,17 +79,35 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
   public bool IsCard => string.Equals(PaymentMethod, "Card", StringComparison.OrdinalIgnoreCase);
   public bool IsPoints => string.Equals(PaymentMethod, "Points", StringComparison.OrdinalIgnoreCase);
 
+  public bool ShowSingleVietQr => !IsSplitPayment && IsVietQr;
+  public bool ShowSingleMoMo => !IsSplitPayment && IsMoMo;
+  public bool ShowSingleCash => !IsSplitPayment && IsCash;
+  public bool ShowSingleCard => !IsSplitPayment && IsCard;
+  public bool ShowSplitPayment => IsSplitPayment;
+
+  public bool HasSplitQr => IsSplitPayment && !string.IsNullOrEmpty(ActiveSplitQrMethod) && SplitQrAmount > 0;
+  public bool IsSplitVietQr => IsSplitPayment && string.Equals(ActiveSplitQrMethod, "VietQR", StringComparison.OrdinalIgnoreCase);
+  public bool IsSplitMoMo => IsSplitPayment && string.Equals(ActiveSplitQrMethod, "MoMo", StringComparison.OrdinalIgnoreCase);
+  public bool HasSplitCash => IsSplitPayment && SplitItems.Any(i => i.IsCash);
+
   public bool HasPointsDiscount => PointsDiscount > 0 || PointsUsed > 0;
   public bool HasVoucherDiscount => VoucherDiscount > 0;
 
-  public string PaymentMethodBadgeTitle => PaymentMethod?.ToUpperInvariant() switch
+  public string PaymentMethodBadgeTitle
   {
-    "VIETQR" => "CHUYỂN KHOẢN VIETQR 24/7",
-    "MOMO" => "VÍ ĐIỆN TỬ MOMO",
-    "CARD" => "THẺ NGÂN HÀNG / POS",
-    "POINTS" => "ĐIỂM THƯỞNG ORACLUB",
-    _ => "TIỀN MẶT TẠI QUẦY"
-  };
+    get
+    {
+      if (IsSplitPayment) return "THANH TOÁN KẾT HỢP (SPLIT)";
+      return PaymentMethod?.ToUpperInvariant() switch
+      {
+        "VIETQR" => "CHUYỂN KHOẢN VIETQR 24/7",
+        "MOMO" => "VÍ ĐIỆN TỬ MOMO",
+        "CARD" => "THẺ NGÂN HÀNG / POS",
+        "POINTS" => "ĐIỂM THƯỞNG ORACLUB",
+        _ => "TIỀN MẶT TẠI QUẦY"
+      };
+    }
+  }
 
   public CfdLiveCartViewModel(SessionService sessionService)
   {
@@ -107,10 +131,19 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
     {
       var state = message.State;
 
-      // Hủy timer tự đóng nếu khách/thu ngân quét món mới
-      _successDismissTimer?.Stop();
-      _successDismissTimer = null;
-      IsPaymentCompleted = false;
+      // Nếu khách/thu ngân quét món mới (TotalItems > 0), mới hủy trạng thái thanh toán thành công
+      if (state.TotalItems > 0)
+      {
+        _successDismissTimer?.Stop();
+        _successDismissTimer = null;
+        IsPaymentCompleted = false;
+        IsPaymentMode = false;
+      }
+      else if (IsPaymentCompleted)
+      {
+        // Giỏ hàng trống do ClearCart sau khi thanh toán, giữ nguyên màn hình thành công cho khách xem
+        return;
+      }
 
       TotalItems = state.TotalItems;
       SubTotal = state.SubTotal;
@@ -163,6 +196,19 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
       var state = message.State;
       IsPaymentMode = true;
       PaymentMethod = state.PaymentMethod ?? "Cash";
+      IsSplitPayment = state.IsSplitPayment;
+      ActiveSplitQrMethod = state.ActiveSplitQrMethod;
+      SplitQrAmount = state.SplitQrAmount;
+
+      SplitItems.Clear();
+      if (state.SplitItems != null)
+      {
+        foreach (var item in state.SplitItems)
+        {
+          SplitItems.Add(item);
+        }
+      }
+
       GrandTotal = state.GrandTotal;
       PaymentGrandTotal = state.GrandTotal;
       PaymentTenderedCash = state.TenderedCash;
@@ -171,7 +217,7 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
       PaymentOrderCode = state.OrderCode;
       PaymentBankName = !string.IsNullOrWhiteSpace(state.BankName) ? state.BankName : "MB Bank";
       PaymentAccountNumber = !string.IsNullOrWhiteSpace(state.AccountNumber) ? state.AccountNumber : "0988888888";
-      PaymentAccountName = !string.IsNullOrWhiteSpace(state.AccountName) ? state.AccountName : "CỬA HÀNG POS";
+      PaymentAccountName = !string.IsNullOrWhiteSpace(state.AccountName) ? state.AccountName : "TNHH OraPos";
       PaymentTransferContent = !string.IsNullOrWhiteSpace(state.TransferContent) ? state.TransferContent : "THANHTOAN";
       PaymentStatusText = !string.IsNullOrWhiteSpace(state.StatusText) ? state.StatusText : (state.IsCompleted ? "Thanh toán thành công! ✅" : "Đang chờ thanh toán...");
       IsPaymentCompleted = state.IsCompleted;
@@ -209,14 +255,16 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
       {
         PaymentQrImage = GenerateQrBitmap(state.QrDataUrl, 260);
       }
-      else if (IsVietQr)
+      else if (ShowSingleVietQr || (IsSplitPayment && ActiveSplitQrMethod == "VietQR"))
       {
-        var qrPayload = $"https://img.vietqr.io/image/{PaymentBankName}-{PaymentAccountNumber}-compact2.png?amount={(long)PaymentGrandTotal}&addInfo={PaymentTransferContent}&accountName={Uri.EscapeDataString(PaymentAccountName ?? string.Empty)}";
+        var amt = IsSplitPayment && SplitQrAmount > 0 ? (long)SplitQrAmount : (long)PaymentGrandTotal;
+        var qrPayload = $"https://img.vietqr.io/image/{PaymentBankName}-{PaymentAccountNumber}-compact2.png?amount={amt}&addInfo={PaymentTransferContent}&accountName={Uri.EscapeDataString(PaymentAccountName ?? string.Empty)}";
         PaymentQrImage = GenerateQrBitmap(qrPayload, 260);
       }
-      else if (IsMoMo)
+      else if (ShowSingleMoMo || (IsSplitPayment && ActiveSplitQrMethod == "MoMo"))
       {
-        var momoPayload = $"2|99|{PaymentAccountNumber}|{PaymentAccountName}|pos@store.vn|0|0|{(long)PaymentGrandTotal}|{PaymentTransferContent}|transfer_myqr";
+        var amt = IsSplitPayment && SplitQrAmount > 0 ? (long)SplitQrAmount : (long)PaymentGrandTotal;
+        var momoPayload = $"2|99|{PaymentAccountNumber}|{PaymentAccountName}|pos@store.vn|0|0|{amt}|{PaymentTransferContent}|transfer_myqr";
         PaymentQrImage = GenerateQrBitmap(momoPayload, 260);
       }
       else
@@ -245,6 +293,10 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
       _successDismissTimer = null;
       IsPaymentMode = false;
       IsPaymentCompleted = false;
+      IsSplitPayment = false;
+      ActiveSplitQrMethod = null;
+      SplitQrAmount = 0;
+      SplitItems.Clear();
       PaymentQrImage = null;
       NotifyPaymentMethodChanged();
     }
@@ -282,7 +334,7 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
   private void StartSuccessDismissTimer()
   {
     _successDismissTimer?.Stop();
-    _successDismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
+    _successDismissTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(6) };
     _successDismissTimer.Tick += (_, _) =>
     {
       _successDismissTimer?.Stop();
@@ -290,6 +342,7 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
       if (IsPaymentCompleted)
       {
         ResetToStandby();
+        WeakReferenceMessenger.Default.Send(new CfdShowStandbyMessage());
       }
     };
     _successDismissTimer.Start();
@@ -299,6 +352,10 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
   {
     IsPaymentMode = false;
     IsPaymentCompleted = false;
+    IsSplitPayment = false;
+    ActiveSplitQrMethod = null;
+    SplitQrAmount = 0;
+    SplitItems.Clear();
     PaymentQrImage = null;
     CartItems.Clear();
     TotalItems = 0;
@@ -308,14 +365,16 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
     PointsDiscount = 0;
     PointsUsed = 0;
     PointsBalanceRemaining = 0;
+    TaxAmount = 0;
     GrandTotal = 0;
-    LatestItem = null;
     CustomerName = null;
     CustomerPhone = null;
     CustomerTier = "Thành viên";
     CustomerPointsBalance = 0;
     PointsEarned = 0;
     HasCustomerInfo = false;
+    LatestItem = null;
+    PaymentStatusText = "Đang chờ thanh toán...";
     NotifyPaymentMethodChanged();
   }
 
@@ -326,6 +385,16 @@ public sealed partial class CfdLiveCartViewModel : ObservableObject,
     OnPropertyChanged(nameof(IsCash));
     OnPropertyChanged(nameof(IsCard));
     OnPropertyChanged(nameof(IsPoints));
+    OnPropertyChanged(nameof(IsSplitPayment));
+    OnPropertyChanged(nameof(ShowSingleVietQr));
+    OnPropertyChanged(nameof(ShowSingleMoMo));
+    OnPropertyChanged(nameof(ShowSingleCash));
+    OnPropertyChanged(nameof(ShowSingleCard));
+    OnPropertyChanged(nameof(ShowSplitPayment));
+    OnPropertyChanged(nameof(HasSplitQr));
+    OnPropertyChanged(nameof(IsSplitVietQr));
+    OnPropertyChanged(nameof(IsSplitMoMo));
+    OnPropertyChanged(nameof(HasSplitCash));
     OnPropertyChanged(nameof(HasPointsDiscount));
     OnPropertyChanged(nameof(HasVoucherDiscount));
     OnPropertyChanged(nameof(PaymentMethodBadgeTitle));

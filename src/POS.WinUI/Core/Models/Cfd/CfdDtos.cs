@@ -37,6 +37,19 @@ public record CfdPaymentQrDto(
     string AccountName
 );
 
+public record CfdSplitPaymentItemDto(
+    string Method,
+    string Title,
+    decimal Amount,
+    string PercentageText,
+    bool IsCash = false,
+    decimal TenderedCash = 0,
+    decimal ChangeAmount = 0,
+    string? ImagePath = null,
+    string? BadgeBg = null,
+    string? BadgeFg = null
+);
+
 public record CfdPaymentStateDto(
     string PaymentMethod,
     decimal GrandTotal,
@@ -58,5 +71,9 @@ public record CfdPaymentStateDto(
     decimal PointsEarned = 0,
     string? CustomerName = null,
     string? CustomerPhone = null,
-    string? CustomerTier = null
+    string? CustomerTier = null,
+    bool IsSplitPayment = false,
+    IReadOnlyList<CfdSplitPaymentItemDto>? SplitItems = null,
+    string? ActiveSplitQrMethod = null,
+    decimal SplitQrAmount = 0
 );

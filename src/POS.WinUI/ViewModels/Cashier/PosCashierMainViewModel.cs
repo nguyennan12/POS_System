@@ -55,10 +55,13 @@ public partial class PosCashierMainViewModel : ObservableObject
     private string _avatarInitials = "NV";
 
     [ObservableProperty]
-    private string _shiftName = "Đang kiểm tra ca làm việc...";
+    private string _shiftName = "Đang kiểm tra ca...";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasOpenShift))]
     private Guid? _currentShiftId;
+
+    public bool HasOpenShift => CurrentShiftId.HasValue;
 
     [ObservableProperty]
     private string _currentLanguage = "VI";
@@ -254,7 +257,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(_sessionService.StoreId) || !Guid.TryParse(_sessionService.StoreId, out var storeId))
         {
-            ShiftName = "Chưa chọn cửa hàng";
+            ShiftName = "Chưa mở ca";
             CurrentShiftId = null;
             return;
         }
@@ -266,12 +269,11 @@ public partial class PosCashierMainViewModel : ObservableObject
             {
                 var shift = res.Data;
                 CurrentShiftId = shift.ShiftId;
-                var localTime = shift.OpenedAt.ToLocalTime();
-                ShiftName = $"Ca mở lúc {localTime:HH:mm} (Tiền đầu ca: {shift.OpeningCash:N0}đ)";
+                ShiftName = "Đang trong ca";
             }
             else
             {
-                ShiftName = "Chưa mở ca làm việc";
+                ShiftName = "Chưa mở ca";
                 CurrentShiftId = null;
             }
         }

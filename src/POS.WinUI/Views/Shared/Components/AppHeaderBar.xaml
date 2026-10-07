@@ -119,24 +119,68 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Badge Thông tin Ca làm việc -->
-                <Border Background="#FEF3C7"
-                        BorderBrush="#FDE68A"
-                        BorderThickness="1"
-                        CornerRadius="10"
-                        Padding="12,7"
-                        Margin="12,0,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Clock24" 
-                                        FontSize="14" 
-                                        Foreground="#D97706" 
-                                        Margin="0,0,6,0" 
-                                        VerticalAlignment="Center"/>
+                <!-- Badge Thông tin Ca làm việc (Pill Bo Tròn Nhỏ Xanh Nhạt) -->
+                <Border CornerRadius="14"
+                        Padding="10,3.5"
+                        Margin="10,0,0,0"
+                        VerticalAlignment="Center">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <!-- Trạng thái mặc định: Chưa mở ca -->
+                            <Setter Property="Background" Value="#F8FAFC"/>
+                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Style.Triggers>
+                                <!-- Trạng thái: Đang trong ca (Xanh nhạt pastel bo tròn) -->
+                                <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
+                                    <Setter Property="Background" Value="#F0FDF4"/>
+                                    <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Chấm tròn trạng thái nhỏ gọn -->
+                        <Grid Margin="0,0,6,0" VerticalAlignment="Center">
+                            <!-- Chấm xám khi chưa mở ca -->
+                            <Ellipse Width="6.5" Height="6.5" Fill="#94A3B8"
+                                     Visibility="{Binding HasOpenShift, Converter={StaticResource InverseBoolToVis}}"/>
+
+                            <!-- Chấm xanh lá nhấp nháy chớp tắt khi Đang trong ca -->
+                            <Ellipse Width="6.5" Height="6.5" Fill="#16A34A"
+                                     Visibility="{Binding HasOpenShift, Converter={StaticResource BoolToVis}}">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="4" Color="#16A34A" Opacity="0.7" ShadowDepth="0"/>
+                                </Ellipse.Effect>
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="1.0" To="0.2" Duration="0:0:0.75"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                        </Grid>
+
+                        <!-- Chữ trạng thái ca nhỏ gọn -->
                         <TextBlock Text="{Binding ShiftName}" 
-                                    FontSize="12" 
-                                    FontWeight="Medium" 
-                                    Foreground="#92400E" 
-                                    VerticalAlignment="Center"/>
+                                   FontSize="11.5" 
+                                   FontWeight="Bold" 
+                                   VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#64748B"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
+                                            <Setter Property="Foreground" Value="#15803D"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </StackPanel>
                 </Border>
 

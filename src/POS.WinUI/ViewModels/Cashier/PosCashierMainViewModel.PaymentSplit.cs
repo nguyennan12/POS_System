@@ -28,12 +28,14 @@ public partial class PosCashierMainViewModel
     [ObservableProperty]
     private bool _isSplitFullyAllocated = true;
 
-    [ObservableProperty]
-    private bool _hasCashInSplit = false;
+    public bool HasCashInSplit => SplitPayments.Any(p => p.Method == "Cash");
+    public bool IsVietQrInSplit => SplitPayments.Any(p => p.Method == "VietQR");
+    public bool IsMoMoInSplit => SplitPayments.Any(p => p.Method == "MoMo");
+    public bool HasQrInSplit => IsVietQrInSplit || IsMoMoInSplit;
 
-    public bool CanAddCash => IsSplitPayment && !SplitPayments.Any(p => p.Method == "Cash");
-    public bool CanAddVietQr => IsSplitPayment && !SplitPayments.Any(p => p.Method == "VietQR");
-    public bool CanAddMoMo => IsSplitPayment && !SplitPayments.Any(p => p.Method == "MoMo");
+    public bool CanAddCash => IsSplitPayment && !HasCashInSplit;
+    public bool CanAddVietQr => IsSplitPayment && !IsVietQrInSplit && !IsMoMoInSplit;
+    public bool CanAddMoMo => IsSplitPayment && !IsMoMoInSplit && !IsVietQrInSplit;
     public bool CanAddCard => IsSplitPayment && !SplitPayments.Any(p => p.Method == "Card");
 
     public bool IsSplitOverAllocated => RemainingSplitAmount < 0;
@@ -153,6 +155,18 @@ public partial class PosCashierMainViewModel
             return;
         }
 
+        if (method == "VietQR" && IsMoMoInSplit)
+        {
+            ShowWarning("Chỉ được chọn 1 phương thức quét mã QR (VietQR hoặc MoMo) trong cùng một hóa đơn!");
+            return;
+        }
+
+        if (method == "MoMo" && IsVietQrInSplit)
+        {
+            ShowWarning("Chỉ được chọn 1 phương thức quét mã QR (VietQR hoặc MoMo) trong cùng một hóa đơn!");
+            return;
+        }
+
         // Tự động phân bổ số tiền còn thiếu (Remaining Amount)
         var allocateAmount = Math.Max(0, RemainingSplitAmount);
         var newItem = CreateSplitItem(method, allocateAmount);
@@ -228,8 +242,6 @@ public partial class PosCashierMainViewModel
         TotalSplitAllocated = SplitPayments.Sum(p => p.Amount);
         RemainingSplitAmount = GrandTotal - TotalSplitAllocated;
         IsSplitFullyAllocated = (RemainingSplitAmount == 0 && SplitPayments.Count > 0);
-        HasCashInSplit = SplitPayments.Any(p => p.IsCash);
-
         // Cập nhật tỷ lệ % từng dòng
         foreach (var item in SplitPayments)
         {
@@ -257,11 +269,20 @@ public partial class PosCashierMainViewModel
             ChangeAmount = 0;
         }
 
+        OnPropertyChanged(nameof(HasCashInSplit));
+        OnPropertyChanged(nameof(IsVietQrInSplit));
+        OnPropertyChanged(nameof(IsMoMoInSplit));
+        OnPropertyChanged(nameof(HasQrInSplit));
         OnPropertyChanged(nameof(CanAddCash));
         OnPropertyChanged(nameof(CanAddVietQr));
         OnPropertyChanged(nameof(CanAddMoMo));
         OnPropertyChanged(nameof(CanAddCard));
         OnPropertyChanged(nameof(IsSplitOverAllocated));
         OnPropertyChanged(nameof(OverAllocatedAmount));
+
+        if (IsPaymentModalOpen)
+        {
+            _ = GenerateDynamicQrsAsync();
+        }
     }
 }

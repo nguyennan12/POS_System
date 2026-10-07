@@ -60,6 +60,12 @@ public partial class ManagementMainViewModel : ObservableObject
   private string _shiftName = "Đang kiểm tra ca...";
 
   [ObservableProperty]
+  [NotifyPropertyChangedFor(nameof(HasOpenShift))]
+  private Guid? _currentShiftId;
+
+  public bool HasOpenShift => CurrentShiftId.HasValue;
+
+  [ObservableProperty]
   private string _employeeName = "Nhân viên";
 
   [ObservableProperty]
@@ -388,7 +394,8 @@ public partial class ManagementMainViewModel : ObservableObject
   {
     if (string.IsNullOrWhiteSpace(_sessionService.StoreId) || !Guid.TryParse(_sessionService.StoreId, out var storeId))
     {
-      ShiftName = "Chưa mở ca làm việc";
+      ShiftName = "Chưa mở ca";
+      CurrentShiftId = null;
       return;
     }
 
@@ -399,17 +406,19 @@ public partial class ManagementMainViewModel : ObservableObject
       if (res?.Success == true && res.Data != null)
       {
         var shift = res.Data;
+        CurrentShiftId = shift.ShiftId;
         _sessionService.SetShift(shift.ShiftId.ToString(), "Ca đang mở");
-        var localTime = shift.OpenedAt.ToLocalTime();
-        ShiftName = $"Ca mở lúc {localTime:HH:mm} (Tiền đầu ca: {shift.OpeningCash:N0}đ)";
+        ShiftName = "Đang trong ca";
       }
       else
       {
-        ShiftName = "Chưa mở ca làm việc";
+        CurrentShiftId = null;
+        ShiftName = "Chưa mở ca";
       }
     }
     catch
     {
+      CurrentShiftId = null;
       ShiftName = "Chưa mở ca";
     }
     finally

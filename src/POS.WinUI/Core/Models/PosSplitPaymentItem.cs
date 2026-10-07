@@ -47,6 +47,9 @@ public partial class PosSplitPaymentItem : ObservableObject
     private decimal _changeAmount = 0;
 
     public bool IsCash => Method == "Cash";
+    public bool IsVietQr => Method == "VietQR";
+    public bool IsMoMo => Method == "MoMo";
+    public bool IsQrMethod => IsVietQr || IsMoMo;
 
     public Action? OnAmountChangedCallback { get; set; }
 

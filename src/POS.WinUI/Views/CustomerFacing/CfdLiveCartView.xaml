@@ -268,7 +268,7 @@
 
                             <!-- Loyalty Points Discount (if any) -->
                             <StackPanel Orientation="Horizontal" Visibility="{Binding HasPointsDiscount, Converter={StaticResource BoolToVis}}" Margin="8,0,0,0">
-                                <TextBlock Text="• Trừ điểm: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium"/>
+                                <TextBlock Text="Điểm thưởng: " FontSize="12.5" Foreground="#64748B" FontWeight="Medium"/>
                                 <TextBlock Text="{Binding PointsDiscount, StringFormat='-{0:N0} đ'}" FontSize="13" FontWeight="Bold" Foreground="#EA580C"/>
                                 <TextBlock Text="{Binding PointsUsed, StringFormat=' ({0:#,##0.##} điểm)'}" FontSize="11" Foreground="#92400E" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>

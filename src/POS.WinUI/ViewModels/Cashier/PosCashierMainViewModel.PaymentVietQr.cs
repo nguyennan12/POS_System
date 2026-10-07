@@ -16,7 +16,7 @@ public partial class PosCashierMainViewModel
     private string _vietQrAccountNo = "0988888888";
 
     [ObservableProperty]
-    private string _vietQrAccountName = "CỬA HÀNG POS";
+    private string _vietQrAccountName = "TNHH OraPos";
 
     [ObservableProperty]
     private string _vietQrTransferContent = "THANHTOAN";
@@ -52,23 +52,36 @@ public partial class PosCashierMainViewModel
             var bankName = VietQrBankName;
             var accountNo = VietQrAccountNo;
             var accountName = VietQrAccountName;
-            var amount = (long)GrandTotal;
+
+            long vietQrAmount = (long)GrandTotal;
+            long momoAmount = (long)GrandTotal;
+
+            if (IsSplitPayment)
+            {
+                var vItem = SplitPayments.FirstOrDefault(p => p.Method == "VietQR");
+                if (vItem != null) vietQrAmount = (long)vItem.Amount;
+
+                var mItem = SplitPayments.FirstOrDefault(p => p.Method == "MoMo");
+                if (mItem != null) momoAmount = (long)mItem.Amount;
+            }
+
             var method = SelectedPaymentMethod;
+            var isSplit = IsSplitPayment;
 
             var (vQr, mQr) = await Task.Run(() =>
             {
                 System.Windows.Media.Imaging.BitmapSource? v = null;
                 System.Windows.Media.Imaging.BitmapSource? m = null;
 
-                if (method == "VietQR" || string.IsNullOrEmpty(method))
+                if (method == "VietQR" || isSplit || string.IsNullOrEmpty(method))
                 {
-                    var qrPayload = $"https://img.vietqr.io/image/{bankName}-{accountNo}-compact2.png?amount={amount}&addInfo={content}&accountName={Uri.EscapeDataString(accountName)}";
+                    var qrPayload = $"https://img.vietqr.io/image/{bankName}-{accountNo}-compact2.png?amount={vietQrAmount}&addInfo={content}&accountName={Uri.EscapeDataString(accountName)}";
                     v = GenerateQrBitmap(qrPayload, 200);
                 }
 
-                if (method == "MoMo" || string.IsNullOrEmpty(method))
+                if (method == "MoMo" || isSplit || string.IsNullOrEmpty(method))
                 {
-                    var momoPayload = $"2|99|{accountNo}|{accountName}|pos@store.vn|0|0|{amount}|{content}|transfer_myqr";
+                    var momoPayload = $"2|99|{accountNo}|{accountName}|pos@store.vn|0|0|{momoAmount}|{content}|transfer_myqr";
                     m = GenerateQrBitmap(momoPayload, 200);
                 }
 

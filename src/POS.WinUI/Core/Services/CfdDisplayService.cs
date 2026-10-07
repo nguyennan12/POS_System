@@ -18,7 +18,7 @@ public interface ICfdDisplayService
     void ShowLiveCart();
 }
 
-public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartStateMessage>, IRecipient<CfdShowStandbyMessage>
+public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartStateMessage>, IRecipient<CfdShowStandbyMessage>, IRecipient<CfdPaymentStateMessage>
 {
     private readonly IServiceProvider _serviceProvider;
     private CustomerFacingWindow? _cfdWindow;
@@ -26,6 +26,7 @@ public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartSt
 
     private CfdStandbyView? _standbyView;
     private CfdLiveCartView? _liveCartView;
+    private CfdLiveCartViewModel? _liveCartViewModel;
 
     public bool IsOpen => _cfdWindow != null && _cfdWindow.IsVisible;
 
@@ -36,6 +37,7 @@ public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartSt
         // Tự động lắng nghe các sự kiện đồng bộ từ ICfdSyncService
         WeakReferenceMessenger.Default.Register<CfdCartStateMessage>(this);
         WeakReferenceMessenger.Default.Register<CfdShowStandbyMessage>(this);
+        WeakReferenceMessenger.Default.Register<CfdPaymentStateMessage>(this);
     }
 
     private void EnsureViewsInitialized()
@@ -43,6 +45,7 @@ public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartSt
         // Khởi tạo trước cả 2 View & ViewModel để đăng ký nhận Messenger sẵn sàng ngay từ đầu
         _standbyView ??= _serviceProvider.GetRequiredService<CfdStandbyView>();
         _liveCartView ??= _serviceProvider.GetRequiredService<CfdLiveCartView>();
+        _liveCartViewModel ??= _serviceProvider.GetRequiredService<CfdLiveCartViewModel>();
     }
 
     public void OpenCfd()
@@ -112,17 +115,38 @@ public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartSt
         }
     }
 
+    public void Receive(CfdPaymentStateMessage message)
+    {
+        void Update()
+        {
+            if (_cfdWindow != null && _cfdWindow.IsVisible)
+            {
+                ShowLiveCart();
+            }
+        }
+
+        if (Application.Current?.Dispatcher?.CheckAccess() == false)
+        {
+            Application.Current.Dispatcher.Invoke(Update);
+        }
+        else
+        {
+            Update();
+        }
+    }
+
     public void Receive(CfdCartStateMessage message)
     {
         void Update()
         {
             if (_cfdWindow != null && _cfdWindow.IsVisible)
             {
+                EnsureViewsInitialized();
                 if (message.State.TotalItems > 0)
                 {
                     ShowLiveCart();
                 }
-                else
+                else if (_liveCartViewModel?.IsPaymentCompleted != true)
                 {
                     ShowStandby();
                 }
@@ -145,6 +169,12 @@ public sealed class CfdDisplayService : ICfdDisplayService, IRecipient<CfdCartSt
         {
             if (_cfdWindow != null && _cfdWindow.IsVisible)
             {
+                EnsureViewsInitialized();
+                // Nếu đang hiển thị màn hình thanh toán thành công, không chuyển về Standby
+                if (_liveCartViewModel?.IsPaymentCompleted == true)
+                {
+                    return;
+                }
                 ShowStandby();
             }
         }
