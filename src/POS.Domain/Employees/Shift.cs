@@ -12,6 +12,7 @@ public class Shift : BaseEntity
 
   private Shift(
       Guid storeId,
+      Guid registerId,
       Guid employeeId,
       decimal openingCash,
       string? note,
@@ -19,6 +20,7 @@ public class Shift : BaseEntity
       : base(id)
   {
     StoreId = storeId;
+    RegisterId = registerId;
     EmployeeId = employeeId;
     OpeningCash = openingCash;
     Note = note;
@@ -28,6 +30,9 @@ public class Shift : BaseEntity
 
   public Guid StoreId { get; private set; }
   public Store Store { get; private set; } = default!;
+
+  public Guid RegisterId { get; private set; }
+  public PosRegister Register { get; private set; } = default!;
 
   public Guid EmployeeId { get; private set; }
   public Employee Employee { get; private set; } = default!;
@@ -41,11 +46,20 @@ public class Shift : BaseEntity
   public DateTime? ClosedAt { get; private set; }
 
 
-  /// Factory method to open a new shift.
+  /// <summary>
+  /// Factory method to open a new shift for a specific register/terminal.
   /// </summary>
-  public static Shift Open(Guid storeId, Guid employeeId, decimal openingCash, string? note)
+  public static Shift Open(Guid storeId, Guid registerId, Guid employeeId, decimal openingCash, string? note = null)
   {
-    return new Shift(storeId, employeeId, openingCash, note);
+    return new Shift(storeId, registerId, employeeId, openingCash, note);
+  }
+
+  /// <summary>
+  /// Overload for backwards compatibility and test fixtures.
+  /// </summary>
+  public static Shift Open(Guid storeId, Guid employeeId, decimal openingCash, string? note = null)
+  {
+    return new Shift(storeId, Guid.NewGuid(), employeeId, openingCash, note);
   }
 
 

@@ -141,11 +141,10 @@
 
                         <TextBox Grid.Column="0"
                                  Text="{Binding PointsToRedeemInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource CleanTextBoxStyle}"
                                  FontSize="18"
                                  FontWeight="Bold"
                                  Foreground="{StaticResource TextPrimaryBrush}"
-                                 Background="Transparent"
-                                 BorderThickness="0"
                                  VerticalAlignment="Center"/>
 
                         <TextBlock Grid.Column="1" Text="điểm" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>

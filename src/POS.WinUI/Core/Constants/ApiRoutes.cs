@@ -22,6 +22,7 @@ public static class ApiRoutes
   {
     public const string Public = "api/v1/stores/public";
     public const string All = "api/v1/stores";
+    public static string Registers(Guid storeId) => $"api/v1/stores/{storeId}/registers";
   }
 
   public static class Shifts

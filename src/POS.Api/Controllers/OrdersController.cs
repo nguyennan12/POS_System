@@ -106,6 +106,7 @@ public class OrdersController(ISender mediator) : ControllerBase
   }
 
 
+  /// <summary>
   /// Lấy chi tiết đơn hàng theo ID.
   /// </summary>
   [HttpGet("{id:guid}")]
@@ -119,5 +120,28 @@ public class OrdersController(ISender mediator) : ControllerBase
 
     if (result.IsFailure) return this.ToActionResult(result);
     return Ok(ApiResponse<OrderDetailResponse>.Ok(result.Value!.ToResponse()));
+  }
+
+  /// <summary>
+  /// Xem danh sách đơn hàng có phân trang và bộ lọc (storeId, shiftId, status, from, to).
+  /// </summary>
+  [HttpGet]
+  public async Task<ActionResult<ApiResponse<PagedResponse<OrderSummaryResponse>>>> GetOrders(
+      [FromQuery] OrderFilterRequest filter,
+      CancellationToken cancellationToken)
+  {
+    var result = await mediator.Send(
+        new POS.Application.UseCases.Orders.Queries.GetOrders.GetOrdersQuery(filter),
+        cancellationToken);
+
+    if (result.IsFailure) return this.ToActionResult(result);
+
+    var response = new PagedResponse<OrderSummaryResponse>(
+        result.Value!.Items.Select(OrderMapping.ToResponse).ToList(),
+        result.Value.PageNumber,
+        result.Value.PageSize,
+        result.Value.TotalCount);
+
+    return Ok(ApiResponse<PagedResponse<OrderSummaryResponse>>.Ok(response));
   }
 }

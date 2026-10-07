@@ -52,4 +52,23 @@ public sealed class OrderApiClient : BaseApiClient
   /// </summary>
   public Task<ApiResponse<OrderDetailResponse>?> GetOrderByIdAsync(Guid orderId, CancellationToken ct = default)
       => GetAsync<ApiResponse<OrderDetailResponse>>(ApiRoutes.Orders.GetById(orderId), ct);
+
+  /// <summary>
+  /// Lấy danh sách đơn hàng có phân trang & bộ lọc (storeId, shiftId, status, from, to)
+  /// </summary>
+  public Task<ApiResponse<PagedResponse<OrderSummaryResponse>>?> GetOrdersAsync(
+      OrderFilterRequest filter, CancellationToken ct = default)
+  {
+    var queryParams = new System.Collections.Generic.List<string>();
+    if (filter.StoreId.HasValue) queryParams.Add($"storeId={filter.StoreId.Value}");
+    if (filter.ShiftId.HasValue) queryParams.Add($"shiftId={filter.ShiftId.Value}");
+    if (!string.IsNullOrWhiteSpace(filter.Status)) queryParams.Add($"status={Uri.EscapeDataString(filter.Status)}");
+    if (filter.From.HasValue) queryParams.Add($"from={Uri.EscapeDataString(filter.From.Value.ToString("O"))}");
+    if (filter.To.HasValue) queryParams.Add($"to={Uri.EscapeDataString(filter.To.Value.ToString("O"))}");
+    queryParams.Add($"pageNumber={filter.PageNumber}");
+    queryParams.Add($"pageSize={filter.PageSize}");
+
+    var url = $"{ApiRoutes.Orders.Base}?{string.Join("&", queryParams)}";
+    return GetAsync<ApiResponse<PagedResponse<OrderSummaryResponse>>>(url, ct);
+  }
 }

@@ -55,9 +55,10 @@ public class StoreAndEmployeeSeeder : ISeeder
     }
 
     // 2. Seed Second Store (Chi Nhánh Quận 3)
-    if (!await context.Stores.AnyAsync(s => s.Name == "Chi Nhánh Quận 3", cancellationToken))
+    var secondStore = await context.Stores.FirstOrDefaultAsync(s => s.Name == "Chi Nhánh Quận 3", cancellationToken);
+    if (secondStore == null)
     {
-      var secondStore = new Store(
+      secondStore = new Store(
           "Chi Nhánh Quận 3",
           "456 Đường Lê Văn Sỹ, Quận 3, TP. Hồ Chí Minh",
           "0909876543",
@@ -72,6 +73,21 @@ public class StoreAndEmployeeSeeder : ISeeder
       await context.Stores.AddAsync(secondStore, cancellationToken);
       await context.SaveChangesAsync(cancellationToken);
     }
+
+    // 3. Seed Default Registers for Stores
+    if (!await context.PosRegisters.AnyAsync(r => r.StoreId == defaultStore.Id && r.Code == "POS-01", cancellationToken))
+    {
+      await context.PosRegisters.AddAsync(new PosRegister(defaultStore.Id, "Quầy 01", "POS-01", true), cancellationToken);
+    }
+    if (!await context.PosRegisters.AnyAsync(r => r.StoreId == defaultStore.Id && r.Code == "POS-02", cancellationToken))
+    {
+      await context.PosRegisters.AddAsync(new PosRegister(defaultStore.Id, "Quầy 02", "POS-02", true), cancellationToken);
+    }
+    if (!await context.PosRegisters.AnyAsync(r => r.StoreId == secondStore.Id && r.Code == "POS-01", cancellationToken))
+    {
+      await context.PosRegisters.AddAsync(new PosRegister(secondStore.Id, "Quầy 01", "POS-01", true), cancellationToken);
+    }
+    await context.SaveChangesAsync(cancellationToken);
 
     var employeesToAdd = new List<Employee>();
 

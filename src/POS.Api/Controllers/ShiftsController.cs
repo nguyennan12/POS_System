@@ -18,7 +18,7 @@ namespace POS.Api.Controllers;
 public class ShiftsController(ISender mediator) : ControllerBase
 {
 
-  /// Open a new shift for a store.
+  /// Open a new shift for a store and register.
   /// </summary>
   [HttpPost("open")]
   public async Task<ActionResult<ApiResponse<ShiftResponse>>> Open(
@@ -26,7 +26,7 @@ public class ShiftsController(ISender mediator) : ControllerBase
       CancellationToken cancellationToken)
   {
     var result = await mediator.Send(
-        new OpenShiftCommand(request.StoreId, request.OpeningCash, request.Note),
+        new OpenShiftCommand(request.StoreId, request.RegisterId, request.OpeningCash, request.Note),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);
@@ -69,15 +69,16 @@ public class ShiftsController(ISender mediator) : ControllerBase
   }
 
 
-  /// Get the current open shift for a store (with live sales summary).
+  /// Get the current open shift for a store or specific register (with live sales summary).
   /// </summary>
   [HttpGet("current")]
   public async Task<ActionResult<ApiResponse<ShiftSummaryResponse>>> GetCurrent(
       [FromQuery] Guid storeId,
+      [FromQuery] Guid? registerId,
       CancellationToken cancellationToken)
   {
     var result = await mediator.Send(
-        new GetCurrentShiftQuery(storeId),
+        new GetCurrentShiftQuery(storeId, registerId),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);

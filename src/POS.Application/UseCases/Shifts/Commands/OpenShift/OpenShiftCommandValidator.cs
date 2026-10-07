@@ -9,6 +9,9 @@ public class OpenShiftCommandValidator : AbstractValidator<OpenShiftCommand>
         RuleFor(x => x.StoreId)
             .NotEmpty().WithMessage("Mã cửa hàng không được để trống.");
 
+        RuleFor(x => x.RegisterId)
+            .NotEmpty().WithMessage("Mã quầy thu ngân không được để trống.");
+
         RuleFor(x => x.OpeningCash)
             .GreaterThanOrEqualTo(0).WithMessage("Số tiền đầu ca phải >= 0.");
     }

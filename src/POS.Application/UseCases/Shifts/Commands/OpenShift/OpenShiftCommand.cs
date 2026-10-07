@@ -5,6 +5,7 @@ namespace POS.Application.UseCases.Shifts.Commands.OpenShift;
 
 public record OpenShiftCommand(
     Guid StoreId,
+    Guid RegisterId,
     decimal OpeningCash,
     string? Note
 ) : ICommand<ShiftDto>, IRequirePermission
@@ -15,6 +16,8 @@ public record OpenShiftCommand(
 public record ShiftDto(
     Guid Id,
     Guid StoreId,
+    Guid RegisterId,
+    string RegisterName,
     Guid EmployeeId,
     string EmployeeName,
     decimal OpeningCash,

@@ -3,6 +3,7 @@ using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Domain.Common;
 using POS.Domain.Employees;
+using POS.Domain.Rbac.Constants;
 
 namespace POS.Application.UseCases.Shifts.Commands.CloseShift;
 
@@ -34,6 +35,20 @@ public class CloseShiftCommandHandler(
         if (!employee.IsChainOwner && employee.StoreId != shift.StoreId)
             return new Error(ErrorType.Forbidden, "Employee.InvalidStore", "Nhân viên không thuộc cửa hàng này.");
 
+        var isManagerOrAbove = employee.IsChainOwner
+            || (employee.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
+        if (!isManagerOrAbove && shift.EmployeeId != employee.Id)
+        {
+            var shiftOpener = shift.Employee ?? await employeeRepository.GetByIdAsync(shift.EmployeeId, cancellationToken);
+            var isShiftOpenedByManager = shiftOpener != null && (shiftOpener.IsChainOwner || shiftOpener.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
+            if (!isShiftOpenedByManager)
+            {
+                return new Error(ErrorType.Forbidden, "SHIFT.NOT_OWNED", "Cashier chỉ được đóng ca làm việc của chính mình hoặc ca do Quản lý bàn giao.");
+            }
+        }
+
         // Aggregate sales data from orders/payments in this shift
         var sales = await shiftRepository.GetShiftSalesAsync(shift.Id, cancellationToken);
 
@@ -50,6 +65,10 @@ public class CloseShiftCommandHandler(
 
         return new ShiftSummaryDto(
             shift.Id,
+            shift.RegisterId,
+            shift.Register?.Name ?? "Quầy",
+            shift.EmployeeId,
+            shift.Employee?.Name ?? employee.Name,
             shift.OpeningCash,
             sales.CashSales,
             sales.CardSales,

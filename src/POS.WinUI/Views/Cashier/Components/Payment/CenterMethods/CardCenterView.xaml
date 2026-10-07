@@ -162,6 +162,7 @@
 
                 <TextBox Grid.Column="1"
                          Text="{Binding CardTraceNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource CleanTextBoxStyle}"
                          FontSize="13"
                          FontWeight="SemiBold"
                          Padding="10,6"

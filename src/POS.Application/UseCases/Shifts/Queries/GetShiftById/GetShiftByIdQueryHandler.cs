@@ -37,6 +37,8 @@ public class GetShiftByIdQueryHandler(
         return new ShiftDto(
             shift.Id,
             shift.StoreId,
+            shift.RegisterId,
+            shift.Register?.Name ?? "Quầy",
             shift.EmployeeId,
             shift.Employee.Name,
             shift.OpeningCash,

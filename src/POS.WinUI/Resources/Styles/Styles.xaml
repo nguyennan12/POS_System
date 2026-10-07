@@ -228,14 +228,48 @@
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="SelectionBrush" Value="{StaticResource PrimaryLightBrush}"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <ScrollViewer x:Name="PART_ContentHost" 
-                                  Focusable="False" 
-                                  HorizontalScrollBarVisibility="Hidden" 
-                                  VerticalScrollBarVisibility="Hidden"
-                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    <Border Background="Transparent" BorderThickness="0">
+                        <ScrollViewer x:Name="PART_ContentHost" 
+                                      Focusable="False" 
+                                      HorizontalScrollBarVisibility="Hidden" 
+                                      VerticalScrollBarVisibility="Hidden"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Style cho TextBox đa dòng (Multiline / TextArea thuần túy không gạch chân) -->
+    <Style x:Key="CleanMultilineTextBoxStyle" TargetType="TextBox">
+        <Setter Property="Background" Value="#F8FAFC"/>
+        <Setter Property="BorderBrush" Value="#E2E8F0"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="bgBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                        <ScrollViewer x:Name="PART_ContentHost"
+                                      Focusable="False"
+                                      Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bgBorder" Property="BorderBrush" Value="#94A3B8"/>
+                            <Setter TargetName="bgBorder" Property="Background" Value="#FFFFFF"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

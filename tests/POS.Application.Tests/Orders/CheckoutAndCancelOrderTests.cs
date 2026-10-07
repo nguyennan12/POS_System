@@ -480,13 +480,46 @@ public partial class CheckoutAndCancelOrderTests
   }
 
   [Fact]
-  public async Task Checkout_ShouldFail_WhenShiftBelongsToAnotherCashier()
+  public async Task Checkout_ShouldSucceed_WhenShiftOpenedByManagerInSameStore()
   {
-    // Arrange
+    // Arrange: Ca do Quản lý mở, Thu ngân bán hàng -> Thành công
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
 
-    var otherEmployeeId = Guid.NewGuid();
-    var otherShift = Shift.Open(_storeId, otherEmployeeId, 500_000, null);
+    var otherShift = Shift.Open(_storeId, _managerEmployee.Id, 500_000, null);
+    typeof(Shift).GetProperty(nameof(Shift.Employee))!.SetValue(otherShift, _managerEmployee);
+    _shiftRepository.GetByIdAsync(order.ShiftId, Arg.Any<CancellationToken>()).Returns(otherShift);
+
+    _currentUser.EmployeeId.Returns(_employeeId);
+    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+
+    var handler = CreateCheckoutHandler();
+
+    var command = new CheckoutOrderCommand(
+        _orderId,
+        [new PaymentSplitInputDto("Cash", 100_000)]);
+
+    // Act
+    var result = await handler.Handle(command, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    order.Status.Should().Be(OrderStatus.Paid);
+  }
+
+  [Fact]
+  public async Task Checkout_ShouldFail_WhenShiftBelongsToAnotherCashierInSameStore()
+  {
+    // Arrange: Ca do Thu ngân khác mở, Thu ngân hiện tại cố ý thanh toán chèn -> Bị chặn
+    var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
+
+    var otherCashierId = Guid.NewGuid();
+    var otherCashierRole = new Role(RoleNames.Cashier, isSystemRole: true);
+    var otherCashier = new Employee("Thu ngân B", "cashierB", "hash", "pin", otherCashierRole.Id, false, _storeId, true, otherCashierId);
+    typeof(Employee).GetProperty(nameof(Employee.Role))!.SetValue(otherCashier, otherCashierRole);
+
+    var otherShift = Shift.Open(_storeId, otherCashierId, 500_000, null);
+    typeof(Shift).GetProperty(nameof(Shift.Employee))!.SetValue(otherShift, otherCashier);
     _shiftRepository.GetByIdAsync(order.ShiftId, Arg.Any<CancellationToken>()).Returns(otherShift);
 
     _currentUser.EmployeeId.Returns(_employeeId);

@@ -30,7 +30,7 @@ public class GetCurrentShiftQueryHandler(
         if (!employee.IsChainOwner && employee.StoreId != query.StoreId)
             return new Error(ErrorType.Forbidden, "Employee.InvalidStore", "Nhân viên không thuộc cửa hàng này.");
 
-        var shift = await shiftRepository.GetOpenShiftAsync(query.StoreId, cancellationToken);
+        var shift = await shiftRepository.GetOpenShiftAsync(query.StoreId, query.RegisterId, cancellationToken);
         if (shift is null)
             return ShiftErrors.NotFound;
 
@@ -39,6 +39,10 @@ public class GetCurrentShiftQueryHandler(
 
         return new ShiftSummaryDto(
             shift.Id,
+            shift.RegisterId,
+            shift.Register?.Name ?? "Quầy",
+            shift.EmployeeId,
+            shift.Employee?.Name ?? employee.Name,
             shift.OpeningCash,
             sales.CashSales,
             sales.CardSales,

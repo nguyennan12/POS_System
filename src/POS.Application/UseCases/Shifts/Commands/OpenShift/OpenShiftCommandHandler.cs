@@ -8,6 +8,7 @@ namespace POS.Application.UseCases.Shifts.Commands.OpenShift;
 
 public class OpenShiftCommandHandler(
     IShiftRepository shiftRepository,
+    IPosRegisterRepository posRegisterRepository,
     IEmployeeRepository employeeRepository,
     IUnitOfWork unitOfWork,
     ICurrentUser currentUser)
@@ -30,20 +31,29 @@ public class OpenShiftCommandHandler(
         if (!employee.IsChainOwner && employee.StoreId != command.StoreId)
             return new Error(ErrorType.Forbidden, "Employee.InvalidStore", "Nhân viên không thuộc cửa hàng này.");
 
-        // Use serializable transaction to prevent race condition (two shifts opening simultaneously)
+        var register = await posRegisterRepository.GetByIdAsync(command.RegisterId, cancellationToken);
+        if (register is null || register.StoreId != command.StoreId)
+            return new Error(ErrorType.NotFound, "Register.NotFound", "Không tìm thấy quầy thu ngân hợp lệ tại chi nhánh này.");
+
+        if (!register.IsActive)
+            return new Error(ErrorType.Forbidden, "Register.Inactive", "Quầy thu ngân đã tạm ngừng hoạt động.");
+
+        // Use serializable transaction to prevent race condition (two shifts opening simultaneously on same register)
         return await unitOfWork.ExecuteSerializableAsync(async ct =>
         {
-            var existingShift = await shiftRepository.GetOpenShiftAsync(command.StoreId, ct);
+            var existingShift = await shiftRepository.GetOpenShiftByRegisterAsync(command.RegisterId, ct);
             if (existingShift is not null)
                 return Result<ShiftDto>.Failure(ShiftErrors.AlreadyOpen);
 
-            var shift = Shift.Open(command.StoreId, employee.Id, command.OpeningCash, command.Note);
+            var shift = Shift.Open(command.StoreId, command.RegisterId, employee.Id, command.OpeningCash, command.Note);
             await shiftRepository.AddAsync(shift, ct);
             await unitOfWork.SaveChangesAsync(ct);
 
             return Result<ShiftDto>.Success(new ShiftDto(
                 shift.Id,
                 shift.StoreId,
+                shift.RegisterId,
+                register.Name,
                 shift.EmployeeId,
                 employee.Name,
                 shift.OpeningCash,

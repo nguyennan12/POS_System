@@ -116,11 +116,13 @@ public class StoreManagementTests
         Store? created = null;
         stores.AddAsync(Arg.Do<Store>(s => created = s), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
 
-        var result = await new CreateStoreCommandHandler(stores, unitOfWork, employees, currentUser)
+        var registers = Substitute.For<IPosRegisterRepository>();
+        var result = await new CreateStoreCommandHandler(stores, registers, unitOfWork, employees, currentUser)
             .Handle(new("New", null, null, "UTC", "USD"), default);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("New", created!.Name);
+        await registers.Received(1).AddAsync(Arg.Is<PosRegister>(r => r.StoreId == created.Id && r.Name == "Quầy 01"), Arg.Any<CancellationToken>());
         await unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 

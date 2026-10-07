@@ -21,6 +21,8 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly ICfdDisplayService _cfdDisplayService;
     private readonly ICfdSyncService _cfdSyncService;
     private readonly ShiftApiClient _shiftApiClient;
+    private readonly RegisterApiClient _registerApiClient;
+    private readonly LocalDeviceSettingsService _localDeviceSettingsService;
     private readonly StoreApiClient _storeApiClient;
     private readonly AuthApiClient _authApiClient;
     private readonly CategoryApiClient _categoryApiClient;
@@ -116,11 +118,13 @@ public partial class PosCashierMainViewModel : ObservableObject
 
     public PosCashierMainViewModel(
         SessionService sessionService,
+        LocalDeviceSettingsService localDeviceSettingsService,
         NetworkStatusService networkStatusService,
         INavigationService navigationService,
         ICfdDisplayService cfdDisplayService,
         ICfdSyncService cfdSyncService,
         ShiftApiClient shiftApiClient,
+        RegisterApiClient registerApiClient,
         StoreApiClient storeApiClient,
         AuthApiClient authApiClient,
         CategoryApiClient categoryApiClient,
@@ -131,11 +135,13 @@ public partial class PosCashierMainViewModel : ObservableObject
         ProductApiClient productApiClient)
     {
         _sessionService = sessionService;
+        _localDeviceSettingsService = localDeviceSettingsService;
         _networkStatusService = networkStatusService;
         _navigationService = navigationService;
         _cfdDisplayService = cfdDisplayService;
         _cfdSyncService = cfdSyncService;
         _shiftApiClient = shiftApiClient;
+        _registerApiClient = registerApiClient;
         _storeApiClient = storeApiClient;
         _authApiClient = authApiClient;
         _categoryApiClient = categoryApiClient;
@@ -146,7 +152,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         _productApiClient = productApiClient;
 
         LoadUserInfo();
-        _ = LoadCurrentShiftAsync();
+        _ = LoadRegistersAndShiftAsync();
         _ = LoadMemberTiersAsync();
 
         if (IsOwnerRole)
@@ -163,7 +169,7 @@ public partial class PosCashierMainViewModel : ObservableObject
             StatusText = _networkStatusService.StatusText;
             if (isOnline)
             {
-                _ = LoadCurrentShiftAsync();
+                _ = LoadRegistersAndShiftAsync();
                 _ = LoadCatalogFromApiAsync();
                 _ = LoadMemberTiersAsync();
                 if (IsOwnerRole && Stores.Count == 0)
@@ -203,6 +209,8 @@ public partial class PosCashierMainViewModel : ObservableObject
 
         IsManagerRole = _sessionService.IsManager;
         IsOwnerRole = _sessionService.IsOwner;
+        IsCashierRole = _sessionService.IsCashier;
+        CanChangeRegister = _sessionService.IsManager || _sessionService.IsOwner;
 
         if (!string.IsNullOrWhiteSpace(_sessionService.StoreName))
         {
@@ -247,40 +255,8 @@ public partial class PosCashierMainViewModel : ObservableObject
         {
             _sessionService.SetStore(value.Id.ToString(), value.Name);
             StoreName = value.Name;
-            _ = LoadCurrentShiftAsync();
+            _ = LoadRegistersAndShiftAsync();
             _ = LoadCatalogFromApiAsync();
-        }
-    }
-
-    [RelayCommand]
-    public async Task LoadCurrentShiftAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_sessionService.StoreId) || !Guid.TryParse(_sessionService.StoreId, out var storeId))
-        {
-            ShiftName = "Chưa mở ca";
-            CurrentShiftId = null;
-            return;
-        }
-
-        try
-        {
-            var res = await _shiftApiClient.GetCurrentShiftAsync(storeId);
-            if (res?.Success == true && res.Data != null)
-            {
-                var shift = res.Data;
-                CurrentShiftId = shift.ShiftId;
-                ShiftName = "Đang trong ca";
-            }
-            else
-            {
-                ShiftName = "Chưa mở ca";
-                CurrentShiftId = null;
-            }
-        }
-        catch
-        {
-            ShiftName = "Chưa mở ca";
-            CurrentShiftId = null;
         }
     }
 

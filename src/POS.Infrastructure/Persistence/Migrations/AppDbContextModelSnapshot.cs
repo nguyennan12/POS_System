@@ -608,6 +608,10 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("numeric(18,2)")
                         .HasColumnName("opening_cash");
 
+                    b.Property<Guid>("RegisterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("register_id");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -623,6 +627,8 @@ namespace POS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("RegisterId", "Status");
 
                     b.HasIndex("StoreId", "Status");
 
@@ -2175,6 +2181,54 @@ namespace POS.Infrastructure.Migrations
                     b.ToTable("role_permissions", (string)null);
                 });
 
+            modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("pos_registers", (string)null);
+                });
+
             modelBuilder.Entity("POS.Domain.Stores.Store", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2391,6 +2445,12 @@ namespace POS.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("POS.Domain.Stores.PosRegister", "Register")
+                        .WithMany()
+                        .HasForeignKey("RegisterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("POS.Domain.Stores.Store", "Store")
                         .WithMany()
                         .HasForeignKey("StoreId")
@@ -2398,6 +2458,8 @@ namespace POS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+
+                    b.Navigation("Register");
 
                     b.Navigation("Store");
                 });
@@ -2919,6 +2981,17 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
+                {
+                    b.HasOne("POS.Domain.Stores.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Store");
                 });
 
             modelBuilder.Entity("POS.Domain.Inventory.StockIn.StockInVoucher", b =>

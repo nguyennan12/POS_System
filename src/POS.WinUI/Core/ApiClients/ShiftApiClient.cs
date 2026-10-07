@@ -18,10 +18,17 @@ public sealed class ShiftApiClient : BaseApiClient
       : base(http, session) { }
 
 
-  /// Lấy thông tin ca làm việc đang mở hiện tại của một cửa hàng (kèm thống kê doanh thu tức thời)
+  /// Lấy thông tin ca làm việc đang mở hiện tại của một cửa hàng hoặc theo quầy (kèm thống kê doanh thu tức thời)
   /// </summary>
-  public Task<ApiResponse<ShiftSummaryResponse>?> GetCurrentShiftAsync(Guid storeId, CancellationToken ct = default)
-      => GetAsync<ApiResponse<ShiftSummaryResponse>>($"{ApiRoutes.Shifts.Current}?storeId={storeId}", ct);
+  public Task<ApiResponse<ShiftSummaryResponse>?> GetCurrentShiftAsync(Guid storeId, Guid? registerId = null, CancellationToken ct = default)
+  {
+    var url = $"{ApiRoutes.Shifts.Current}?storeId={storeId}";
+    if (registerId.HasValue)
+    {
+      url += $"&registerId={registerId.Value}";
+    }
+    return GetAsync<ApiResponse<ShiftSummaryResponse>>(url, ct);
+  }
 
 
   /// Mở ca làm việc mới kèm số tiền mặt ban đầu

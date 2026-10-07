@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="POS.WinUI.Views.Shared.Components.AppHeaderBar"
+<UserControl x:Class="POS.WinUI.Views.Shared.Components.AppHeaderBar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -119,70 +119,147 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Badge Thông tin Ca làm việc (Pill Bo Tròn Nhỏ Xanh Nhạt) -->
-                <Border CornerRadius="14"
-                        Padding="10,3.5"
-                        Margin="10,0,0,0"
-                        VerticalAlignment="Center">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <!-- Trạng thái mặc định: Chưa mở ca -->
-                            <Setter Property="Background" Value="#F8FAFC"/>
-                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                            <Setter Property="BorderThickness" Value="1"/>
-                            <Style.Triggers>
-                                <!-- Trạng thái: Đang trong ca (Xanh nhạt pastel bo tròn) -->
-                                <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
-                                    <Setter Property="Background" Value="#F0FDF4"/>
-                                    <Setter Property="BorderBrush" Value="#BBF7D0"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Chấm tròn trạng thái nhỏ gọn -->
-                        <Grid Margin="0,0,6,0" VerticalAlignment="Center">
-                            <!-- Chấm xám khi chưa mở ca -->
-                            <Ellipse Width="6.5" Height="6.5" Fill="#94A3B8"
-                                     Visibility="{Binding HasOpenShift, Converter={StaticResource InverseBoolToVis}}"/>
+                <!-- ── Cụm Quầy thu ngân & Ca làm việc (CHỈ HIỆN KHI Ở MÀN HÌNH BÁN HÀNG POS) ── -->
+                <StackPanel Orientation="Horizontal" 
+                            VerticalAlignment="Center" 
+                            Margin="8,0,0,0"
+                            Visibility="{Binding ElementName=RootHeader, Path=IsPosMode, Converter={StaticResource BoolToVis}}">
+                    
+                    <!-- 1. QUẢN LÝ & CHỦ CỬA HÀNG: Dropdown chọn Quầy POS -->
+                    <Border Background="{StaticResource InputBackgroundBrush}"
+                            BorderBrush="{StaticResource InputBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="8,3"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding CanChangeRegister, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Desktop24" 
+                                           FontSize="15" 
+                                           Foreground="#2563EB" 
+                                           Margin="2,0,4,0" 
+                                           VerticalAlignment="Center"/>
+                            <ComboBox ItemsSource="{Binding Registers}"
+                                      SelectedItem="{Binding SelectedRegister}"
+                                      DisplayMemberPath="Name"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      FontSize="12.5"
+                                      FontWeight="SemiBold"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      MinWidth="105"
+                                      Cursor="Hand"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
 
-                            <!-- Chấm xanh lá nhấp nháy chớp tắt khi Đang trong ca -->
-                            <Ellipse Width="6.5" Height="6.5" Fill="#16A34A"
-                                     Visibility="{Binding HasOpenShift, Converter={StaticResource BoolToVis}}">
-                                <Ellipse.Effect>
-                                    <DropShadowEffect BlurRadius="4" Color="#16A34A" Opacity="0.7" ShadowDepth="0"/>
-                                </Ellipse.Effect>
-                                <Ellipse.Triggers>
-                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 From="1.0" To="0.2" Duration="0:0:0.75"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </Ellipse.Triggers>
-                            </Ellipse>
-                        </Grid>
+                    <!-- 2. THU NGÂN: Badge Quầy POS cố định của thiết bị (Không có dropdown) -->
+                    <Border Background="{StaticResource InputBackgroundBrush}"
+                            BorderBrush="{StaticResource InputBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="10,6"
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Visibility="{Binding CanChangeRegister, Converter={StaticResource InverseBoolToVis}}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Desktop24" 
+                                           FontSize="15" 
+                                           Foreground="#2563EB" 
+                                           Margin="0,0,6,0" 
+                                           VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding RegisterName, FallbackValue='Quầy 01'}" 
+                                       FontSize="12.5" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="{StaticResource TextPrimaryBrush}" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
 
-                        <!-- Chữ trạng thái ca nhỏ gọn -->
-                        <TextBlock Text="{Binding ShiftName}" 
-                                   FontSize="11.5" 
-                                   FontWeight="Bold" 
-                                   VerticalAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#64748B"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
-                                            <Setter Property="Foreground" Value="#15803D"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
+                    <!-- 2. Nút Bấm Mở/Đóng Ca làm việc (Pill Bo Tròn Nhỏ Có Hiệu Ứng Bấm) -->
+                    <Button Command="{Binding OpenShiftModalCommand}"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Cursor="Hand"
+                            ToolTip="Bấm để xem thông tin, Mở ca hoặc Đóng ca làm việc"
+                            VerticalAlignment="Center">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="ShiftBadgeBorder"
+                                        CornerRadius="14"
+                                        Padding="10,5">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <!-- Trạng thái mặc định: Chưa mở ca -->
+                                            <Setter Property="Background" Value="#F8FAFC"/>
+                                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+                                            <Setter Property="BorderThickness" Value="1"/>
+                                            <Style.Triggers>
+                                                <!-- Trạng thái: Đang trong ca (Xanh nhạt pastel bo tròn) -->
+                                                <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
+                                                    <Setter Property="Background" Value="#F0FDF4"/>
+                                                    <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <!-- Chấm tròn trạng thái nhỏ gọn -->
+                                        <Grid Margin="0,0,6,0" VerticalAlignment="Center">
+                                            <!-- Chấm xám khi chưa mở ca -->
+                                            <Ellipse Width="6.5" Height="6.5" Fill="#94A3B8"
+                                                     Visibility="{Binding HasOpenShift, Converter={StaticResource InverseBoolToVis}}"/>
+
+                                            <!-- Chấm xanh lá nhấp nháy chớp tắt khi Đang trong ca -->
+                                            <Ellipse Width="6.5" Height="6.5" Fill="#16A34A"
+                                                     Visibility="{Binding HasOpenShift, Converter={StaticResource BoolToVis}}">
+                                                <Ellipse.Effect>
+                                                    <DropShadowEffect BlurRadius="4" Color="#16A34A" Opacity="0.7" ShadowDepth="0"/>
+                                                </Ellipse.Effect>
+                                                <Ellipse.Triggers>
+                                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                                        <BeginStoryboard>
+                                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                 From="1.0" To="0.2" Duration="0:0:0.75"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Ellipse.Triggers>
+                                            </Ellipse>
+                                        </Grid>
+
+                                        <!-- Chữ trạng thái ca nhỏ gọn -->
+                                        <TextBlock Text="{Binding ShiftName}" 
+                                                   FontSize="11.5" 
+                                                   FontWeight="Bold" 
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasOpenShift}" Value="True">
+                                                            <Setter Property="Foreground" Value="#15803D"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ShiftBadgeBorder" Property="Background" Value="#F1F5F9"/>
+                                        <Setter TargetName="ShiftBadgeBorder" Property="BorderBrush" Value="#CBD5E1"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                </StackPanel>
 
             </StackPanel>
 

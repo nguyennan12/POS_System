@@ -13,6 +13,7 @@ public record ShiftFilterRequest(
 
 public record OpenShiftRequest(
     Guid StoreId,
+    Guid RegisterId,
     decimal OpeningCash,
     string? Note = null
 );

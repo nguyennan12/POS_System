@@ -186,10 +186,23 @@ public class CheckoutOrderCommandHandler(
         if (shift.StoreId != order.StoreId)
             return OrderErrors.ShiftStoreMismatch;
 
+        // Phân quyền ca làm việc:
+        // 1. Quản lý / Chủ cửa hàng luôn có quyền thanh toán trên mọi ca.
         var isManagerOrAbove = employee.IsChainOwner
             || (employee.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
         if (!isManagerOrAbove && shift.EmployeeId != employee.Id)
-            return OrderErrors.ShiftNotOwned;
+        {
+            // 2. Nếu người thanh toán là Thu ngân khác, kiểm tra xem người mở ca có phải là Quản lý/Owner (mở ca hộ quầy) hay không.
+            var shiftOpener = shift.Employee ?? await employeeRepository.GetByIdAsync(shift.EmployeeId, ct);
+            var isShiftOpenedByManager = shiftOpener != null && (shiftOpener.IsChainOwner || shiftOpener.Role?.Name is RoleNames.StoreManager or RoleNames.Owner);
+
+            if (!isShiftOpenedByManager)
+            {
+                // Nếu ca do một Thu ngân khác (Cashier) mở, không cho phép Cashier này thao tác chèn vào két của người khác
+                return OrderErrors.ShiftNotOwned;
+            }
+        }
 
         // Cửa hàng
         var store = await storeRepository.GetByIdAsync(order.StoreId, ct);

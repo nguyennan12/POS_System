@@ -7,6 +7,7 @@ using POS.WinUI.Core.ApiClients;
 using POS.WinUI.Core.Constants;
 using POS.WinUI.Core.Models;
 using POS.WinUI.Core.Services;
+using POS.WinUI.ViewModels.Cashier;
 using POS.WinUI.ViewModels.Common;
 using POS.WinUI.ViewModels.Customers;
 using POS.WinUI.ViewModels.Dashboard;
@@ -60,10 +61,25 @@ public partial class ManagementMainViewModel : ObservableObject
   private string _shiftName = "Đang kiểm tra ca...";
 
   [ObservableProperty]
+  private string _registerName = "Quầy 01";
+
+  [ObservableProperty]
   [NotifyPropertyChangedFor(nameof(HasOpenShift))]
   private Guid? _currentShiftId;
 
   public bool HasOpenShift => CurrentShiftId.HasValue;
+
+  [RelayCommand]
+  private void OpenShiftModal()
+  {
+      _clockTimer.Stop();
+      _navigationService.NavigateTo<PosCashierMainView>();
+      if (_serviceProvider.GetService<MainWindowViewModel>()?.CurrentView is PosCashierMainView posView &&
+          posView.DataContext is PosCashierMainViewModel posVm)
+      {
+          posVm.OpenShiftModal();
+      }
+  }
 
   [ObservableProperty]
   private string _employeeName = "Nhân viên";

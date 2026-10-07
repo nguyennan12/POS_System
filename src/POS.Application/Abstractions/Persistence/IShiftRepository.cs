@@ -5,7 +5,8 @@ namespace POS.Application.Abstractions.Persistence;
 public interface IShiftRepository
 {
   Task<Shift?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-  Task<Shift?> GetOpenShiftAsync(Guid storeId, CancellationToken cancellationToken = default);
+  Task<Shift?> GetOpenShiftAsync(Guid storeId, Guid? registerId = null, CancellationToken cancellationToken = default);
+  Task<Shift?> GetOpenShiftByRegisterAsync(Guid registerId, CancellationToken cancellationToken = default);
   Task AddAsync(Shift shift, CancellationToken cancellationToken = default);
 
 

@@ -39,6 +39,7 @@ public sealed class CommandPermissionMappingTests
             ["OpenShiftCommand"] = "shifts:create",
             ["CloseShiftCommand"] = "shifts:update",
             ["CreateStoreCommand"] = "stores:create",
+            ["CreateRegisterCommand"] = "stores:update",
             ["UpdateStoreCommand"] = "stores:update",
             ["UpdateStoreStatusCommand"] = "stores:update",
             ["AssignAdminToStoreCommand"] = "stores:update",

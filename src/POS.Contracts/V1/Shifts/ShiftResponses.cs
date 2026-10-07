@@ -3,6 +3,8 @@ namespace POS.Contracts.V1.Shifts;
 public record ShiftResponse(
     Guid Id,
     Guid StoreId,
+    Guid RegisterId,
+    string RegisterName,
     Guid EmployeeId,
     string EmployeeName,
     decimal OpeningCash,
@@ -16,6 +18,10 @@ public record ShiftResponse(
 
 public record ShiftSummaryResponse(
     Guid ShiftId,
+    Guid RegisterId,
+    string RegisterName,
+    Guid EmployeeId,
+    string EmployeeName,
     decimal OpeningCash,
     decimal TotalCashSales,
     decimal TotalCardSales,

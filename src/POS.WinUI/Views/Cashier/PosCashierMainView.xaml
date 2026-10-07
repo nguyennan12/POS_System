@@ -7,6 +7,7 @@
              xmlns:sharedComp="clr-namespace:POS.WinUI.Views.Shared.Components"
              xmlns:cashierComp="clr-namespace:POS.WinUI.Views.Cashier.Components"
              xmlns:paymentComp="clr-namespace:POS.WinUI.Views.Cashier.Components.Payment"
+             xmlns:shiftComp="clr-namespace:POS.WinUI.Views.Cashier.Components.Shift"
              mc:Ignorable="d" 
              d:DesignHeight="850" d:DesignWidth="1400"
              Focusable="True">
@@ -110,6 +111,11 @@
         <paymentComp:PaymentProcessingModal Grid.Row="0" Grid.RowSpan="3"
                                             Panel.ZIndex="1000"
                                             Visibility="{Binding IsPaymentModalOpen, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- ════════════════════ 5. SHIFT MANAGEMENT MODAL OVERLAY ════════════════════ -->
+        <shiftComp:ShiftManagementModal Grid.Row="0" Grid.RowSpan="3"
+                                        Panel.ZIndex="2000"
+                                        Visibility="{Binding IsShiftModalOpen, Converter={StaticResource BoolToVis}}"/>
 
         <!-- ════════════════════ TOAST NOTIFICATION OVERLAY (TOP-MOST) ════════════════════ -->
         <shared:ToastNotification Grid.Row="0" Grid.RowSpan="3"

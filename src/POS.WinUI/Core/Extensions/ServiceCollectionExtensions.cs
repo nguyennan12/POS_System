@@ -35,6 +35,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddWinUIServices(this IServiceCollection services)
     {
         // ── Core Services ─────────────────────────────────────────
+        services.AddSingleton<LocalDeviceSettingsService>();
         services.AddSingleton<SessionService>();
         services.AddSingleton<NetworkStatusService>();
         services.AddSingleton<INavigationService, NavigationService>();
@@ -44,6 +45,7 @@ public static class ServiceCollectionExtensions
         // ── ApiClients & Handlers ──────────────────────────────────
         services.AddTransient<NetworkStatusHandler>();
         services.AddTransient<StoreApiClient>();
+        services.AddTransient<RegisterApiClient>();
         services.AddTransient<AuthApiClient>();
         services.AddTransient<ShiftApiClient>();
         services.AddTransient<CategoryApiClient>();
