@@ -7,7 +7,7 @@ namespace POS.Infrastructure.Persistence.Seeders;
 
 public class RolePermissionSeeder : ISeeder
 {
-    private static readonly HashSet<string> CashierPermissionCodes =
+    public static readonly HashSet<string> CashierPermissionCodes =
     [
         "stores:read",
         "categories:read",
@@ -31,7 +31,7 @@ public class RolePermissionSeeder : ISeeder
         "config:read"
     ];
 
-    private static readonly HashSet<string> OwnerOnlyPermissionCodes =
+    public static readonly HashSet<string> OwnerOnlyPermissionCodes =
     [
         "stores:manage",
         "roles:manage",
@@ -55,45 +55,73 @@ public class RolePermissionSeeder : ISeeder
             throw new InvalidOperationException("Default system roles must be seeded before seeding RolePermissions.");
         }
 
+        var ownerExpectedCodes = permissions.Select(p => p.Code).ToHashSet();
+        var storeManagerExpectedCodes = permissions.Where(p => !OwnerOnlyPermissionCodes.Contains(p.Code)).Select(p => p.Code).ToHashSet();
+        var cashierExpectedCodes = permissions.Where(p => CashierPermissionCodes.Contains(p.Code)).Select(p => p.Code).ToHashSet();
+
         var existingRolePermissions = await context.RolePermissions
+            .Include(rp => rp.Role)
+            .Include(rp => rp.Permission)
+            .ToListAsync(cancellationToken);
+
+        // 1. Remove stale / revoked role permissions for the 3 system roles
+        var staleRolePermissions = existingRolePermissions.Where(rp =>
+        {
+            if (rp.Role.Name == RoleNames.Owner)
+                return !ownerExpectedCodes.Contains(rp.Permission.Code);
+            if (rp.Role.Name == RoleNames.StoreManager)
+                return !storeManagerExpectedCodes.Contains(rp.Permission.Code);
+            if (rp.Role.Name == RoleNames.Cashier)
+                return !cashierExpectedCodes.Contains(rp.Permission.Code);
+            return false;
+        }).ToList();
+
+        if (staleRolePermissions.Count > 0)
+        {
+            context.RolePermissions.RemoveRange(staleRolePermissions);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        // 2. Refresh active map of (roleId, permissionId)
+        var activeMap = (await context.RolePermissions
             .Select(rp => new { rp.RoleId, rp.PermissionId })
-            .ToHashSetAsync(cancellationToken);
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
 
-        var rolePermissions = new List<RolePermission>();
+        var newRolePermissions = new List<RolePermission>();
 
-        // 1. OWNER: Full Access to all permissions
+        // 3. Add expected permissions for Owner (Full Access - 57 permissions)
         foreach (var p in permissions)
         {
             AddIfMissing(ownerRole, p);
         }
 
-        // 2. STORE_MANAGER: All permissions except chain-owner exclusive ones
-        var storeManagerPerms = permissions.Where(p => !OwnerOnlyPermissionCodes.Contains(p.Code));
-        foreach (var p in storeManagerPerms)
+        // 4. Add expected permissions for StoreManager (Store Management - 51 permissions)
+        foreach (var p in permissions.Where(p => storeManagerExpectedCodes.Contains(p.Code)))
         {
             AddIfMissing(storeManagerRole, p);
         }
 
-        // 3. CASHIER: Front-desk POS cashier permissions
-        var cashierPerms = permissions.Where(p => CashierPermissionCodes.Contains(p.Code));
-        foreach (var p in cashierPerms)
+        // 5. Add expected permissions for Cashier (Front-desk POS Cashier - 20 permissions)
+        foreach (var p in permissions.Where(p => cashierExpectedCodes.Contains(p.Code)))
         {
             AddIfMissing(cashierRole, p);
         }
 
-        if (rolePermissions.Count > 0)
+        if (newRolePermissions.Count > 0)
         {
-            await context.RolePermissions.AddRangeAsync(rolePermissions, cancellationToken);
+            await context.RolePermissions.AddRangeAsync(newRolePermissions, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
         }
 
         void AddIfMissing(Role role, Permission permission)
         {
-            if (existingRolePermissions.Contains(new { RoleId = role.Id, PermissionId = permission.Id }))
+            var key = new { RoleId = role.Id, PermissionId = permission.Id };
+            if (activeMap.Contains(key))
                 return;
 
-            existingRolePermissions.Add(new { RoleId = role.Id, PermissionId = permission.Id });
-            rolePermissions.Add(new RolePermission(role.Id, role, permission.Id, permission));
+            activeMap.Add(key);
+            newRolePermissions.Add(new RolePermission(role.Id, role, permission.Id, permission));
         }
     }
 }
