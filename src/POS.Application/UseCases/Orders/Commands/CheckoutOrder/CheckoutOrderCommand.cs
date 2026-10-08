@@ -16,5 +16,5 @@ public record CheckoutOrderCommand(
     Guid? CustomerId = null
 ) : ICommand<CheckoutDto>, IRequirePermission
 {
-    public string RequiredPermission => "orders:update";
+    public string RequiredPermission => "payments:create_own";
 }

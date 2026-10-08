@@ -15,5 +15,5 @@ public record UpdateSkuCommand(
     JsonElement? Attributes
 ) : ICommand<Guid>, IRequirePermission
 {
-    public string RequiredPermission => "products:update";
+    public string RequiredPermission => "skus:manage";
 }

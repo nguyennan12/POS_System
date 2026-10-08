@@ -12,5 +12,5 @@ public record AdjustPointsCommand(
     string Note
 ) : ICommand<LoyaltyAccountDto>, IRequirePermission
 {
-    public string RequiredPermission => "customers:update";
+    public string RequiredPermission => "customers:loyalty_adjust";
 }

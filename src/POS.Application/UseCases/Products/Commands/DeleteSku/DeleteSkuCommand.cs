@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Products.Commands.DeleteSku;
 
 public record DeleteSkuCommand(Guid SkuId) : ICommand, IRequirePermission
 {
-    public string RequiredPermission => "products:delete";
+    public string RequiredPermission => "skus:manage";
 }

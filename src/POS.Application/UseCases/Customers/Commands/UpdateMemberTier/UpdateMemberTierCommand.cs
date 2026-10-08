@@ -12,5 +12,5 @@ public record UpdateMemberTierCommand(
     decimal? PointRedemptionRate = null
 ) : ICommand<MemberTierDto>, IRequirePermission
 {
-    public string RequiredPermission => "customers:update";
+    public string RequiredPermission => "member_tiers:manage";
 }

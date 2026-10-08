@@ -14,7 +14,7 @@ public record BulkImportProductsCommand(
     string? FileName = null
 ) : ICommand<BulkImportResultDto>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "products:import";
 }
 
 public record BulkImportResultDto(

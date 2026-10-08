@@ -22,5 +22,5 @@ public record CreatePromotionCommand(
     Guid? CreatedBy = null
 ) : ICommand<PromotionDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:create";
+    public string RequiredPermission => "promotions:manage";
 }

@@ -10,5 +10,5 @@ public record CreateOrderCommand(
     string? Note = null
 ) : ICommand<OrderDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "orders:create";
+    public string RequiredPermission => "orders:create_own";
 }

@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Rbac.Queries.GetRoleById;
 
 public record GetRoleByIdQuery(Guid Id) : IQuery<RoleDetailDto>, IRequirePermission
 {
-  public string RequiredPermission => "roles:read";
+  public string RequiredPermission => "roles:manage";
 }

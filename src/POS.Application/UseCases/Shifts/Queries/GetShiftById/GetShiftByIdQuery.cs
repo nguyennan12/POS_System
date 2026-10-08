@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Shifts.Queries.GetShiftById;
 
 public record GetShiftByIdQuery(Guid ShiftId) : IQuery<ShiftDto>, IRequirePermission
 {
-    public string RequiredPermission => "shifts:read";
+    public string RequiredPermission => "shifts:manage_own";
 }

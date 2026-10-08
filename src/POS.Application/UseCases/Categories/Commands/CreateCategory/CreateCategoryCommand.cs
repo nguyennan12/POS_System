@@ -12,5 +12,5 @@ public record CreateCategoryCommand(
     bool IsVisible
 ) : ICommand<CategoryDto>, IRequirePermission
 {
-    public string RequiredPermission => "categories:create";
+    public string RequiredPermission => "categories:manage";
 }

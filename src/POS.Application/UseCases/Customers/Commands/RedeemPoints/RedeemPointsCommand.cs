@@ -13,5 +13,5 @@ public record RedeemPointsCommand(
     string? Note = null
 ) : ICommand<LoyaltyAccountDto>, IRequirePermission
 {
-    public string RequiredPermission => "customers:update";
+    public string RequiredPermission => "customers:manage";
 }

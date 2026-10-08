@@ -9,7 +9,7 @@ public record CloseShiftCommand(
     string? Note
 ) : ICommand<ShiftSummaryDto>, IRequirePermission
 {
-    public string RequiredPermission => "shifts:update";
+    public string RequiredPermission => "shifts:manage_own";
 }
 
 public record ShiftSummaryDto(

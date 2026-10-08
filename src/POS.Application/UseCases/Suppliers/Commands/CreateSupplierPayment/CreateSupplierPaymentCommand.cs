@@ -11,5 +11,5 @@ public record CreateSupplierPaymentCommand(
     string? Note
 ) : ICommand<SupplierPaymentDto>, IRequirePermission
 {
-    public string RequiredPermission => "suppliers:update";
+    public string RequiredPermission => "suppliers:pay";
 }

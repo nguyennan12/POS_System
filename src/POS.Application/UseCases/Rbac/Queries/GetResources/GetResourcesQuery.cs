@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Rbac.Queries.GetResources;
 
 public record GetResourcesQuery : IQuery<IReadOnlyList<ResourceDto>>, IRequirePermission
 {
-  public string RequiredPermission => "roles:read";
+  public string RequiredPermission => "roles:manage";
 }

@@ -22,7 +22,7 @@ public partial class CheckoutAndCancelOrderTests
         var command = new CheckoutOrderCommand(_orderId, [new("Cash", 100)]);
 
         var permissionRequest = Assert.IsAssignableFrom<IRequirePermission>(command);
-        permissionRequest.RequiredPermission.Should().Be("orders:update");
+        permissionRequest.RequiredPermission.Should().Be("payments:create_own");
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public partial class CheckoutAndCancelOrderTests
 
         var cache = Substitute.For<ICacheService>();
         cache.GetAsync<string[]>($"perm:{_employeeId}", Arg.Any<CancellationToken>())
-            .Returns(hasPermission ? ["orders:update"] : ["orders:read"]);
+            .Returns(hasPermission ? ["payments:create_own"] : ["orders:read"]);
 
         var services = Substitute.For<IServiceProvider>();
         services.GetService(typeof(ICacheService)).Returns(cache);

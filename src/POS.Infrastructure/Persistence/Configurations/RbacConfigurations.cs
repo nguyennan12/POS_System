@@ -50,13 +50,12 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
     {
         builder.ToTable("permissions");
         builder.ConfigureUuidPrimaryKey();
-        builder.Property(p => p.Action).HasConversion<string>().IsRequired().HasMaxLength(20);
+        builder.Property(p => p.Action).HasConversion<string>().IsRequired().HasMaxLength(50);
         builder.Property(p => p.Code).IsRequired().HasMaxLength(80);
         builder.Property(p => p.Description).HasMaxLength(200);
         builder.HasIndex(p => p.Code).IsUnique();
         builder.HasIndex(p => new { p.ResourceId, p.Action }).IsUnique();
         builder.HasOne(p => p.Resource).WithMany(r => r.Permissions).HasForeignKey(p => p.ResourceId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasTableCheckConstraint("ck_permissions_action", "action IN ('Create','Read','Update','Delete','Approve','Export','Override')");
     }
 }
 

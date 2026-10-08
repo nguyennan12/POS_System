@@ -12,5 +12,5 @@ public record CreatePriceListCommand(
     string? CustomerGroup
 ) : ICommand<PriceListDto>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "skus:price_override";
 }

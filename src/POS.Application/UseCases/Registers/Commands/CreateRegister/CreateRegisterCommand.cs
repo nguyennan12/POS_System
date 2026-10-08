@@ -11,5 +11,5 @@ public record CreateRegisterCommand(
     string Code
 ) : ICommand<RegisterResponse>, IRequirePermission
 {
-    public string RequiredPermission => "stores:update";
+    public string RequiredPermission => "stores:manage";
 }

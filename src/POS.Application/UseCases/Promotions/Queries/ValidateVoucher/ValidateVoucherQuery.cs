@@ -10,5 +10,5 @@ public record ValidateVoucherQuery(
     Guid? StoreId = null
 ) : IQuery<ValidateVoucherResultDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:read";
+    public string RequiredPermission => "vouchers:read";
 }

@@ -12,5 +12,5 @@ public record CreateUnitConversionCommand(
     decimal SellPrice
 ) : ICommand<UnitConversionDto>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "skus:manage";
 }

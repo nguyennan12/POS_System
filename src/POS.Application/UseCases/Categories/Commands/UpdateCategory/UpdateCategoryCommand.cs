@@ -13,5 +13,5 @@ public record UpdateCategoryCommand(
     bool IsVisible
 ) : ICommand<CategoryDto>, IRequirePermission
 {
-    public string RequiredPermission => "categories:update";
+    public string RequiredPermission => "categories:manage";
 }

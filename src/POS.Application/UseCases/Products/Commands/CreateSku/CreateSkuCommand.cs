@@ -14,5 +14,5 @@ public record CreateSkuCommand(
     JsonElement? Attributes
 ) : ICommand<Guid>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "skus:manage";
 }

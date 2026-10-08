@@ -149,7 +149,7 @@ public class InvoicesControllerTests
             user.IsAuthenticated.Returns(true);
             var employees = Substitute.For<IEmployeeRepository>();
             employees.GetByIdAsync(employee.Id, Arg.Any<CancellationToken>()).Returns(employee);
-            fixture.Cache.GetAsync<string[]>($"perm:{employee.Id}", Arg.Any<CancellationToken>()).Returns(["orders:read"]);
+            fixture.Cache.GetAsync<string[]>($"perm:{employee.Id}", Arg.Any<CancellationToken>()).Returns(["invoices:read"]);
             var order = Order.CreateDraft(employee.StoreId!.Value, Guid.NewGuid(), employee.Id);
             var product = new Product(order.StoreId, Guid.NewGuid(), "Product", "piece");
             var sku = new Sku(product.Id, order.StoreId, "INVOICE", "123", 100, 50, 10, true) { Product = product };

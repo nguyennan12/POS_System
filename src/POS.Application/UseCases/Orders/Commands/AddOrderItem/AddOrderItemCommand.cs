@@ -10,5 +10,5 @@ public record AddOrderItemCommand(
     decimal Qty
 ) : ICommand<OrderDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "orders:update";
+    public string RequiredPermission => "orders:create_own";
 }

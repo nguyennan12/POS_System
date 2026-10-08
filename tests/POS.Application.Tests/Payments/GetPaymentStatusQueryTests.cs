@@ -83,14 +83,14 @@ public class GetPaymentStatusQueryTests
         user.EmployeeId.Returns(employee.Id);
         var cache = Substitute.For<ICacheService>();
         cache.GetAsync<string[]>($"perm:{employee.Id}", Arg.Any<CancellationToken>())
-            .Returns(hasPermission ? ["orders:read"] : ["orders:update"]);
+            .Returns(hasPermission ? ["payments:read"] : ["orders:update"]);
         var employees = Substitute.For<IEmployeeRepository>();
         var services = Substitute.For<IServiceProvider>();
         services.GetService(typeof(ICacheService)).Returns(cache);
         services.GetService(typeof(IEmployeeRepository)).Returns(employees);
         services.GetService(typeof(IPermissionRepository)).Returns(Substitute.For<IPermissionRepository>());
         var query = new GetPaymentStatusQuery(Guid.NewGuid());
-        Assert.Equal("orders:read", ((IRequirePermission)query).RequiredPermission);
+        Assert.Equal("payments:read", ((IRequirePermission)query).RequiredPermission);
         var called = false;
 
         var result = await new AuthorizationBehavior<GetPaymentStatusQuery, Result<PaymentStatusResponse>>(user, services)

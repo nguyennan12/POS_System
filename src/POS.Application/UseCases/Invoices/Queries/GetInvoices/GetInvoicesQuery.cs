@@ -8,5 +8,5 @@ namespace POS.Application.UseCases.Invoices.Queries.GetInvoices;
 public record GetInvoicesQuery(InvoiceFilterRequest Filter)
     : IQuery<PagedResponse<InvoiceSummaryResponse>>, IRequirePermission
 {
-    public string RequiredPermission => "orders:read";
+    public string RequiredPermission => "invoices:read";
 }

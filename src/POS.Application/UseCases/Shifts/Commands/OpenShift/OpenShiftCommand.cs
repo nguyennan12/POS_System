@@ -10,7 +10,7 @@ public record OpenShiftCommand(
     string? Note
 ) : ICommand<ShiftDto>, IRequirePermission
 {
-    public string RequiredPermission => "shifts:create";
+    public string RequiredPermission => "shifts:manage_own";
 }
 
 public record ShiftDto(

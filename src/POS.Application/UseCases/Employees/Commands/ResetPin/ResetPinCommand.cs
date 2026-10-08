@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Employees.Commands.ResetPin;
 
 public record ResetPinCommand(Guid Id, string NewPin) : ICommand<EmployeeDto>, IRequirePermission
 {
-    public string RequiredPermission => "employees:update";
+    public string RequiredPermission => "employees:manage";
 }

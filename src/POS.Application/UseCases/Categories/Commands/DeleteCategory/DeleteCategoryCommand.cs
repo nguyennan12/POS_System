@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Categories.Commands.DeleteCategory;
 
 public record DeleteCategoryCommand(Guid Id) : ICommand, IRequirePermission
 {
-    public string RequiredPermission => "categories:delete";
+    public string RequiredPermission => "categories:manage";
 }

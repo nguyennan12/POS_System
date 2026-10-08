@@ -179,7 +179,7 @@ public class InvoiceReadQueryTests
         user.IsAuthenticated.Returns(authenticated);
         var cache = Substitute.For<ICacheService>();
         cache.GetAsync<string[]>($"perm:{employee.Id}", Arg.Any<CancellationToken>())
-            .Returns(allowed ? ["orders:read"] : ["orders:update"]);
+            .Returns(allowed ? ["invoices:read"] : ["orders:update"]);
         var services = Substitute.For<IServiceProvider>();
         services.GetService(typeof(ICacheService)).Returns(cache);
         services.GetService(typeof(IEmployeeRepository)).Returns(employees);
@@ -191,7 +191,7 @@ public class InvoiceReadQueryTests
     private async Task CheckPermission<TQuery, TResponse>(TQuery query, IServiceProvider services, ErrorType expected)
         where TQuery : IRequest<Result<TResponse>>, IRequirePermission
     {
-        Assert.Equal("orders:read", query.RequiredPermission);
+        Assert.Equal("invoices:read", query.RequiredPermission);
         var called = false;
         var result = await new AuthorizationBehavior<TQuery, Result<TResponse>>(user, services).Handle(query, () =>
         {

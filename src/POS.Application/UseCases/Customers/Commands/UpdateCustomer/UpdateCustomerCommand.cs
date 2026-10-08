@@ -1,4 +1,4 @@
-﻿using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Customers.Commands.UpdateCustomer;
@@ -13,5 +13,5 @@ public record UpdateCustomerCommand(
     bool IsActive = true
 ) : ICommand<CustomerDto>, IRequirePermission
 {
-    public string RequiredPermission => "customers:update";
+    public string RequiredPermission => "customers:manage";
 }

@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Promotions.Queries.GetVoucherById;
 
 public record GetVoucherByIdQuery(Guid Id) : IQuery<VoucherDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:read";
+    public string RequiredPermission => "vouchers:read";
 }

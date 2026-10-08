@@ -9,5 +9,5 @@ public record CancelOrderCommand(
     string? Reason = null
 ) : ICommand<OrderDetailDto>, IRequirePermission
 {
-  public string RequiredPermission => "orders:update";
+  public string RequiredPermission => "orders:cancel_own";
 }

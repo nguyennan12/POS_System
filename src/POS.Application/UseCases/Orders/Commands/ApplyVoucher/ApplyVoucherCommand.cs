@@ -9,5 +9,5 @@ public record ApplyVoucherCommand(
     string Code
 ) : ICommand<OrderDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "orders:update";
+    public string RequiredPermission => "vouchers:apply_own";
 }

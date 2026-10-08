@@ -11,5 +11,5 @@ public record CreateVoucherCommand(
     DateTimeOffset? ExpiresAt = null
 ) : ICommand<VoucherDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:create";
+    public string RequiredPermission => "vouchers:manage";
 }
