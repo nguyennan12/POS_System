@@ -7,6 +7,7 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Orders.Commands.CancelOrder;
 using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
+using POS.Application.UseCases.Orders.Commands.ProcessOrderPaid;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Services;
@@ -43,6 +44,7 @@ public partial class CheckoutAndCancelOrderTests
   private readonly IVoucherRepository _voucherRepository = Substitute.For<IVoucherRepository>();
   private readonly IVoucherUsageRepository _voucherUsageRepository = Substitute.For<IVoucherUsageRepository>();
   private readonly ICustomerRepository _customerRepository = Substitute.For<ICustomerRepository>();
+  private readonly IMemberTierRepository _memberTierRepository = Substitute.For<IMemberTierRepository>();
   private readonly IPaymentStrategyFactory _paymentStrategyFactory;
   private readonly ICartCalculationService _cartCalculationService = Substitute.For<ICartCalculationService>();
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -112,6 +114,15 @@ public partial class CheckoutAndCancelOrderTests
 
     _invoiceRepository.ExistsForOrderAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
     _invoiceRepository.GetNextSequenceAsync(Arg.Any<Guid>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns(1);
+    _memberTierRepository.GetAllAsync(Arg.Any<CancellationToken>())
+        .Returns([new MemberTier(POS.Domain.Customers.Enums.MemberTierName.Normal, 0m, 0.01m, 0m, "#808080")]);
+
+    _sender.Send(Arg.Any<ProcessOrderPaidCommand>(), Arg.Any<CancellationToken>())
+        .Returns(call => new ProcessOrderPaidCommandHandler(
+            _orderRepository, _stockEntryRepository, _stockTransactionRepository,
+            _customerRepository, _memberTierRepository, NullLogger<ProcessOrderPaidCommandHandler>.Instance)
+            .Handle(call.Arg<ProcessOrderPaidCommand>(), call.Arg<CancellationToken>()));
+
     _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>())
         .Returns(call => new GenerateInvoiceCommandHandler(_orderRepository, _storeRepository,
             _invoiceRepository, NullLogger<GenerateInvoiceCommandHandler>.Instance)

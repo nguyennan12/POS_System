@@ -127,6 +127,7 @@ public class InventoryController(ISender mediator) : ControllerBase
 
   /// [T31] Lấy tồn kho hiện tại phân trang với bộ lọc SKU/Category/Search.
   /// </summary>
+  [HttpGet("")]
   [HttpGet("stock")]
   public async Task<ActionResult<ApiResponse<PagedResponse<StockEntryResponse>>>> GetInventorySummary(
       [FromQuery] InventoryFilterRequest request,
@@ -155,6 +156,7 @@ public class InventoryController(ISender mediator) : ControllerBase
 
   /// [T31] Lấy danh sách cảnh báo tồn kho: min-stock và hàng cận ngày hết hạn.
   /// </summary>
+  [HttpGet("alerts")]
   [HttpGet("stock/alerts")]
   public async Task<ActionResult<ApiResponse<PagedResponse<StockAlertResponse>>>> GetStockAlerts(
       [FromQuery] int nearExpiryDays = 30,
@@ -185,6 +187,7 @@ public class InventoryController(ISender mediator) : ControllerBase
 
   /// [T31] Lấy danh sách lô hàng (StockBatch) với bộ lọc theo SKU và hạn dùng.
   /// </summary>
+  [HttpGet("batches")]
   [HttpGet("stock/batches")]
   public async Task<ActionResult<ApiResponse<PagedResponse<StockBatchResponse>>>> GetStockBatches(
       [FromQuery] BatchFilterRequest request,
@@ -211,6 +214,7 @@ public class InventoryController(ISender mediator) : ControllerBase
 
   /// [T31] Lấy lịch sử giao dịch kho phân trang.
   /// </summary>
+  [HttpGet("transactions")]
   [HttpGet("stock/transactions")]
   public async Task<ActionResult<ApiResponse<PagedResponse<StockTransactionResponse>>>> GetStockTransactions(
       [FromQuery] Guid? skuId,
@@ -240,6 +244,7 @@ public class InventoryController(ISender mediator) : ControllerBase
 
   /// [T31] Xuất hủy hàng hóa (Dispose), trừ kho và ghi StockTransaction Dispose.
   /// </summary>
+  [HttpPost("dispose")]
   [HttpPost("stock/dispose")]
   public async Task<ActionResult<ApiResponse<StockTransactionResponse>>> DisposeStock(
       [FromBody] DisposeStockRequest request,

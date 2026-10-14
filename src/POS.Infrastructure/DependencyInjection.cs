@@ -73,6 +73,10 @@ public static class DependencyInjection
         services.AddScoped<POS.Application.Abstractions.Excel.IExcelExporter, POS.Infrastructure.Excel.ClosedXmlExcelExporter>();
         services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
 
+        // ---- Reports & Export Job Store ----
+        services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddSingleton<POS.Application.Abstractions.Reports.IReportExportJobStore, POS.Infrastructure.Reports.ReportExportJobStore>();
+
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();

@@ -4,6 +4,7 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Categories.Commands.CreateCategory;
 using POS.Application.UseCases.Invoices.Commands.GenerateInvoice;
+using POS.Application.UseCases.Orders.Commands.ProcessOrderPaid;
 
 namespace POS.Application.Tests.Common.Behaviors;
 
@@ -65,6 +66,7 @@ public sealed class CommandPermissionMappingTests
             ["UpdateUnitConversionCommand"] = "skus:manage",
             ["CreatePriceListCommand"] = "skus:price_override",
             ["BulkImportProductsCommand"] = "products:import",
+            ["ExportReportCommand"] = "reports:export",
         };
 
     private static readonly HashSet<string> AuthenticationCommands =
@@ -78,7 +80,7 @@ public sealed class CommandPermissionMappingTests
     ];
 
     // Invoked by checkout after its authorization, inside its existing transaction.
-    private static readonly HashSet<string> InternalCommands = [nameof(GenerateInvoiceCommand)];
+    private static readonly HashSet<string> InternalCommands = [nameof(GenerateInvoiceCommand), nameof(ProcessOrderPaidCommand)];
 
     [Fact]
     public void Commands_ShouldDeclareExpectedBusinessPermissions()

@@ -185,4 +185,9 @@ public static class OrderErrors
         ErrorType.Invalid,
         "ORDER.NOT_CONFIRMED",
         "Đơn hàng chưa được xác nhận.");
+
+    public static readonly Error OrderNotPaid = new(
+        ErrorType.Invalid,
+        "ORDER.NOT_PAID",
+        "Đơn hàng chưa ở trạng thái Paid.");
 }
