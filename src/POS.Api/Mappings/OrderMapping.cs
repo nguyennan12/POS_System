@@ -125,6 +125,16 @@ public static class OrderMapping
             );
         }
 
+        OrderPaidSideEffectsResponse? sideEffects = null;
+        if (dto.SideEffects is not null)
+        {
+            sideEffects = new OrderPaidSideEffectsResponse(
+                dto.SideEffects.StockTransactions.Select(t => t.ToResponse()).ToList().AsReadOnly(),
+                dto.SideEffects.StockAlerts.Select(a => a.ToResponse()).ToList().AsReadOnly(),
+                dto.SideEffects.PointTransaction?.ToResponse()
+            );
+        }
+
         return new CheckoutResponse(
             OrderId: dto.OrderId,
             GrandTotal: dto.GrandTotal,
@@ -132,7 +142,8 @@ public static class OrderMapping
             ChangeAmount: dto.ChangeAmount,
             Status: dto.Status,
             Payments: payments,
-            ReceiptData: receiptData
+            ReceiptData: receiptData,
+            SideEffects: sideEffects
         );
     }
 }

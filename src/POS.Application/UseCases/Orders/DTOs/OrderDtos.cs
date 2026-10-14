@@ -1,3 +1,5 @@
+using POS.Application.UseCases.Orders.Commands.ProcessOrderPaid;
+
 namespace POS.Application.UseCases.Orders.DTOs;
 
 public record OrderItemDto(
@@ -93,5 +95,6 @@ public record CheckoutDto(
     decimal ChangeAmount,
     string Status,
     IReadOnlyList<OrderPaymentDto> Payments,
-    ReceiptDataDto? ReceiptData = null
+    ReceiptDataDto? ReceiptData = null,
+    OrderPaidSideEffectsDto? SideEffects = null
 );

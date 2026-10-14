@@ -79,7 +79,7 @@ public static class OrderMappingExtensions
         );
     }
 
-    public static CheckoutDto ToCheckoutDto(this Order order, POS.Domain.Employees.Employee employee, POS.Domain.Stores.Store store)
+    public static CheckoutDto ToCheckoutDto(this Order order, POS.Domain.Employees.Employee employee, POS.Domain.Stores.Store store, POS.Application.UseCases.Orders.Commands.ProcessOrderPaid.OrderPaidSideEffectsDto? sideEffects = null)
     {
         var (totalPaid, changeAmount) = order.GetPaymentTotals();
 
@@ -134,7 +134,8 @@ public static class OrderMappingExtensions
             ChangeAmount: changeAmount,
             Status: order.Status.ToString(),
             Payments: paymentDtos,
-            ReceiptData: receiptData
+            ReceiptData: receiptData,
+            SideEffects: sideEffects
         );
     }
 }

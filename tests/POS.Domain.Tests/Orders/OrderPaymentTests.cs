@@ -72,4 +72,19 @@ public class OrderPaymentTests
         Assert.Equal(OrderStatus.Cancelled, order.Status);
         Assert.Null(order.PaidAt);
     }
+
+    [Fact]
+    public void AggregatePaymentStatus_ShouldRaiseOrderPaidDomainEvent_WhenPaid()
+    {
+        var order = ConfirmedOrder();
+        order.ProcessPayments([(PaymentMethod.Cash, 100, null)]);
+        order.AggregatePaymentStatus();
+
+        Assert.Equal(OrderStatus.Paid, order.Status);
+        Assert.Single(order.DomainEvents);
+        var domainEvent = Assert.IsType<POS.Domain.Orders.Events.OrderPaidDomainEvent>(order.DomainEvents.First());
+        Assert.Equal(order.Id, domainEvent.OrderId);
+        Assert.Equal(order.GrandTotal, domainEvent.GrandTotal);
+        Assert.Single(domainEvent.Items);
+    }
 }

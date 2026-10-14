@@ -4,6 +4,7 @@ using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.Abstractions.Payments;
 using POS.Application.UseCases.Invoices.Commands.GenerateInvoice;
+using POS.Application.UseCases.Orders.Commands.ProcessOrderPaid;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Mappings;
@@ -113,15 +114,20 @@ public class CheckoutOrderCommandHandler(
                 order.ProcessPayments(parsedPayments);
                 await orderRepository.AddPaymentsAsync(order.Payments.Where(p => !previousIds.Contains(p.Id)), ct);
 
+                OrderPaidSideEffectsDto? sideEffects = null;
                 if (order.Status == OrderStatus.Paid)
                 {
+                    var sideEffectsResult = await sender.Send(new ProcessOrderPaidCommand(order.Id, employee.Id, order), ct);
+                    if (sideEffectsResult.IsFailure) return sideEffectsResult.Error;
+                    sideEffects = sideEffectsResult.Value;
+
                     await ExecutePostPaidSideEffectsAsync(order, employee, ct);
                     var invoiceResult = await sender.Send(new GenerateInvoiceCommand(order.Id), ct);
                     if (invoiceResult.IsFailure) return invoiceResult.Error;
                 }
 
                 await unitOfWork.SaveChangesAsync(ct);
-                return Result<CheckoutDto>.Success(order.ToCheckoutDto(employee, store));
+                return Result<CheckoutDto>.Success(order.ToCheckoutDto(employee, store, sideEffects));
                 }, cancellationToken);
                 if (attempt < 2 && result.IsFailure && result.Error.Code == "Persistence.ConcurrentModification")
                     continue;
@@ -328,21 +334,7 @@ public class CheckoutOrderCommandHandler(
 
     private async Task ExecutePostPaidSideEffectsAsync(Order order, Employee employee, CancellationToken ct)
     {
-        // 1. Trừ kho (kèm theo lô FEFO nếu có) và tạo StockTransaction SaleOut
-        foreach (var item in order.Items)
-        {
-            await stockEntryRepository.DeductStockWithBatchesAsync(item.SkuId, order.StoreId, item.Qty, ct);
-
-            var stockTx = StockTransaction.CreateSaleOut(
-                storeId: order.StoreId,
-                skuId: item.SkuId,
-                qty: item.Qty,
-                createdBy: employee.Id,
-                orderId: order.Id);
-            await stockTransactionRepository.AddAsync(stockTx, ct);
-        }
-
-        // 2. Ghi nhận sử dụng voucher
+        // 1. Ghi nhận sử dụng voucher
         if (order.AppliedVoucherId.HasValue)
         {
             var voucher = await voucherRepository.GetByIdWithPromotionAsync(order.AppliedVoucherId.Value, ct);
@@ -360,7 +352,7 @@ public class CheckoutOrderCommandHandler(
             }
         }
 
-        // 3. Thực thi xử lý post-paid cho các phương thức thanh toán qua Strategy
+        // 2. Thực thi xử lý post-paid cho các phương thức thanh toán qua Strategy
         foreach (var payment in order.Payments.Where(p => p.Status == PaymentStatus.Success))
         {
             var strategy = paymentStrategyFactory.GetStrategy(payment.Method);
