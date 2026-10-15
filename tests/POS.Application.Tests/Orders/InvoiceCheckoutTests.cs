@@ -7,22 +7,24 @@ using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Domain.Common;
 using POS.Domain.Orders;
+using POS.Domain.Orders.Events;
 
 namespace POS.Application.Tests.Orders;
 
 public partial class CheckoutAndCancelOrderTests
 {
     [Fact]
-    public void Checkout_ShouldDependOnSender_WithoutInvoiceRepository()
+    public void Checkout_ShouldDependOnPublisher_WithoutISenderOrInvoiceRepository()
     {
         var dependencies = typeof(CheckoutOrderCommandHandler).GetConstructors()
             .SelectMany(c => c.GetParameters()).Select(p => p.ParameterType).ToList();
-        Assert.Contains(typeof(ISender), dependencies);
+        Assert.Contains(typeof(IPublisher), dependencies);
         Assert.DoesNotContain(typeof(IInvoiceRepository), dependencies);
+        Assert.DoesNotContain(typeof(ISender), dependencies);
     }
 
     [Fact]
-    public async Task Checkout_ShouldSendGenerateInvoiceInsideTransaction_OnlyWhenPaid()
+    public async Task Checkout_ShouldPublishOrderPaidDomainEvent_InsideTransaction_OnlyWhenPaid()
     {
         SetUpPaymentOrder(100);
         var inTransaction = false;
@@ -34,54 +36,29 @@ public partial class CheckoutAndCancelOrderTests
             try { return await call.Arg<Func<CancellationToken, Task<Result<CheckoutDto>>>>()(cancellation.Token); }
             finally { inTransaction = false; }
         });
-        _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>()).Returns(call =>
+        _publisher.Publish(Arg.Any<OrderPaidDomainEvent>(), Arg.Any<CancellationToken>()).Returns(call =>
         {
             Assert.True(inTransaction);
             Assert.Equal(cancellation.Token, call.Arg<CancellationToken>());
-            Assert.Equal(_orderId, call.Arg<GenerateInvoiceCommand>().OrderId);
-            return Result.Success();
+            Assert.Equal(_orderId, call.Arg<OrderPaidDomainEvent>().OrderId);
+            return Task.CompletedTask;
         });
 
         var handler = CreateCheckoutHandler();
         Assert.True((await handler.Handle(new(_orderId, [new("Cash", 40)]), default)).IsSuccess);
-        await _sender.DidNotReceive().Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>());
+        await _publisher.DidNotReceive().Publish(Arg.Any<OrderPaidDomainEvent>(), Arg.Any<CancellationToken>());
         Assert.True((await handler.Handle(new(_orderId, [new("Cash", 60)]), default)).IsSuccess);
-        await _sender.Received(1).Send(Arg.Any<GenerateInvoiceCommand>(), cancellation.Token);
+        await _publisher.Received(1).Publish(Arg.Any<OrderPaidDomainEvent>(), cancellation.Token);
     }
 
     [Fact]
-    public async Task Checkout_ShouldPropagateInvoiceFailure_WithoutSaving()
+    public async Task Checkout_ShouldPropagatePublisherException_WithoutSaving()
     {
         SetUpPaymentOrder(100);
-        _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Failure(InvoiceErrors.AlreadyInvoiced));
-        var result = await CreateCheckoutHandler().Handle(new(_orderId, [new("Cash", 100)]), default);
-        Assert.Equal(InvoiceErrors.AlreadyInvoiced, result.Error);
-        await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Checkout_ShouldPropagateInvoiceException_WithoutSaving()
-    {
-        SetUpPaymentOrder(100);
-        _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>())
-            .Returns<Result>(_ => throw new InvalidOperationException("Invoice failure"));
+        _publisher.Publish(Arg.Any<OrderPaidDomainEvent>(), Arg.Any<CancellationToken>())
+            .Returns<Task>(_ => throw new InvalidOperationException("Invoice handler failure"));
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             CreateCheckoutHandler().Handle(new(_orderId, [new("Cash", 100)]), default));
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Checkout_ShouldSucceedWithUtcInvoice_WhenStoreTimezoneIsUnknown()
-    {
-        SetUpPaymentOrder(100);
-        _store.UpdateInfo(_store.Name, null, null, "Unknown/InvoiceTimezone", "VND", null, null, null);
-        var before = DateTime.UtcNow.ToString("yyyyMMdd");
-        var result = await CreateCheckoutHandler().Handle(new(_orderId, [new("Cash", 100)]), default);
-        var after = DateTime.UtcNow.ToString("yyyyMMdd");
-        Assert.True(result.IsSuccess);
-        await _invoiceRepository.Received(1).AddAsync(Arg.Is<Invoice>(i =>
-            i.InvoiceNo == $"HD-{_store.Code}-{before}-000001" ||
-            i.InvoiceNo == $"HD-{_store.Code}-{after}-000001"), Arg.Any<CancellationToken>());
     }
 }

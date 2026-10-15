@@ -591,15 +591,27 @@ public class SplitPaymentPersistenceTests
             services.AddSingleton(user);
             services.AddSingleton<IOrderRepository>(orders ?? new OrderRepository(db));
             services.AddSingleton<IStoreRepository>(new StoreRepository(db));
+            services.AddSingleton<IShiftRepository>(new ShiftRepository(db));
+            services.AddSingleton<IEmployeeRepository>(new EmployeeRepository(db));
+            services.AddSingleton<ICustomerRepository>(customers);
+            services.AddSingleton<IStockEntryRepository>(new StockEntryRepository(db));
+            services.AddSingleton<IVoucherRepository>(vouchers);
+            services.AddSingleton<IStockTransactionRepository>(new StockTransactionRepository(db));
+            services.AddSingleton<IVoucherUsageRepository>(new VoucherUsageRepository(db));
             services.AddSingleton<IInvoiceRepository>(new InvoiceRepository(db));
             if (invoiceBehavior is not null) services.AddSingleton(invoiceBehavior);
             var provider = services.BuildServiceProvider();
             providers.Add(provider);
-            return new(orders ?? new OrderRepository(db), new ShiftRepository(db), new EmployeeRepository(db),
-                new StoreRepository(db), new StockEntryRepository(db),
-                new StockTransactionRepository(db), provider.GetRequiredService<ISender>(), vouchers, new VoucherUsageRepository(db),
-                strategies, new CartCalculationService(new SkuRepository(db), new PromotionRepository(db), vouchers,
-                    customers, new PromotionEngine()), new UnitOfWork(db), user, customers);
+            var orderRepo = orders ?? new OrderRepository(db);
+            return new(
+                orderRepo,
+                provider.GetRequiredService<ICheckoutGuardService>(),
+                strategies,
+                new CartCalculationService(new SkuRepository(db), new PromotionRepository(db), vouchers,
+                    customers, new PromotionEngine()),
+                customers,
+                provider.GetRequiredService<IPublisher>(),
+                new UnitOfWork(db));
         }
 
         public async ValueTask DisposeAsync()
