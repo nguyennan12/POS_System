@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ICfdDisplayService, CfdDisplayService>();
         services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
+        services.AddSingleton(_ => LocalizationService.Instance);
 
         // ── ApiClients & Handlers ──────────────────────────────────
         services.AddTransient<NetworkStatusHandler>();
@@ -54,6 +55,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<VoucherApiClient>();
         services.AddTransient<OrderApiClient>();
         services.AddTransient<ProductApiClient>();
+        services.AddTransient<ConfigApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -84,6 +86,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<DashboardView>();
         services.AddTransient<OrdersView>();
         services.AddTransient<ProductsView>();
+        services.AddTransient<frmProductList>();
+        services.AddTransient<frmProductEdit>();
         services.AddTransient<InventoryView>();
         services.AddTransient<CustomersView>();
         services.AddTransient<PromotionsView>();

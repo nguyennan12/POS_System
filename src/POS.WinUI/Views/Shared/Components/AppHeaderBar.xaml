@@ -338,7 +338,7 @@
                                                    Foreground="White" 
                                                    Margin="0,0,8,0" 
                                                    VerticalAlignment="Center"/>
-                                    <TextBlock Text="Màn hình Bán hàng" 
+                                    <TextBlock Text="{Binding PosButtonText}" 
                                                FontSize="13.5" 
                                                FontWeight="SemiBold" 
                                                Foreground="White" 

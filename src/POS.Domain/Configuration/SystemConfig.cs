@@ -14,4 +14,13 @@ public class SystemConfig : BaseEntity
     public string Key { get; private set; } = default!;
     public string Value { get; private set; } = default!;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
+
+    public static SystemConfig Create(Guid? storeId, string key, string value) =>
+        new() { StoreId = storeId, Key = key, Value = value, UpdatedAt = DateTime.UtcNow };
+
+    public void SetValue(string value)
+    {
+        Value = value;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

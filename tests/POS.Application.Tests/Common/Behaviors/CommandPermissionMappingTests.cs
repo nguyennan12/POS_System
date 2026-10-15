@@ -67,6 +67,8 @@ public sealed class CommandPermissionMappingTests
             ["CreatePriceListCommand"] = "skus:price_override",
             ["BulkImportProductsCommand"] = "products:import",
             ["ExportReportCommand"] = "reports:export",
+            ["UpdateStoreConfigCommand"] = "stores:update",
+            ["UpdateI18nDictionaryCommand"] = "stores:update",
         };
 
     private static readonly HashSet<string> AuthenticationCommands =

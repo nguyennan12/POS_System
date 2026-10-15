@@ -123,7 +123,29 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
 
         if (categoryId.HasValue)
         {
-            query = query.Where(x => x.CategoryId == categoryId.Value);
+            var targetId = categoryId.Value;
+            var childIds = await dbContext.Categories.AsNoTracking()
+                .Where(c => c.StoreId == storeId && c.ParentId == targetId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+            if (childIds.Count > 0)
+            {
+                var allCategoryIds = new List<Guid> { targetId };
+                allCategoryIds.AddRange(childIds);
+
+                var grandchildIds = await dbContext.Categories.AsNoTracking()
+                    .Where(c => c.StoreId == storeId && c.ParentId.HasValue && childIds.Contains(c.ParentId.Value))
+                    .Select(c => c.Id)
+                    .ToListAsync(cancellationToken);
+                allCategoryIds.AddRange(grandchildIds);
+
+                query = query.Where(x => allCategoryIds.Contains(x.CategoryId));
+            }
+            else
+            {
+                query = query.Where(x => x.CategoryId == targetId);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(search))

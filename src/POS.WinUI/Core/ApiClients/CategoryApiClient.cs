@@ -19,8 +19,27 @@ public sealed class CategoryApiClient : BaseApiClient
       : base(http, session) { }
 
 
+  /// <summary>
   /// Lấy cây danh mục sản phẩm đang hiển thị
   /// </summary>
   public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(CancellationToken ct = default)
       => GetAsync<ApiResponse<List<CategoryResponse>>>(ApiRoutes.Categories.Tree, ct);
+
+  /// <summary>
+  /// Tạo danh mục mới
+  /// </summary>
+  public Task<ApiResponse<CategoryResponse>?> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct = default)
+      => PostAsync<ApiResponse<CategoryResponse>>(ApiRoutes.Categories.Tree, request, ct);
+
+  /// <summary>
+  /// Cập nhật danh mục
+  /// </summary>
+  public Task<ApiResponse<CategoryResponse>?> UpdateCategoryAsync(Guid id, UpdateCategoryRequest request, CancellationToken ct = default)
+      => PutAsync<ApiResponse<CategoryResponse>>(ApiRoutes.Categories.GetById(id), request, ct);
+
+  /// <summary>
+  /// Xóa danh mục
+  /// </summary>
+  public Task<ApiResponse<bool>?> DeleteCategoryAsync(Guid id, CancellationToken ct = default)
+      => DeleteAsync<ApiResponse<bool>>(ApiRoutes.Categories.GetById(id), ct);
 }

@@ -109,7 +109,7 @@
                                    Foreground="{StaticResource TextMutedBrush}" 
                                    Margin="0,0,8,0" 
                                    VerticalAlignment="Center"/>
-                    <TextBlock Text="Trang chủ" 
+                    <TextBlock Text="{Binding HomeBreadcrumbText}" 
                                FontSize="13" 
                                Foreground="{StaticResource TextMutedBrush}" 
                                VerticalAlignment="Center"/>

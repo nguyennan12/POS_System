@@ -104,6 +104,15 @@ public partial class ManagementMainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isLoadingShift = false;
 
+    [ObservableProperty]
+    private string _workspaceHeaderText = "KHÔNG GIAN LÀM VIỆC";
+
+    [ObservableProperty]
+    private string _posButtonText = "Màn hình Bán hàng";
+
+    [ObservableProperty]
+    private string _homeBreadcrumbText = "Trang chủ";
+
     public ObservableCollection<NavigationItemViewModel> NavTabs { get; } = new();
 
     public ManagementMainViewModel(
@@ -125,6 +134,7 @@ public partial class ManagementMainViewModel : ObservableObject
 
         LoadUserInfo();
         InitializeNavigationTabs();
+        LocalizationService.Instance.PropertyChanged += (_, _) => UpdateLocalizedTexts();
         _ = LoadCurrentShiftAsync();
 
         if (IsOwnerRole)
