@@ -14,7 +14,7 @@ public abstract class BaseApiClient
   protected readonly HttpClient _http;
   protected readonly SessionService _session;
 
-  private static readonly JsonSerializerOptions _jsonOptions = new()
+  protected static readonly JsonSerializerOptions _jsonOptions = new()
   {
     PropertyNameCaseInsensitive = true
   };
@@ -73,7 +73,7 @@ public abstract class BaseApiClient
     await HandleFailureResponseAsync(response, ct);
   }
 
-  private static async Task HandleFailureResponseAsync(HttpResponseMessage response, CancellationToken ct)
+  protected static async Task HandleFailureResponseAsync(HttpResponseMessage response, CancellationToken ct)
   {
     if (response.IsSuccessStatusCode) return;
 

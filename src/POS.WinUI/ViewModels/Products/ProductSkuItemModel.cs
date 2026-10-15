@@ -83,14 +83,34 @@ public sealed partial class ProductSkuItemModel : ObservableObject
     partial void OnSizeChanged(string value) => OnPropertyChanged(nameof(AttributesDisplay));
     partial void OnQtyOnHandChanged(decimal value) => OnPropertyChanged(nameof(FormattedQty));
 
+    public string Packaging
+    {
+        get => Color;
+        set => Color = value;
+    }
+
+    public string Flavor
+    {
+        get => Size;
+        set => Size = value;
+    }
+
     public JsonElement? BuildAttributesJson()
     {
         if (string.IsNullOrWhiteSpace(Color) && string.IsNullOrWhiteSpace(Size))
             return null;
 
         var dict = new System.Collections.Generic.Dictionary<string, string>();
-        if (!string.IsNullOrWhiteSpace(Color)) dict["color"] = Color.Trim();
-        if (!string.IsNullOrWhiteSpace(Size)) dict["size"] = Size.Trim();
+        if (!string.IsNullOrWhiteSpace(Color))
+        {
+            dict["packaging"] = Color.Trim();
+            dict["color"] = Color.Trim();
+        }
+        if (!string.IsNullOrWhiteSpace(Size))
+        {
+            dict["flavor"] = Size.Trim();
+            dict["size"] = Size.Trim();
+        }
 
         return JsonSerializer.SerializeToElement(dict);
     }
@@ -103,12 +123,22 @@ public sealed partial class ProductSkuItemModel : ObservableObject
         string color = string.Empty;
         string size = string.Empty;
 
-        if (attributes.Value.TryGetProperty("color", out var cProp))
+        if (attributes.Value.TryGetProperty("packaging", out var pkgProp))
+            color = pkgProp.GetString() ?? string.Empty;
+        else if (attributes.Value.TryGetProperty("quy_cach", out var qcProp))
+            color = qcProp.GetString() ?? string.Empty;
+        else if (attributes.Value.TryGetProperty("dung_tich", out var dtProp))
+            color = dtProp.GetString() ?? string.Empty;
+        else if (attributes.Value.TryGetProperty("color", out var cProp))
             color = cProp.GetString() ?? string.Empty;
         else if (attributes.Value.TryGetProperty("mau", out var mProp))
             color = mProp.GetString() ?? string.Empty;
 
-        if (attributes.Value.TryGetProperty("size", out var sProp))
+        if (attributes.Value.TryGetProperty("flavor", out var flvProp))
+            size = flvProp.GetString() ?? string.Empty;
+        else if (attributes.Value.TryGetProperty("huong_vi", out var hvProp))
+            size = hvProp.GetString() ?? string.Empty;
+        else if (attributes.Value.TryGetProperty("size", out var sProp))
             size = sProp.GetString() ?? string.Empty;
         else if (attributes.Value.TryGetProperty("kich_co", out var kcProp))
             size = kcProp.GetString() ?? string.Empty;

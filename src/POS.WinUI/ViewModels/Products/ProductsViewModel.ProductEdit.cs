@@ -56,21 +56,57 @@ public partial class ProductsViewModel
     // ── Danh sách SKU trong modal ──
     public ObservableCollection<ProductSkuItemModel> EditingSkus { get; } = new();
 
-    // ── Công cụ sinh biến thể màu / size tự động ──
+    // ── Công cụ sinh biến thể tự động cho Cửa hàng tiện lợi (Quy cách bán & Hương vị / Phân loại) ──
     [ObservableProperty]
-    private string _variantColorInput = string.Empty; // ví dụ: "Đen, Trắng, Đỏ"
+    private string _variantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon"; // Quy cách / Dung tích / Đóng gói
 
     [ObservableProperty]
-    private string _variantSizeInput = string.Empty;  // ví dụ: "S, M, L, XL"
+    private string _variantSizeInput = "Nguyên bản, Không đường";  // Hương vị / Phân loại
 
     [ObservableProperty]
-    private decimal _variantDefaultCost = 100000;
+    private decimal _variantDefaultCost = 10000;
 
     [ObservableProperty]
-    private decimal _variantDefaultSell = 150000;
+    private decimal _variantDefaultSell = 15000;
 
     [ObservableProperty]
     private decimal _variantDefaultTax = 8; // 8%
+
+    [RelayCommand]
+    public void ApplyDrinkPreset()
+    {
+        VariantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon";
+        VariantSizeInput = "Nguyên bản, Không đường";
+        EditingSkus.Clear();
+        GenerateVariants();
+    }
+
+    [RelayCommand]
+    public void ApplyNoodlePreset()
+    {
+        VariantColorInput = "Gói lẻ 75g, Tô 85g, Thùng 30 gói";
+        VariantSizeInput = "Vị Bò cay, Tôm chua cay";
+        EditingSkus.Clear();
+        GenerateVariants();
+    }
+
+    [RelayCommand]
+    public void ApplyBeerPreset()
+    {
+        VariantColorInput = "Lon 330ml, Lốc 6 lon, Thùng 24 lon";
+        VariantSizeInput = "Bạc, Vàng";
+        EditingSkus.Clear();
+        GenerateVariants();
+    }
+
+    [RelayCommand]
+    public void ApplyConsumerPreset()
+    {
+        VariantColorInput = "Gói nhỏ, Gói lớn";
+        VariantSizeInput = "Tiêu chuẩn, Hương hoa";
+        EditingSkus.Clear();
+        GenerateVariants();
+    }
 
     [RelayCommand]
     public void OpenCreateProductModal()
@@ -78,7 +114,7 @@ public partial class ProductsViewModel
         IsEditMode = false;
         EditProductId = Guid.Empty;
         EditProductName = string.Empty;
-        EditBaseUnit = "Cái";
+        EditBaseUnit = "Chai";
         EditBrand = string.Empty;
         EditDescription = string.Empty;
         EditImageUrl = string.Empty;
@@ -91,14 +127,14 @@ public partial class ProductsViewModel
 
         // Reset biến thể
         EditingSkus.Clear();
-        VariantColorInput = "Đen, Trắng";
-        VariantSizeInput = "S, M, L";
-        VariantDefaultCost = 100000;
-        VariantDefaultSell = 150000;
+        VariantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon";
+        VariantSizeInput = "Nguyên bản, Không đường";
+        VariantDefaultCost = 10000;
+        VariantDefaultSell = 15000;
         VariantDefaultTax = 8;
 
-        // Tự động tạo 1 SKU mặc định
-        AddDefaultSku();
+        // Tự động sinh danh sách biến thể SKU ban đầu vào form
+        GenerateVariants();
 
         OnPropertyChanged(nameof(ProductModalTitle));
         IsProductEditModalOpen = true;
@@ -185,8 +221,8 @@ public partial class ProductsViewModel
             SellPrice = VariantDefaultSell,
             TaxRate = VariantDefaultTax,
             IsActive = true,
-            Color = "Mặc định",
-            Size = "Tiêu chuẩn"
+            Color = "Quy cách chuẩn",
+            Size = "Nguyên bản"
         });
     }
 
@@ -206,7 +242,9 @@ public partial class ProductsViewModel
             CostPrice = VariantDefaultCost,
             SellPrice = VariantDefaultSell,
             TaxRate = VariantDefaultTax,
-            IsActive = true
+            IsActive = true,
+            Color = "Quy cách chuẩn",
+            Size = "Nguyên bản"
         });
     }
 
@@ -225,7 +263,7 @@ public partial class ProductsViewModel
     }
 
     /// <summary>
-    /// Thuật toán sinh biến thể động (Màu sắc x Kích cỡ)
+    /// Thuật toán sinh biến thể động cho Cửa hàng tiện lợi (Quy cách / Dung tích x Hương vị / Phân loại)
     /// </summary>
     [RelayCommand]
     public void GenerateVariants()
@@ -244,7 +282,7 @@ public partial class ProductsViewModel
 
         if (colors.Count == 0 && sizes.Count == 0)
         {
-            EditErrorMessage = "Vui lòng nhập ít nhất 1 màu sắc hoặc 1 kích cỡ.";
+            EditErrorMessage = "Vui lòng nhập ít nhất 1 quy cách/dung tích hoặc 1 hương vị/loại sản phẩm.";
             return;
         }
 
@@ -332,7 +370,9 @@ public partial class ProductsViewModel
         // Xóa SKU mặc định nếu có nhiều hơn 1 SKU và SKU mặc định chưa chỉnh sửa
         if (EditingSkus.Count > 1)
         {
-            var defaultSku = EditingSkus.FirstOrDefault(s => s.Color == "Mặc định" && s.Size == "Tiêu chuẩn");
+            var defaultSku = EditingSkus.FirstOrDefault(s => 
+                (s.Color == "Quy cách chuẩn" && s.Size == "Nguyên bản") ||
+                (s.Color == "Mặc định" && s.Size == "Tiêu chuẩn"));
             if (defaultSku != null) EditingSkus.Remove(defaultSku);
         }
     }
