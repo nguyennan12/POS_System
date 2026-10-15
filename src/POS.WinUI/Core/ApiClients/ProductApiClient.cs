@@ -121,4 +121,29 @@ public sealed class ProductApiClient : BaseApiClient
     /// </summary>
     public Task<ApiResponse<object>?> DeleteSkuAsync(Guid id, CancellationToken ct = default)
         => DeleteAsync<ApiResponse<object>>(ApiRoutes.Skus.GetById(id), ct);
+
+    /// <summary>
+    /// [P05] Nhập danh sách sản phẩm và SKU hàng loạt từ file Excel (.xlsx / .xls)
+    /// </summary>
+    public async Task<ApiResponse<BulkImportResultResponse>?> BulkImportProductsAsync(
+        string filePath,
+        CancellationToken ct = default)
+    {
+        AttachToken();
+        using var form = new System.Net.Http.MultipartFormDataContent();
+        await using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new System.Net.Http.StreamContent(fileStream);
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var mimeType = ext == ".xls"
+            ? "application/vnd.ms-excel"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+
+        var response = await _http.PostAsync(ApiRoutes.Products.BulkImport, form, ct);
+        await HandleFailureResponseAsync(response, ct);
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<ApiResponse<BulkImportResultResponse>>(response.Content, _jsonOptions, ct);
+    }
 }

@@ -12,7 +12,7 @@ public class GetI18nDictionaryQueryHandler(ITranslationRepository translations)
     {
         ["vi"] = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["nav.workspace"] = "KHÔNG GIAN LÀM VIỆC",
+            ["nav.workspace"] = "DANH MỤC QUẢN LÝ",
             ["nav.dashboard"] = "Tổng quan",
             ["nav.orders"] = "Đơn hàng & Hóa đơn",
             ["nav.products"] = "Sản phẩm & Danh mục",
@@ -22,7 +22,7 @@ public class GetI18nDictionaryQueryHandler(ITranslationRepository translations)
             ["nav.employees"] = "Nhân viên & Phân quyền",
             ["nav.reports"] = "Báo cáo & Thống kê",
             ["nav.settings"] = "Cài đặt hệ thống",
-            ["header.pos_screen"] = "Màn hình Bán hàng",
+            ["header.pos_screen"] = "Bán hàng POS (F1)",
             ["header.loading_stores"] = "Đang tải chi nhánh...",
             ["header.notifications"] = "Thông báo hệ thống",
             ["settings.title"] = "Cài đặt hệ thống",

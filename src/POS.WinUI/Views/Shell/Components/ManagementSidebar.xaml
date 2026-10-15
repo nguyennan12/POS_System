@@ -77,7 +77,7 @@
                                        FontWeight="Bold" 
                                        Foreground="{StaticResource TextPrimaryBrush}" 
                                        LineHeight="18"/>
-                            <TextBlock Text="Hệ thống Quản lý" 
+                            <TextBlock Text="Quản lý chuỗi bán lẻ" 
                                        FontSize="11" 
                                        Foreground="{StaticResource TextMutedBrush}" 
                                        Margin="0,2,0,0"/>

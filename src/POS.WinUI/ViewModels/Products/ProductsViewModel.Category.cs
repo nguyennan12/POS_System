@@ -148,10 +148,45 @@ public partial class ProductsViewModel
         }
     }
 
+    // ── Xác nhận Xóa Danh Mục ──
+    [ObservableProperty]
+    private bool _isDeleteCategoryConfirmOpen = false;
+
+    [ObservableProperty]
+    private CategoryItemModel? _categoryToDelete;
+
+    [ObservableProperty]
+    private string _deleteCategoryConfirmMessage = string.Empty;
+
     [RelayCommand]
-    public async Task DeleteCategoryAsync(CategoryItemModel? cat)
+    public void ToggleCategoryExpand(CategoryItemModel? cat)
     {
         if (cat == null) return;
+        cat.ToggleExpanded();
+    }
+
+    [RelayCommand]
+    public void RequestDeleteCategory(CategoryItemModel? cat)
+    {
+        if (cat == null) return;
+        CategoryToDelete = cat;
+        DeleteCategoryConfirmMessage = $"Bạn có chắc chắn muốn xóa danh mục \"{cat.Name}\"?";
+        IsDeleteCategoryConfirmOpen = true;
+    }
+
+    [RelayCommand]
+    public void CancelDeleteCategory()
+    {
+        IsDeleteCategoryConfirmOpen = false;
+        CategoryToDelete = null;
+    }
+
+    [RelayCommand]
+    public async Task ConfirmDeleteCategoryAsync()
+    {
+        if (CategoryToDelete == null) return;
+        var cat = CategoryToDelete;
+        IsDeleteCategoryConfirmOpen = false;
 
         IsLoading = true;
         try
@@ -164,7 +199,7 @@ public partial class ProductsViewModel
             }
             else
             {
-                ShowStatus(res?.Error?.Message ?? "Không thể xóa danh mục. Có thể đang có sản phẩm thuộc danh mục này.", isError: true);
+                ShowStatus(res?.Error?.Message ?? "Không thể xóa danh mục. Có thể đang có sản phẩm hoặc danh mục con thuộc danh mục này.", isError: true);
             }
         }
         catch (Exception ex)
@@ -173,7 +208,14 @@ public partial class ProductsViewModel
         }
         finally
         {
+            CategoryToDelete = null;
             IsLoading = false;
         }
+    }
+
+    [RelayCommand]
+    public void DeleteCategory(CategoryItemModel? cat)
+    {
+        RequestDeleteCategory(cat);
     }
 }

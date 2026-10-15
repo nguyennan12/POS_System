@@ -105,10 +105,10 @@ public partial class ManagementMainViewModel : ObservableObject
     private bool _isLoadingShift = false;
 
     [ObservableProperty]
-    private string _workspaceHeaderText = "KHÔNG GIAN LÀM VIỆC";
+    private string _workspaceHeaderText = "DANH MỤC QUẢN LÝ";
 
     [ObservableProperty]
-    private string _posButtonText = "Màn hình Bán hàng";
+    private string _posButtonText = "Bán hàng POS (F1)";
 
     [ObservableProperty]
     private string _homeBreadcrumbText = "Trang chủ";

@@ -125,12 +125,11 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Vùng hiển thị Sub-View của Tab được chọn -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ContentControl Content="{Binding CurrentTabViewModel}" 
-                                    HorizontalContentAlignment="Stretch" 
-                                    VerticalContentAlignment="Stretch"/>
-                </ScrollViewer>
+                <!-- Vùng hiển thị Sub-View của Tab được chọn (Không bọc ScrollViewer để view con quản lý layout & scroll nội bộ chuẩn xác) -->
+                <ContentControl Grid.Row="1" 
+                                Content="{Binding CurrentTabViewModel}" 
+                                HorizontalContentAlignment="Stretch" 
+                                VerticalContentAlignment="Stretch"/>
             </Grid>
         </Grid>
 
