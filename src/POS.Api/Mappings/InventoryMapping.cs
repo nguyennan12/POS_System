@@ -91,4 +91,40 @@ public static class InventoryMapping
         dto.CreatedBy,
         dto.CreatedAt
     );
+
+    // ── Stock Take ────────────────────────────────────────────────────────────
+
+    public static StockTakeItemResponse ToResponse(this StockTakeItemDto dto) => new(
+        dto.Id,
+        dto.SkuId,
+        dto.SkuCode,
+        dto.ProductName,
+        dto.SystemQty,
+        dto.ActualQty,
+        dto.DiffQty,
+        dto.Note
+    );
+
+    public static StockTakeSummaryResponse ToResponse(this StockTakeSummaryDto dto) => new(
+        dto.Id,
+        dto.StoreId,
+        dto.Status,
+        dto.Note,
+        dto.CreatedBy,
+        dto.ApprovedBy,
+        dto.CreatedAt,
+        dto.ApprovedAt
+    );
+
+    public static StockTakeDetailResponse ToResponse(this StockTakeDetailDto dto) => new(
+        dto.Id,
+        dto.StoreId,
+        dto.Status,
+        dto.Note,
+        dto.CreatedBy,
+        dto.ApprovedBy,
+        dto.CreatedAt,
+        dto.ApprovedAt,
+        dto.Items.Select(i => i.ToResponse()).ToList().AsReadOnly()
+    );
 }

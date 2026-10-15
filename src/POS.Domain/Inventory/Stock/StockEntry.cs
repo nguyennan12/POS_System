@@ -34,6 +34,16 @@ public class StockEntry : BaseEntity
     LastUpdated = DateTime.UtcNow;
   }
 
+  /// <summary>
+  /// Cân bằng tồn kho thực tế sau khi kiểm kê (Stock Take Adjust).
+  /// </summary>
+  public void AdjustStock(decimal newQty)
+  {
+    if (newQty < 0) throw new ArgumentOutOfRangeException(nameof(newQty), "Số lượng tồn kho không được âm.");
+    QtyOnHand = newQty;
+    LastUpdated = DateTime.UtcNow;
+  }
+
   public Guid StoreId { get; private set; }
   public Store Store { get; private set; } = default!;
 

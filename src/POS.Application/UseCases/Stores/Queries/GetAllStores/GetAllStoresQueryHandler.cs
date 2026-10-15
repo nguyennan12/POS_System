@@ -5,12 +5,12 @@ using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Stores.Queries.GetAllStores;
 
-public class GetAllStoresQueryHandler(IStoreRepository stores, IEmployeeRepository employees, ICurrentUser currentUser)
+public class GetAllStoresQueryHandler(IStoreRepository stores, IStoreAccessPolicy storeAccessPolicy)
     : IQueryHandler<GetAllStoresQuery, List<StoreDto>>
 {
     public async Task<Result<List<StoreDto>>> Handle(GetAllStoresQuery query, CancellationToken cancellationToken)
     {
-        var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+        var caller = await storeAccessPolicy.GetAuthenticatedOwnerAsync(cancellationToken);
         if (caller.IsFailure) return caller.Error;
         var owner = caller.Value!;
         var visibleStores = await stores.GetAccessibleAsync(owner.Id, owner.IsChainOwner, owner.StoreId, cancellationToken);

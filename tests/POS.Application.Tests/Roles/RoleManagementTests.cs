@@ -28,6 +28,7 @@ public class RoleManagementTests
     private readonly IStoreRepository storeRepository = Substitute.For<IStoreRepository>();
     private readonly ICacheService cacheService = Substitute.For<ICacheService>();
     private readonly ICurrentUser currentUser = Substitute.For<ICurrentUser>();
+    private readonly IStoreAccessPolicy storeAccessPolicy = Substitute.For<IStoreAccessPolicy>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ILogger<UpdateRolePermissionsCommandHandler> logger = Substitute.For<ILogger<UpdateRolePermissionsCommandHandler>>();
 
@@ -36,11 +37,11 @@ public class RoleManagementTests
     {
         var storeId = Guid.NewGuid();
         var store = new Store("Test Store", "Address", "0123456789", "Asia/Ho_Chi_Minh", "VND", isActive: true);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns(store);
         roleRepository.ExistsByNameAsync("Inventory Staff", storeId, null, Arg.Any<CancellationToken>()).Returns(false);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Inventory Staff", "Manages stock", storeId), default);
 
         Assert.True(result.IsSuccess);
@@ -58,12 +59,11 @@ public class RoleManagementTests
     {
         var storeId = Guid.NewGuid();
         var store = new Store("Test Store", "Address", "0123456789", "Asia/Ho_Chi_Minh", "VND", isActive: true);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeId);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns(store);
         roleRepository.ExistsByNameAsync("Barista Lead", storeId, null, Arg.Any<CancellationToken>()).Returns(false);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Barista Lead", "Custom", storeId), default);
 
         Assert.True(result.IsSuccess);
@@ -73,10 +73,9 @@ public class RoleManagementTests
     [Fact]
     public async Task CreateRole_Fails_WhenNonChainOwnerCreatesChainWideRole()
     {
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(Guid.NewGuid());
+        storeAccessPolicy.CanAccessStore(null).Returns(false);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Chain Wide Custom", null, null), default);
 
         Assert.True(result.IsFailure);
@@ -87,12 +86,10 @@ public class RoleManagementTests
     [Fact]
     public async Task CreateRole_Fails_WhenStoreManagerCreatesRoleForAnotherStore()
     {
-        var myStore = Guid.NewGuid();
         var otherStore = Guid.NewGuid();
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(myStore);
+        storeAccessPolicy.CanAccessStore(otherStore).Returns(false);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Other Role", null, otherStore), default);
 
         Assert.True(result.IsFailure);
@@ -104,10 +101,10 @@ public class RoleManagementTests
     public async Task CreateRole_Fails_WhenStoreNotFoundOrInactive()
     {
         var storeId = Guid.NewGuid();
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns((Store?)null);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Shift Lead", null, storeId), default);
 
         Assert.True(result.IsFailure);
@@ -120,11 +117,11 @@ public class RoleManagementTests
     {
         var storeId = Guid.NewGuid();
         var store = new Store("Test Store", "Address", "0123456789", "Asia/Ho_Chi_Minh", "VND", isActive: true);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns(store);
         roleRepository.ExistsByNameAsync("Cashier", storeId, null, Arg.Any<CancellationToken>()).Returns(true);
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Cashier", null, storeId), default);
 
         Assert.True(result.IsFailure);
@@ -137,14 +134,14 @@ public class RoleManagementTests
     {
         var storeId = Guid.NewGuid();
         var store = new Store("Test Store", "Address", "0123456789", "Asia/Ho_Chi_Minh", "VND", isActive: true);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         storeRepository.GetByIdAsync(storeId, Arg.Any<CancellationToken>()).Returns(store);
         roleRepository.ExistsByNameAsync("Concurrent Role", storeId, null, Arg.Any<CancellationToken>()).Returns(false);
 
         unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
             .Throws(new PersistenceConflictException(PersistenceConstraints.RoleStoreNameUnique, new Exception()));
 
-        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, currentUser, unitOfWork);
+        var handler = new CreateRoleCommandHandler(roleRepository, storeRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new CreateRoleCommand("Concurrent Role", null, storeId), default);
 
         Assert.True(result.IsFailure);
@@ -157,12 +154,11 @@ public class RoleManagementTests
         var storeId = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var role = new Role("Old Name", isSystemRole: false, storeId: storeId, description: "Old desc", id: roleId);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeId);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
         roleRepository.ExistsByNameAsync("New Name", storeId, roleId, Arg.Any<CancellationToken>()).Returns(false);
 
-        var handler = new UpdateRoleCommandHandler(roleRepository, currentUser, unitOfWork);
+        var handler = new UpdateRoleCommandHandler(roleRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new UpdateRoleCommand(roleId, "New Name", "New desc"), default);
 
         Assert.True(result.IsSuccess);
@@ -174,15 +170,13 @@ public class RoleManagementTests
     [Fact]
     public async Task UpdateRole_Fails_WhenAccessingOtherStoreRole()
     {
-        var storeA = Guid.NewGuid();
         var storeB = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var role = new Role("Store B Role", isSystemRole: false, storeId: storeB, id: roleId);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeA);
+        storeAccessPolicy.CanAccessStore(storeB).Returns(false);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
 
-        var handler = new UpdateRoleCommandHandler(roleRepository, currentUser, unitOfWork);
+        var handler = new UpdateRoleCommandHandler(roleRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new UpdateRoleCommand(roleId, "Tampered Name"), default);
 
         Assert.True(result.IsFailure);
@@ -195,10 +189,9 @@ public class RoleManagementTests
     {
         var roleId = Guid.NewGuid();
         var systemRole = new Role(RoleNames.Owner, isSystemRole: true, storeId: null, id: roleId);
-        currentUser.IsChainOwner.Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(systemRole);
 
-        var handler = new UpdateRoleCommandHandler(roleRepository, currentUser, unitOfWork);
+        var handler = new UpdateRoleCommandHandler(roleRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new UpdateRoleCommand(roleId, "Renamed Owner", null), default);
 
         Assert.True(result.IsFailure);
@@ -212,14 +205,14 @@ public class RoleManagementTests
         var storeId = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var role = new Role("Old Name", isSystemRole: false, storeId: storeId, description: "Old desc", id: roleId);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
         roleRepository.ExistsByNameAsync("Duplicated Name", storeId, roleId, Arg.Any<CancellationToken>()).Returns(false);
 
         unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
             .Throws(new PersistenceConflictException(PersistenceConstraints.RoleStoreNameUnique, new Exception()));
 
-        var handler = new UpdateRoleCommandHandler(roleRepository, currentUser, unitOfWork);
+        var handler = new UpdateRoleCommandHandler(roleRepository, storeAccessPolicy, unitOfWork);
         var result = await handler.Handle(new UpdateRoleCommand(roleId, "Duplicated Name"), default);
 
         Assert.True(result.IsFailure);
@@ -232,7 +225,7 @@ public class RoleManagementTests
         var storeId = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var customRole = new Role("Custom Role", isSystemRole: false, storeId: storeId, id: roleId);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(customRole);
 
         var resource = new Resource("roles", "Role Management");
@@ -257,6 +250,7 @@ public class RoleManagementTests
             permissionRepository,
             cacheService,
             currentUser,
+            storeAccessPolicy,
             unitOfWork,
             logger);
 
@@ -287,7 +281,7 @@ public class RoleManagementTests
         var storeId = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var customRole = new Role("Custom Role", isSystemRole: false, storeId: storeId, id: roleId);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(storeId).Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(customRole);
 
         var resource = new Resource("roles", "Role Management");
@@ -309,6 +303,7 @@ public class RoleManagementTests
             permissionRepository,
             cacheService,
             currentUser,
+            storeAccessPolicy,
             unitOfWork,
             logger);
 
@@ -322,12 +317,10 @@ public class RoleManagementTests
     [Fact]
     public async Task UpdateRolePermissions_Fails_WhenAccessingOtherStoreRole()
     {
-        var storeA = Guid.NewGuid();
         var storeB = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var customRole = new Role("Custom Role", isSystemRole: false, storeId: storeB, id: roleId);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeA);
+        storeAccessPolicy.CanAccessStore(storeB).Returns(false);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(customRole);
 
         var handler = new UpdateRolePermissionsCommandHandler(
@@ -335,6 +328,7 @@ public class RoleManagementTests
             permissionRepository,
             cacheService,
             currentUser,
+            storeAccessPolicy,
             unitOfWork,
             logger);
 
@@ -350,7 +344,6 @@ public class RoleManagementTests
     {
         var roleId = Guid.NewGuid();
         var systemRole = new Role(RoleNames.Cashier, isSystemRole: true, storeId: null, id: roleId);
-        currentUser.IsChainOwner.Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(systemRole);
 
         var handler = new UpdateRolePermissionsCommandHandler(
@@ -358,6 +351,7 @@ public class RoleManagementTests
             permissionRepository,
             cacheService,
             currentUser,
+            storeAccessPolicy,
             unitOfWork,
             logger);
 
@@ -374,7 +368,7 @@ public class RoleManagementTests
     {
         var roleId = Guid.NewGuid();
         var customRole = new Role("Custom Role", isSystemRole: false, storeId: null, id: roleId);
-        currentUser.IsChainOwner.Returns(true);
+        storeAccessPolicy.CanAccessStore(null).Returns(true);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(customRole);
 
         var permId1 = Guid.NewGuid();
@@ -390,6 +384,7 @@ public class RoleManagementTests
             permissionRepository,
             cacheService,
             currentUser,
+            storeAccessPolicy,
             unitOfWork,
             logger);
 
@@ -433,15 +428,13 @@ public class RoleManagementTests
     [Fact]
     public async Task GetRoleByIdQuery_Fails_WhenAccessingOtherStoreRole()
     {
-        var storeA = Guid.NewGuid();
         var storeB = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var role = new Role("Other Role", isSystemRole: false, storeId: storeB, id: roleId);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeA);
+        storeAccessPolicy.CanAccessRole(role).Returns(false);
         roleRepository.GetByIdWithPermissionsAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
 
-        var handler = new GetRoleByIdQueryHandler(roleRepository, currentUser);
+        var handler = new GetRoleByIdQueryHandler(roleRepository, storeAccessPolicy);
         var result = await handler.Handle(new GetRoleByIdQuery(roleId), default);
 
         Assert.True(result.IsFailure);
@@ -451,15 +444,13 @@ public class RoleManagementTests
     [Fact]
     public async Task GetRolePermissionsQuery_Fails_WhenAccessingOtherStoreRole()
     {
-        var storeA = Guid.NewGuid();
         var storeB = Guid.NewGuid();
         var roleId = Guid.NewGuid();
         var role = new Role("Other Role", isSystemRole: false, storeId: storeB, id: roleId);
-        currentUser.IsChainOwner.Returns(false);
-        currentUser.StoreId.Returns(storeA);
+        storeAccessPolicy.CanAccessRole(role).Returns(false);
         roleRepository.GetByIdAsync(roleId, Arg.Any<CancellationToken>()).Returns(role);
 
-        var handler = new GetRolePermissionsQueryHandler(roleRepository, permissionRepository, currentUser);
+        var handler = new GetRolePermissionsQueryHandler(roleRepository, permissionRepository, storeAccessPolicy);
         var result = await handler.Handle(new GetRolePermissionsQuery(roleId), default);
 
         Assert.True(result.IsFailure);

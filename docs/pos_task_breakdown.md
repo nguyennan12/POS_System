@@ -198,7 +198,7 @@ POS-System
 | **T29** | Implement Supplier Management & Debt Tracking Use Cases                     | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T07                |
 | **T30** | Implement Stock-In Voucher Creation & Stock Transaction Ledger              | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T29           |
 | **T31** | Implement Stock Entries Realtime Queries, Min-Stock & Expiry Alerts         | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T30           |
-| **T32** | Implement Stock Take (Kiểm kê) & Variance Approval Use Cases                | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T31                |
+| **T32** | Implement Stock Take (Kiểm kê) & Variance Approval Use Cases                | FEATURE  | BE/API    | DONE          | P2 - Medium   | T31                |
 | **T33** | Implement Inventory & Stock-In WinUI Screens                                | FEATURE  | FE        | MISSING       | P1 - High     | T30, T31, T32      |
 | **T34** | Implement Shift Work (Open Shift, Close Shift & Cash Reconciliation)        | FEATURE  | BE/API    | MISSING       | P1 - High     | T12                |
 | **T35** | Implement Open/Close Shift WinUI Dialogs                                    | FEATURE  | FE        | MISSING       | P1 - High     | T34                |
@@ -642,7 +642,7 @@ POS-System
 
 ### T32 — [BE/API][FEATURE] Implement Stock Take (Kiểm kê) & Variance Approval Use Cases
 
-- **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** BE
+- **Status:** DONE | **Priority:** P2 - Medium | **Suggested Role:** BE
 - **Description:** Nghiệp vụ kiểm kê kho: Tạo phiếu kiểm kê, quét đếm thực tế, Quản lý duyệt chênh lệch để tự động cân bằng tồn kho (`Adjust`).
 - **Dependencies:** T31
 - **API Contracts:**
@@ -1027,7 +1027,7 @@ POS-System
 
 ### T63 — [ARCH/BE][REFACTOR] Extract Store & Role Access Control into Policy Pattern
 
-- **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** ARCH / BE
+- **Status:** DONE | **Priority:** P2 - Medium | **Suggested Role:** ARCH / BE
 - **Description:** Chuyển đổi các logic kiểm tra quyền Owner và phạm vi chi nhánh (Tenant Scope) từ các static helper class (`StoreManagementAccess`, `RoleAccessControl`) sang Policy Pattern (`IStoreAccessPolicy`). Mục tiêu: Tuân thủ Dependency Inversion Principle (DIP), tập trung hóa quy tắc ủy quyền cửa hàng và giúp các UseCase Handler dễ dàng mock khi viết Unit Test.
 - **Implementation:**
   - Tạo Interface `IStoreAccessPolicy` trong `POS.Application/Abstractions/Auth/` với các method: `GetAuthenticatedOwnerAsync()`, `CanAccessStore(targetStoreId)`, `CanAccessRole(role)`.

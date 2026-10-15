@@ -6,12 +6,13 @@ using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Stores.Errors;
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Domain.Common;
+using POS.Domain.Employees;
 using POS.Domain.Rbac.Constants;
 
 namespace POS.Application.UseCases.Stores.Commands.AssignAdminToStore;
 
 public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployeeRepository employees,
-    IRoleRepository roles, ICurrentUser currentUser,
+    IRoleRepository roles, IStoreAccessPolicy storeAccessPolicy,
     IUnitOfWork unitOfWork, ICacheService cache, ILogger<AssignAdminToStoreCommandHandler> logger)
     : ICommandHandler<AssignAdminToStoreCommand, StoreDetailDto>
 {
@@ -35,9 +36,9 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
 
     private async Task<Result<StoreDetailDto>> AssignAsync(AssignAdminToStoreCommand command, CancellationToken cancellationToken)
     {
-        var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+        var caller = await storeAccessPolicy.GetAuthenticatedOwnerAsync(cancellationToken);
         if (caller.IsFailure) return caller.Error;
-        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, cancellationToken))
+        if (!storeAccessPolicy.CanAccessStore(command.StoreId))
             return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);
@@ -49,13 +50,13 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
         var stateError = EmployeeTransferGuards.ValidateState(employee, store);
         if (stateError != Error.None) return stateError;
         if (employee.IsChainOwner ||
-            !(StoreManagementAccess.HasSystemRole(employee, RoleNames.Cashier) ||
-              StoreManagementAccess.HasSystemRole(employee, RoleNames.StoreManager)))
+            !(HasSystemRole(employee, RoleNames.Cashier) ||
+              HasSystemRole(employee, RoleNames.StoreManager)))
             return StoreErrors.InvalidEmployeeRole;
 
         if (employee.StoreId is not Guid sourceStoreId)
             return StoreErrors.InvalidEmployeeStore;
-        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, sourceStoreId, cancellationToken))
+        if (!storeAccessPolicy.CanAccessStore(sourceStoreId))
             return StoreErrors.Forbidden;
 
         var managerRoles = await roles.GetSystemRolesByNameAsync(RoleNames.StoreManager, cancellationToken);
@@ -80,4 +81,9 @@ public class AssignAdminToStoreCommandHandler(IStoreRepository stores, IEmployee
 
         return StoreDetailDto.FromStore(store);
     }
+
+    /// <summary>Checks if the <paramref name="employee"/> holds a specific named system role.</summary>
+    private static bool HasSystemRole(Employee employee, string roleName) =>
+        employee.Role is { IsSystemRole: true, StoreId: null } role &&
+        role.Id == employee.RoleId && role.Name == roleName;
 }

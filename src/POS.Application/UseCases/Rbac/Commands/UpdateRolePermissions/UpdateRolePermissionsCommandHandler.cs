@@ -14,6 +14,7 @@ public class UpdateRolePermissionsCommandHandler(
     IPermissionRepository permissionRepository,
     ICacheService cacheService,
     ICurrentUser currentUser,
+    IStoreAccessPolicy storeAccessPolicy,
     IUnitOfWork unitOfWork,
     ILogger<UpdateRolePermissionsCommandHandler> logger
 ) : ICommandHandler<UpdateRolePermissionsCommand, RoleDetailDto>
@@ -31,8 +32,7 @@ public class UpdateRolePermissionsCommandHandler(
             return RoleErrors.SystemRoleCannotBeModified;
         }
 
-        var canManage = RoleAccessControl.CanManageStore(currentUser, role.StoreId);
-        if (!canManage)
+        if (!storeAccessPolicy.CanAccessStore(role.StoreId))
         {
             return RoleErrors.Forbidden;
         }

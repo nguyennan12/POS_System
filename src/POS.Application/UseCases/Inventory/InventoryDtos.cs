@@ -1,7 +1,44 @@
 using POS.Domain.Inventory.Stock;
 using POS.Domain.Inventory.StockIn;
+using POS.Domain.Inventory.StockTake;
 
 namespace POS.Application.UseCases.Inventory;
+
+// ── StockTake DTOs ────────────────────────────────────────────────────────────
+
+public record StockTakeItemDto(
+    Guid Id,
+    Guid SkuId,
+    string SkuCode,
+    string ProductName,
+    decimal SystemQty,
+    decimal ActualQty,
+    decimal DiffQty,
+    string? Note
+);
+
+public record StockTakeSummaryDto(
+    Guid Id,
+    Guid StoreId,
+    string Status,
+    string? Note,
+    Guid CreatedBy,
+    Guid? ApprovedBy,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ApprovedAt
+);
+
+public record StockTakeDetailDto(
+    Guid Id,
+    Guid StoreId,
+    string Status,
+    string? Note,
+    Guid CreatedBy,
+    Guid? ApprovedBy,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ApprovedAt,
+    IReadOnlyList<StockTakeItemDto> Items
+);
 
 // ── StockIn Voucher DTOs ──────────────────────────────────────────────────────
 
@@ -169,5 +206,39 @@ public static class InventoryDtoExtensions
         t.Note,
         t.CreatedBy,
         new DateTimeOffset(t.CreatedAt, TimeSpan.Zero)
+    );
+
+    public static StockTakeSummaryDto ToSummaryDto(this POS.Domain.Inventory.StockTake.StockTake s) => new(
+        s.Id,
+        s.StoreId,
+        s.Status.ToString(),
+        s.Note,
+        s.CreatedBy,
+        s.ApprovedBy,
+        new DateTimeOffset(s.CreatedAt, TimeSpan.Zero),
+        s.ApprovedAt.HasValue ? new DateTimeOffset(s.ApprovedAt.Value, TimeSpan.Zero) : null
+    );
+
+    public static StockTakeDetailDto ToDetailDto(this POS.Domain.Inventory.StockTake.StockTake s) => new(
+        s.Id,
+        s.StoreId,
+        s.Status.ToString(),
+        s.Note,
+        s.CreatedBy,
+        s.ApprovedBy,
+        new DateTimeOffset(s.CreatedAt, TimeSpan.Zero),
+        s.ApprovedAt.HasValue ? new DateTimeOffset(s.ApprovedAt.Value, TimeSpan.Zero) : null,
+        s.Items.Select(i => i.ToDto()).ToList().AsReadOnly()
+    );
+
+    public static StockTakeItemDto ToDto(this POS.Domain.Inventory.StockTake.StockTakeItem i) => new(
+        i.Id,
+        i.SkuId,
+        i.Sku?.SkuCode ?? string.Empty,
+        i.Sku?.Product?.Name ?? string.Empty,
+        i.SystemQty,
+        i.ActualQty,
+        i.DiffQty,
+        i.Note
     );
 }
