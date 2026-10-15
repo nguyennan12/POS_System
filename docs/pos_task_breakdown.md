@@ -193,7 +193,7 @@ POS-System
 | **T24** | Implement Product & SKU Management Use Cases (Barcode Uniqueness)           | FEATURE  | BE        | MISSING       | P1 - High     | T22                |
 | **T25** | Implement Unit Conversions & Price Lists Handlers                           | FEATURE  | BE        | MISSING       | P2 - Medium   | T24                |
 | **T26** | Implement Products, SKUs & Barcode Query Controller Endpoints               | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T25           |
-| **T27** | Implement Product & Category Management WinUI Forms                         | FEATURE  | FE        | MISSING       | P1 - High     | T23, T26           |
+| **T27** | Implement Product & Category Management WinUI Forms                         | FEATURE  | FE        | DONE          | P1 - High     | T23, T26           |
 | **T28** | Implement Bulk Product Excel Import via ClosedXML                           | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T24                |
 | **T29** | Implement Supplier Management & Debt Tracking Use Cases                     | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T07                |
 | **T30** | Implement Stock-In Voucher Creation & Stock Transaction Ledger              | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T29           |
@@ -579,7 +579,7 @@ POS-System
 
 ### T27 — [FE][FEATURE] Implement Product & Category Management WinUI Forms
 
-- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** FE
+- **Status:** DONE | **Priority:** P1 - High | **Suggested Role:** FE
 - **Description:** Xây dựng màn hình danh sách sản phẩm (`frmProductList.cs`) và form chi tiết (`frmProductEdit.cs`), hỗ trợ thêm nhiều biến thể SKU và in tem mã vạch.
 - **Dependencies:** T23, T26
 - **API Contracts:** `ProductApiClient` -> `ProductFilterRequest`, `CreateProductRequest`, `UpdateProductRequest`, `CreateSkuRequest` / Nhận `ProductSummaryResponse`, `ProductDetailResponse`, `SkuDetailResponse`, `CategoryResponse`

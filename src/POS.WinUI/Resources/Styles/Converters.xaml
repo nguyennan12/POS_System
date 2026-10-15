@@ -11,4 +11,8 @@
     <converters:PermissionToVisibilityConverter  x:Key="PermissionToVis" />
     <converters:PermissionToVisibilityConverter  x:Key="InversePermissionToVis"    Invert="True" />
 
+    <converters:InverseBoolConverter             x:Key="InvertBoolConverter" />
+    <converters:InverseBoolConverter             x:Key="InverseBoolConverter" />
+    <converters:NullOrEmptyToVisibilityConverter x:Key="StringToVisibilityConverter" />
+
 </ResourceDictionary>

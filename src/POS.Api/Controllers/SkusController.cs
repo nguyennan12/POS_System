@@ -61,7 +61,7 @@ public class SkusController(ISender mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var command = new Application.UseCases.Products.Commands.CreateSku.CreateSkuCommand(
-            request.ProductId,
+            request.ProductId.GetValueOrDefault(),
             request.SkuCode,
             request.Barcode,
             request.CostPrice,

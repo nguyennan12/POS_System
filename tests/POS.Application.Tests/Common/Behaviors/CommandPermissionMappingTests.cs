@@ -65,6 +65,8 @@ public sealed class CommandPermissionMappingTests
             ["UpdateUnitConversionCommand"] = "products:update",
             ["CreatePriceListCommand"] = "products:create",
             ["BulkImportProductsCommand"] = "products:create",
+            ["UpdateStoreConfigCommand"] = "stores:update",
+            ["UpdateI18nDictionaryCommand"] = "stores:update",
         };
 
     private static readonly HashSet<string> AuthenticationCommands =
