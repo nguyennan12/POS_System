@@ -7,22 +7,20 @@ namespace POS.Application.UseCases.Products.Queries.GetPosCatalog;
 
 internal sealed class GetPosCatalogQueryHandler(
     ISkuRepository skuRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetPosCatalogQuery, PagedPosCatalogList>
+    IStoreAccessPolicy storeAccessPolicy) : IQueryHandler<GetPosCatalogQuery, PagedPosCatalogList>
 {
     public async Task<Result<PagedPosCatalogList>> Handle(
         GetPosCatalogQuery query,
         CancellationToken cancellationToken)
     {
-        if (currentUser.StoreId is null)
-            return ProductErrors.StoreRequired;
-
-        var storeId = currentUser.StoreId.Value;
+        var storeContext = storeAccessPolicy.EnforceStoreAccess(query.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
         var pageNumber = Math.Max(1, query.PageNumber);
         var pageSize = Math.Min(200, Math.Max(1, query.PageSize));
 
         var (items, total) = await skuRepository.GetPosCatalogAsync(
-            storeId,
+            storeContext.Value,
             query.CategoryId,
             query.Search,
             pageNumber,

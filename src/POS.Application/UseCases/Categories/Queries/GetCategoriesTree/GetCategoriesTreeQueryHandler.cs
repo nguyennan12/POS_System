@@ -2,6 +2,7 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Categories.Dtos;
+using POS.Application.UseCases.Categories.Errors;
 using POS.Domain.Common;
 using POS.Domain.Products;
 
@@ -10,25 +11,22 @@ namespace POS.Application.UseCases.Categories.Queries.GetCategoriesTree;
 internal sealed class GetCategoriesTreeQueryHandler : IQueryHandler<GetCategoriesTreeQuery, List<CategoryDto>>
 {
     private readonly ICategoryRepository _categoryRepository;
-    private readonly ICurrentUser _currentUser;
+    private readonly IStoreAccessPolicy _storeAccessPolicy;
 
     public GetCategoriesTreeQueryHandler(
         ICategoryRepository categoryRepository,
-        ICurrentUser currentUser)
+        IStoreAccessPolicy storeAccessPolicy)
     {
         _categoryRepository = categoryRepository;
-        _currentUser = currentUser;
+        _storeAccessPolicy = storeAccessPolicy;
     }
 
     public async Task<Result<List<CategoryDto>>> Handle(GetCategoriesTreeQuery request, CancellationToken cancellationToken)
     {
-        var storeId = _currentUser.StoreId;
-        if (!storeId.HasValue)
-        {
-            return Result<List<CategoryDto>>.Failure(new Error("Store.Required", "Store context is missing."));
-        }
+        var storeContext = _storeAccessPolicy.EnforceStoreAccess(request.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
-        var categories = await _categoryRepository.GetAllByStoreIdAsync(storeId.Value, cancellationToken);
+        var categories = await _categoryRepository.GetAllByStoreIdAsync(storeContext.Value, cancellationToken);
 
         var responseList = BuildTree(categories, null);
         

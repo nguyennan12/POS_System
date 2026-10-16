@@ -166,27 +166,18 @@ public partial class ProductsViewModel
     }
 
     [RelayCommand]
-    public void RequestDeleteCategory(CategoryItemModel? cat)
+    public async Task DeleteCategoryAsync(CategoryItemModel? cat)
     {
         if (cat == null) return;
-        CategoryToDelete = cat;
-        DeleteCategoryConfirmMessage = $"Bạn có chắc chắn muốn xóa danh mục \"{cat.Name}\"?";
-        IsDeleteCategoryConfirmOpen = true;
-    }
 
-    [RelayCommand]
-    public void CancelDeleteCategory()
-    {
-        IsDeleteCategoryConfirmOpen = false;
-        CategoryToDelete = null;
-    }
+        var confirmed = await _confirmDialog.ShowDangerConfirmAsync(
+            title: "Xác nhận xóa danh mục",
+            message: $"Bạn có chắc chắn muốn xóa danh mục \"{cat.Name}\"?",
+            warningMessage: "Nếu danh mục này có chứa hàng hóa hoặc danh mục con, hệ thống sẽ từ chối xóa để bảo toàn dữ liệu.",
+            confirmText: "Xóa vĩnh viễn"
+        );
 
-    [RelayCommand]
-    public async Task ConfirmDeleteCategoryAsync()
-    {
-        if (CategoryToDelete == null) return;
-        var cat = CategoryToDelete;
-        IsDeleteCategoryConfirmOpen = false;
+        if (!confirmed) return;
 
         IsLoading = true;
         try
@@ -195,7 +186,10 @@ public partial class ProductsViewModel
             if (res != null && res.Success)
             {
                 ShowStatus($"Đã xóa danh mục '{cat.Name}'.");
+                _queryCache.InvalidateByPrefix("categories");
+                _queryCache.InvalidateByPrefix("kpi");
                 await LoadCategoriesAsync();
+                await LoadKpiSummaryAsync();
             }
             else
             {
@@ -208,14 +202,10 @@ public partial class ProductsViewModel
         }
         finally
         {
-            CategoryToDelete = null;
             IsLoading = false;
         }
     }
 
     [RelayCommand]
-    public void DeleteCategory(CategoryItemModel? cat)
-    {
-        RequestDeleteCategory(cat);
-    }
+    public Task RequestDeleteCategoryAsync(CategoryItemModel? cat) => DeleteCategoryAsync(cat);
 }

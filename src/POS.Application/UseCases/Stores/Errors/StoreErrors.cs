@@ -14,6 +14,16 @@ public static class StoreErrors
         "STORE.FORBIDDEN",
         "Không có quyền quản lý cửa hàng này.");
 
+    public static readonly Error StoreRequired = new(
+        ErrorType.Unauthorized,
+        "Store.Required",
+        "Thiếu ngữ cảnh cửa hàng.");
+
+    public static readonly Error StoreAccessDenied = new(
+        ErrorType.Forbidden,
+        "Store.AccessDenied",
+        "Bạn không có quyền truy cập cửa hàng này.");
+
     public static readonly Error StoreNotFound = new(
         ErrorType.NotFound,
         "STORE.NOT_FOUND",

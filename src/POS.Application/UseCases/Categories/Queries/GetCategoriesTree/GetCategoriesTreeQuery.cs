@@ -4,7 +4,7 @@ using POS.Application.UseCases.Categories.Dtos;
 
 namespace POS.Application.UseCases.Categories.Queries.GetCategoriesTree;
 
-public record GetCategoriesTreeQuery : IQuery<List<CategoryDto>>, IRequirePermission
+public record GetCategoriesTreeQuery(Guid? StoreId = null) : IQuery<List<CategoryDto>>, IRequirePermission
 {
     public string RequiredPermission => "categories:read";
 }

@@ -22,8 +22,20 @@ public sealed class CategoryApiClient : BaseApiClient
   /// <summary>
   /// Lấy cây danh mục sản phẩm đang hiển thị
   /// </summary>
-  public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(CancellationToken ct = default)
-      => GetAsync<ApiResponse<List<CategoryResponse>>>(ApiRoutes.Categories.Tree, ct);
+  public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(CancellationToken ct)
+      => GetCategoriesTreeAsync(null, ct);
+
+  /// <summary>
+  /// Lấy cây danh mục sản phẩm theo cửa hàng mục tiêu (hoặc cửa hàng hiện tại)
+  /// </summary>
+  public Task<ApiResponse<List<CategoryResponse>>?> GetCategoriesTreeAsync(Guid? storeId = null, CancellationToken ct = default)
+  {
+      var effectiveStoreId = storeId ?? (Guid.TryParse(_session.StoreId, out var sid) ? sid : null);
+      var url = effectiveStoreId.HasValue
+          ? $"{ApiRoutes.Categories.Tree}?storeId={effectiveStoreId.Value}"
+          : ApiRoutes.Categories.Tree;
+      return GetAsync<ApiResponse<List<CategoryResponse>>>(url, ct);
+  }
 
   /// <summary>
   /// Tạo danh mục mới

@@ -20,6 +20,8 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
 {
     private readonly ProductApiClient _productApi;
     private readonly CategoryApiClient _categoryApi;
+    private readonly IConfirmDialogService _confirmDialog;
+    private readonly IQueryCacheService _queryCache;
 
     public override string TabId => "Products";
     public override string Title => "Sản phẩm & Danh mục";
@@ -135,10 +137,14 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
     public ProductsViewModel(
         ProductApiClient productApi,
         CategoryApiClient categoryApi,
-        SessionService sessionService) : base(sessionService)
+        SessionService sessionService,
+        IConfirmDialogService confirmDialog,
+        IQueryCacheService queryCache) : base(sessionService)
     {
         _productApi = productApi;
         _categoryApi = categoryApi;
+        _confirmDialog = confirmDialog;
+        _queryCache = queryCache;
 
         // Initialize helper & barcode
         InitializeBarcode();
@@ -160,6 +166,35 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
         }
 
         await LoadProductsAsync();
+        await LoadKpiSummaryAsync();
+    }
+
+    /// <summary>
+    /// Nạp số liệu thống kê KPI chuẩn toàn hệ thống từ Backend (Tổng sản phẩm, Đang kinh doanh, SKU, Danh mục)
+    /// </summary>
+    [RelayCommand]
+    public async Task LoadKpiSummaryAsync()
+    {
+        try
+        {
+            var cacheKey = $"kpi-summary-{CurrentStoreId}";
+            var kpiRes = await _queryCache.GetOrFetchAsync(
+                cacheKey,
+                () => _productApi.GetProductKpiSummaryAsync(),
+                staleTime: TimeSpan.FromSeconds(30));
+
+            if (kpiRes?.Data != null)
+            {
+                TotalProductsCount = kpiRes.Data.TotalProducts;
+                ActiveProductsCount = kpiRes.Data.ActiveProducts;
+                TotalSkusCount = kpiRes.Data.TotalSkus;
+                TotalCategoriesCount = kpiRes.Data.TotalCategories;
+            }
+        }
+        catch
+        {
+            // Giữ nguyên số liệu fallback nếu API gặp sự cố
+        }
     }
 
     /// <summary>
@@ -254,13 +289,21 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
             if (SelectedStatusFilter.Contains("Active")) status = "Active";
             else if (SelectedStatusFilter.Contains("Inactive")) status = "Inactive";
 
-            var response = await _productApi.GetProductsAsync(
-                categoryId: catId,
-                search: string.IsNullOrWhiteSpace(SearchKeyword) ? null : SearchKeyword.Trim(),
-                status: status,
-                pageNumber: CurrentPage,
-                pageSize: PageSize,
-                ct: ct);
+            var search = string.IsNullOrWhiteSpace(SearchKeyword) ? null : SearchKeyword.Trim();
+
+            // Áp dụng Stale-While-Revalidate Query Cache (TanStack Query style)
+            var queryKey = $"products-{CurrentStoreId}-{catId}-{status}-{search}-{CurrentPage}-{PageSize}";
+
+            var response = await _queryCache.GetOrFetchAsync(
+                queryKey,
+                () => _productApi.GetProductsAsync(
+                    categoryId: catId,
+                    search: search,
+                    status: status,
+                    pageNumber: CurrentPage,
+                    pageSize: PageSize,
+                    ct: ct),
+                staleTime: TimeSpan.FromSeconds(30));
 
             Products.Clear();
 
@@ -270,9 +313,6 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
                 TotalCount = paged.TotalCount;
                 TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
                 if (TotalPages < 1) TotalPages = 1;
-
-                int activeCount = 0;
-                int skuSum = 0;
 
                 foreach (var item in paged.Items)
                 {
@@ -290,15 +330,15 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
                         CreatedAt = item.CreatedAt
                     };
 
-                    if (model.IsActive) activeCount++;
-                    skuSum += model.SkuCount;
-
                     Products.Add(model);
                 }
 
-                TotalProductsCount = TotalCount;
-                ActiveProductsCount = activeCount;
-                TotalSkusCount = skuSum;
+                // Nếu chưa nạp KPI toàn cục từ endpoint summary thì mới fallback tạm
+                if (TotalProductsCount == 0)
+                {
+                    TotalProductsCount = TotalCount;
+                    ActiveProductsCount = TotalCount;
+                }
 
                 OnPropertyChanged(nameof(PaginationSummary));
                 OnPropertyChanged(nameof(HasPreviousPage));
@@ -457,7 +497,17 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
 
     public void ShowStatus(string message, bool isError = false)
     {
+        if (string.IsNullOrWhiteSpace(message)) return;
         StatusMessage = message;
         IsStatusError = isError;
+
+        if (isError)
+        {
+            ShowError(message);
+        }
+        else
+        {
+            ShowSuccess(message);
+        }
     }
 }

@@ -7,7 +7,8 @@ public record GetProductsQuery(
     Guid? CategoryId,
     string? Status,
     int PageNumber = 1,
-    int PageSize = 20) : IQuery<PagedProductList>;
+    int PageSize = 20,
+    Guid? StoreId = null) : IQuery<PagedProductList>;
 
 public record PagedProductList(
     IReadOnlyList<ProductSummaryDto> Items,

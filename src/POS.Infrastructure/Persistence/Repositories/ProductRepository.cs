@@ -152,6 +152,25 @@ internal sealed class ProductRepository(AppDbContext dbContext) : IProductReposi
 
         return result;
     }
+
+    public async Task<(int TotalProducts, int ActiveProducts, int TotalSkus, int TotalCategories)> GetProductKpiSummaryAsync(
+        Guid storeId,
+        CancellationToken cancellationToken = default)
+    {
+        var totalProducts = await dbContext.Products.AsNoTracking()
+            .CountAsync(p => p.StoreId == storeId, cancellationToken);
+
+        var activeProducts = await dbContext.Products.AsNoTracking()
+            .CountAsync(p => p.StoreId == storeId && p.Status == ProductStatus.Active, cancellationToken);
+
+        var totalSkus = await dbContext.Skus.AsNoTracking()
+            .CountAsync(s => s.StoreId == storeId && s.IsActive, cancellationToken);
+
+        var totalCategories = await dbContext.Categories.AsNoTracking()
+            .CountAsync(c => c.StoreId == storeId, cancellationToken);
+
+        return (totalProducts, activeProducts, totalSkus, totalCategories);
+    }
 }
 
 /// <summary>

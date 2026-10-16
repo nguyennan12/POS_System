@@ -18,6 +18,13 @@ public interface IStoreAccessPolicy
     Task<Result<Employee>> GetAuthenticatedOwnerAsync(CancellationToken ct = default);
 
     /// <summary>
+    /// Kiểm tra và xác định StoreId hợp lệ cho ngữ cảnh hiện tại.
+    /// Ưu tiên <paramref name="requestedStoreId"/> nếu có, ngược lại lấy store của người dùng.
+    /// Trả về StoreId nếu hợp lệ, ngược lại trả về Error (StoreRequired hoặc StoreAccessDenied).
+    /// </summary>
+    Result<Guid> EnforceStoreAccess(Guid? requestedStoreId = null);
+
+    /// <summary>
     /// Kiểm tra người dùng hiện tại có thể truy cập chi nhánh <paramref name="targetStoreId"/>.
     /// ChainOwner luôn được phép; nhân viên chi nhánh chỉ được phép truy cập chi nhánh của mình.
     /// </summary>

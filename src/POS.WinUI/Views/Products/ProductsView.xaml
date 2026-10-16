@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:local="clr-namespace:POS.WinUI.Views.Products"
+             xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
              mc:Ignorable="d" 
              d:DesignHeight="900" d:DesignWidth="1200">
 
@@ -372,20 +373,18 @@
                                     <ColumnDefinition Width="42"/>                              <!-- 0: Expand Chevron -->
                                     <ColumnDefinition Width="2*" MinWidth="180"/>              <!-- 1: Sản phẩm & Thương hiệu -->
                                     <ColumnDefinition Width="130"/>                             <!-- 2: Danh mục -->
-                                    <ColumnDefinition Width="70"/>                              <!-- 3: Đơn vị tính -->
-                                    <ColumnDefinition Width="95"/>                              <!-- 4: Biến thể SKU -->
-                                    <ColumnDefinition Width="110"/>                             <!-- 5: Trạng thái kinh doanh -->
-                                    <ColumnDefinition Width="95"/>                              <!-- 6: Ngày tạo -->
-                                    <ColumnDefinition Width="115"/>                             <!-- 7: Thao tác -->
+                                    <ColumnDefinition Width="80"/>                              <!-- 3: Đơn vị tính -->
+                                    <ColumnDefinition Width="110"/>                             <!-- 4: Trạng thái kinh doanh -->
+                                    <ColumnDefinition Width="110"/>                             <!-- 5: Ngày tạo -->
+                                    <ColumnDefinition Width="115"/>                             <!-- 6: Thao tác -->
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="SẢN PHẨM &amp; THƯƠNG HIỆU" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <TextBlock Grid.Column="2" Text="DANH MỤC" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <TextBlock Grid.Column="3" Text="ĐƠN VỊ" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
-                                <TextBlock Grid.Column="4" Text="BIẾN THỂ SKU" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
-                                <TextBlock Grid.Column="5" Text="TRẠNG THÁI" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
-                                <TextBlock Grid.Column="6" Text="NGÀY TẠO" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
-                                <TextBlock Grid.Column="7" Text="THAO TÁC" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
+                                <TextBlock Grid.Column="4" Text="TRẠNG THÁI" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
+                                <TextBlock Grid.Column="5" Text="NGÀY TẠO" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
+                                <TextBlock Grid.Column="6" Text="THAO TÁC" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
                             </Grid>
                         </Border>
 
@@ -401,11 +400,10 @@
                                                     <ColumnDefinition Width="42"/>                              <!-- 0: Expand Chevron -->
                                                     <ColumnDefinition Width="2*" MinWidth="180"/>              <!-- 1: Sản phẩm & Thương hiệu -->
                                                     <ColumnDefinition Width="130"/>                             <!-- 2: Danh mục -->
-                                                    <ColumnDefinition Width="70"/>                              <!-- 3: Đơn vị tính -->
-                                                    <ColumnDefinition Width="95"/>                              <!-- 4: Biến thể SKU -->
-                                                    <ColumnDefinition Width="110"/>                             <!-- 5: Trạng thái kinh doanh -->
-                                                    <ColumnDefinition Width="95"/>                              <!-- 6: Ngày tạo -->
-                                                    <ColumnDefinition Width="115"/>                             <!-- 7: Thao tác -->
+                                                    <ColumnDefinition Width="80"/>                              <!-- 3: Đơn vị tính -->
+                                                    <ColumnDefinition Width="110"/>                             <!-- 4: Trạng thái kinh doanh -->
+                                                    <ColumnDefinition Width="110"/>                             <!-- 5: Ngày tạo -->
+                                                    <ColumnDefinition Width="115"/>                             <!-- 6: Thao tác -->
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Expand Button -->
@@ -416,7 +414,7 @@
                                                     <Button.Template>
                                                         <ControlTemplate TargetType="Button">
                                                             <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
                                                         </ControlTemplate>
                                                     </Button.Template>
@@ -439,21 +437,16 @@
                                                 <!-- Base Unit -->
                                                 <TextBlock Grid.Column="3" Text="{Binding BaseUnit}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-                                                <!-- SKU Count Badge -->
-                                                <Border Grid.Column="4" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8,4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding SkuCount, StringFormat={}{0} SKUs}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-                                                </Border>
-
                                                 <!-- Status Badge -->
-                                                <Border Grid.Column="5" Background="{Binding StatusBadgeBackground}" CornerRadius="6" Padding="10,4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Border Grid.Column="4" Background="{Binding StatusBadgeBackground}" CornerRadius="6" Padding="10,4" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding StatusBadgeText}" FontSize="12" FontWeight="SemiBold" Foreground="{Binding StatusBadgeForeground}"/>
                                                 </Border>
 
                                                 <!-- Created At -->
-                                                <TextBlock Grid.Column="6" Text="{Binding CreatedAtFormatted}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="5" Text="{Binding CreatedAtFormatted}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
                                                 <!-- Action Buttons -->
-                                                <StackPanel Grid.Column="7" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                     <!-- Sửa -->
                                                     <Button Command="{Binding DataContext.OpenEditProductModalCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                             CommandParameter="{Binding}"
@@ -902,112 +895,11 @@
     </Grid>
 
         <!-- ════════════════════ MODAL OVERLAYS (FULL VIEW POPUP) ════════════════════ -->
-        <local:ProductEditModal Visibility="{Binding IsProductEditModalOpen, Converter={StaticResource BoolToVis}}"/>
+        <!-- ProductEditModal và ConfirmDialog hiện được hiển thị toàn màn hình (Full Window Overlay) qua ModalWindow / ConfirmDialogService -->
 
         <local:CategoryManageModal Visibility="{Binding IsCategoryModalOpen, Converter={StaticResource BoolToVis}}"/>
 
         <local:BarcodePrintModal Visibility="{Binding IsBarcodeModalOpen, Converter={StaticResource BoolToVis}}"/>
-
-        <!-- MODAL: XÁC NHẬN XÓA DANH MỤC -->
-        <Grid Visibility="{Binding IsDeleteCategoryConfirmOpen, Converter={StaticResource BoolToVis}}">
-            <!-- Backdrop -->
-            <Border Background="#66000000"/>
-
-            <!-- Dialog Card -->
-            <Border Width="440" VerticalAlignment="Center" HorizontalAlignment="Center"
-                    Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource InputBorderBrush}"
-                    BorderThickness="1" CornerRadius="16" Padding="24">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="24" ShadowDepth="4" Direction="270" Color="#000000" Opacity="0.2"/>
-                </Border.Effect>
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Border Width="40" Height="40" CornerRadius="20" Background="#FEE2E2" Margin="0,0,14,0">
-                            <ui:SymbolIcon Symbol="Delete24" FontSize="20" Foreground="#DC2626" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Xác nhận xóa danh mục" FontSize="17" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Hành động này không thể hoàn tác" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <TextBlock Text="{Binding DeleteCategoryConfirmMessage}" 
-                               FontSize="13.5" Foreground="{StaticResource TextPrimaryBrush}" 
-                               TextWrapping="Wrap" Margin="0,0,0,12"/>
-
-                    <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,0,0,20">
-                        <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="Warning24" FontSize="15" Foreground="#D97706" Margin="0,0,8,0" VerticalAlignment="Top"/>
-                            <TextBlock Text="Nếu danh mục này có chứa hàng hóa hoặc danh mục con, hệ thống sẽ từ chối xóa để bảo toàn dữ liệu."
-                                       FontSize="12" Foreground="#92400E" TextWrapping="Wrap" MaxWidth="340"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Action buttons -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="14"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Nút Hủy bỏ -->
-                        <Button Grid.Column="0" Command="{Binding CancelDeleteCategoryCommand}"
-                                Height="42" Cursor="Hand" BorderThickness="0" Background="Transparent">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="btnBorder" Background="#FFFFFF" 
-                                            BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
-                                            CornerRadius="10">
-                                        <TextBlock x:Name="btnText" Text="Hủy bỏ" 
-                                                   FontSize="13.5" FontWeight="SemiBold" 
-                                                   Foreground="{StaticResource TextSecondaryBrush}" 
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="btnBorder" Property="Background" Value="#F1F5F9"/>
-                                            <Setter TargetName="btnBorder" Property="BorderBrush" Value="#CBD5E1"/>
-                                            <Setter TargetName="btnText" Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="btnBorder" Property="Background" Value="#E2E8F0"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-
-                        <!-- Nút Xóa vĩnh viễn -->
-                        <Button Grid.Column="2" Command="{Binding ConfirmDeleteCategoryCommand}"
-                                Height="42" Cursor="Hand" BorderThickness="0" Background="Transparent">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border x:Name="btnBorder" Background="#EF4444" CornerRadius="10">
-                                        <Border.Effect>
-                                            <DropShadowEffect BlurRadius="12" Color="#EF4444" Opacity="0.32" ShadowDepth="3" Direction="270"/>
-                                        </Border.Effect>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <ui:SymbolIcon Symbol="Delete24" FontSize="16" Foreground="White" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Xóa vĩnh viễn" FontSize="13.5" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="btnBorder" Property="Background" Value="#DC2626"/>
-                                        </Trigger>
-                                        <Trigger Property="IsPressed" Value="True">
-                                            <Setter TargetName="btnBorder" Property="Background" Value="#B91C1C"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Button.Template>
-                        </Button>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </Grid>
 
         <!-- MODAL: KẾT QUẢ IMPORT EXCEL -->
         <Grid Visibility="{Binding IsImportResultModalOpen, Converter={StaticResource BoolToVis}}">
@@ -1115,5 +1007,12 @@
                 </Grid>
             </Border>
         </Grid>
+
+        <!-- ════════════════════ TOAST NOTIFICATION (TOP-MOST) ════════════════════ -->
+        <shared:ToastNotification Panel.ZIndex="999" 
+                                  VerticalAlignment="Top" 
+                                  HorizontalAlignment="Center" 
+                                  Message="{Binding ToastMessage}" 
+                                  ToastType="{Binding ToastType}"/>
     </Grid>
 </UserControl>

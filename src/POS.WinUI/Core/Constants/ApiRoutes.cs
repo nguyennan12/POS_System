@@ -67,6 +67,7 @@ public static class ApiRoutes
   {
     public const string Base = "api/v1/products";
     public const string PosCatalog = "api/v1/products/pos-catalog";
+    public const string KpiSummary = "api/v1/products/kpi-summary";
     public static string GetById(Guid id) => $"api/v1/products/{id}";
     public const string BulkImport = "api/v1/products/bulk-import";
   }

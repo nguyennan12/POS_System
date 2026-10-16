@@ -32,6 +32,19 @@ public sealed class StoreAccessPolicy(
     }
 
     /// <inheritdoc/>
+    public Result<Guid> EnforceStoreAccess(Guid? requestedStoreId = null)
+    {
+        var targetStoreId = requestedStoreId ?? currentUser.StoreId;
+        if (!targetStoreId.HasValue)
+            return StoreErrors.StoreRequired;
+
+        if (!CanAccessStore(targetStoreId.Value))
+            return StoreErrors.StoreAccessDenied;
+
+        return targetStoreId.Value;
+    }
+
+    /// <inheritdoc/>
     public bool CanAccessStore(Guid? targetStoreId)
     {
         if (currentUser.IsChainOwner) return true;

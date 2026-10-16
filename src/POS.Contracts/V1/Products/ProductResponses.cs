@@ -50,3 +50,11 @@ public record PosCatalogItemResponse(
     string CategoryName,
     string? ImageUrl
 );
+
+public record ProductKpiSummaryResponse(
+    int TotalProducts,
+    int ActiveProducts,
+    int TotalSkus,
+    int TotalCategories
+);
+

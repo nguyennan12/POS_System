@@ -5,21 +5,21 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d" 
-             d:DesignHeight="850" d:DesignWidth="1000">
+             d:DesignHeight="850" d:DesignWidth="1160">
 
-<!-- ════════════════════ MODAL BACKDROP ════════════════════ -->
+    <!-- ════════════════════ MODAL BACKDROP ════════════════════ -->
     <Grid Background="#75000000">
         <!-- ════════════════════ MODAL CARD CONTAINER ════════════════════ -->
-        <Border HorizontalAlignment="Stretch" 
-                VerticalAlignment="Stretch"
-                MaxWidth="1040" 
+        <Border HorizontalAlignment="Center" 
+                VerticalAlignment="Center"
+                Width="1160" 
                 MaxHeight="860"
                 Margin="20,12"
                 Background="#FFFFFF"
                 CornerRadius="16"
                 BorderBrush="{StaticResource InputBorderBrush}"
                 BorderThickness="1"
-                Padding="24,18,24,18">
+                Padding="24,20,24,20">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="30" Color="#0F172A" Opacity="0.25" ShadowDepth="8" Direction="270"/>
             </Border.Effect>
@@ -35,7 +35,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- ════════════════════ ROW 0: HEADER ════════════════════ -->
-                <Grid Grid.Row="0" Margin="0,0,0,14">
+                <Grid Grid.Row="0" Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -71,210 +71,216 @@
                 <ScrollViewer x:Name="ModalScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,-4,0" Padding="0,0,4,0">
                     <StackPanel>
 
-                        <!-- 1. THÔNG TIN CƠ BẢN -->
-                        <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="18">
-                            <StackPanel>
-                                <TextBlock Text="1. THÔNG TIN SẢN PHẨM" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                        <!-- ══ BỐ CỤC 2 CỘT: TRÁI (THÔNG TIN SẢN PHẨM) | PHẢI (CÔNG CỤ SINH SKU) ══ -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <!-- Cột 1: Thông tin sản phẩm (Bên trái) -->
+                                <ColumnDefinition Width="1.05*"/>
+                                <ColumnDefinition Width="14"/>
+                                <!-- Cột 2: Hộp công cụ sinh biến thể SKU (Bên phải) -->
+                                <ColumnDefinition Width="1.25*"/>
+                            </Grid.ColumnDefinitions>
 
-                                <!-- Dòng 1: Tên sản phẩm & Danh mục -->
-                                <Grid Margin="0,12,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="3*"/>
-                                        <ColumnDefinition Width="14"/>
-                                        <ColumnDefinition Width="2*"/>
-                                    </Grid.ColumnDefinitions>
+                            <!-- ── 1. THÔNG TIN CƠ BẢN SẢN PHẨM (BÊN TRÁI) ── -->
+                            <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="16">
+                                <StackPanel>
+                                    <TextBlock Text="1. THÔNG TIN SẢN PHẨM" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
 
                                     <!-- Tên sản phẩm -->
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Tên sản phẩm *" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12,8">
+                                    <StackPanel Margin="0,0,0,10">
+                                        <TextBlock Text="Tên sản phẩm *" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,6">
                                             <TextBox x:Name="ProductNameTextBox"
                                                      Text="{Binding EditProductName, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13.5"/>
-                                        </Border>
-                                    </StackPanel>
-
-                                    <!-- Danh mục -->
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Danh mục hàng hóa *" FontSize="12.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <ComboBox ItemsSource="{Binding CategoryFilterOptions}" 
-                                                  SelectedItem="{Binding EditSelectedCategory}"
-                                                  DisplayMemberPath="DisplayName"
-                                                  Height="38" FontSize="13"/>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Dòng 2: Đơn vị tính, Thương hiệu, Trạng thái, Ảnh -->
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Đơn vị cơ bản -->
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Đơn vị tính *" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <ComboBox ItemsSource="{Binding BaseUnitOptions}" 
-                                                  SelectedItem="{Binding EditBaseUnit}"
-                                                  Height="38" FontSize="13"/>
-                                    </StackPanel>
-
-                                    <!-- Thương hiệu -->
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Thương hiệu" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding EditBrand, UpdateSourceTrigger=PropertyChanged}" 
                                                      Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
                                         </Border>
                                     </StackPanel>
 
-                                    <!-- Trạng thái -->
-                                    <StackPanel Grid.Column="4">
-                                        <TextBlock Text="Trạng thái" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <ComboBox SelectedValue="{Binding EditStatus}" SelectedValuePath="Tag" Height="38" FontSize="13">
-                                            <ComboBoxItem Content="Đang kinh doanh" Tag="Active" IsSelected="True"/>
-                                            <ComboBoxItem Content="Ngưng kinh doanh" Tag="Inactive"/>
-                                        </ComboBox>
-                                    </StackPanel>
+                                    <!-- Danh mục & Đơn vị tính -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="2*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <!-- Link Ảnh (tùy chọn) -->
-                                    <StackPanel Grid.Column="6">
-                                        <TextBlock Text="Ảnh (URL)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding EditImageUrl, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
-                                        </Border>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Dòng 3: Mô tả tóm tắt -->
-                                <StackPanel>
-                                    <TextBlock Text="Mô tả tóm tắt" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                    <TextBox Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}" 
-                                             Style="{StaticResource CleanMultilineTextBoxStyle}" 
-                                             Height="50" TextWrapping="Wrap" AcceptsReturn="True" FontSize="12.5"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- 2. CÔNG CỤ SINH BIẾN THỂ CỬA HÀNG TIỆN LỢI -->
-                        <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="14" Padding="18" Margin="0,14,0,0">
-                            <StackPanel>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:SymbolIcon Symbol="Flash24" FontSize="16" Foreground="#D97706" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="2. CÔNG CỤ SINH BIẾN THỂ SKU (QUY CÁCH BÁN &amp; HƯƠNG VỊ / PHÂN LOẠI)" FontSize="13" FontWeight="Bold" Foreground="#B45309"/>
+                                        <!-- Danh mục -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Danh mục hàng hóa *" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <ComboBox ItemsSource="{Binding CategoryFilterOptions}" 
+                                                      SelectedItem="{Binding EditSelectedCategory}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      Height="36" FontSize="12.5"/>
                                         </StackPanel>
-                                        <TextBlock Text="Tối ưu cho bán lẻ / cửa hàng tiện lợi: Biến thể theo quy cách bán (lon, chai, lốc, thùng, ml...) và hương vị/loại sản phẩm." 
-                                                   FontSize="12" Foreground="#92400E" Margin="0,4,0,0"/>
+
+                                        <!-- Đơn vị cơ bản -->
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Đơn vị tính *" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <ComboBox ItemsSource="{Binding BaseUnitOptions}" 
+                                                      SelectedItem="{Binding EditBaseUnit}"
+                                                      Height="36" FontSize="12.5"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Thương hiệu, Trạng thái & Ảnh -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Thương hiệu -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Thương hiệu" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,5">
+                                                <TextBox Text="{Binding EditBrand, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Trạng thái -->
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Trạng thái" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <ComboBox SelectedValue="{Binding EditStatus}" SelectedValuePath="Tag" Height="36" FontSize="12.5">
+                                                <ComboBoxItem Content="Đang bán" Tag="Active" IsSelected="True"/>
+                                                <ComboBoxItem Content="Ngưng bán" Tag="Inactive"/>
+                                            </ComboBox>
+                                        </StackPanel>
+
+                                        <!-- Link Ảnh -->
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="Ảnh (URL)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8,5">
+                                                <TextBox Text="{Binding EditImageUrl, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Mô tả tóm tắt -->
+                                    <StackPanel>
+                                        <TextBlock Text="Mô tả tóm tắt" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource CleanMultilineTextBoxStyle}" 
+                                                 Height="46" TextWrapping="Wrap" AcceptsReturn="True" FontSize="12"/>
                                     </StackPanel>
+                                </StackPanel>
+                            </Border>
 
-                                    <!-- Quick Preset Chips -->
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="Gợi ý mẫu:" FontSize="11.5" Foreground="#92400E" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                        <Button Command="{Binding ApplyDrinkPresetCommand}" Content="🥤 Nước ngọt" Height="26" Padding="8,0" Margin="0,0,4,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
-                                        <Button Command="{Binding ApplyNoodlePresetCommand}" Content="🍜 Mì gói" Height="26" Padding="8,0" Margin="0,0,4,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
-                                        <Button Command="{Binding ApplyBeerPresetCommand}" Content="🍺 Bia lon" Height="26" Padding="8,0" Margin="0,0,4,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
-                                        <Button Command="{Binding ApplyConsumerPresetCommand}" Content="🧻 Tiêu dùng" Height="26" Padding="8,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
-                                    </StackPanel>
-                                </Grid>
+                            <!-- ── 2. CÔNG CỤ SINH BIẾN THỂ SKU (BÊN PHẢI) ── -->
+                            <Border Grid.Column="2" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="14" Padding="16">
+                                <StackPanel>
+                                    <!-- Header + Chips gợi ý -->
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ui:SymbolIcon Symbol="Flash24" FontSize="16" Foreground="#D97706" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="2. CÔNG CỤ SINH BIẾN THỂ SKU" FontSize="12.5" FontWeight="Bold" Foreground="#B45309" VerticalAlignment="Center"/>
+                                        </StackPanel>
 
-                                <!-- Dòng 1: Nhập Quy cách & Hương vị -->
-                                <Grid Margin="0,12,0,10">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="14"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                        <!-- Quick Preset Chips -->
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="Mẫu:" FontSize="11" Foreground="#92400E" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                            <Button Command="{Binding ApplyDrinkPresetCommand}" Content="🥤 Nước" Height="24" Padding="6,0" Margin="0,0,3,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
+                                            <Button Command="{Binding ApplyNoodlePresetCommand}" Content="🍜 Mì" Height="24" Padding="6,0" Margin="0,0,3,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
+                                            <Button Command="{Binding ApplyBeerPresetCommand}" Content="🍺 Bia" Height="24" Padding="6,0" Margin="0,0,3,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
+                                            <Button Command="{Binding ApplyConsumerPresetCommand}" Content="🧻 Tiêu dùng" Height="24" Padding="6,0" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" FontSize="11" Cursor="Hand"/>
+                                        </StackPanel>
+                                    </Grid>
 
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Quy cách / Dung tích / Đóng gói (ngăn cách bởi dấu phẩy) *" FontSize="12" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
-                                        <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding VariantColorInput, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
-                                        </Border>
-                                    </StackPanel>
+                                    <!-- Nhập Quy cách & Hương vị -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Hương vị / Phân loại sản phẩm (ngăn cách bởi dấu phẩy)" FontSize="12" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
-                                        <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding VariantSizeInput, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
-                                        </Border>
-                                    </StackPanel>
-                                </Grid>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Quy cách / Đóng gói (cách bằng dấu phẩy) *" FontSize="11.5" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                                <TextBox Text="{Binding VariantColorInput, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
 
-                                <!-- Dòng 2: Giá vốn, Giá bán, VAT và Nút Sinh -->
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="160"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="160"/>
-                                        <ColumnDefinition Width="12"/>
-                                        <ColumnDefinition Width="90"/>
-                                        <ColumnDefinition Width="14"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Hương vị / Phân loại (cách bằng dấu phẩy)" FontSize="11.5" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                                                <TextBox Text="{Binding VariantSizeInput, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
 
-                                    <!-- Giá vốn mặc định -->
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Giá vốn mặc định (đ)" FontSize="12" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
-                                        <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding VariantDefaultCost, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
-                                        </Border>
-                                    </StackPanel>
+                                    <!-- Hàng: Giá vốn, Giá bán, VAT và Nút Sinh SKU -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="70"/>
+                                            <ColumnDefinition Width="10"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
 
-                                    <!-- Giá bán mặc định -->
-                                    <StackPanel Grid.Column="2">
-                                        <TextBlock Text="Giá bán mặc định (đ)" FontSize="12" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
-                                        <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding VariantDefaultSell, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13"/>
-                                        </Border>
-                                    </StackPanel>
+                                        <!-- Giá vốn mặc định -->
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Giá vốn (đ)" FontSize="11.5" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="8,5">
+                                                <TextBox Text="{Binding VariantDefaultCost, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
 
-                                    <!-- Thuế VAT -->
-                                    <StackPanel Grid.Column="4">
-                                        <TextBlock Text="VAT (%)" FontSize="12" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
-                                        <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="10,6">
-                                            <TextBox Text="{Binding VariantDefaultTax, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Style="{StaticResource CleanTextBoxStyle}" FontSize="13" TextAlignment="Center"/>
-                                        </Border>
-                                    </StackPanel>
+                                        <!-- Giá bán mặc định -->
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Giá bán (đ)" FontSize="11.5" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="8,5">
+                                                <TextBox Text="{Binding VariantDefaultSell, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5"/>
+                                            </Border>
+                                        </StackPanel>
 
-                                    <!-- Nút Sinh biến thể -->
-                                    <Button Grid.Column="6" 
-                                            Content="⚡ Tự động sinh danh sách SKU" 
-                                            Command="{Binding GenerateVariantsCommand}"
-                                            Height="38" Padding="16,0"
-                                            VerticalAlignment="Bottom"
-                                            Background="#D97706" Foreground="White" FontWeight="Bold" FontSize="13"
-                                            Cursor="Hand">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                                        <!-- Thuế VAT -->
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="VAT (%)" FontSize="11.5" FontWeight="SemiBold" Foreground="#78350F" Margin="0,0,0,4"/>
+                                            <Border Background="#FFFFFF" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="8" Padding="6,5">
+                                                <TextBox Text="{Binding VariantDefaultTax, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12.5" TextAlignment="Center"/>
+                                            </Border>
+                                        </StackPanel>
 
-                        <!-- 3. DANH SÁCH BIẾN THỂ SKU -->
-                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="18" Margin="0,14,0,0">
+                                        <!-- Nút Tự động sinh danh sách SKU -->
+                                        <Button Grid.Column="6" 
+                                                Content="⚡ Tự động sinh danh sách SKU" 
+                                                Command="{Binding GenerateVariantsCommand}"
+                                                Height="34" Padding="12,0"
+                                                VerticalAlignment="Bottom"
+                                                Background="#D97706" Foreground="White" FontWeight="Bold" FontSize="12"
+                                                Cursor="Hand">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <!-- ── 3. DANH SÁCH BIẾN THỂ SKU (BÊN DƯỚI) ── -->
+                        <Border Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="14" Padding="16">
                             <StackPanel>
                                 <Grid Margin="0,0,0,10">
                                     <Grid.ColumnDefinitions>
@@ -283,7 +289,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock Text="3. DANH SÁCH BIẾN THỂ SKU" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                                        <TextBlock Text="3. DANH SÁCH BIẾN THỂ SKU" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
                                         <Border Background="#EFF6FF" CornerRadius="8" Padding="8,2" Margin="10,0,0,0">
                                             <TextBlock Text="{Binding EditingSkus.Count, StringFormat={}{0} biến thể}" FontSize="12" FontWeight="Bold" Foreground="#2563EB"/>
                                         </Border>
@@ -300,103 +306,114 @@
                                     </Button>
                                 </Grid>
 
-                                <!-- Bảng danh sách các dòng SKU -->
-                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Padding="0,0,0,4">
-                                    <StackPanel MinWidth="780">
+                                <!-- Bảng danh sách các dòng SKU có ScrollViewer cuộn nội bộ -->
+                                <ScrollViewer MaxHeight="240" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Padding="0,0,0,4">
+                                    <StackPanel MinWidth="850">
                                         <!-- Header bảng biến thể -->
                                         <Border Background="#F1F5F9" CornerRadius="8" Padding="8,8">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="125"/>
-                                                    <ColumnDefinition Width="150"/>
-                                                    <ColumnDefinition Width="125"/>
-                                                    <ColumnDefinition Width="115"/>
-                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="135"/>
+                                                    <ColumnDefinition Width="145"/>
+                                                    <ColumnDefinition Width="32"/>
+                                                    <ColumnDefinition Width="130"/>
+                                                    <ColumnDefinition Width="130"/>
                                                     <ColumnDefinition Width="105"/>
-                                                    <ColumnDefinition Width="50"/>
-                                                    <ColumnDefinition Width="34"/>
+                                                    <ColumnDefinition Width="105"/>
+                                                    <ColumnDefinition Width="65"/>
+                                                    <ColumnDefinition Width="40"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="Mã SKU *" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
-                                                <TextBlock Grid.Column="1" Text="Mã vạch (Barcode) *" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
-                                                <TextBlock Grid.Column="2" Text="Quy cách / Dung tích" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
-                                                <TextBlock Grid.Column="3" Text="Hương vị / Loại" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
-                                                <TextBlock Grid.Column="4" Text="Giá vốn (đ)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0" TextAlignment="Right"/>
-                                                <TextBlock Grid.Column="5" Text="Giá bán (đ) *" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0" TextAlignment="Right"/>
-                                                <TextBlock Grid.Column="6" Text="VAT %" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
-                                                <TextBlock Grid.Column="7" Text="" FontSize="12"/>
+                                                <TextBlock Grid.Column="0" Text="Mã SKU *" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="1" Text="Mã vạch (Barcode) *" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="2" Text="" FontSize="11.5"/>
+                                                <TextBlock Grid.Column="3" Text="Quy cách / Dung tích" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="4" Text="Hương vị / Loại" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                <TextBlock Grid.Column="5" Text="Giá vốn (đ)" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Right"/>
+                                                <TextBlock Grid.Column="6" Text="Giá bán (đ) *" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Right"/>
+                                                <TextBlock Grid.Column="7" Text="VAT %" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" TextAlignment="Center"/>
+                                                <TextBlock Grid.Column="8" Text="" FontSize="11.5"/>
                                             </Grid>
                                         </Border>
 
-                                        <!-- Danh sách các dòng SKU -->
+                                        <!-- Danh sách dòng SKU -->
                                         <ItemsControl ItemsSource="{Binding EditingSkus}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="8,6">
+                                                    <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="8,7">
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="125"/>
-                                                                <ColumnDefinition Width="150"/>
-                                                                <ColumnDefinition Width="125"/>
-                                                                <ColumnDefinition Width="115"/>
-                                                                <ColumnDefinition Width="100"/>
+                                                                <ColumnDefinition Width="135"/>
+                                                                <ColumnDefinition Width="145"/>
+                                                                <ColumnDefinition Width="32"/>
+                                                                <ColumnDefinition Width="130"/>
+                                                                <ColumnDefinition Width="130"/>
                                                                 <ColumnDefinition Width="105"/>
-                                                                <ColumnDefinition Width="50"/>
-                                                                <ColumnDefinition Width="34"/>
+                                                                <ColumnDefinition Width="105"/>
+                                                                <ColumnDefinition Width="65"/>
+                                                                <ColumnDefinition Width="40"/>
                                                             </Grid.ColumnDefinitions>
 
                                                             <!-- Mã SKU -->
-                                                            <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="2,0">
-                                                                <TextBox Text="{Binding SkuCode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12" FontWeight="SemiBold"/>
+                                                            <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding SkuCode, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12" FontWeight="SemiBold"/>
                                                             </Border>
 
-                                                            <!-- Barcode kèm nút tạo ngẫu nhiên -->
-                                                            <Grid Grid.Column="1" Margin="2,0">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6,0,0,6" Padding="6,4">
-                                                                    <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CleanTextBoxStyle}" FontSize="11.5"/>
-                                                                </Border>
-                                                                <Button Grid.Column="1" 
-                                                                        Command="{Binding DataContext.GenerateBarcodeForSkuCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                        CommandParameter="{Binding}"
-                                                                        ToolTip="Sinh barcode mới"
-                                                                        Width="24" Height="26" Background="#E2E8F0" BorderThickness="0" Cursor="Hand">
-                                                                    <ui:SymbolIcon Symbol="ArrowSync24" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                                </Button>
-                                                            </Grid>
-
-                                                            <!-- Quy cách / Dung tích (Packaging) -->
-                                                            <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="2,0">
-                                                                <TextBox Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12"/>
+                                                            <!-- Mã vạch (Barcode) -->
+                                                            <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,4,0">
+                                                                <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12"/>
                                                             </Border>
 
-                                                            <!-- Hương vị / Phân loại (Flavor) -->
-                                                            <Border Grid.Column="3" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="2,0">
-                                                                <TextBox Text="{Binding Size, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12"/>
+                                                            <!-- Nút sinh barcode ngẫu nhiên -->
+                                                            <Button Grid.Column="2" 
+                                                                    Command="{Binding DataContext.RegenerateSkuBarcodeCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Width="26" Height="26" Background="#F1F5F9" BorderThickness="0" Cursor="Hand" ToolTip="Sinh mã vạch ngẫu nhiên chuẩn EAN-13" Margin="0,0,6,0">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                                                            <ui:SymbolIcon Symbol="BarcodeScanner24" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+
+                                                            <!-- Quy cách / Màu -->
+                                                            <Border Grid.Column="3" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12"/>
+                                                            </Border>
+
+                                                            <!-- Hương vị / Size -->
+                                                            <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding Size, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12"/>
                                                             </Border>
 
                                                             <!-- Giá vốn -->
-                                                            <Border Grid.Column="4" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="2,0">
-                                                                <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12" TextAlignment="Right"/>
+                                                            <Border Grid.Column="5" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12" TextAlignment="Right"/>
                                                             </Border>
 
                                                             <!-- Giá bán -->
-                                                            <Border Grid.Column="5" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="2,0">
-                                                                <TextBox Text="{Binding SellPrice, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" TextAlignment="Right"/>
+                                                            <Border Grid.Column="6" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding SellPrice, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:N0}}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" TextAlignment="Right"/>
                                                             </Border>
 
                                                             <!-- Thuế VAT -->
-                                                            <Border Grid.Column="6" Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="4,4" Margin="2,0">
-                                                                <TextBox Text="{Binding TaxRate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CleanTextBoxStyle}" FontSize="12" TextAlignment="Center"/>
+                                                            <Border Grid.Column="7" Background="#FFFFFF" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="4,4" Margin="0,0,6,0">
+                                                                <TextBox Text="{Binding TaxRate, UpdateSourceTrigger=PropertyChanged}" 
+                                                                         Style="{StaticResource CleanTextBoxStyle}" FontSize="12" TextAlignment="Center"/>
                                                             </Border>
 
-                                                            <!-- Nút Xóa SKU -->
-                                                            <Button Grid.Column="7" 
+                                                            <!-- Nút xóa dòng SKU -->
+                                                            <Button Grid.Column="8" 
                                                                     Command="{Binding DataContext.RemoveSkuCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                                     CommandParameter="{Binding}"
-                                                                    Width="26" Height="26" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa biến thể này"
+                                                                    Width="26" Height="26" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Xóa biến thể SKU này"
                                                                     HorizontalAlignment="Center">
                                                                 <ui:SymbolIcon Symbol="Delete24" FontSize="13" Foreground="#EF4444"/>
                                                             </Button>
@@ -410,20 +427,11 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- BANNER THÔNG BÁO LỖI NẾU CÓ -->
-                        <Border Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,12,0,0"
-                                Visibility="{Binding EditErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Warning24" FontSize="16" Foreground="#DC2626" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding EditErrorMessage}" FontSize="13" FontWeight="SemiBold" Foreground="#B91C1C" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- ════════════════════ ROW 2: FOOTER BUTTONS ════════════════════ -->
-                <Grid Grid.Row="2" Margin="0,18,0,0">
+                <Grid Grid.Row="2" Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -434,13 +442,13 @@
                     <Button Grid.Column="1" 
                             Content="Hủy bỏ" 
                             Command="{Binding CloseProductEditModalCommand}"
-                            Width="120" Height="42"
+                            Width="120" Height="40"
                             Style="{StaticResource OutlineButtonStyle}"/>
 
                     <Button Grid.Column="3" 
                             Content="Lưu sản phẩm &amp; SKU" 
                             Command="{Binding SaveProductCommand}"
-                            Width="190" Height="42"
+                            Width="190" Height="40"
                             Style="{StaticResource PrimaryButtonStyle}"/>
                 </Grid>
 

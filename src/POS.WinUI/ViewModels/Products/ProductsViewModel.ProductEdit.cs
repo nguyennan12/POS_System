@@ -58,25 +58,28 @@ public partial class ProductsViewModel
 
     // ── Công cụ sinh biến thể tự động cho Cửa hàng tiện lợi (Quy cách bán & Hương vị / Phân loại) ──
     [ObservableProperty]
-    private string _variantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon"; // Quy cách / Dung tích / Đóng gói
+    private string _variantColorInput = string.Empty; // Quy cách / Dung tích / Đóng gói
 
     [ObservableProperty]
-    private string _variantSizeInput = "Nguyên bản, Không đường";  // Hương vị / Phân loại
+    private string _variantSizeInput = string.Empty;  // Hương vị / Phân loại
 
     [ObservableProperty]
-    private decimal _variantDefaultCost = 10000;
+    private decimal _variantDefaultCost = 0;
 
     [ObservableProperty]
-    private decimal _variantDefaultSell = 15000;
+    private decimal _variantDefaultSell = 0;
 
     [ObservableProperty]
-    private decimal _variantDefaultTax = 8; // 8%
+    private decimal _variantDefaultTax = 0;
 
     [RelayCommand]
     public void ApplyDrinkPreset()
     {
         VariantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon";
         VariantSizeInput = "Nguyên bản, Không đường";
+        VariantDefaultCost = 10000;
+        VariantDefaultSell = 15000;
+        VariantDefaultTax = 8;
         EditingSkus.Clear();
         GenerateVariants();
     }
@@ -86,6 +89,9 @@ public partial class ProductsViewModel
     {
         VariantColorInput = "Gói lẻ 75g, Tô 85g, Thùng 30 gói";
         VariantSizeInput = "Vị Bò cay, Tôm chua cay";
+        VariantDefaultCost = 8000;
+        VariantDefaultSell = 12000;
+        VariantDefaultTax = 8;
         EditingSkus.Clear();
         GenerateVariants();
     }
@@ -95,6 +101,9 @@ public partial class ProductsViewModel
     {
         VariantColorInput = "Lon 330ml, Lốc 6 lon, Thùng 24 lon";
         VariantSizeInput = "Bạc, Vàng";
+        VariantDefaultCost = 14000;
+        VariantDefaultSell = 18000;
+        VariantDefaultTax = 10;
         EditingSkus.Clear();
         GenerateVariants();
     }
@@ -104,6 +113,9 @@ public partial class ProductsViewModel
     {
         VariantColorInput = "Gói nhỏ, Gói lớn";
         VariantSizeInput = "Tiêu chuẩn, Hương hoa";
+        VariantDefaultCost = 25000;
+        VariantDefaultSell = 35000;
+        VariantDefaultTax = 10;
         EditingSkus.Clear();
         GenerateVariants();
     }
@@ -114,7 +126,7 @@ public partial class ProductsViewModel
         IsEditMode = false;
         EditProductId = Guid.Empty;
         EditProductName = string.Empty;
-        EditBaseUnit = "Chai";
+        EditBaseUnit = string.Empty;
         EditBrand = string.Empty;
         EditDescription = string.Empty;
         EditImageUrl = string.Empty;
@@ -125,16 +137,13 @@ public partial class ProductsViewModel
         EditSelectedCategory = CategoryFilterOptions.FirstOrDefault(c => c.Id != Guid.Empty);
         EditCategoryId = EditSelectedCategory?.Id ?? Guid.Empty;
 
-        // Reset biến thể
+        // Reset biến thể: để trống, chỉ hiển thị khi người dùng nhập hoặc bấm nút gợi ý
         EditingSkus.Clear();
-        VariantColorInput = "Lon 330ml, Chai 1.5L, Lốc 6 lon";
-        VariantSizeInput = "Nguyên bản, Không đường";
-        VariantDefaultCost = 10000;
-        VariantDefaultSell = 15000;
-        VariantDefaultTax = 8;
-
-        // Tự động sinh danh sách biến thể SKU ban đầu vào form
-        GenerateVariants();
+        VariantColorInput = string.Empty;
+        VariantSizeInput = string.Empty;
+        VariantDefaultCost = 0;
+        VariantDefaultSell = 0;
+        VariantDefaultTax = 0;
 
         OnPropertyChanged(nameof(ProductModalTitle));
         IsProductEditModalOpen = true;
@@ -282,11 +291,9 @@ public partial class ProductsViewModel
 
         if (colors.Count == 0 && sizes.Count == 0)
         {
-            EditErrorMessage = "Vui lòng nhập ít nhất 1 quy cách/dung tích hoặc 1 hương vị/loại sản phẩm.";
+            ShowError("Vui lòng nhập ít nhất 1 quy cách/dung tích hoặc 1 hương vị/loại sản phẩm.");
             return;
         }
-
-        EditErrorMessage = string.Empty;
         var prefix = GeneratePrefixFromProductName(EditProductName);
         if (string.IsNullOrWhiteSpace(prefix)) prefix = "SP";
 
@@ -385,19 +392,19 @@ public partial class ProductsViewModel
     {
         if (string.IsNullOrWhiteSpace(EditProductName))
         {
-            EditErrorMessage = "Vui lòng nhập tên sản phẩm.";
+            ShowError("Vui lòng nhập tên sản phẩm.");
             return;
         }
 
         if (EditSelectedCategory == null || EditSelectedCategory.Id == Guid.Empty)
         {
-            EditErrorMessage = "Vui lòng chọn danh mục cho sản phẩm.";
+            ShowError("Vui lòng chọn danh mục cho sản phẩm.");
             return;
         }
 
         if (EditingSkus.Count == 0)
         {
-            EditErrorMessage = "Sản phẩm phải có ít nhất 1 biến thể SKU.";
+            ShowError("Sản phẩm phải có ít nhất 1 biến thể SKU.");
             return;
         }
 
@@ -406,7 +413,7 @@ public partial class ProductsViewModel
             .FirstOrDefault(g => g.Count() > 1);
         if (duplicateSku != null)
         {
-            EditErrorMessage = $"Mã SKU '{duplicateSku.Key}' bị trùng lặp.";
+            ShowError($"Mã SKU '{duplicateSku.Key}' bị trùng lặp.");
             return;
         }
 
@@ -414,11 +421,10 @@ public partial class ProductsViewModel
             .FirstOrDefault(g => g.Count() > 1);
         if (duplicateBarcode != null)
         {
-            EditErrorMessage = $"Mã vạch '{duplicateBarcode.Key}' bị trùng lặp.";
+            ShowError($"Mã vạch '{duplicateBarcode.Key}' bị trùng lặp.");
             return;
         }
 
-        EditErrorMessage = string.Empty;
         IsLoading = true;
 
         try
@@ -450,11 +456,15 @@ public partial class ProductsViewModel
                 {
                     ShowStatus($"Tạo sản phẩm '{EditProductName}' thành công!");
                     CloseProductEditModal();
+                    _queryCache.InvalidateByPrefix("products");
+                    _queryCache.InvalidateByPrefix("kpi");
+                    _queryCache.InvalidateByPrefix("pos-catalog");
                     await LoadProductsAsync();
+                    await LoadKpiSummaryAsync();
                 }
                 else
                 {
-                    EditErrorMessage = res?.Error?.Message ?? "Không thể tạo sản phẩm. Vui lòng thử lại.";
+                    ShowError(res?.Error?.Message ?? "Không thể tạo sản phẩm. Vui lòng thử lại.");
                 }
             }
             else
@@ -506,19 +516,23 @@ public partial class ProductsViewModel
                         }
                     }
 
-                    ShowStatus($"Cập nhật sản phẩm '{EditProductName}' thành công!");
+                    ShowSuccess($"Cập nhật sản phẩm '{EditProductName}' thành công!");
                     CloseProductEditModal();
+                    _queryCache.InvalidateByPrefix("products");
+                    _queryCache.InvalidateByPrefix("kpi");
+                    _queryCache.InvalidateByPrefix("pos-catalog");
                     await LoadProductsAsync();
+                    await LoadKpiSummaryAsync();
                 }
                 else
                 {
-                    EditErrorMessage = res?.Error?.Message ?? "Không thể cập nhật sản phẩm.";
+                    ShowError(res?.Error?.Message ?? "Không thể cập nhật sản phẩm.");
                 }
             }
         }
         catch (Exception ex)
         {
-            EditErrorMessage = $"Lỗi: {ex.Message}";
+            ShowError($"Lỗi: {ex.Message}");
         }
         finally
         {

@@ -60,10 +60,15 @@ public partial class ProductsViewModel
                     ShowStatus($"Nhập thành công toàn bộ {res.Data.SuccessCount} sản phẩm từ Excel!");
                 }
 
-                // Tự động tải lại danh sách sản phẩm và danh mục mới nhất
+                // Tự động tải lại danh sách sản phẩm và danh mục mới nhất kèm xóa cache
+                _queryCache.InvalidateByPrefix("products");
+                _queryCache.InvalidateByPrefix("categories");
+                _queryCache.InvalidateByPrefix("kpi");
+                _queryCache.InvalidateByPrefix("pos-catalog");
                 CurrentPage = 1;
                 await LoadCategoriesAsync();
                 await LoadProductsAsync();
+                await LoadKpiSummaryAsync();
             }
             else
             {

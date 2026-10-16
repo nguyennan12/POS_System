@@ -25,13 +25,19 @@ public abstract class BaseApiClient
     _session = session;
   }
 
-  /// Gắn Authorization header từ token hiện tại
+  /// Gắn Authorization header và X-Store-Id từ phiên đăng nhập hiện tại
   protected void AttachToken()
   {
     var token = _session.AccessToken;
     if (!string.IsNullOrEmpty(token))
       _http.DefaultRequestHeaders.Authorization =
           new AuthenticationHeaderValue("Bearer", token);
+
+    _http.DefaultRequestHeaders.Remove("X-Store-Id");
+    if (!string.IsNullOrWhiteSpace(_session.StoreId))
+    {
+      _http.DefaultRequestHeaders.TryAddWithoutValidation("X-Store-Id", _session.StoreId);
+    }
   }
 
   protected async Task<T?> GetAsync<T>(string url, CancellationToken ct = default)

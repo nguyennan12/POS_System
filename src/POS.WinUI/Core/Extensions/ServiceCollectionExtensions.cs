@@ -41,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<ICfdDisplayService, CfdDisplayService>();
         services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
+        services.AddSingleton<IQueryCacheService, QueryCacheService>();
+        services.AddSingleton<IConfirmDialogService, ConfirmDialogService>();
         services.AddSingleton(_ => LocalizationService.Instance);
 
         // ── ApiClients & Handlers ──────────────────────────────────
