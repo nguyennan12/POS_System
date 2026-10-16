@@ -1,4 +1,4 @@
-﻿using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.UseCases.Inventory;
 
@@ -7,6 +7,6 @@ namespace POS.Application.UseCases.Inventory.StockIn.Commands.CancelStockInVouch
 public record CancelStockInVoucherCommand(Guid VoucherId)
     : ICommand<StockInVoucherDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:delete";
+    public string RequiredPermission => "stock_in_vouchers:manage";
 }
 

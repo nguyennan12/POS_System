@@ -2033,8 +2033,8 @@ namespace POS.Infrastructure.Migrations
 
                     b.Property<string>("Action")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("action");
 
                     b.Property<string>("Code")
@@ -2060,10 +2060,7 @@ namespace POS.Infrastructure.Migrations
                     b.HasIndex("ResourceId", "Action")
                         .IsUnique();
 
-                    b.ToTable("permissions", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_permissions_action", "action IN ('Create','Read','Update','Delete','Approve','Export','Override')");
-                        });
+                    b.ToTable("permissions", (string)null);
                 });
 
             modelBuilder.Entity("POS.Domain.Rbac.Resource", b =>

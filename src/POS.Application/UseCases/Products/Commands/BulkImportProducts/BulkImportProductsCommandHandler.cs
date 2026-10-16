@@ -32,7 +32,7 @@ public class BulkImportProductsCommandHandler : ICommandHandler<BulkImportProduc
     private readonly IProductRepository    _productRepository;
     private readonly ISkuRepository        _skuRepository;
     private readonly IUnitOfWork           _unitOfWork;
-    private readonly ICurrentUser          _currentUser;
+    private readonly IStoreAccessPolicy    _storeAccessPolicy;
 
     public BulkImportProductsCommandHandler(
         IExcelReader         excelReader,
@@ -40,26 +40,24 @@ public class BulkImportProductsCommandHandler : ICommandHandler<BulkImportProduc
         IProductRepository   productRepository,
         ISkuRepository       skuRepository,
         IUnitOfWork          unitOfWork,
-        ICurrentUser         currentUser)
+        IStoreAccessPolicy   storeAccessPolicy)
     {
         _excelReader        = excelReader;
         _categoryRepository = categoryRepository;
         _productRepository  = productRepository;
         _skuRepository      = skuRepository;
         _unitOfWork         = unitOfWork;
-        _currentUser        = currentUser;
+        _storeAccessPolicy  = storeAccessPolicy;
     }
 
     public async Task<Result<BulkImportResultDto>> Handle(
         BulkImportProductsCommand request,
         CancellationToken cancellationToken)
     {
-        // [FIX-1] Xác thực StoreId từ CurrentUser
-        // Chain-owner có StoreId = null → từ chối, phải chọn cửa hàng trước khi import.
-        if (_currentUser.StoreId is null)
-            return Result<BulkImportResultDto>.Failure(ProductErrors.StoreRequired);
+        var storeContext = _storeAccessPolicy.EnforceStoreAccess(request.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
-        var storeId = _currentUser.StoreId.Value;
+        var storeId = storeContext.Value;
 
         // ── 1. Parse Excel bằng IExcelReader generic engine ──────────────────
         ExcelReadResult<ProductImportRowDto> readResult;

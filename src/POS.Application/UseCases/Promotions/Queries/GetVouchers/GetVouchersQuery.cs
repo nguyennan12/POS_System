@@ -11,5 +11,5 @@ public record GetVouchersQuery(
     Guid? PromotionId = null
 ) : IQuery<PagedVoucherList>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:read";
+    public string RequiredPermission => "vouchers:read";
 }

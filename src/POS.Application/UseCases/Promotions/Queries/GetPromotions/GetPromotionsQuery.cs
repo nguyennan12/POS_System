@@ -12,5 +12,5 @@ public record GetPromotionsQuery(
     int PageSize = 20
 ) : IQuery<PagedPromotionList>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:read";
+    public string RequiredPermission => "promotions:read";
 }

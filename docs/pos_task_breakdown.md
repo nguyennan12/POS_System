@@ -193,12 +193,12 @@ POS-System
 | **T24** | Implement Product & SKU Management Use Cases (Barcode Uniqueness)           | FEATURE  | BE        | MISSING       | P1 - High     | T22                |
 | **T25** | Implement Unit Conversions & Price Lists Handlers                           | FEATURE  | BE        | MISSING       | P2 - Medium   | T24                |
 | **T26** | Implement Products, SKUs & Barcode Query Controller Endpoints               | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T25           |
-| **T27** | Implement Product & Category Management WinUI Forms                         | FEATURE  | FE        | MISSING       | P1 - High     | T23, T26           |
+| **T27** | Implement Product & Category Management WinUI Forms                         | FEATURE  | FE        | DONE          | P1 - High     | T23, T26           |
 | **T28** | Implement Bulk Product Excel Import via ClosedXML                           | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T24                |
 | **T29** | Implement Supplier Management & Debt Tracking Use Cases                     | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T07                |
 | **T30** | Implement Stock-In Voucher Creation & Stock Transaction Ledger              | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T29           |
 | **T31** | Implement Stock Entries Realtime Queries, Min-Stock & Expiry Alerts         | FEATURE  | BE/API    | MISSING       | P1 - High     | T24, T30           |
-| **T32** | Implement Stock Take (Kiểm kê) & Variance Approval Use Cases                | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T31                |
+| **T32** | Implement Stock Take (Kiểm kê) & Variance Approval Use Cases                | FEATURE  | BE/API    | DONE          | P2 - Medium   | T31                |
 | **T33** | Implement Inventory & Stock-In WinUI Screens                                | FEATURE  | FE        | MISSING       | P1 - High     | T30, T31, T32      |
 | **T34** | Implement Shift Work (Open Shift, Close Shift & Cash Reconciliation)        | FEATURE  | BE/API    | MISSING       | P1 - High     | T12                |
 | **T35** | Implement Open/Close Shift WinUI Dialogs                                    | FEATURE  | FE        | MISSING       | P1 - High     | T34                |
@@ -579,7 +579,7 @@ POS-System
 
 ### T27 — [FE][FEATURE] Implement Product & Category Management WinUI Forms
 
-- **Status:** MISSING | **Priority:** P1 - High | **Suggested Role:** FE
+- **Status:** DONE | **Priority:** P1 - High | **Suggested Role:** FE
 - **Description:** Xây dựng màn hình danh sách sản phẩm (`frmProductList.cs`) và form chi tiết (`frmProductEdit.cs`), hỗ trợ thêm nhiều biến thể SKU và in tem mã vạch.
 - **Dependencies:** T23, T26
 - **API Contracts:** `ProductApiClient` -> `ProductFilterRequest`, `CreateProductRequest`, `UpdateProductRequest`, `CreateSkuRequest` / Nhận `ProductSummaryResponse`, `ProductDetailResponse`, `SkuDetailResponse`, `CategoryResponse`
@@ -642,7 +642,7 @@ POS-System
 
 ### T32 — [BE/API][FEATURE] Implement Stock Take (Kiểm kê) & Variance Approval Use Cases
 
-- **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** BE
+- **Status:** DONE | **Priority:** P2 - Medium | **Suggested Role:** BE
 - **Description:** Nghiệp vụ kiểm kê kho: Tạo phiếu kiểm kê, quét đếm thực tế, Quản lý duyệt chênh lệch để tự động cân bằng tồn kho (`Adjust`).
 - **Dependencies:** T31
 - **API Contracts:**
@@ -1027,7 +1027,7 @@ POS-System
 
 ### T63 — [ARCH/BE][REFACTOR] Extract Store & Role Access Control into Policy Pattern
 
-- **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** ARCH / BE
+- **Status:** DONE | **Priority:** P2 - Medium | **Suggested Role:** ARCH / BE
 - **Description:** Chuyển đổi các logic kiểm tra quyền Owner và phạm vi chi nhánh (Tenant Scope) từ các static helper class (`StoreManagementAccess`, `RoleAccessControl`) sang Policy Pattern (`IStoreAccessPolicy`). Mục tiêu: Tuân thủ Dependency Inversion Principle (DIP), tập trung hóa quy tắc ủy quyền cửa hàng và giúp các UseCase Handler dễ dàng mock khi viết Unit Test.
 - **Implementation:**
   - Tạo Interface `IStoreAccessPolicy` trong `POS.Application/Abstractions/Auth/` với các method: `GetAuthenticatedOwnerAsync()`, `CanAccessStore(targetStoreId)`, `CanAccessRole(role)`.

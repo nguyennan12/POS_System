@@ -13,30 +13,28 @@ public class CreateProductCommandHandler : ICommandHandler<CreateProductCommand,
     private readonly ISkuRepository _skuRepository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICurrentUser _currentUser;
+    private readonly IStoreAccessPolicy _storeAccessPolicy;
 
     public CreateProductCommandHandler(
         IProductRepository productRepository,
         ISkuRepository skuRepository,
         ICategoryRepository categoryRepository,
         IUnitOfWork unitOfWork,
-        ICurrentUser currentUser)
+        IStoreAccessPolicy storeAccessPolicy)
     {
         _productRepository = productRepository;
         _skuRepository = skuRepository;
         _categoryRepository = categoryRepository;
         _unitOfWork = unitOfWork;
-        _currentUser = currentUser;
+        _storeAccessPolicy = storeAccessPolicy;
     }
 
     public async Task<Result<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
-        if (_currentUser.StoreId is null)
-        {
-            return Result<Guid>.Failure(ProductErrors.StoreRequired);
-        }
+        var storeContext = _storeAccessPolicy.EnforceStoreAccess(request.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
-        var storeId = _currentUser.StoreId.Value;
+        var storeId = storeContext.Value;
 
         // Validate CategoryId belongs to this store
         var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);

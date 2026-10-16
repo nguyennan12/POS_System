@@ -20,8 +20,9 @@ public record CreateProductCommand(
     string? Description,
     string? Brand,
     string? ImageUrl,
-    IReadOnlyList<CreateSkuInfo>? Skus
+    IReadOnlyList<CreateSkuInfo>? Skus,
+    Guid? StoreId = null
 ) : ICommand<Guid>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "products:manage";
 }

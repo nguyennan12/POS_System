@@ -33,4 +33,9 @@ public interface IProductRepository
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
     void Update(Product product);
     void Remove(Product product);
+
+    /// <summary>Lấy số liệu thống kê KPI chuẩn của sản phẩm, SKU và danh mục cho cửa hàng.</summary>
+    Task<(int TotalProducts, int ActiveProducts, int TotalSkus, int TotalCategories)> GetProductKpiSummaryAsync(
+        Guid storeId,
+        CancellationToken cancellationToken = default);
 }

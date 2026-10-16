@@ -1,0 +1,25 @@
+<Window x:Class="POS.WinUI.Views.Products.ProductEditModalWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:POS.WinUI.Views.Products"
+        xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="#75000000"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid Background="Transparent">
+        <!-- Card modal nằm chính giữa toàn màn hình -->
+        <local:ProductEditModal x:Name="EditModalContent" 
+                                HorizontalAlignment="Center" 
+                                VerticalAlignment="Center"/>
+
+        <!-- Toast Notification trên đỉnh modal nếu có thông báo/lỗi -->
+        <shared:ToastNotification Panel.ZIndex="999" 
+                                  VerticalAlignment="Top" 
+                                  HorizontalAlignment="Center" 
+                                  Message="{Binding ToastMessage}" 
+                                  ToastType="{Binding ToastType}"/>
+    </Grid>
+</Window>

@@ -11,14 +11,13 @@ namespace POS.Application.UseCases.Rbac.Commands.CreateRole;
 public class CreateRoleCommandHandler(
     IRoleRepository roleRepository,
     IStoreRepository storeRepository,
-    ICurrentUser currentUser,
+    IStoreAccessPolicy storeAccessPolicy,
     IUnitOfWork unitOfWork
 ) : ICommandHandler<CreateRoleCommand, RoleDto>
 {
     public async Task<Result<RoleDto>> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
     {
-        var canManage = RoleAccessControl.CanManageStore(currentUser, request.StoreId);
-        if (!canManage)
+        if (!storeAccessPolicy.CanAccessStore(request.StoreId))
         {
             return RoleErrors.Forbidden;
         }

@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Stores.Commands.UpdateStoreStatus;
 
 public record UpdateStoreStatusCommand(Guid StoreId, bool? IsActive) : ICommand<StoreDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "stores:update";
+    public string RequiredPermission => "stores:manage";
 }

@@ -1,4 +1,4 @@
-﻿using POS.Application.Abstractions.Auth;
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Inventory.StockIn.Commands.CreateStockInVoucher;
@@ -18,7 +18,7 @@ public record CreateStockInVoucherCommand(
     string? Note = null
 ) : ICommand<StockInVoucherDetailDto>, IRequirePermission
 {
-  public string RequiredPermission => "inventory:create";
+  public string RequiredPermission => "stock_in_vouchers:manage";
 }
 
 

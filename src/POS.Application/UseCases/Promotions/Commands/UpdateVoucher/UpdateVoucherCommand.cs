@@ -11,5 +11,5 @@ public record UpdateVoucherCommand(
     bool IsActive
 ) : ICommand<VoucherDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:update";
+    public string RequiredPermission => "vouchers:manage";
 }

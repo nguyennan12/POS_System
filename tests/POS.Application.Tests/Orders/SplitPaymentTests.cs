@@ -22,7 +22,7 @@ public partial class CheckoutAndCancelOrderTests
         var command = new CheckoutOrderCommand(_orderId, [new("Cash", 100)]);
 
         var permissionRequest = Assert.IsAssignableFrom<IRequirePermission>(command);
-        permissionRequest.RequiredPermission.Should().Be("orders:update");
+        permissionRequest.RequiredPermission.Should().Be("payments:create_own");
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public partial class CheckoutAndCancelOrderTests
 
         var cache = Substitute.For<ICacheService>();
         cache.GetAsync<string[]>($"perm:{_employeeId}", Arg.Any<CancellationToken>())
-            .Returns(hasPermission ? ["orders:update"] : ["orders:read"]);
+            .Returns(hasPermission ? ["payments:create_own"] : ["orders:read"]);
 
         var services = Substitute.For<IServiceProvider>();
         services.GetService(typeof(ICacheService)).Returns(cache);
@@ -282,7 +282,7 @@ public partial class CheckoutAndCancelOrderTests
         _unitOfWork.When(x => x.SaveChangesAsync(Arg.Any<CancellationToken>()))
             .Do(_ => inTransaction.Should().BeTrue());
         (await CreateCheckoutHandler().Handle(new(_orderId, [new("Cash", 100)]), default)).IsSuccess.Should().BeTrue();
-        // Checkout and its nested invoice command both read through the same transaction.
-        await _orderRepository.Received(2).GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>());
+        // Checkout reads the order once; invoice generation is now done by the domain event handler.
+        await _orderRepository.Received(1).GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>());
     }
 }

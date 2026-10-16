@@ -167,11 +167,11 @@ Resources               -- danh mục "đối tượng" có thể phân quyền
 Permissions              -- hành động cụ thể trên 1 resource
   id            UNIQUEIDENTIFIER PRIMARY KEY DEFAULT NEWID()
   resource_id   UNIQUEIDENTIFIER NOT NULL REFERENCES Resources(id) ON DELETE CASCADE
-  action        VARCHAR(20) NOT NULL
-                 CHECK (action IN ('Create','Read','Update','Delete','Approve','Export','Override'))
+  action        VARCHAR(50) NOT NULL
+                 -- enum PermissionAction (vd: Manage, Read, CreateOwn, ReadOwn, CancelOwn, Dispose, Complete, Approve, Pay, Refund, ...)
   code          VARCHAR(80) NOT NULL UNIQUE
-                 -- tự sinh "resource_code:action", vd "orders:refund",
-                 -- "products:create" — denormalize để check nhanh, không
+                 -- chuẩn hóa "resource_code:action" (snake_case), vd "orders:refund",
+                 -- "products:manage", "shifts:manage_own" — denormalize để check nhanh, không
                  -- cần join khi so khớp permission
   description   NVARCHAR(200)
 
@@ -194,15 +194,13 @@ Lấy toàn bộ permission từ role (qua RolePermissions theo role_id).
 Không có override theo từng user; nếu cần ngoại lệ thì tạo role riêng.
 ```
 
-**Seed dữ liệu mặc định** — 3 role hệ thống (`is_system_role = 1`,
-`store_id = NULL`), permission gán theo đúng bảng phân quyền đã thống nhất
-trước đó (Owner > StoreManager > Cashier), ví dụ trích một phần:
+**Seed dữ liệu mặc định** — 3 role hệ thống (`is_system_role = 1`, `store_id = NULL`), permission gán theo đúng bảng ma trận phân quyền (Chi tiết đầy đủ tại `docs/pos_business_logic.md` mục 2.10):
 
-| Role         | Permission code (ví dụ)                                                                                                              |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Owner        | `stores:create`, `stores:update`, `reports:read` (toàn chuỗi), `config:override`, + toàn bộ quyền của StoreManager                    |
-| StoreManager | `employees:create`, `products:create`, `promotions:update`, `reports:read` (chi nhánh), `config:update`, `inventory:create`, `stocktakes:approve`, `orders:refund`, `orders:override` |
-| Cashier      | `orders:create`, `payments:create`, `shifts:create` (mở/đóng ca của mình)                                                            |
+| Role | Phạm vi & Số lượng quyền | Permission code (ví dụ) |
+| :--- | :--- | :--- |
+| **Owner** | Full Access toàn bộ 57 quyền hệ thống | `stores:manage`, `roles:manage`, `reports:profit_view`, `config:manage_global`, `audit_logs:read`, + 51 quyền khác |
+| **StoreManager** | Quản lý toàn bộ nghiệp vụ cửa hàng (51 quyền) | `employees:manage`, `products:manage`, `stock_takes:approve`, `suppliers:pay`, `orders:refund`, `reports:revenue_view`, ... |
+| **Cashier** | 20 quyền thao tác tiền sảnh POS / thu ngân | `shifts:manage_own`, `orders:create_own`, `orders:cancel_own`, `payments:create_own`, `vouchers:apply_own`, `customers:create`, ... |
 
 ### 3.3 PRODUCT
 

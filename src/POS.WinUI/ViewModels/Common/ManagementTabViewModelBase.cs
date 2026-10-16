@@ -17,6 +17,29 @@ public abstract partial class ManagementTabViewModelBase : ObservableObject, IDi
     [ObservableProperty]
     private bool _isLoading;
 
+    // ── Toast Notification dùng chung toàn bộ các tab quản lý ──
+    [ObservableProperty]
+    private string? _toastMessage;
+
+    [ObservableProperty]
+    private string _toastType = "Info";
+
+    public void ShowToast(string message, string type = "Info")
+    {
+        if (string.IsNullOrWhiteSpace(message)) return;
+        ToastType = type;
+        if (ToastMessage == message)
+        {
+            ToastMessage = string.Empty;
+        }
+        ToastMessage = message;
+    }
+
+    public void ShowError(string message) => ShowToast(message, "Error");
+    public void ShowSuccess(string message) => ShowToast(message, "Success");
+    public void ShowWarning(string message) => ShowToast(message, "Warning");
+    public void ShowInfo(string message) => ShowToast(message, "Info");
+
     public bool IsOwner => SessionService?.IsOwner ?? false;
     public bool IsStoreManager => SessionService?.IsStoreManager ?? false;
     public bool IsCashier => SessionService?.IsCashier ?? false;

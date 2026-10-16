@@ -2,6 +2,7 @@ using POS.Domain.Common;
 using POS.Domain.Customers;
 using POS.Domain.Employees;
 using POS.Domain.Orders.Enums;
+using POS.Domain.Orders.Events;
 using POS.Domain.Products;
 using POS.Domain.Promotions.Services.Models;
 using POS.Domain.Stores;
@@ -253,6 +254,16 @@ public class Order : BaseEntity
         {
             Status = OrderStatus.Paid;
             PaidAt = DateTime.UtcNow;
+            AddDomainEvent(new OrderPaidDomainEvent(
+                Id,
+                StoreId,
+                ShiftId,
+                CreatedBy,
+                CustomerId,
+                GrandTotal,
+                PaidAt.Value,
+                Items.Select(i => new OrderItemPaidDetail(i.SkuId, i.Qty, i.UnitPrice, i.LineTotal)).ToList()
+            ));
         }
     }
 

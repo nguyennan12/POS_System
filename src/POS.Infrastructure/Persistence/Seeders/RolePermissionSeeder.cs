@@ -7,66 +7,121 @@ namespace POS.Infrastructure.Persistence.Seeders;
 
 public class RolePermissionSeeder : ISeeder
 {
-  public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
-  {
-    var roles = await context.Roles.ToListAsync(cancellationToken);
-    var permissions = await context.Permissions.Include(p => p.Resource).ToListAsync(cancellationToken);
+    public static readonly HashSet<string> CashierPermissionCodes =
+    [
+        "stores:read",
+        "categories:read",
+        "products:read",
+        "skus:read",
+        "inventory:read",
+        "shifts:manage_own",
+        "orders:create_own",
+        "orders:read_own",
+        "orders:cancel_own",
+        "payments:create_own",
+        "payments:read",
+        "invoices:read",
+        "customers:read",
+        "customers:create",
+        "customers:manage",
+        "member_tiers:read",
+        "promotions:read",
+        "vouchers:read",
+        "vouchers:apply_own",
+        "config:read"
+    ];
 
-    var ownerRole = roles.FirstOrDefault(r => r.Name == RoleNames.Owner);
-    var storeManagerRole = roles.FirstOrDefault(r => r.Name == RoleNames.StoreManager);
-    var cashierRole = roles.FirstOrDefault(r => r.Name == RoleNames.Cashier);
+    public static readonly HashSet<string> OwnerOnlyPermissionCodes =
+    [
+        "stores:manage",
+        "roles:manage",
+        "member_tiers:manage",
+        "reports:profit_view",
+        "config:manage_global",
+        "audit_logs:read"
+    ];
 
-    if (ownerRole == null || storeManagerRole == null || cashierRole == null)
+    public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
     {
-      throw new InvalidOperationException("Default system roles must be seeded before seeding RolePermissions.");
+        var roles = await context.Roles.ToListAsync(cancellationToken);
+        var permissions = await context.Permissions.Include(p => p.Resource).ToListAsync(cancellationToken);
+
+        var ownerRole = roles.FirstOrDefault(r => r.Name == RoleNames.Owner);
+        var storeManagerRole = roles.FirstOrDefault(r => r.Name == RoleNames.StoreManager);
+        var cashierRole = roles.FirstOrDefault(r => r.Name == RoleNames.Cashier);
+
+        if (ownerRole == null || storeManagerRole == null || cashierRole == null)
+        {
+            throw new InvalidOperationException("Default system roles must be seeded before seeding RolePermissions.");
+        }
+
+        var ownerExpectedCodes = permissions.Select(p => p.Code).ToHashSet();
+        var storeManagerExpectedCodes = permissions.Where(p => !OwnerOnlyPermissionCodes.Contains(p.Code)).Select(p => p.Code).ToHashSet();
+        var cashierExpectedCodes = permissions.Where(p => CashierPermissionCodes.Contains(p.Code)).Select(p => p.Code).ToHashSet();
+
+        var existingRolePermissions = await context.RolePermissions
+            .Include(rp => rp.Role)
+            .Include(rp => rp.Permission)
+            .ToListAsync(cancellationToken);
+
+        // 1. Remove stale / revoked role permissions for the 3 system roles
+        var staleRolePermissions = existingRolePermissions.Where(rp =>
+        {
+            if (rp.Role.Name == RoleNames.Owner)
+                return !ownerExpectedCodes.Contains(rp.Permission.Code);
+            if (rp.Role.Name == RoleNames.StoreManager)
+                return !storeManagerExpectedCodes.Contains(rp.Permission.Code);
+            if (rp.Role.Name == RoleNames.Cashier)
+                return !cashierExpectedCodes.Contains(rp.Permission.Code);
+            return false;
+        }).ToList();
+
+        if (staleRolePermissions.Count > 0)
+        {
+            context.RolePermissions.RemoveRange(staleRolePermissions);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        // 2. Refresh active map of (roleId, permissionId)
+        var activeMap = (await context.RolePermissions
+            .Select(rp => new { rp.RoleId, rp.PermissionId })
+            .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        var newRolePermissions = new List<RolePermission>();
+
+        // 3. Add expected permissions for Owner (Full Access - 57 permissions)
+        foreach (var p in permissions)
+        {
+            AddIfMissing(ownerRole, p);
+        }
+
+        // 4. Add expected permissions for StoreManager (Store Management - 51 permissions)
+        foreach (var p in permissions.Where(p => storeManagerExpectedCodes.Contains(p.Code)))
+        {
+            AddIfMissing(storeManagerRole, p);
+        }
+
+        // 5. Add expected permissions for Cashier (Front-desk POS Cashier - 20 permissions)
+        foreach (var p in permissions.Where(p => cashierExpectedCodes.Contains(p.Code)))
+        {
+            AddIfMissing(cashierRole, p);
+        }
+
+        if (newRolePermissions.Count > 0)
+        {
+            await context.RolePermissions.AddRangeAsync(newRolePermissions, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        void AddIfMissing(Role role, Permission permission)
+        {
+            var key = new { RoleId = role.Id, PermissionId = permission.Id };
+            if (activeMap.Contains(key))
+                return;
+
+            activeMap.Add(key);
+            newRolePermissions.Add(new RolePermission(role.Id, role, permission.Id, permission));
+        }
     }
-
-    var existingRolePermissions = await context.RolePermissions
-        .Select(rolePermission => new { rolePermission.RoleId, rolePermission.PermissionId })
-        .ToHashSetAsync(cancellationToken);
-    var rolePermissions = new List<RolePermission>();
-
-    // 1. OWNER: Full Access
-    foreach (var p in permissions)
-    {
-      AddIfMissing(ownerRole, p);
-    }
-
-    // 2. STORE_MANAGER: All permissions except create/delete store
-    var storeManagerPerms = permissions.Where(p =>
-        !(p.Resource.Code == ResourceNames.Stores && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Delete)));
-    foreach (var p in storeManagerPerms)
-    {
-      AddIfMissing(storeManagerRole, p);
-    }
-
-    // 3. CASHIER: POS cashier operations (read-all + create order/customer + update customer + create shifts)
-    var cashierPerms = permissions.Where(p =>
-     p.Action == PermissionAction.Read ||
-     (p.Resource.Code == ResourceNames.Orders &&
-         (p.Action == PermissionAction.Create || p.Action == PermissionAction.Update)) ||
-     (p.Resource.Code == ResourceNames.Shifts &&
-         (p.Action == PermissionAction.Create || p.Action == PermissionAction.Update)) ||
-     (p.Resource.Code == ResourceNames.Customers &&
-         (p.Action == PermissionAction.Create || p.Action == PermissionAction.Update)));
-    foreach (var p in cashierPerms)
-    {
-      AddIfMissing(cashierRole, p);
-    }
-
-    if (rolePermissions.Count > 0)
-    {
-      await context.RolePermissions.AddRangeAsync(rolePermissions, cancellationToken);
-      await context.SaveChangesAsync(cancellationToken);
-    }
-
-    void AddIfMissing(Role role, Permission permission)
-    {
-      if (existingRolePermissions.Contains(new { RoleId = role.Id, PermissionId = permission.Id }))
-        return;
-
-      existingRolePermissions.Add(new { RoleId = role.Id, PermissionId = permission.Id });
-      rolePermissions.Add(new RolePermission(role.Id, role, permission.Id, permission));
-    }
-  }
 }

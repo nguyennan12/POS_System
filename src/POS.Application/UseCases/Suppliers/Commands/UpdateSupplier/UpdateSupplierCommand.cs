@@ -15,5 +15,5 @@ public record UpdateSupplierCommand(
     bool IsActive
 ) : ICommand<SupplierDto>, IRequirePermission
 {
-    public string RequiredPermission => "suppliers:update";
+    public string RequiredPermission => "suppliers:manage";
 }

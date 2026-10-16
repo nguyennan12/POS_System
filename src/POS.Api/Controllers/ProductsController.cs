@@ -32,7 +32,8 @@ public class ProductsController(ISender mediator) : ControllerBase
                 request.CategoryId,
                 request.Search,
                 pageNumber,
-                pageSize),
+                pageSize,
+                request.StoreId),
             cancellationToken);
 
         if (result.IsFailure) return this.ToActionResult(result);
@@ -63,7 +64,8 @@ public class ProductsController(ISender mediator) : ControllerBase
                 request.CategoryId,
                 request.Status,
                 pageNumber,
-                pageSize),
+                pageSize,
+                request.StoreId),
             cancellationToken);
 
         if (result.IsFailure) return this.ToActionResult(result);
@@ -75,6 +77,29 @@ public class ProductsController(ISender mediator) : ControllerBase
                 paged.PageNumber,
                 paged.PageSize,
                 paged.TotalCount)));
+    }
+
+    /// <summary>
+    /// [P00-KPI] Lấy số liệu thống kê KPI chuẩn (Tổng sản phẩm, Đang kinh doanh, Tổng SKU, Tổng Danh mục).
+    /// </summary>
+    [HttpGet("kpi-summary")]
+    public async Task<ActionResult<ApiResponse<ProductKpiSummaryResponse>>> GetProductKpiSummary(
+        [FromQuery] Guid? storeId,
+        CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(
+            new POS.Application.UseCases.Products.Queries.GetProductKpiSummary.GetProductKpiSummaryQuery(storeId),
+            cancellationToken);
+
+        if (result.IsFailure) return this.ToActionResult(result);
+
+        var data = result.Value!;
+        return Ok(ApiResponse<ProductKpiSummaryResponse>.Ok(
+            new ProductKpiSummaryResponse(
+                data.TotalProducts,
+                data.ActiveProducts,
+                data.TotalSkus,
+                data.TotalCategories)));
     }
 
     /// <summary>

@@ -11,10 +11,12 @@ public record BulkImportProductsCommand(
     /// <summary>Nội dung nhị phân của file Excel.</summary>
     byte[] FileContent,
     /// <summary>Tên file gốc — dùng để validate extension (.xlsx/.xls) ở Application layer.</summary>
-    string? FileName = null
+    string? FileName = null,
+    /// <summary>ID cửa hàng mục tiêu (tuỳ chọn cho Owner).</summary>
+    Guid? StoreId = null
 ) : ICommand<BulkImportResultDto>, IRequirePermission
 {
-    public string RequiredPermission => "products:create";
+    public string RequiredPermission => "products:import";
 }
 
 public record BulkImportResultDto(

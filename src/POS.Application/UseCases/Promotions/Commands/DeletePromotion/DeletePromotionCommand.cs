@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Promotions.Commands.DeletePromotion;
 
 public record DeletePromotionCommand(Guid Id) : ICommand<bool>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:delete";
+    public string RequiredPermission => "promotions:manage";
 }

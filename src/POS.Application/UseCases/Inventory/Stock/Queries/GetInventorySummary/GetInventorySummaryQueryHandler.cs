@@ -8,16 +8,16 @@ namespace POS.Application.UseCases.Inventory.Stock.Queries.GetInventorySummary;
 
 public class GetInventorySummaryQueryHandler(
     IStockEntryRepository stockEntryRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetInventorySummaryQuery, PagedStockEntryList>
+    IStoreAccessPolicy storeAccessPolicy) : IQueryHandler<GetInventorySummaryQuery, PagedStockEntryList>
 {
     public async Task<Result<PagedStockEntryList>> Handle(
         GetInventorySummaryQuery query,
         CancellationToken cancellationToken)
     {
-        if (currentUser.StoreId is null && !currentUser.IsChainOwner)
-            return InventoryErrors.StoreRequired;
+        var storeContext = storeAccessPolicy.EnforceStoreAccess(query.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
-        var storeId = currentUser.StoreId;
+        var storeId = storeContext.Value;
 
         var (items, total) = await stockEntryRepository.GetPagedAsync(
             storeId,

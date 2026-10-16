@@ -18,9 +18,11 @@ namespace POS.Api.Controllers;
 public class CategoriesController(ISender mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<CategoryResponse>>>> GetTree(CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<List<CategoryResponse>>>> GetTree(
+        [FromQuery] Guid? storeId,
+        CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetCategoriesTreeQuery(), cancellationToken);
+        var result = await mediator.Send(new GetCategoriesTreeQuery(storeId), cancellationToken);
 
         if (result.IsFailure)
             return this.ToActionResult(result);

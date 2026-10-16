@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using POS.Application.Abstractions.Auth;
 using POS.Application.Common.Behaviors;
+using POS.Application.UseCases.Auth;
 
 namespace POS.Application;
 
@@ -9,6 +11,9 @@ public static class DependencyInjection
   ///  Registers application services, pipeline behaviors, and domain services.</summary>
   public static IServiceCollection AddApplication(this IServiceCollection services)
   {
+    // ---- Access Policy ----
+    services.AddScoped<IStoreAccessPolicy, StoreAccessPolicy>();
+
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
     services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
@@ -18,6 +23,7 @@ public static class DependencyInjection
 
     services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
     services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
+    services.AddScoped<POS.Application.UseCases.Orders.Services.ICheckoutGuardService, POS.Application.UseCases.Orders.Services.CheckoutGuardService>();
 
     // ---- Payment Strategies & Factory ----
     services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CashPaymentStrategy>();

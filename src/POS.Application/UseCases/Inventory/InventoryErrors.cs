@@ -10,6 +10,9 @@ public static class InventoryErrors
     public static readonly Error StoreRequired =
         new(ErrorType.Invalid, "Inventory.StoreRequired", "Nhân viên phải thuộc một cửa hàng.");
 
+    public static readonly Error StoreAccessDenied =
+        new(ErrorType.Forbidden, "Inventory.StoreAccessDenied", "Bạn không có quyền truy cập cửa hàng này.");
+
     public static readonly Error StoreInactive =
         new(ErrorType.Invalid, "Inventory.StoreInactive", "Cửa hàng không hoạt động.");
 

@@ -12,7 +12,7 @@ public record CreateStoreCommand(
     string CurrencyCode
 ) : ICommand<CreateStoreDto>, IRequirePermission
 {
-    public string RequiredPermission => "stores:create";
+    public string RequiredPermission => "stores:manage";
 }
 
 public record CreateStoreDto(

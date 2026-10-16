@@ -1,10 +1,10 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
-using POS.Domain.Common;
-using POS.Domain.Stores;
-using POS.Domain.Employees;
-using POS.Application.Abstractions.Auth;
 using POS.Application.UseCases.Stores.Errors;
+using POS.Domain.Common;
+using POS.Domain.Employees;
+using POS.Domain.Stores;
 
 namespace POS.Application.UseCases.Stores.Commands.CreateStore;
 
@@ -12,15 +12,14 @@ public class CreateStoreCommandHandler(
     IStoreRepository storeRepository,
     IPosRegisterRepository posRegisterRepository,
     IUnitOfWork unitOfWork,
-    IEmployeeRepository employees,
-    ICurrentUser currentUser)
+    IStoreAccessPolicy storeAccessPolicy)
     : ICommandHandler<CreateStoreCommand, CreateStoreDto>
 {
   public async Task<Result<CreateStoreDto>> Handle(
         CreateStoreCommand command,
         CancellationToken cancellationToken)
   {
-    var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+    var caller = await storeAccessPolicy.GetAuthenticatedOwnerAsync(cancellationToken);
     if (caller.IsFailure) return caller.Error;
     if (!caller.Value!.IsChainOwner) return StoreErrors.Forbidden;
 

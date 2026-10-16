@@ -13,7 +13,7 @@ public record GetStockInVouchersQuery(
     int PageSize
 ) : IQuery<PagedStockInVoucherList>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:read";
+    public string RequiredPermission => "stock_in_vouchers:read";
 }
 
 public record PagedStockInVoucherList(

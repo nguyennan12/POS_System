@@ -97,81 +97,154 @@ public partial class PosCashierMainViewModel
         }
     }
 
-    private async Task FetchProductsFromApiAsync()
+    // ── Trạng thái phân trang BE (Load on scroll / Infinite scroll) ──
+    private int _catalogPageNumber = 1;
+    public const int CatalogPageSize = 20;
+
+    [ObservableProperty]
+    private bool _hasMoreCatalogItems = true;
+
+    [ObservableProperty]
+    private bool _isLoadingMoreCatalog = false;
+
+    [ObservableProperty]
+    private int _totalCatalogItems = 0;
+
+    [RelayCommand]
+    public async Task LoadMoreCatalogAsync()
     {
-        Guid? catId = null;
-        // Ưu tiên lọc theo danh mục con nếu có chọn
-        if (SelectedSubCategory != null && SelectedSubCategory.Id != "ALL" && Guid.TryParse(SelectedSubCategory.Id, out var parsedSubCatId))
+        await FetchProductsFromApiAsync(isLoadMore: true);
+    }
+
+    private async Task FetchProductsFromApiAsync(bool isLoadMore = false)
+    {
+        // Nếu tải trang tiếp theo mà không còn hàng hoặc đang bận thì bỏ qua
+        if (isLoadMore)
         {
-            catId = parsedSubCatId;
-        }
-        else if (SelectedCategory != null && SelectedCategory.Id != "ALL" && Guid.TryParse(SelectedCategory.Id, out var parsedCatId))
-        {
-            catId = parsedCatId;
-        }
+            if (!HasMoreCatalogItems || IsLoadingCatalog || IsLoadingMoreCatalog)
+                return;
 
-        var search = string.IsNullOrWhiteSpace(SearchQuery) ? null : SearchQuery.Trim();
-
-        FilteredProducts.Clear();
-
-        // 1. Gọi 1 API duy nhất tối ưu cho POS Catalog (đã có đủ SKU, Giá bán, Tồn kho, Mã vạch)
-        var catalogRes = await _productApiClient.GetPosCatalogAsync(
-            categoryId: catId,
-            search: search,
-            pageNumber: 1,
-            pageSize: 100);
-
-        if (catalogRes?.Success == true && catalogRes.Data?.Items != null && catalogRes.Data.Items.Count > 0)
-        {
-            foreach (var item in catalogRes.Data.Items)
-            {
-                var unitText = !string.IsNullOrWhiteSpace(item.BaseUnit) ? item.BaseUnit : "Cái";
-
-                FilteredProducts.Add(new PosProductItem
-                {
-                    Id = item.SkuId,
-                    Name = item.ProductName,
-                    Specification = unitText,
-                    Sku = item.SkuCode,
-                    Barcode = item.Barcode,
-                    Unit = unitText,
-                    Price = item.SellPrice,
-                    StockQuantity = (int)item.QtyOnHand,
-                    CategoryId = item.CategoryId.ToString(),
-                    CategoryName = item.CategoryName,
-                    ImageUrl = item.ImageUrl
-                });
-            }
+            IsLoadingMoreCatalog = true;
         }
         else
         {
-            // 2. Fallback an toàn nếu chưa có bản ghi SKU/Product
-            var stockRes = await _inventoryApiClient.GetStockAsync(
+            IsLoadingCatalog = true;
+            _catalogPageNumber = 1;
+            HasMoreCatalogItems = true;
+            FilteredProducts.Clear();
+        }
+
+        try
+        {
+            Guid? catId = null;
+            // Ưu tiên lọc theo danh mục con nếu có chọn
+            if (SelectedSubCategory != null && SelectedSubCategory.Id != "ALL" && Guid.TryParse(SelectedSubCategory.Id, out var parsedSubCatId))
+            {
+                catId = parsedSubCatId;
+            }
+            else if (SelectedCategory != null && SelectedCategory.Id != "ALL" && Guid.TryParse(SelectedCategory.Id, out var parsedCatId))
+            {
+                catId = parsedCatId;
+            }
+
+            var search = string.IsNullOrWhiteSpace(SearchQuery) ? null : SearchQuery.Trim();
+            var targetPage = isLoadMore ? _catalogPageNumber + 1 : 1;
+
+            // Gọi API POS Catalog phân trang từ Backend (chuẩn 20 sản phẩm/lần)
+            var catalogRes = await _productApiClient.GetPosCatalogAsync(
                 categoryId: catId,
                 search: search,
-                pageNumber: 1,
-                pageSize: 100);
+                pageNumber: targetPage,
+                pageSize: CatalogPageSize);
 
-            if (stockRes?.Success == true && stockRes.Data?.Items != null)
+            if (catalogRes?.Success == true && catalogRes.Data != null)
             {
-                foreach (var item in stockRes.Data.Items)
+                var pagedData = catalogRes.Data;
+                TotalCatalogItems = pagedData.TotalCount;
+                _catalogPageNumber = targetPage;
+
+                if (pagedData.Items != null && pagedData.Items.Count > 0)
                 {
-                    FilteredProducts.Add(new PosProductItem
+                    foreach (var item in pagedData.Items)
                     {
-                        Id = item.SkuId,
-                        Name = item.ProductName,
-                        Specification = "Cái",
-                        Sku = item.SkuCode,
-                        Barcode = item.Barcode,
-                        Unit = "Cái",
-                        Price = 0,
-                        StockQuantity = (int)item.QtyOnHand,
-                        CategoryId = item.SkuCode,
-                        CategoryName = "Sản phẩm"
-                    });
+                        FilteredProducts.Add(MapToPosProductItem(item));
+                    }
+                }
+
+                // Cập nhật trạng thái còn dữ liệu để tải cuộn tiếp hay không
+                HasMoreCatalogItems = FilteredProducts.Count < pagedData.TotalCount && (pagedData.Items?.Count ?? 0) >= CatalogPageSize;
+            }
+            else if (!isLoadMore)
+            {
+                // Fallback an toàn nếu chưa có bản ghi SKU/Product
+                var stockRes = await _inventoryApiClient.GetStockAsync(
+                    categoryId: catId,
+                    search: search,
+                    pageNumber: 1,
+                    pageSize: CatalogPageSize);
+
+                if (stockRes?.Success == true && stockRes.Data?.Items != null)
+                {
+                    TotalCatalogItems = stockRes.Data.TotalCount;
+                    foreach (var item in stockRes.Data.Items)
+                    {
+                        FilteredProducts.Add(new PosProductItem
+                        {
+                            Id = item.SkuId,
+                            Name = item.ProductName,
+                            Specification = "Cái",
+                            Sku = item.SkuCode,
+                            Barcode = item.Barcode,
+                            Unit = "Cái",
+                            Price = 0,
+                            StockQuantity = (int)item.QtyOnHand,
+                            CategoryId = item.SkuCode,
+                            CategoryName = "Sản phẩm"
+                        });
+                    }
+                    HasMoreCatalogItems = FilteredProducts.Count < stockRes.Data.TotalCount;
+                }
+                else
+                {
+                    HasMoreCatalogItems = false;
                 }
             }
         }
+        catch (Exception ex)
+        {
+            ShowError($"Lỗi tải danh mục sản phẩm: {ex.Message}");
+            HasMoreCatalogItems = false;
+        }
+        finally
+        {
+            if (isLoadMore)
+            {
+                IsLoadingMoreCatalog = false;
+            }
+            else
+            {
+                IsLoadingCatalog = false;
+            }
+        }
+    }
+
+    private static PosProductItem MapToPosProductItem(POS.Contracts.V1.Products.PosCatalogItemResponse item)
+    {
+        var unitText = !string.IsNullOrWhiteSpace(item.BaseUnit) ? item.BaseUnit : "Cái";
+        return new PosProductItem
+        {
+            Id = item.SkuId,
+            Name = item.ProductName,
+            Specification = unitText,
+            Sku = item.SkuCode,
+            Barcode = item.Barcode,
+            Unit = unitText,
+            Price = item.SellPrice,
+            StockQuantity = (int)item.QtyOnHand,
+            CategoryId = item.CategoryId.ToString(),
+            CategoryName = item.CategoryName,
+            ImageUrl = item.ImageUrl
+        };
     }
 
     partial void OnSearchQueryChanged(string value)

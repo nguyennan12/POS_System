@@ -51,6 +51,9 @@ publish/
 appsettings.Local.json
 appsettings.Development.json
 
+## Docker local overrides
+docker-compose.override.yml
+
 # OS
 .DS_Store
 Thumbs.db

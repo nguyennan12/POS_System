@@ -109,7 +109,7 @@
                                    Foreground="{StaticResource TextMutedBrush}" 
                                    Margin="0,0,8,0" 
                                    VerticalAlignment="Center"/>
-                    <TextBlock Text="Trang chủ" 
+                    <TextBlock Text="{Binding HomeBreadcrumbText}" 
                                FontSize="13" 
                                Foreground="{StaticResource TextMutedBrush}" 
                                VerticalAlignment="Center"/>
@@ -125,12 +125,11 @@
                                VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Vùng hiển thị Sub-View của Tab được chọn -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ContentControl Content="{Binding CurrentTabViewModel}" 
-                                    HorizontalContentAlignment="Stretch" 
-                                    VerticalContentAlignment="Stretch"/>
-                </ScrollViewer>
+                <!-- Vùng hiển thị Sub-View của Tab được chọn (Không bọc ScrollViewer để view con quản lý layout & scroll nội bộ chuẩn xác) -->
+                <ContentControl Grid.Row="1" 
+                                Content="{Binding CurrentTabViewModel}" 
+                                HorizontalContentAlignment="Stretch" 
+                                VerticalContentAlignment="Stretch"/>
             </Grid>
         </Grid>
 

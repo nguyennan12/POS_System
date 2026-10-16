@@ -12,16 +12,16 @@ internal sealed class CreateCategoryCommandHandler : ICommandHandler<CreateCateg
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ICurrentUser _currentUser;
+    private readonly IStoreAccessPolicy _storeAccessPolicy;
 
     public CreateCategoryCommandHandler(
         ICategoryRepository categoryRepository,
         IUnitOfWork unitOfWork,
-        ICurrentUser currentUser)
+        IStoreAccessPolicy storeAccessPolicy)
     {
         _categoryRepository = categoryRepository;
         _unitOfWork = unitOfWork;
-        _currentUser = currentUser;
+        _storeAccessPolicy = storeAccessPolicy;
     }
 
     public async Task<Result<CategoryDto>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
@@ -31,18 +31,17 @@ internal sealed class CreateCategoryCommandHandler : ICommandHandler<CreateCateg
             var parent = await _categoryRepository.GetByIdAsync(request.ParentId.Value, cancellationToken);
             if (parent is null)
             {
-                return Result<CategoryDto>.Failure(CategoryErrors.NotFound);
+                return CategoryErrors.NotFound;
             }
         }
 
-        var storeId = _currentUser.StoreId;
-        if (!storeId.HasValue)
-        {
-            return Result<CategoryDto>.Failure(new Error("Store.Required", "Store context is missing."));
-        }
+        var storeContext = _storeAccessPolicy.EnforceStoreAccess(request.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
+
+        var storeId = storeContext.Value;
 
         var category = Category.Create(
-            storeId.Value,
+            storeId,
             request.Name,
             request.ParentId,
             request.DisplayOrder,

@@ -188,9 +188,11 @@
             </StackPanel>
         </Border>
 
-        <!-- Trạng thái 3: Lưới sản phẩm co giãn thích ứng khi có dữ liệu -->
-        <ScrollViewer VerticalScrollBarVisibility="Hidden" 
+        <!-- Trạng thái 3: Lưới sản phẩm co giãn thích ứng khi có dữ liệu (Hỗ trợ Infinite Scroll phân trang BE) -->
+        <ScrollViewer x:Name="CatalogScrollViewer"
+                      VerticalScrollBarVisibility="Auto" 
                       HorizontalScrollBarVisibility="Disabled"
+                      ScrollChanged="OnCatalogScrollChanged"
                       Focusable="False">
             <ScrollViewer.Style>
                 <Style TargetType="ScrollViewer">
@@ -205,16 +207,29 @@
                     </Style.Triggers>
                 </Style>
             </ScrollViewer.Style>
-            <ItemsControl ItemsSource="{Binding FilteredProducts}" 
-                          ItemTemplate="{StaticResource ProductCardTemplate}"
-                          VerticalAlignment="Top"
-                          HorizontalAlignment="Stretch">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <cashier:AdaptiveCardPanel MinItemWidth="150" ItemHeight="210" Spacing="10"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <StackPanel Orientation="Vertical">
+                <ItemsControl ItemsSource="{Binding FilteredProducts}" 
+                              ItemTemplate="{StaticResource ProductCardTemplate}"
+                              VerticalAlignment="Top"
+                              HorizontalAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <cashier:AdaptiveCardPanel MinItemWidth="150" ItemHeight="210" Spacing="10"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <!-- Indicator tải thêm khi cuộn trang (Infinite Scroll BE) -->
+                <Border Visibility="{Binding IsLoadingMoreCatalog, Converter={StaticResource BoolToVis}}"
+                        Padding="0,14,0,14"
+                        HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,10,0"/>
+                        <TextBlock Text="Đang tải thêm sản phẩm..." FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>

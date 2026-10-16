@@ -14,7 +14,7 @@ public abstract class BaseApiClient
   protected readonly HttpClient _http;
   protected readonly SessionService _session;
 
-  private static readonly JsonSerializerOptions _jsonOptions = new()
+  protected static readonly JsonSerializerOptions _jsonOptions = new()
   {
     PropertyNameCaseInsensitive = true
   };
@@ -25,13 +25,19 @@ public abstract class BaseApiClient
     _session = session;
   }
 
-  /// Gắn Authorization header từ token hiện tại
+  /// Gắn Authorization header và X-Store-Id từ phiên đăng nhập hiện tại
   protected void AttachToken()
   {
     var token = _session.AccessToken;
     if (!string.IsNullOrEmpty(token))
       _http.DefaultRequestHeaders.Authorization =
           new AuthenticationHeaderValue("Bearer", token);
+
+    _http.DefaultRequestHeaders.Remove("X-Store-Id");
+    if (!string.IsNullOrWhiteSpace(_session.StoreId))
+    {
+      _http.DefaultRequestHeaders.TryAddWithoutValidation("X-Store-Id", _session.StoreId);
+    }
   }
 
   protected async Task<T?> GetAsync<T>(string url, CancellationToken ct = default)
@@ -73,7 +79,7 @@ public abstract class BaseApiClient
     await HandleFailureResponseAsync(response, ct);
   }
 
-  private static async Task HandleFailureResponseAsync(HttpResponseMessage response, CancellationToken ct)
+  protected static async Task HandleFailureResponseAsync(HttpResponseMessage response, CancellationToken ct)
   {
     if (response.IsSuccessStatusCode) return;
 

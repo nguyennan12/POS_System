@@ -27,7 +27,31 @@ internal sealed class ProductRepository(AppDbContext dbContext) : IProductReposi
         }
 
         if (categoryId.HasValue)
-            query = query.Where(p => p.CategoryId == categoryId.Value);
+        {
+            var targetId = categoryId.Value;
+            var childIds = await dbContext.Categories.AsNoTracking()
+                .Where(c => c.StoreId == storeId && c.ParentId == targetId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+            if (childIds.Count > 0)
+            {
+                var allCategoryIds = new List<Guid> { targetId };
+                allCategoryIds.AddRange(childIds);
+
+                var grandchildIds = await dbContext.Categories.AsNoTracking()
+                    .Where(c => c.StoreId == storeId && c.ParentId.HasValue && childIds.Contains(c.ParentId.Value))
+                    .Select(c => c.Id)
+                    .ToListAsync(cancellationToken);
+                allCategoryIds.AddRange(grandchildIds);
+
+                query = query.Where(p => allCategoryIds.Contains(p.CategoryId));
+            }
+            else
+            {
+                query = query.Where(p => p.CategoryId == targetId);
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(status))
         {
@@ -127,6 +151,25 @@ internal sealed class ProductRepository(AppDbContext dbContext) : IProductReposi
             result[p.Name] = p;
 
         return result;
+    }
+
+    public async Task<(int TotalProducts, int ActiveProducts, int TotalSkus, int TotalCategories)> GetProductKpiSummaryAsync(
+        Guid storeId,
+        CancellationToken cancellationToken = default)
+    {
+        var totalProducts = await dbContext.Products.AsNoTracking()
+            .CountAsync(p => p.StoreId == storeId, cancellationToken);
+
+        var activeProducts = await dbContext.Products.AsNoTracking()
+            .CountAsync(p => p.StoreId == storeId && p.Status == ProductStatus.Active, cancellationToken);
+
+        var totalSkus = await dbContext.Skus.AsNoTracking()
+            .CountAsync(s => s.StoreId == storeId && s.IsActive, cancellationToken);
+
+        var totalCategories = await dbContext.Categories.AsNoTracking()
+            .CountAsync(c => c.StoreId == storeId, cancellationToken);
+
+        return (totalProducts, activeProducts, totalSkus, totalCategories);
     }
 }
 

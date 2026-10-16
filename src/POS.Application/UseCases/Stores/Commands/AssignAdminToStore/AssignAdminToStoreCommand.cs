@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Stores.Commands.AssignAdminToStore;
 
 public record AssignAdminToStoreCommand(Guid StoreId, Guid EmployeeId) : ICommand<StoreDetailDto>, IRequirePermission
 {
-	public string RequiredPermission => "stores:update";
+	public string RequiredPermission => "stores:manage";
 }

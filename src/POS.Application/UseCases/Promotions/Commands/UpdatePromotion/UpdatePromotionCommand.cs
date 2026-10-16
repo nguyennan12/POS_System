@@ -22,5 +22,5 @@ public record UpdatePromotionCommand(
     IReadOnlyList<Guid>? TargetSkuIds = null
 ) : ICommand<PromotionDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:update";
+    public string RequiredPermission => "promotions:manage";
 }

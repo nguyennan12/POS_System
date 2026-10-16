@@ -5,5 +5,5 @@ namespace POS.Application.UseCases.Promotions.Commands.DeleteVoucher;
 
 public record DeleteVoucherCommand(Guid Id) : ICommand<bool>, IRequirePermission
 {
-    public string RequiredPermission => "discounts:delete";
+    public string RequiredPermission => "vouchers:manage";
 }

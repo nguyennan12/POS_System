@@ -1,3 +1,6 @@
+using POS.Contracts.V1.Customers;
+using POS.Contracts.V1.Inventory;
+
 namespace POS.Contracts.V1.Orders;
 
 public record OrderItemResponse(
@@ -86,6 +89,12 @@ public record ReceiptDataResponse(
     string? ReceiptFooter
 );
 
+public record OrderPaidSideEffectsResponse(
+    IReadOnlyList<StockTransactionResponse> StockTransactions,
+    IReadOnlyList<StockAlertResponse> StockAlerts,
+    PointTransactionResponse? PointTransaction
+);
+
 public record CheckoutResponse(
     Guid OrderId,
     decimal GrandTotal,
@@ -93,5 +102,6 @@ public record CheckoutResponse(
     decimal ChangeAmount,
     string Status,
     IReadOnlyList<OrderPaymentResponse> Payments,
-    ReceiptDataResponse? ReceiptData = null
+    ReceiptDataResponse? ReceiptData = null,
+    OrderPaidSideEffectsResponse? SideEffects = null
 );

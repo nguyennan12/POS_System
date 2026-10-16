@@ -9,6 +9,33 @@ public class StockTakeItem : BaseEntity
     {
     }
 
+    public StockTakeItem(
+        Guid takeId,
+        Guid skuId,
+        decimal systemQty,
+        decimal actualQty,
+        string? note = null,
+        Guid? id = null) : base(id)
+    {
+        TakeId = takeId;
+        SkuId = skuId;
+        SystemQty = systemQty;
+        ActualQty = actualQty;
+        DiffQty = actualQty - systemQty;
+        Note = note;
+    }
+
+    public void Update(decimal actualQty, decimal systemQty, string? note = null)
+    {
+        ActualQty = actualQty;
+        SystemQty = systemQty;
+        DiffQty = actualQty - systemQty;
+        if (note is not null)
+        {
+            Note = note;
+        }
+    }
+
     public Guid TakeId { get; private set; }
     public StockTake Take { get; private set; } = default!;
 

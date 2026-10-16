@@ -6,5 +6,5 @@ namespace POS.Application.UseCases.Invoices.Queries.GetInvoiceById;
 
 public record GetInvoiceByIdQuery(Guid Id) : IQuery<InvoiceDetailResponse>, IRequirePermission
 {
-    public string RequiredPermission => "orders:read";
+    public string RequiredPermission => "invoices:read";
 }

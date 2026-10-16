@@ -9,8 +9,9 @@ public record CreateCategoryCommand(
     Guid? ParentId,
     int DisplayOrder,
     string? ImageUrl,
-    bool IsVisible
+    bool IsVisible,
+    Guid? StoreId = null
 ) : ICommand<CategoryDto>, IRequirePermission
 {
-    public string RequiredPermission => "categories:create";
+    public string RequiredPermission => "categories:manage";
 }

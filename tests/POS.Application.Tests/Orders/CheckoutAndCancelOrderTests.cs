@@ -7,6 +7,7 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Orders.Commands.CancelOrder;
 using POS.Application.UseCases.Orders.Commands.CheckoutOrder;
+using POS.Application.UseCases.Orders.Commands.ProcessOrderPaid;
 using POS.Application.UseCases.Orders.DTOs;
 using POS.Application.UseCases.Orders.Errors;
 using POS.Application.UseCases.Orders.Services;
@@ -20,6 +21,7 @@ using POS.Domain.Employees.Enums;
 using POS.Domain.Inventory.Stock;
 using POS.Domain.Orders;
 using POS.Domain.Orders.Enums;
+using POS.Domain.Orders.Events;
 using POS.Domain.Products;
 using POS.Domain.Promotions;
 using POS.Domain.Promotions.Enums;
@@ -30,6 +32,7 @@ using POS.Domain.Stores;
 
 namespace POS.Application.Tests.Orders;
 
+
 public partial class CheckoutAndCancelOrderTests
 {
   private readonly IOrderRepository _orderRepository = Substitute.For<IOrderRepository>();
@@ -39,14 +42,16 @@ public partial class CheckoutAndCancelOrderTests
   private readonly IStockEntryRepository _stockEntryRepository = Substitute.For<IStockEntryRepository>();
   private readonly IStockTransactionRepository _stockTransactionRepository = Substitute.For<IStockTransactionRepository>();
   private readonly IInvoiceRepository _invoiceRepository = Substitute.For<IInvoiceRepository>();
-  private readonly ISender _sender = Substitute.For<ISender>();
   private readonly IVoucherRepository _voucherRepository = Substitute.For<IVoucherRepository>();
   private readonly IVoucherUsageRepository _voucherUsageRepository = Substitute.For<IVoucherUsageRepository>();
   private readonly ICustomerRepository _customerRepository = Substitute.For<ICustomerRepository>();
+  private readonly IMemberTierRepository _memberTierRepository = Substitute.For<IMemberTierRepository>();
   private readonly IPaymentStrategyFactory _paymentStrategyFactory;
   private readonly ICartCalculationService _cartCalculationService = Substitute.For<ICartCalculationService>();
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly ICurrentUser _currentUser = Substitute.For<ICurrentUser>();
+  private readonly IPublisher _publisher = Substitute.For<IPublisher>();
+  private readonly ICheckoutGuardService _checkoutGuardService = Substitute.For<ICheckoutGuardService>();
 
   private readonly Guid _storeId = Guid.NewGuid();
   private readonly Guid _shiftId;
@@ -101,7 +106,14 @@ public partial class CheckoutAndCancelOrderTests
 
     _openShift = Shift.Open(_storeId, _employeeId, 500_000, null);
     _shiftId = _openShift.Id;
-    _shiftRepository.GetByIdAsync(_shiftId, Arg.Any<CancellationToken>()).Returns(_openShift);
+
+    // Default: guard service returns employee + shift/store success, and inventory passes
+    _checkoutGuardService.ValidateEmployeeAuthAsync(Arg.Any<CancellationToken>())
+        .Returns(Result<Employee>.Success(_cashierEmployee));
+    _checkoutGuardService.ValidatePreCheckoutGuardsAsync(Arg.Any<Order>(), Arg.Any<Employee>(), Arg.Any<CancellationToken>())
+        .Returns(Result<(Shift, Store)>.Success((_openShift, _store)));
+    _checkoutGuardService.ValidateInventoryAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>())
+        .Returns(Result.Success());
 
     _storeRepository.GetByIdAsync(_storeId, Arg.Any<CancellationToken>()).Returns(_store);
     _stockEntryRepository.GetBySkuAndStoreAsync(Arg.Any<Guid>(), _storeId, Arg.Any<CancellationToken>())
@@ -112,10 +124,8 @@ public partial class CheckoutAndCancelOrderTests
 
     _invoiceRepository.ExistsForOrderAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(false);
     _invoiceRepository.GetNextSequenceAsync(Arg.Any<Guid>(), Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns(1);
-    _sender.Send(Arg.Any<GenerateInvoiceCommand>(), Arg.Any<CancellationToken>())
-        .Returns(call => new GenerateInvoiceCommandHandler(_orderRepository, _storeRepository,
-            _invoiceRepository, NullLogger<GenerateInvoiceCommandHandler>.Instance)
-            .Handle(call.Arg<GenerateInvoiceCommand>(), call.Arg<CancellationToken>()));
+    _memberTierRepository.GetAllAsync(Arg.Any<CancellationToken>())
+        .Returns([new MemberTier(POS.Domain.Customers.Enums.MemberTierName.Normal, 0m, 0.01m, 0m, "#808080")]);
 
     var strategies = new IPaymentStrategy[]
     {
@@ -134,19 +144,12 @@ public partial class CheckoutAndCancelOrderTests
 
   private CheckoutOrderCommandHandler CreateCheckoutHandler(ICartCalculationService? calculationService = null) => new(
       _orderRepository,
-      _shiftRepository,
-      _employeeRepository,
-      _storeRepository,
-      _stockEntryRepository,
-      _stockTransactionRepository,
-      _sender,
-      _voucherRepository,
-      _voucherUsageRepository,
+      _checkoutGuardService,
       _paymentStrategyFactory,
       calculationService ?? _cartCalculationService,
-      _unitOfWork,
-      _currentUser,
-      _customerRepository);
+      _customerRepository,
+      _publisher,
+      _unitOfWork);
 
   private Order CreateDraftOrderWithItems(decimal itemPrice = 100_000, decimal qty = 1)
   {
@@ -238,13 +241,13 @@ public partial class CheckoutAndCancelOrderTests
     order.Status.Should().Be(OrderStatus.Paid);
     order.PaidAt.Should().NotBeNull();
 
-    // Verify side effects
-    await _stockEntryRepository.Received(1).DeductStockWithBatchesAsync(Arg.Any<Guid>(), _storeId, 1, Arg.Any<CancellationToken>());
-    await _stockTransactionRepository.Received(1).AddAsync(Arg.Any<StockTransaction>(), Arg.Any<CancellationToken>());
-    await _invoiceRepository.Received(1).AddAsync(
-        Arg.Is<Invoice>(i => i.InvoiceNo.StartsWith($"HD-{_store.Code}-")
-            && i.InvoiceNo.EndsWith("-000001")), Arg.Any<CancellationToken>());
+    // Side effects (inventory deduction, invoice) are delegated to domain event handlers
+    // via publisher.Publish(OrderPaidDomainEvent) — verify the event was published
+    await _publisher.Received(1).Publish(
+        Arg.Is<OrderPaidDomainEvent>(e => e.OrderId == _orderId),
+        Arg.Any<CancellationToken>());
   }
+
 
   [Fact]
   public async Task Checkout_ShouldReplayWholeDecisionAfterSerializableConflict()
@@ -268,8 +271,12 @@ public partial class CheckoutAndCancelOrderTests
 
     result.IsSuccess.Should().BeTrue();
     attempts.Should().Be(2);
-    await _invoiceRepository.Received(1).AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
+    // Event is published (handlers deduct stock, generate invoice)
+    await _publisher.Received().Publish(
+        Arg.Is<OrderPaidDomainEvent>(e => e.OrderId == _orderId),
+        Arg.Any<CancellationToken>());
   }
+
 
   [Fact]
   public async Task Checkout_ShouldTransitionToPaid_AndCalculateChangeAmount_WhenCashOverpays()
@@ -456,20 +463,14 @@ public partial class CheckoutAndCancelOrderTests
   {
     // Arrange
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 5);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
 
-    // Tồn kho chỉ có 2 (yêu cầu 5)
-    _stockEntryRepository.GetBySkuAndStoreAsync(Arg.Any<Guid>(), _storeId, Arg.Any<CancellationToken>())
-        .Returns(ci => new StockEntry(_storeId, ci.ArgAt<Guid>(0), 2));
+    // Guard service returns stock insufficient error (tồn kho chỉ có 2, yêu cầu 5)
+    _checkoutGuardService.ValidateInventoryAsync(Arg.Any<Order>(), Arg.Any<CancellationToken>())
+        .Returns(Result.Failure(OrderErrors.StockInsufficient));
 
     var handler = CreateCheckoutHandler();
-
-    var command = new CheckoutOrderCommand(
-        _orderId,
-        [new PaymentSplitInputDto("Cash", 500_000)]);
+    var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 500_000)]);
 
     // Act
     var result = await handler.Handle(command, CancellationToken.None);
@@ -479,25 +480,17 @@ public partial class CheckoutAndCancelOrderTests
     result.Error.Code.Should().Be(OrderErrors.StockInsufficient.Code);
   }
 
+
   [Fact]
   public async Task Checkout_ShouldSucceed_WhenShiftOpenedByManagerInSameStore()
   {
     // Arrange: Ca do Quản lý mở, Thu ngân bán hàng -> Thành công
+    // Default guard service mock already returns success — this test verifies the success path
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
-
-    var otherShift = Shift.Open(_storeId, _managerEmployee.Id, 500_000, null);
-    typeof(Shift).GetProperty(nameof(Shift.Employee))!.SetValue(otherShift, _managerEmployee);
-    _shiftRepository.GetByIdAsync(order.ShiftId, Arg.Any<CancellationToken>()).Returns(otherShift);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
 
     var handler = CreateCheckoutHandler();
-
-    var command = new CheckoutOrderCommand(
-        _orderId,
-        [new PaymentSplitInputDto("Cash", 100_000)]);
+    var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]);
 
     // Act
     var result = await handler.Handle(command, CancellationToken.None);
@@ -507,35 +500,20 @@ public partial class CheckoutAndCancelOrderTests
     order.Status.Should().Be(OrderStatus.Paid);
   }
 
+
   [Fact]
   public async Task Checkout_ShouldFail_WhenShiftBelongsToAnotherCashierInSameStore()
   {
-    // Arrange: Ca do Thu ngân khác mở, Thu ngân hiện tại cố ý thanh toán chèn -> Bị chặn
+    // Arrange: Ca do Thu ngân khác mở → guard service trả ShiftNotOwned
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
-
-    var otherCashierId = Guid.NewGuid();
-    var otherCashierRole = new Role(RoleNames.Cashier, isSystemRole: true);
-    var otherCashier = new Employee("Thu ngân B", "cashierB", "hash", "pin", otherCashierRole.Id, false, _storeId, true, otherCashierId);
-    typeof(Employee).GetProperty(nameof(Employee.Role))!.SetValue(otherCashier, otherCashierRole);
-
-    var otherShift = Shift.Open(_storeId, otherCashierId, 500_000, null);
-    typeof(Shift).GetProperty(nameof(Shift.Employee))!.SetValue(otherShift, otherCashier);
-    _shiftRepository.GetByIdAsync(order.ShiftId, Arg.Any<CancellationToken>()).Returns(otherShift);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    _checkoutGuardService.ValidatePreCheckoutGuardsAsync(Arg.Any<Order>(), Arg.Any<Employee>(), Arg.Any<CancellationToken>())
+        .Returns(Result<(Shift, Store)>.Failure(OrderErrors.ShiftNotOwned));
 
     var handler = CreateCheckoutHandler();
+    var result = await handler.Handle(
+        new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]), CancellationToken.None);
 
-    var command = new CheckoutOrderCommand(
-        _orderId,
-        [new PaymentSplitInputDto("Cash", 100_000)]);
-
-    // Act
-    var result = await handler.Handle(command, CancellationToken.None);
-
-    // Assert
     result.IsFailure.Should().BeTrue();
     result.Error.Code.Should().Be(OrderErrors.ShiftNotOwned.Code);
   }
@@ -543,27 +521,16 @@ public partial class CheckoutAndCancelOrderTests
   [Fact]
   public async Task Checkout_ShouldFail_WhenShiftStoreMismatch()
   {
-    // Arrange
+    // Arrange: Shift storeId ≠ order storeId → guard service trả ShiftStoreMismatch
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
-
-    var otherStoreId = Guid.NewGuid();
-    var otherShift = Shift.Open(otherStoreId, _employeeId, 500_000, null);
-    _shiftRepository.GetByIdAsync(order.ShiftId, Arg.Any<CancellationToken>()).Returns(otherShift);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    _checkoutGuardService.ValidatePreCheckoutGuardsAsync(Arg.Any<Order>(), Arg.Any<Employee>(), Arg.Any<CancellationToken>())
+        .Returns(Result<(Shift, Store)>.Failure(OrderErrors.ShiftStoreMismatch));
 
     var handler = CreateCheckoutHandler();
+    var result = await handler.Handle(
+        new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]), CancellationToken.None);
 
-    var command = new CheckoutOrderCommand(
-        _orderId,
-        [new PaymentSplitInputDto("Cash", 100_000)]);
-
-    // Act
-    var result = await handler.Handle(command, CancellationToken.None);
-
-    // Assert
     result.IsFailure.Should().BeTrue();
     result.Error.Code.Should().Be(OrderErrors.ShiftStoreMismatch.Code);
   }
@@ -571,28 +538,20 @@ public partial class CheckoutAndCancelOrderTests
   [Fact]
   public async Task Checkout_ShouldFail_WhenStoreIsInactive()
   {
-    // Arrange
+    // Arrange: Store inactive → guard service trả StoreInactive
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
-    var inactiveStore = new Store("Inactive Store", isActive: false, id: _storeId);
-    _storeRepository.GetByIdAsync(_storeId, Arg.Any<CancellationToken>()).Returns(inactiveStore);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    _checkoutGuardService.ValidatePreCheckoutGuardsAsync(Arg.Any<Order>(), Arg.Any<Employee>(), Arg.Any<CancellationToken>())
+        .Returns(Result<(Shift, Store)>.Failure(OrderErrors.StoreInactive));
 
     var handler = CreateCheckoutHandler();
+    var result = await handler.Handle(
+        new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]), CancellationToken.None);
 
-    var command = new CheckoutOrderCommand(
-        _orderId,
-        [new PaymentSplitInputDto("Cash", 100_000)]);
-
-    // Act
-    var result = await handler.Handle(command, CancellationToken.None);
-
-    // Assert
     result.IsFailure.Should().BeTrue();
     result.Error.Code.Should().Be(OrderErrors.StoreInactive.Code);
   }
+
 
   [Fact]
   public async Task Checkout_ShouldFail_WhenPointsUsedWithoutCustomer()
@@ -739,19 +698,16 @@ public partial class CheckoutAndCancelOrderTests
   }
 
   [Fact]
-  public async Task CheckoutOrder_ShouldRecordVoucherUse_EvenForGuestCustomer()
+  public async Task CheckoutOrder_ShouldPublishDomainEvent_WhenOrderPaid_WithVoucher()
   {
-    // Arrange
+    // Arrange: voucher recording is now handled by OrderPaidVoucherHandler via domain event
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
     var promotion = new Promotion(_storeId, "Promo", PromotionType.CartFixed, 20_000, validFrom: DateTime.UtcNow.AddDays(-1), createdBy: _cashierEmployee.Id);
     var voucher = new Voucher(promotion.Id, "GUEST20K", maxUses: 10, expiresAt: DateTime.UtcNow.AddDays(1));
     typeof(Voucher).GetProperty(nameof(Voucher.Promotion))!.SetValue(voucher, promotion);
 
     order.SetAppliedVoucher(voucher.Id, voucher.Code);
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
-    _voucherRepository.GetByIdWithPromotionAsync(voucher.Id, Arg.Any<CancellationToken>()).Returns(voucher);
 
     var handler = CreateCheckoutHandler();
     var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]);
@@ -759,11 +715,13 @@ public partial class CheckoutAndCancelOrderTests
     // Act
     var result = await handler.Handle(command, CancellationToken.None);
 
-    // Assert
+    // Assert: handler publishes domain event; the voucher handler runs independently
     result.IsSuccess.Should().BeTrue();
-    voucher.UsedCount.Should().Be(1);
-    await _voucherUsageRepository.DidNotReceive().AddAsync(Arg.Any<VoucherUsage>(), Arg.Any<CancellationToken>());
+    await _publisher.Received(1).Publish(
+        Arg.Is<OrderPaidDomainEvent>(e => e.OrderId == _orderId),
+        Arg.Any<CancellationToken>());
   }
+
 
   [Fact]
   public async Task CheckoutOrder_ShouldSetCustomerOnDraft_WhenProvidedInCommand()
@@ -792,15 +750,12 @@ public partial class CheckoutAndCancelOrderTests
   [Fact]
   public async Task CheckoutOrder_ShouldFail_WhenCustomerIsInactive()
   {
-    // Arrange
+    // Arrange: Guard service trả CustomerErrors.Inactive khi khách hàng bị vô hiệu hóa
     var order = CreateDraftOrderWithItems(itemPrice: 100_000, qty: 1);
-    var inactiveCustomer = new Customer("Inactive Customer", "0988776655", Guid.NewGuid(), isActive: false);
-    order.SetCustomer(inactiveCustomer.Id);
-    typeof(Order).GetProperty(nameof(Order.Customer))!.SetValue(order, inactiveCustomer);
-
-    _currentUser.EmployeeId.Returns(_employeeId);
-    _employeeRepository.GetByIdAsync(_employeeId, Arg.Any<CancellationToken>()).Returns(_cashierEmployee);
+    order.SetCustomer(Guid.NewGuid());
     _orderRepository.GetByIdWithDetailsAsync(_orderId, Arg.Any<CancellationToken>()).Returns(order);
+    _checkoutGuardService.ValidatePreCheckoutGuardsAsync(Arg.Any<Order>(), Arg.Any<Employee>(), Arg.Any<CancellationToken>())
+        .Returns(Result<(Shift, Store)>.Failure(POS.Domain.Customers.Errors.CustomerErrors.Inactive));
 
     var handler = CreateCheckoutHandler();
     var command = new CheckoutOrderCommand(_orderId, [new PaymentSplitInputDto("Cash", 100_000)]);

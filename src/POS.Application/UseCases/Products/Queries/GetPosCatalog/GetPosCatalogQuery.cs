@@ -6,5 +6,6 @@ public record GetPosCatalogQuery(
     Guid? CategoryId,
     string? Search,
     int PageNumber,
-    int PageSize
+    int PageSize,
+    Guid? StoreId = null
 ) : IQuery<PagedPosCatalogList>;

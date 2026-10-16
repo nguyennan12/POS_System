@@ -8,5 +8,5 @@ public record UpdateStoreCommand(Guid StoreId, string Name, string? Address, str
     string Timezone, string CurrencyCode, string? TaxCode, string? ReceiptHeader, string? ReceiptFooter)
     : ICommand<StoreDetailDto>, IRequirePermission
 {
-    public string RequiredPermission => "stores:update";
+    public string RequiredPermission => "stores:manage";
 }

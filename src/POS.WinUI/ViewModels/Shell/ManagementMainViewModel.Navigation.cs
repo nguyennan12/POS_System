@@ -48,6 +48,39 @@ public partial class ManagementMainViewModel
         {
             SelectTab(NavTabs[0]);
         }
+
+        UpdateLocalizedTexts();
+    }
+
+    public void UpdateLocalizedTexts()
+    {
+        var loc = POS.WinUI.Core.Services.LocalizationService.Instance;
+        WorkspaceHeaderText = loc["nav.workspace"];
+        PosButtonText = loc["header.pos_screen"];
+        HomeBreadcrumbText = loc["breadcrumb.home"];
+
+        foreach (var tab in NavTabs)
+        {
+            tab.Title = tab.Id switch
+            {
+                "Dashboard" => loc["nav.dashboard"],
+                "Orders" => loc["nav.orders"],
+                "Products" => loc["nav.products"],
+                "Inventory" => loc["nav.inventory"],
+                "Customers" => loc["nav.customers"],
+                "Promotions" => loc["nav.promotions"],
+                "Employees" => loc["nav.employees"],
+                "Reports" => loc["nav.reports"],
+                "Settings" => loc["nav.settings"],
+                _ => tab.Title
+            };
+        }
+
+        if (SelectedTab != null)
+        {
+            ActiveTabTitle = SelectedTab.Title;
+            ActiveTabBadgeText = $"Đang ở: {SelectedTab.Title}";
+        }
     }
 
     private bool IsTabAllowed(NavigationItemViewModel tab)

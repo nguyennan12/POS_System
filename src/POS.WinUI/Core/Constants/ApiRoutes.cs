@@ -67,6 +67,7 @@ public static class ApiRoutes
   {
     public const string Base = "api/v1/products";
     public const string PosCatalog = "api/v1/products/pos-catalog";
+    public const string KpiSummary = "api/v1/products/kpi-summary";
     public static string GetById(Guid id) => $"api/v1/products/{id}";
     public const string BulkImport = "api/v1/products/bulk-import";
   }
@@ -86,5 +87,11 @@ public static class ApiRoutes
     public static string Vouchers(Guid id) => $"api/v1/orders/{id}/vouchers";
     public static string Checkout(Guid id) => $"api/v1/orders/{id}/checkout";
     public static string Cancel(Guid id) => $"api/v1/orders/{id}/cancel";
+  }
+
+  public static class Config
+  {
+    public const string Store = "api/v1/config/store";
+    public static string I18n(string languageCode) => $"api/v1/config/i18n/{languageCode}";
   }
 }

@@ -13,112 +13,166 @@ public static class SystemPermissions
 {
     public static readonly ResourceDefinition[] Resources =
     [
-        // 1. Store Management
+        // 1. Stores
         new(ResourceNames.Stores, "Store Management",
         [
-            (PermissionAction.Create, "Create new store"),
             (PermissionAction.Read, "View store details and list"),
-            (PermissionAction.Update, "Update store information and settings"),
-            (PermissionAction.Delete, "Delete store")
+            (PermissionAction.Manage, "Create, update, manage store status and assign manager")
         ]),
 
-        // 2. Employee Management
+        // 2. Roles & Permissions
+        new(ResourceNames.Roles, "Role & Permission Management",
+        [
+            (PermissionAction.Manage, "Manage custom roles and assign permissions")
+        ]),
+
+        // 3. Employees
         new(ResourceNames.Employees, "Employee Management",
         [
-            (PermissionAction.Create, "Create new employee account"),
             (PermissionAction.Read, "View employee profiles and list"),
-            (PermissionAction.Update, "Update employee information and status"),
-            (PermissionAction.Delete, "Delete or deactivate employee account")
+            (PermissionAction.Manage, "Create, update, lock/unlock employees, reset PIN/password"),
+            (PermissionAction.LoginHistory, "View employee login history and audit logs")
         ]),
 
-        // 3. Role & Permission Management
-        new(ResourceNames.Roles, "Role and Permission Management",
-        [
-            (PermissionAction.Create, "Create new custom role"),
-            (PermissionAction.Read, "View roles and assigned permission matrix"),
-            (PermissionAction.Update, "Update role details and permissions"),
-            (PermissionAction.Delete, "Delete custom role")
-        ]),
-
-        // 4. Product Management
-        new(ResourceNames.Products, "Product Catalog Management",
-        [
-            (PermissionAction.Create, "Create new product"),
-            (PermissionAction.Read, "View product catalog, pricing, and details"),
-            (PermissionAction.Update, "Update product information and pricing"),
-            (PermissionAction.Delete, "Delete product")
-        ]),
-
-        // 5. Category Management
+        // 4. Categories
         new(ResourceNames.Categories, "Category Management",
         [
-            (PermissionAction.Create, "Create new product category"),
-            (PermissionAction.Read, "View product category list"),
-            (PermissionAction.Update, "Update product category details"),
-            (PermissionAction.Delete, "Delete product category")
+            (PermissionAction.Read, "View product categories"),
+            (PermissionAction.Manage, "Create, update, and delete product categories")
         ]),
 
-        // 6. Inventory Management
-        new(ResourceNames.Inventory, "Inventory and Stock Management",
+        // 5. Products
+        new(ResourceNames.Products, "Product Catalog Management",
         [
-            (PermissionAction.Create, "Create stock entry or inventory slip"),
-            (PermissionAction.Read, "View stock levels and inventory movement"),
-            (PermissionAction.Update, "Update inventory quantities and slips"),
-            (PermissionAction.Delete, "Delete or void inventory slip")
+            (PermissionAction.Read, "View product catalog, pricing, and details"),
+            (PermissionAction.Manage, "Create, update, and deactivate products"),
+            (PermissionAction.Import, "Bulk import products from Excel")
         ]),
 
-        // 7. Shift Management
-        new(ResourceNames.Shifts, "Shift Management",
+        // 6. SKUs
+        new(ResourceNames.Skus, "SKU & Pricing Management",
         [
-            (PermissionAction.Create, "Open a shift"),
-            (PermissionAction.Read, "View shift details and history"),
-            (PermissionAction.Update, "Close and reconcile a shift"),
-            (PermissionAction.Delete, "Void a shift")
+            (PermissionAction.Read, "Scan barcode, view SKU details, price and stock availability"),
+            (PermissionAction.Manage, "Create, update, deactivate SKUs and unit conversions"),
+            (PermissionAction.PriceOverride, "Configure time-based and customer-group price lists")
         ]),
 
-        // 8. Order & Sales Management
-        new(ResourceNames.Orders, "Order and Sales Management",
+        // 7. Inventory
+        new(ResourceNames.Inventory, "Inventory & Stock Management",
         [
-            (PermissionAction.Create, "Create new sales order"),
-            (PermissionAction.Read, "View order details and sales history"),
-            (PermissionAction.Update, "Update order status and details"),
-            (PermissionAction.Delete, "Cancel or delete sales order")
+            (PermissionAction.Read, "View current stock levels and expiry alerts"),
+            (PermissionAction.Dispose, "Dispose damaged or expired stock")
         ]),
 
-        // 9. Customer Management
-        new(ResourceNames.Customers, "Customer Management",
+        // 8. Stock In Vouchers
+        new(ResourceNames.StockInVouchers, "Stock In Voucher Management",
         [
-            (PermissionAction.Create, "Create new customer profile"),
-            (PermissionAction.Read, "View customer profiles and purchase history"),
-            (PermissionAction.Update, "Update customer details and reward points"),
-            (PermissionAction.Delete, "Delete customer profile")
+            (PermissionAction.Read, "View stock in vouchers and receiving history"),
+            (PermissionAction.Manage, "Create, edit, and cancel draft stock in vouchers"),
+            (PermissionAction.Complete, "Complete stock in voucher, increase stock and calculate cost")
         ]),
 
-        // 10. Discount & Promotion Management
-        new(ResourceNames.Discounts, "Discount and Promotion Management",
+        // 9. Stock Takes
+        new(ResourceNames.StockTakes, "Stock Take & Count Management",
         [
-            (PermissionAction.Create, "Create new promotional campaign or discount"),
-            (PermissionAction.Read, "View discount list and active promotions"),
-            (PermissionAction.Update, "Update discount rules and validity"),
-            (PermissionAction.Delete, "Delete promotional campaign or discount")
+            (PermissionAction.Manage, "Create stock take sessions and input counted quantities"),
+            (PermissionAction.Approve, "Approve stock take and adjust inventory balance")
         ]),
 
-        // 11. Reports & Analytics Management
-        new(ResourceNames.Reports, "Reports and Analytics Management",
-        [
-            (PermissionAction.Create, "Generate new analytics report"),
-            (PermissionAction.Read, "View sales, revenue, and inventory reports"),
-            (PermissionAction.Update, "Update report parameters and settings"),
-            (PermissionAction.Delete, "Delete saved report")
-        ]),
-
-        // 12. Supplier Management
+        // 10. Suppliers
         new(ResourceNames.Suppliers, "Supplier Management",
         [
-            (PermissionAction.Create, "Create new supplier"),
-            (PermissionAction.Read, "View supplier details and list"),
-            (PermissionAction.Update, "Update supplier information and payments"),
-            (PermissionAction.Delete, "Deactivate supplier")
+            (PermissionAction.Read, "View supplier details and payables"),
+            (PermissionAction.Manage, "Create, update, and deactivate suppliers"),
+            (PermissionAction.Pay, "Record supplier debt payments")
+        ]),
+
+        // 11. Shifts
+        new(ResourceNames.Shifts, "Shift & Cash Reconciliation",
+        [
+            (PermissionAction.ManageOwn, "Open, view, and close own shift with cash count"),
+            (PermissionAction.Read, "View store shift history and cash summaries"),
+            (PermissionAction.AuditApprove, "Approve cash discrepancy audit reports")
+        ]),
+
+        // 12. Orders
+        new(ResourceNames.Orders, "Order & Sales Management",
+        [
+            (PermissionAction.CreateOwn, "Create sales orders and add items in open shift"),
+            (PermissionAction.ReadOwn, "View own created orders in shift"),
+            (PermissionAction.Read, "View store-wide and chain-wide sales orders"),
+            (PermissionAction.CancelOwn, "Cancel own unpaid draft orders"),
+            (PermissionAction.Cancel, "Cancel any order with manager authorization"),
+            (PermissionAction.OverrideDiscount, "Apply manual discounts overriding standard rules"),
+            (PermissionAction.Refund, "Process refunds and item returns for paid orders")
+        ]),
+
+        // 13. Payments
+        new(ResourceNames.Payments, "Payment Processing",
+        [
+            (PermissionAction.CreateOwn, "Create payment transactions (Cash, QR, Card, Points) for own orders"),
+            (PermissionAction.Read, "View payment transaction status and details")
+        ]),
+
+        // 14. Invoices
+        new(ResourceNames.Invoices, "Invoice & Receipt Management",
+        [
+            (PermissionAction.Read, "View, print, and export sales receipts / invoices")
+        ]),
+
+        // 15. Customers
+        new(ResourceNames.Customers, "Customer & CRM Management",
+        [
+            (PermissionAction.Read, "Lookup and view customer profiles"),
+            (PermissionAction.Create, "Register new customer profiles at POS"),
+            (PermissionAction.Manage, "Update customer details and status"),
+            (PermissionAction.LoyaltyAdjust, "Manually adjust customer loyalty points with reason")
+        ]),
+
+        // 16. Member Tiers
+        new(ResourceNames.MemberTiers, "Member Tier Configuration",
+        [
+            (PermissionAction.Read, "View membership tiers"),
+            (PermissionAction.Manage, "Configure membership tier spending thresholds and point rates")
+        ]),
+
+        // 17. Promotions
+        new(ResourceNames.Promotions, "Promotions Management",
+        [
+            (PermissionAction.Read, "View active promotional campaigns"),
+            (PermissionAction.Manage, "Create, update, and close promotional campaigns")
+        ]),
+
+        // 18. Vouchers
+        new(ResourceNames.Vouchers, "Voucher Management",
+        [
+            (PermissionAction.Read, "View and validate vouchers"),
+            (PermissionAction.ApplyOwn, "Apply voucher code to cart at POS"),
+            (PermissionAction.Manage, "Issue, update, and revoke voucher codes")
+        ]),
+
+        // 19. Reports
+        new(ResourceNames.Reports, "Reports & Analytics",
+        [
+            (PermissionAction.DashboardView, "View real-time dashboard analytics"),
+            (PermissionAction.RevenueView, "View detailed revenue and sales breakdown"),
+            (PermissionAction.InventoryView, "View stock status, low stock, and slow moving reports"),
+            (PermissionAction.ProfitView, "View gross profit reports (Revenue vs Cost)"),
+            (PermissionAction.Export, "Export reports to Excel and PDF formats")
+        ]),
+
+        // 20. Config
+        new(ResourceNames.Config, "System & Store Configuration",
+        [
+            (PermissionAction.Read, "Read system settings and i18n translations"),
+            (PermissionAction.ManageStore, "Configure store-specific settings and receipts"),
+            (PermissionAction.ManageGlobal, "Configure global chain-wide settings and policies")
+        ]),
+
+        // 21. Audit Logs
+        new(ResourceNames.AuditLogs, "Audit Log Management",
+        [
+            (PermissionAction.Read, "View system security audit trail and logs")
         ])
     ];
 }

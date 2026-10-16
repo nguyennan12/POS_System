@@ -134,7 +134,8 @@ public static class OrderMappingExtensions
             ChangeAmount: changeAmount,
             Status: order.Status.ToString(),
             Payments: paymentDtos,
-            ReceiptData: receiptData
+            ReceiptData: receiptData,
+            SideEffects: null
         );
     }
 }

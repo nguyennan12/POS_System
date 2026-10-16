@@ -11,7 +11,28 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
     
     public Guid? EmployeeId => ReadGuid("sub") ?? ReadGuid(ClaimTypes.NameIdentifier) ?? ReadGuid("employee_id");
     public Guid? RoleId => ReadGuid("role_id");
-    public Guid? StoreId => ReadGuid("store_id");
+    public Guid? StoreId
+    {
+        get
+        {
+            if (IsChainOwner && accessor.HttpContext != null)
+            {
+                if (accessor.HttpContext.Request.Headers.TryGetValue("X-Store-Id", out var headerVal) &&
+                    Guid.TryParse(headerVal, out var headerStoreId) && headerStoreId != Guid.Empty)
+                {
+                    return headerStoreId;
+                }
+
+                if (accessor.HttpContext.Request.Query.TryGetValue("storeId", out var queryVal) &&
+                    Guid.TryParse(queryVal, out var queryStoreId) && queryStoreId != Guid.Empty)
+                {
+                    return queryStoreId;
+                }
+            }
+
+            return ReadGuid("store_id");
+        }
+    }
     public bool IsChainOwner => IsAuthenticated &&
         bool.TryParse(User?.FindFirstValue("is_chain_owner"), out var isChainOwner) && isChainOwner;
     public string? Role => User?.FindFirstValue(ClaimTypes.Role) ?? User?.FindFirstValue("role");

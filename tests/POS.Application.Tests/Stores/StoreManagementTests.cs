@@ -7,6 +7,7 @@ using POS.Application.UseCases.Stores.Commands.AssignAdminToStore;
 using POS.Application.UseCases.Stores.Commands.CreateStore;
 using POS.Application.UseCases.Stores.Commands.UpdateStore;
 using POS.Application.UseCases.Stores.Commands.UpdateStoreStatus;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Application.UseCases.Stores.Queries.GetAllStores;
 using POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 using POS.Domain.Common;
@@ -22,7 +23,7 @@ public class StoreManagementTests
     private readonly IStoreRepository stores = Substitute.For<IStoreRepository>();
     private readonly IEmployeeRepository employees = Substitute.For<IEmployeeRepository>();
     private readonly IRoleRepository roles = Substitute.For<IRoleRepository>();
-    private readonly ICurrentUser currentUser = Substitute.For<ICurrentUser>();
+    private readonly IStoreAccessPolicy storeAccessPolicy = Substitute.For<IStoreAccessPolicy>();
     private readonly IUnitOfWork unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICacheService cache = Substitute.For<ICacheService>();
     private readonly Store store = new("Store", phone: "0123456789", timezone: "UTC", currencyCode: "USD",
@@ -32,9 +33,10 @@ public class StoreManagementTests
     public StoreManagementTests()
     {
         owner = EmployeeWithRole(RoleNames.Owner, chainOwner: true);
-        currentUser.IsAuthenticated.Returns(true);
-        currentUser.EmployeeId.Returns(owner.Id);
-        employees.GetByIdAsync(owner.Id, Arg.Any<CancellationToken>()).Returns(owner);
+        // Default: authenticated chain owner with full access.
+        storeAccessPolicy.GetAuthenticatedOwnerAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result<Employee>.Success(owner)));
+        storeAccessPolicy.CanAccessStore(Arg.Any<Guid?>()).Returns(true);
         stores.GetByIdAsync(store.Id, Arg.Any<CancellationToken>()).Returns(store);
         unitOfWork.ExecuteSerializableAsync(
                 Arg.Any<Func<CancellationToken, Task<Result<StoreDetailDto>>>>(), Arg.Any<CancellationToken>())
@@ -44,8 +46,10 @@ public class StoreManagementTests
     [Fact]
     public async Task Anonymous_list_does_not_query_stores()
     {
-        currentUser.IsAuthenticated.Returns(false);
-        var result = await new GetAllStoresQueryHandler(stores, employees, currentUser).Handle(new(), default);
+        storeAccessPolicy.GetAuthenticatedOwnerAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result<Employee>.Failure(StoreErrors.Unauthorized)));
+
+        var result = await new GetAllStoresQueryHandler(stores, storeAccessPolicy).Handle(new(), default);
         Assert.Equal(ErrorType.Unauthorized, result.Error.Type);
         Assert.Empty(stores.ReceivedCalls());
     }
@@ -53,9 +57,10 @@ public class StoreManagementTests
     [Fact]
     public async Task StoreManager_cannot_list_owner_management_data()
     {
-        var manager = EmployeeWithRole(RoleNames.StoreManager, store.Id);
-        employees.GetByIdAsync(owner.Id, Arg.Any<CancellationToken>()).Returns(manager);
-        var result = await new GetAllStoresQueryHandler(stores, employees, currentUser).Handle(new(), default);
+        storeAccessPolicy.GetAuthenticatedOwnerAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result<Employee>.Failure(StoreErrors.Forbidden)));
+
+        var result = await new GetAllStoresQueryHandler(stores, storeAccessPolicy).Handle(new(), default);
         Assert.Equal(ErrorType.Forbidden, result.Error.Type);
         Assert.Empty(stores.ReceivedCalls());
     }
@@ -64,7 +69,7 @@ public class StoreManagementTests
     public async Task List_passes_database_scope_and_never_calls_unrestricted_GetAll()
     {
         stores.GetAccessibleAsync(owner.Id, true, null, Arg.Any<CancellationToken>()).Returns([store]);
-        var result = await new GetAllStoresQueryHandler(stores, employees, currentUser).Handle(new(), default);
+        var result = await new GetAllStoresQueryHandler(stores, storeAccessPolicy).Handle(new(), default);
         Assert.Equal(store.Id, Assert.Single(result.Value!).Id);
         await stores.DidNotReceive().GetAllAsync(Arg.Any<CancellationToken>());
     }
@@ -72,7 +77,7 @@ public class StoreManagementTests
     [Fact]
     public async Task Detail_contains_actual_settings_and_timestamps()
     {
-        var result = await new GetStoreDetailQueryHandler(stores, employees, currentUser).Handle(new(store.Id), default);
+        var result = await new GetStoreDetailQueryHandler(stores, storeAccessPolicy).Handle(new(store.Id), default);
         Assert.Equal("USD", result.Value!.CurrencyCode);
         Assert.Equal("UTC", result.Value.Timezone);
         Assert.Equal("0123456789", result.Value.Phone);
@@ -85,7 +90,7 @@ public class StoreManagementTests
     public async Task Missing_store_returns_not_found_without_saving()
     {
         stores.GetByIdAsync(store.Id, Arg.Any<CancellationToken>()).Returns((Store?)null);
-        var result = await new UpdateStoreStatusCommandHandler(stores, employees, currentUser, unitOfWork)
+        var result = await new UpdateStoreStatusCommandHandler(stores, storeAccessPolicy, unitOfWork)
             .Handle(new(store.Id, false), default);
         Assert.Equal(ErrorType.NotFound, result.Error.Type);
         await unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -94,7 +99,7 @@ public class StoreManagementTests
     [Fact]
     public async Task Status_can_deactivate_then_reactivate()
     {
-        var handler = new UpdateStoreStatusCommandHandler(stores, employees, currentUser, unitOfWork);
+        var handler = new UpdateStoreStatusCommandHandler(stores, storeAccessPolicy, unitOfWork);
         Assert.False((await handler.Handle(new(store.Id, false), default)).Value!.IsActive);
         Assert.True((await handler.Handle(new(store.Id, true), default)).Value!.IsActive);
     }
@@ -117,7 +122,7 @@ public class StoreManagementTests
         stores.AddAsync(Arg.Do<Store>(s => created = s), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
 
         var registers = Substitute.For<IPosRegisterRepository>();
-        var result = await new CreateStoreCommandHandler(stores, registers, unitOfWork, employees, currentUser)
+        var result = await new CreateStoreCommandHandler(stores, registers, unitOfWork, storeAccessPolicy)
             .Handle(new("New", null, null, "UTC", "USD"), default);
 
         Assert.True(result.IsSuccess);
@@ -257,7 +262,7 @@ public class StoreManagementTests
     }
 
     private AssignAdminToStoreCommandHandler AssignHandler() =>
-        new(stores, employees, roles, currentUser, unitOfWork, cache, NullLogger<AssignAdminToStoreCommandHandler>.Instance);
+        new(stores, employees, roles, storeAccessPolicy, unitOfWork, cache, NullLogger<AssignAdminToStoreCommandHandler>.Instance);
 
     private static Employee EmployeeWithRole(string name, Guid? storeId = null, bool chainOwner = false)
     {

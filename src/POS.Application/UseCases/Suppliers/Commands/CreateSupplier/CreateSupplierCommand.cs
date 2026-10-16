@@ -13,5 +13,5 @@ public record CreateSupplierCommand(
     string? CreditTerms
 ) : ICommand<SupplierDto>, IRequirePermission
 {
-    public string RequiredPermission => "suppliers:create";
+    public string RequiredPermission => "suppliers:manage";
 }

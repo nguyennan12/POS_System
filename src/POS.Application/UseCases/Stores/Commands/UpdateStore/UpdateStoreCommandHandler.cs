@@ -7,15 +7,15 @@ using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Stores.Commands.UpdateStore;
 
-public class UpdateStoreCommandHandler(IStoreRepository stores, IEmployeeRepository employees,
-    ICurrentUser currentUser, IUnitOfWork unitOfWork)
+public class UpdateStoreCommandHandler(IStoreRepository stores, IStoreAccessPolicy storeAccessPolicy,
+    IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateStoreCommand, StoreDetailDto>
 {
     public async Task<Result<StoreDetailDto>> Handle(UpdateStoreCommand command, CancellationToken cancellationToken)
     {
-        var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+        var caller = await storeAccessPolicy.GetAuthenticatedOwnerAsync(cancellationToken);
         if (caller.IsFailure) return caller.Error;
-        if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, command.StoreId, cancellationToken))
+        if (!storeAccessPolicy.CanAccessStore(command.StoreId))
             return StoreErrors.Forbidden;
 
         var store = await stores.GetByIdAsync(command.StoreId, cancellationToken);

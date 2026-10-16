@@ -95,6 +95,70 @@
 - Đăng xuất, đổi mật khẩu hoặc đóng ca phải revoke token liên quan theo chính sách bảo mật.
 - Thay đổi quyền phải làm mất hiệu lực cache permission của nhân viên bị ảnh hưởng.
 
+### 2.10 Bảng ma trận phân quyền hệ thống (RBAC Permission Matrix)
+
+> Chuẩn định danh quyền hạn thống nhất theo cấu trúc: `resource:action`. Thao tác quản trị tổng hợp CRUD được chuẩn hóa bằng action `manage`; các nghiệp vụ tiền sảnh gắn với ca/nhân viên thao tác được gắn hậu tố `_own`.
+
+| STT | Resource | Mã Quyền (Permission Code) | Mô Tả Nghiệp Vụ | Owner | StoreManager | Cashier |
+| :---: | :--- | :--- | :--- | :---: | :---: | :---: |
+| 1 | `stores` | `stores:read` | Xem thông tin và danh sách cửa hàng | ✅ | ✅ | ✅ |
+| 2 | `stores` | `stores:manage` | Tạo mới, cập nhật thông tin, trạng thái chi nhánh & gán quản lý | ✅ | ❌ | ❌ |
+| 3 | `roles` | `roles:manage` | Quản lý vai trò tùy chỉnh và gán danh sách quyền | ✅ | ❌ | ❌ |
+| 4 | `employees` | `employees:read` | Xem hồ sơ và danh sách nhân viên | ✅ | ✅ | ❌ |
+| 5 | `employees` | `employees:manage` | Tạo, cập nhật, khóa/mở khóa nhân viên, reset PIN/mật khẩu | ✅ | ✅ | ❌ |
+| 6 | `employees` | `employees:login_history` | Tra cứu lịch sử đăng nhập, audit log nhân viên | ✅ | ✅ | ❌ |
+| 7 | `categories` | `categories:read` | Xem danh mục sản phẩm | ✅ | ✅ | ✅ |
+| 8 | `categories` | `categories:manage` | Tạo mới, cập nhật, sắp xếp và xóa danh mục sản phẩm | ✅ | ✅ | ❌ |
+| 9 | `products` | `products:read` | Tra cứu danh mục sản phẩm, bảng giá và chi tiết mặt hàng | ✅ | ✅ | ✅ |
+| 10 | `products` | `products:manage` | Thêm mới, chỉnh sửa thông tin, đổi trạng thái sản phẩm | ✅ | ✅ | ❌ |
+| 11 | `products` | `products:import` | Nhập danh sách sản phẩm hàng loạt từ file Excel | ✅ | ✅ | ❌ |
+| 12 | `skus` | `skus:read` | Quét barcode, xem thông tin SKU, đơn vị quy đổi, giá bán | ✅ | ✅ | ✅ |
+| 13 | `skus` | `skus:manage` | Thêm/sửa SKU, quy đổi đơn vị tính, barcode, trạng thái | ✅ | ✅ | ❌ |
+| 14 | `skus` | `skus:price_override` | Thiết lập bảng giá linh hoạt theo thời gian, nhóm khách hàng | ✅ | ✅ | ❌ |
+| 15 | `inventory` | `inventory:read` | Xem số lượng tồn kho tức thời, cảnh báo hết hàng/hết hạn | ✅ | ✅ | ✅ |
+| 16 | `inventory` | `inventory:dispose` | Lập phiếu xuất hủy hàng hư hỏng, hết hạn sử dụng | ✅ | ✅ | ❌ |
+| 17 | `stock_in_vouchers` | `stock_in_vouchers:read` | Xem danh sách phiếu nhập kho và lịch sử nhập hàng | ✅ | ✅ | ❌ |
+| 18 | `stock_in_vouchers` | `stock_in_vouchers:manage` | Tạo nháp, chỉnh sửa, hủy phiếu nhập kho | ✅ | ✅ | ❌ |
+| 19 | `stock_in_vouchers` | `stock_in_vouchers:complete` | Hoàn thành nhập kho, tăng tồn kho và tính giá vốn bình quân | ✅ | ✅ | ❌ |
+| 20 | `stock_takes` | `stock_takes:manage` | Tạo đợt kiểm kê, nhập số lượng thực tế | ✅ | ✅ | ❌ |
+| 21 | `stock_takes` | `stock_takes:approve` | Phê duyệt kết quả kiểm kê và tự động cân bằng tồn kho | ✅ | ✅ | ❌ |
+| 22 | `suppliers` | `suppliers:read` | Xem danh sách, thông tin liên hệ và công nợ nhà cung cấp | ✅ | ✅ | ❌ |
+| 23 | `suppliers` | `suppliers:manage` | Tạo mới, cập nhật thông tin và trạng thái nhà cung cấp | ✅ | ✅ | ❌ |
+| 24 | `suppliers` | `suppliers:pay` | Ghi nhận phiếu chi thanh toán công nợ nhà cung cấp | ✅ | ✅ | ❌ |
+| 25 | `shifts` | `shifts:manage_own` | Mở ca, xem dữ liệu ca hiện tại và đóng ca (kiểm tiền) của mình | ✅ | ✅ | ✅ |
+| 26 | `shifts` | `shifts:read` | Tra cứu lịch sử ca làm việc, báo cáo tiền mặt toàn cửa hàng | ✅ | ✅ | ❌ |
+| 27 | `shifts` | `shifts:audit_approve` | Xác nhận/duyệt biên bản chênh lệch tiền mặt khi đóng ca | ✅ | ✅ | ❌ |
+| 28 | `orders` | `orders:create_own` | Tạo đơn hàng và thêm sản phẩm trong ca đang mở của mình | ✅ | ✅ | ✅ |
+| 29 | `orders` | `orders:read_own` | Xem các đơn hàng do chính mình tạo trong ca | ✅ | ✅ | ✅ |
+| 30 | `orders` | `orders:read` | Xem danh sách và chi tiết toàn bộ đơn hàng trong cửa hàng/chuỗi | ✅ | ✅ | ❌ |
+| 31 | `orders` | `orders:cancel_own` | Hủy đơn hàng nháp/chưa thanh toán do chính mình tạo | ✅ | ✅ | ✅ |
+| 32 | `orders` | `orders:cancel` | Hủy bất kỳ đơn hàng nào theo quyền quản lý | ✅ | ✅ | ❌ |
+| 33 | `orders` | `orders:override_discount` | Áp dụng chiết khấu thủ công ngoài quy định lên đơn hàng | ✅ | ✅ | ❌ |
+| 34 | `orders` | `orders:refund` | Tiếp nhận trả hàng, lập phiếu hoàn tiền đơn hàng đã thanh toán | ✅ | ✅ | ❌ |
+| 35 | `payments` | `payments:create_own` | Tạo giao dịch thanh toán (Tiền mặt, QR, Thẻ, Điểm) cho đơn của mình | ✅ | ✅ | ✅ |
+| 36 | `payments` | `payments:read` | Tra cứu lịch sử, trạng thái giao dịch thanh toán | ✅ | ✅ | ✅ |
+| 37 | `invoices` | `invoices:read` | Xem, in hóa đơn / phiếu bán hàng và xuất PDF/file | ✅ | ✅ | ✅ |
+| 38 | `customers` | `customers:read` | Tra cứu hồ sơ, lịch sử mua hàng, tích điểm của khách hàng | ✅ | ✅ | ✅ |
+| 39 | `customers` | `customers:create` | Đăng ký nhanh khách hàng mới ngay tại quầy thu ngân | ✅ | ✅ | ✅ |
+| 40 | `customers` | `customers:manage` | Chỉnh sửa thông tin chi tiết, khóa/mở khóa hồ sơ khách hàng | ✅ | ✅ | ✅ |
+| 41 | `customers` | `customers:loyalty_adjust` | Điều chỉnh điểm tích lũy thủ công (cộng/trừ điểm có lý do) | ✅ | ✅ | ❌ |
+| 42 | `member_tiers` | `member_tiers:read` | Xem danh sách hạng thành viên và chính sách tích điểm | ✅ | ✅ | ✅ |
+| 43 | `member_tiers` | `member_tiers:manage` | Thiết lập điều kiện nâng hạng, tỷ lệ tích/đổi điểm toàn chuỗi | ✅ | ❌ | ❌ |
+| 44 | `promotions` | `promotions:read` | Xem danh sách chương trình khuyến mãi đang áp dụng | ✅ | ✅ | ✅ |
+| 45 | `promotions` | `promotions:manage` | Tạo mới, sửa điều kiện, bật/tắt chiến dịch khuyến mãi | ✅ | ✅ | ❌ |
+| 46 | `vouchers` | `vouchers:read` | Tra cứu và kiểm tra tính hợp lệ của mã voucher | ✅ | ✅ | ✅ |
+| 47 | `vouchers` | `vouchers:apply_own` | Áp dụng mã voucher vào đơn hàng tại quầy thu ngân | ✅ | ✅ | ✅ |
+| 48 | `vouchers` | `vouchers:manage` | Phát hành mã giảm giá, cấu hình số lượng và thu hồi voucher | ✅ | ✅ | ❌ |
+| 49 | `reports` | `reports:dashboard_view` | Xem tổng quan biểu đồ kinh doanh thời gian thực | ✅ | ✅ | ❌ |
+| 50 | `reports` | `reports:revenue_view` | Xem báo cáo chi tiết doanh thu, dòng tiền bán hàng | ✅ | ✅ | ❌ |
+| 51 | `reports` | `reports:inventory_view` | Xem báo cáo tồn kho, cảnh báo hàng sắp hết/bán chậm | ✅ | ✅ | ❌ |
+| 52 | `reports` | `reports:profit_view` | Xem báo cáo lợi nhuận gộp (Doanh thu - Giá vốn) toàn chuỗi | ✅ | ❌ | ❌ |
+| 53 | `reports` | `reports:export` | Xuất dữ liệu báo cáo ra file Excel, PDF | ✅ | ✅ | ❌ |
+| 54 | `config` | `config:read` | Đọc tham số cấu hình hệ thống, ngôn ngữ đa ngữ | ✅ | ✅ | ✅ |
+| 55 | `config` | `config:manage_store` | Cấu hình thông số riêng cho từng chi nhánh (mẫu in, thông tin bill) | ✅ | ✅ | ❌ |
+| 56 | `config` | `config:manage_global` | Cấu hình chính sách chung toàn chuỗi hệ thống | ✅ | ❌ | ❌ |
+| 57 | `audit_logs` | `audit_logs:read` | Tra cứu nhật ký vết kiểm toán bảo mật toàn hệ thống | ✅ | ❌ | ❌ |
+
 ---
 
 ## 3. SẢN PHẨM, SKU, DANH MỤC VÀ GIÁ

@@ -63,15 +63,22 @@ public static class DependencyInjection
         services.AddScoped<IStockTransactionRepository, StockTransactionRepository>();
         services.AddScoped<IStockBatchRepository, StockBatchRepository>();
         services.AddScoped<IStockInVoucherRepository, StockInVoucherRepository>();
+        services.AddScoped<IStockTakeRepository, StockTakeRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
         services.AddScoped<IUnitConversionRepository, UnitConversionRepository>();
         services.AddScoped<IPriceListRepository, PriceListRepository>();
+        services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
+        services.AddScoped<ITranslationRepository, TranslationRepository>();
 
         // ---- Excel Services (Reusable Import / Export) ----
         services.AddScoped<POS.Application.Abstractions.Excel.IExcelReader, POS.Infrastructure.Excel.ClosedXmlExcelReader>();
         services.AddScoped<POS.Application.Abstractions.Excel.IExcelExporter, POS.Infrastructure.Excel.ClosedXmlExcelExporter>();
         services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
+
+        // ---- Reports & Export Job Store ----
+        services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddSingleton<POS.Application.Abstractions.Reports.IReportExportJobStore, POS.Infrastructure.Reports.ReportExportJobStore>();
 
 
         services.AddScoped<IPermissionRepository, PermissionRepository>();

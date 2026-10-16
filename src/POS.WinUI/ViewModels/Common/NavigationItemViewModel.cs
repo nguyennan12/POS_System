@@ -6,7 +6,10 @@ namespace POS.WinUI.ViewModels.Common;
 public partial class NavigationItemViewModel : ObservableObject
 {
     public string Id { get; init; } = string.Empty;
-    public string Title { get; init; } = string.Empty;
+
+    [ObservableProperty]
+    private string _title = string.Empty;
+
     public SymbolRegular Icon { get; init; }
 
     public string[]? AllowedRoles { get; init; }

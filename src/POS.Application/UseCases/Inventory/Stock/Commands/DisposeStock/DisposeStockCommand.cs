@@ -11,6 +11,6 @@ public record DisposeStockCommand(
     Guid? BatchId = null
 ) : ICommand<StockTransactionDto>, IRequirePermission
 {
-    public string RequiredPermission => "inventory:update";
+    public string RequiredPermission => "inventory:dispose";
 }
 

@@ -26,6 +26,7 @@ public sealed class ProductApiClient : BaseApiClient
         string? search = null,
         int pageNumber = 1,
         int pageSize = 100,
+        Guid? storeId = null,
         CancellationToken ct = default)
     {
         var queryParams = new List<string>
@@ -40,6 +41,10 @@ public sealed class ProductApiClient : BaseApiClient
         if (!string.IsNullOrWhiteSpace(search))
             queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
 
+        var effectiveStoreId = storeId ?? (Guid.TryParse(_session.StoreId, out var sid) ? sid : null);
+        if (effectiveStoreId.HasValue)
+            queryParams.Add($"storeId={effectiveStoreId.Value}");
+
         var url = $"{ApiRoutes.Products.PosCatalog}?{string.Join("&", queryParams)}";
         return GetAsync<ApiResponse<PagedResponse<PosCatalogItemResponse>>>(url, ct);
     }
@@ -53,6 +58,7 @@ public sealed class ProductApiClient : BaseApiClient
         string? status = null,
         int pageNumber = 1,
         int pageSize = 50,
+        Guid? storeId = null,
         CancellationToken ct = default)
     {
         var queryParams = new List<string>
@@ -70,8 +76,27 @@ public sealed class ProductApiClient : BaseApiClient
         if (!string.IsNullOrWhiteSpace(status))
             queryParams.Add($"status={Uri.EscapeDataString(status.Trim())}");
 
+        var effectiveStoreId = storeId ?? (Guid.TryParse(_session.StoreId, out var sid) ? sid : null);
+        if (effectiveStoreId.HasValue)
+            queryParams.Add($"storeId={effectiveStoreId.Value}");
+
         var url = $"{ApiRoutes.Products.Base}?{string.Join("&", queryParams)}";
         return GetAsync<ApiResponse<PagedResponse<ProductSummaryResponse>>>(url, ct);
+    }
+
+    /// <summary>
+    /// Lấy số liệu thống kê KPI chuẩn (Tổng sản phẩm, Đang kinh doanh, Tổng SKU, Tổng Danh mục)
+    /// </summary>
+    public Task<ApiResponse<ProductKpiSummaryResponse>?> GetProductKpiSummaryAsync(
+        Guid? storeId = null,
+        CancellationToken ct = default)
+    {
+        var effectiveStoreId = storeId ?? (Guid.TryParse(_session.StoreId, out var sid) ? sid : null);
+        var url = effectiveStoreId.HasValue
+            ? $"{ApiRoutes.Products.KpiSummary}?storeId={effectiveStoreId.Value}"
+            : ApiRoutes.Products.KpiSummary;
+
+        return GetAsync<ApiResponse<ProductKpiSummaryResponse>>(url, ct);
     }
 
     /// <summary>
@@ -121,4 +146,29 @@ public sealed class ProductApiClient : BaseApiClient
     /// </summary>
     public Task<ApiResponse<object>?> DeleteSkuAsync(Guid id, CancellationToken ct = default)
         => DeleteAsync<ApiResponse<object>>(ApiRoutes.Skus.GetById(id), ct);
+
+    /// <summary>
+    /// [P05] Nhập danh sách sản phẩm và SKU hàng loạt từ file Excel (.xlsx / .xls)
+    /// </summary>
+    public async Task<ApiResponse<BulkImportResultResponse>?> BulkImportProductsAsync(
+        string filePath,
+        CancellationToken ct = default)
+    {
+        AttachToken();
+        using var form = new System.Net.Http.MultipartFormDataContent();
+        await using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new System.Net.Http.StreamContent(fileStream);
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var mimeType = ext == ".xls"
+            ? "application/vnd.ms-excel"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+
+        var response = await _http.PostAsync(ApiRoutes.Products.BulkImport, form, ct);
+        await HandleFailureResponseAsync(response, ct);
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<ApiResponse<BulkImportResultResponse>>(response.Content, _jsonOptions, ct);
+    }
 }

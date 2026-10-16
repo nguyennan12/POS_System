@@ -7,19 +7,17 @@ namespace POS.Application.UseCases.Products.Queries.GetProducts;
 
 internal sealed class GetProductsQueryHandler(
     IProductRepository productRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetProductsQuery, PagedProductList>
+    IStoreAccessPolicy storeAccessPolicy) : IQueryHandler<GetProductsQuery, PagedProductList>
 {
     public async Task<Result<PagedProductList>> Handle(
         GetProductsQuery query,
         CancellationToken cancellationToken)
     {
-        if (currentUser.StoreId is null)
-            return ProductErrors.StoreRequired;
-
-        var storeId = currentUser.StoreId.Value;
+        var storeContext = storeAccessPolicy.EnforceStoreAccess(query.StoreId);
+        if (storeContext.IsFailure) return storeContext.Error;
 
         var (rows, total) = await productRepository.GetPagedAsync(
-            storeId,
+            storeContext.Value,
             query.Search,
             query.CategoryId,
             query.Status,
