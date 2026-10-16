@@ -127,11 +127,15 @@ public class StoreAssignmentConcurrencyTests
     private static AssignAdminToStoreCommandHandler CreateHandler(
         AppDbContext context, IEmployeeRepository employees, Guid callerId, ICacheService cache)
     {
-        var currentUser = Substitute.For<ICurrentUser>();
-        currentUser.IsAuthenticated.Returns(true);
-        currentUser.EmployeeId.Returns(callerId);
+        var storeAccessPolicy = Substitute.For<IStoreAccessPolicy>();
+        // Simulate a chain-owner caller: build a minimal owner stub for authorization.
+        var ownerRole = new Role(RoleNames.Owner, isSystemRole: true);
+        var callerEmployee = new Employee("Caller", "caller", "unused", "pin", ownerRole.Id, isChainOwner: true);
+        storeAccessPolicy.GetAuthenticatedOwnerAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(Result<Employee>.Success(callerEmployee)));
+        storeAccessPolicy.CanAccessStore(Arg.Any<Guid?>()).Returns(true);
         return new(new StoreRepository(context), employees, new RoleRepository(context),
-            currentUser, new UnitOfWork(context), cache,
+            storeAccessPolicy, new UnitOfWork(context), cache,
             NullLogger<AssignAdminToStoreCommandHandler>.Instance);
     }
 

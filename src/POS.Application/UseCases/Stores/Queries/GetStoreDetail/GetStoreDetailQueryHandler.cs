@@ -6,14 +6,15 @@ using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Stores.Queries.GetStoreDetail;
 
-public class GetStoreDetailQueryHandler(IStoreRepository storeRepository, IEmployeeRepository employees,
-    ICurrentUser currentUser) : IQueryHandler<GetStoreDetailQuery, StoreDetailDto>
+public class GetStoreDetailQueryHandler(
+    IStoreRepository storeRepository,
+    IStoreAccessPolicy storeAccessPolicy) : IQueryHandler<GetStoreDetailQuery, StoreDetailDto>
 {
   public async Task<Result<StoreDetailDto>> Handle(GetStoreDetailQuery query, CancellationToken cancellationToken)
   {
-    var caller = await StoreManagementAccess.GetOwnerAsync(currentUser, employees, cancellationToken);
+    var caller = await storeAccessPolicy.GetAuthenticatedOwnerAsync(cancellationToken);
     if (caller.IsFailure) return caller.Error;
-    if (!await StoreManagementAccess.CanAccessAsync(caller.Value!, query.StoreId, cancellationToken))
+    if (!storeAccessPolicy.CanAccessStore(query.StoreId))
       return StoreErrors.Forbidden;
 
     var store = await storeRepository.GetByIdAsync(query.StoreId, cancellationToken);

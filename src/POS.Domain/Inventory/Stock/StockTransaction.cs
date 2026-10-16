@@ -83,6 +83,17 @@ public class StockTransaction : BaseEntity
         return new StockTransaction(storeId, skuId, StockTransactionType.Dispose, qty, createdBy, note: note, unitCost: unitCost);
     }
 
+    public static StockTransaction CreateAdjust(
+        Guid storeId,
+        Guid skuId,
+        decimal qty,
+        Guid createdBy,
+        string? note = null,
+        decimal? unitCost = null)
+    {
+        return new StockTransaction(storeId, skuId, StockTransactionType.Adjust, qty, createdBy, note: note, unitCost: unitCost);
+    }
+
     public Guid StoreId { get; private set; }
     public Store Store { get; private set; } = default!;
 

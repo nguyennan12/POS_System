@@ -63,6 +63,7 @@ public static class DependencyInjection
         services.AddScoped<IStockTransactionRepository, StockTransactionRepository>();
         services.AddScoped<IStockBatchRepository, StockBatchRepository>();
         services.AddScoped<IStockInVoucherRepository, StockInVoucherRepository>();
+        services.AddScoped<IStockTakeRepository, StockTakeRepository>();
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IVoucherUsageRepository, VoucherUsageRepository>();
         services.AddScoped<IUnitConversionRepository, UnitConversionRepository>();
