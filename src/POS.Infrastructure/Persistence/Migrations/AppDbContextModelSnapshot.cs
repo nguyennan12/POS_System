@@ -1443,6 +1443,11 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("gateway_response_json");
 
+                    b.Property<string>("MerchantReference")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("merchant_reference");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1474,8 +1479,16 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("Method", "MerchantReference")
+                        .IsUnique();
+
                     b.HasIndex("Method", "TransactionRef")
                         .IsUnique();
+
+                    b.HasIndex("OrderId", "Method")
+                        .IsUnique()
+                        .HasDatabaseName("IX_payments_pending_qr")
+                        .HasFilter("status = 'Pending' AND merchant_reference IS NOT NULL");
 
                     b.ToTable("payments", null, t =>
                         {
