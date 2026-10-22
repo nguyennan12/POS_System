@@ -2,7 +2,9 @@ using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
 using POS.Application.UseCases.Payments.Errors;
-using POS.Contracts.V1.Payments;
+using POS.Application.UseCases.Payments.DTOs;
+using POS.Application.UseCases.Payments.Commands.ExpirePendingPayment;
+using MediatR;
 using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Payments.Queries.GetPaymentStatus;
@@ -10,9 +12,10 @@ namespace POS.Application.UseCases.Payments.Queries.GetPaymentStatus;
 public class GetPaymentStatusQueryHandler(
     IPaymentRepository paymentRepository,
     IEmployeeRepository employeeRepository,
-    ICurrentUser currentUser) : IQueryHandler<GetPaymentStatusQuery, PaymentStatusResponse>
+    ICurrentUser currentUser,
+    ISender sender) : IQueryHandler<GetPaymentStatusQuery, PaymentStatusDto>
 {
-    public async Task<Result<PaymentStatusResponse>> Handle(
+    public async Task<Result<PaymentStatusDto>> Handle(
         GetPaymentStatusQuery query, CancellationToken cancellationToken)
     {
         if (currentUser.EmployeeId is null)
@@ -31,8 +34,8 @@ public class GetPaymentStatusQueryHandler(
             return PaymentErrors.InvalidStore;
         }
 
-        return new PaymentStatusResponse(
-            payment.Id, payment.OrderId, payment.Method.ToString(), payment.Amount,
-            payment.Status.ToString(), payment.TransactionRef, payment.PaidAt);
+        if (payment.Status == POS.Domain.Orders.Enums.PaymentStatus.Pending && QrSessionDto.Read(payment) is not null)
+            return await sender.Send(new ExpirePendingPaymentCommand(payment.Id), cancellationToken);
+        return PaymentStatusDto.From(payment);
     }
 }
