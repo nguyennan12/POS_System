@@ -1,5 +1,7 @@
 using POS.Api.Exceptions;
 using POS.Api.Extensions;
+using POS.Api.Hubs;
+using POS.Api.Middleware;
 using POS.Application;
 using POS.Infrastructure;
 using POS.Infrastructure.Logging;
@@ -35,12 +37,14 @@ try
     // ---------- 4. Dependency Injection (Application + Infrastructure) ----------
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddPaymentRealtime(builder.Configuration);
 
     // ---------- 5. Authentication & Authorization ----------
     builder.Services.AddPosAuthentication(builder.Configuration);
     builder.Services.AddAuthorization();
     builder.Services.AddHttpContextAccessor();
-    builder.Services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser, POS.Api.Auth.CurrentUser>();
+    builder.Services.AddScoped<POS.Api.Auth.CurrentUser>();
+    builder.Services.AddScoped<POS.Application.Abstractions.Auth.ICurrentUser>(sp => sp.GetRequiredService<POS.Api.Auth.CurrentUser>());
 
     // ---------- 6. Controllers & OpenAPI ----------
     builder.Services.AddControllers()
@@ -59,6 +63,7 @@ try
 
     // ---------- 8. Middleware Pipeline ----------
     app.UseExceptionHandler();
+    app.UseMiddleware<PaymentWebhookTimingMiddleware>();
 
     // Prometheus HTTP Metrics (đặt đầu pipeline để bọc toàn bộ request và đo được mọi status code 2xx, 4xx, 5xx)
     app.UseHttpMetrics();
@@ -70,10 +75,15 @@ try
     app.MapOpenApiDocumentation();
 
     app.UseHttpsRedirection();
+    app.UseMiddleware<PaymentHubOriginMiddleware>();
+    app.UseCors();
+    app.UseWebSockets();
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapControllers();
+    app.MapHub<PaymentHub>("/hubs/payment", options => options.CloseOnAuthenticationExpiration = true)
+        .RequireCors(PaymentHubExtensions.CorsPolicy);
 
     // Endpoints: Metrics & Health Checks
     app.MapMetrics();
