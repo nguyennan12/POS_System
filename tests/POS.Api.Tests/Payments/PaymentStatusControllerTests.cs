@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using POS.Api.Controllers;
+using POS.Api.Mappings;
+using POS.Application.UseCases.Payments.DTOs;
 using POS.Application.UseCases.Payments.Errors;
 using POS.Application.UseCases.Payments.Queries.GetPaymentStatus;
 using POS.Contracts.V1.Common;
@@ -26,14 +28,14 @@ public class PaymentStatusControllerTests
     public async Task GetPaymentStatus_ReturnsDocumentedEnvelope()
     {
         var id = Guid.NewGuid();
-        var response = new PaymentStatusResponse(id, Guid.NewGuid(), "Card", 40, "Success", "ref", null);
+        var response = new PaymentStatusDto(id, Guid.NewGuid(), "Card", 40, "Success", "ref", null);
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Is<GetPaymentStatusQuery>(query => query.Id == id), Arg.Any<CancellationToken>())
-            .Returns(Result<PaymentStatusResponse>.Success(response));
+            .Returns(Result<PaymentStatusDto>.Success(response));
 
         var result = await new PaymentsController(sender).GetPaymentStatus(id, default);
 
-        Assert.Same(response, Assert.IsType<ApiResponse<PaymentStatusResponse>>(
+        Assert.Equal(response.ToResponse(), Assert.IsType<ApiResponse<PaymentStatusResponse>>(
             Assert.IsType<OkObjectResult>(result.Result).Value).Data);
     }
 
@@ -46,7 +48,7 @@ public class PaymentStatusControllerTests
     {
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Any<GetPaymentStatusQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result<PaymentStatusResponse>.Failure(new Error(errorType, "TEST.ERROR", "test")));
+            .Returns(Result<PaymentStatusDto>.Failure(new Error(errorType, "TEST.ERROR", "test")));
 
         var result = await new PaymentsController(sender).GetPaymentStatus(Guid.NewGuid(), default);
 
@@ -73,7 +75,7 @@ public class PaymentStatusControllerTests
         var orderId = Guid.NewGuid();
         var sender = Substitute.For<ISender>();
         sender.Send(Arg.Any<GetPaymentStatusQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result<PaymentStatusResponse>.Success(new(
+            .Returns(Result<PaymentStatusDto>.Success(new(
                 paymentId, orderId, "Card", 40, "Success", null, null)));
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseTestServer();
