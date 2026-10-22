@@ -11,6 +11,14 @@ using POS.Infrastructure.Import;
 using POS.Infrastructure.Persistence;
 using POS.Infrastructure.Persistence.Repositories;
 using StackExchange.Redis;
+using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
+using POS.Application.Abstractions.Payments;
+using POS.Application.Abstractions.Notifications;
+using POS.Application.UseCases.Payments.DTOs;
+using POS.Infrastructure.Payments;
+using POS.Infrastructure.Notifications;
 
 namespace POS.Infrastructure;
 
@@ -92,6 +100,28 @@ public static class DependencyInjection
 
         // ---- Configuration ----
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+
+        // TODO T58: replace options source with SystemConfigs; keep secrets outside source control.
+        services.Configure<MomoOptions>(configuration.GetSection("Payments:MoMo"));
+        services.Configure<VietQrOptions>(configuration.GetSection("Payments:VietQR"));
+        services.AddOptions<QrPaymentOptions>().Bind(configuration.GetSection("Payments:Qr"))
+            .Validate(o => o.LifetimeMinutes is >= 1 and <= 120).ValidateOnStart();
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<QrPaymentOptions>>().Value);
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IWebhookSignatureVerifier, MomoWebhookSignatureVerifier>();
+        services.AddScoped<IWebhookSignatureVerifier, VietQrWebhookSignatureVerifier>();
+        services.AddHttpClient<MoMoPaymentAdapter>((sp, client) =>
+        {
+            var endpoint = new Uri(sp.GetRequiredService<IOptions<MomoOptions>>().Value.ApiBaseUrl);
+            if (endpoint.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("MoMo requires HTTPS.");
+            client.BaseAddress = endpoint;
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+            .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+            .WaitAndRetryAsync(2, attempt => TimeSpan.FromMilliseconds(200 * attempt)));
+        services.AddScoped<IPaymentGateway>(sp => sp.GetRequiredService<MoMoPaymentAdapter>());
+        services.AddScoped<IPaymentGateway, VietQRAdapter>();
+        services.AddScoped<IRealtimeEventPublisher, NoOpRealtimeEventPublisher>();
 
         return services;
     }

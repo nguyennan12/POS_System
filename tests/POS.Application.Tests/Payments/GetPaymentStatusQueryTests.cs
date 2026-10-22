@@ -5,7 +5,7 @@ using POS.Application.Abstractions.Persistence;
 using POS.Application.Common.Behaviors;
 using POS.Application.UseCases.Payments.Errors;
 using POS.Application.UseCases.Payments.Queries.GetPaymentStatus;
-using POS.Contracts.V1.Payments;
+using POS.Application.UseCases.Payments.DTOs;
 using POS.Domain.Common;
 using POS.Domain.Employees;
 using POS.Domain.Orders;
@@ -93,11 +93,11 @@ public class GetPaymentStatusQueryTests
         Assert.Equal("payments:read", ((IRequirePermission)query).RequiredPermission);
         var called = false;
 
-        var result = await new AuthorizationBehavior<GetPaymentStatusQuery, Result<PaymentStatusResponse>>(user, services)
+        var result = await new AuthorizationBehavior<GetPaymentStatusQuery, Result<PaymentStatusDto>>(user, services)
             .Handle(query, () =>
             {
                 called = true;
-                return Task.FromResult(Result<PaymentStatusResponse>.Success(default!));
+                return Task.FromResult(Result<PaymentStatusDto>.Success(default!));
             }, default);
 
         Assert.Equal(authenticated && hasPermission, called);
@@ -115,6 +115,6 @@ public class GetPaymentStatusQueryTests
             storeId: Guid.NewGuid());
         user.EmployeeId.Returns(employee.Id);
         employees.GetByIdAsync(employee.Id, Arg.Any<CancellationToken>()).Returns(employee);
-        return (new(payments, employees, user), payments, employee, user);
+        return (new(payments, employees, user, Substitute.For<MediatR.ISender>()), payments, employee, user);
     }
 }
