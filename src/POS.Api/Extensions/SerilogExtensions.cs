@@ -78,6 +78,7 @@ internal sealed class RequestResponseLoggingMiddleware
 
     // Bỏ qua các endpoint hệ thống không cần thiết để tránh làm rác log
     if (path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/api/v1/payments", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||
