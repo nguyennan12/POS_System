@@ -4,6 +4,7 @@ namespace POS.Application.UseCases.Payments.Errors;
 
 public static class PaymentErrors
 {
+    public static readonly Error InvalidShift = new(ErrorType.Forbidden, "PAYMENT.INVALID_SHIFT", "Nhân viên không có quyền theo dõi thanh toán của ca này.");
     public static readonly Error InvalidWebhook = new(ErrorType.Invalid, "PAYMENT.INVALID_WEBHOOK", "Không thể xác nhận thanh toán.");
     public static readonly Error GatewayUnavailable = new(ErrorType.Invalid, "PAYMENT.GATEWAY_UNAVAILABLE", "Chưa thể tạo QR. Vui lòng thử lại.");
     public static readonly Error InvalidOrder = new(ErrorType.Invalid, "PAYMENT.INVALID_ORDER", "Đơn hàng chưa sẵn sàng thanh toán QR.");
