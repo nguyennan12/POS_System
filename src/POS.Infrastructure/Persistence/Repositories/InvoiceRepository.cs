@@ -8,6 +8,15 @@ namespace POS.Infrastructure.Persistence.Repositories;
 
 public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
 {
+    public Task<Invoice?> GetForReceiptAsync(Guid id, CancellationToken cancellationToken = default) =>
+        dbContext.Invoices.AsNoTracking().AsSplitQuery()
+            .Include(i => i.Order).ThenInclude(o => o.Store)
+            .Include(i => i.Order).ThenInclude(o => o.CreatedByEmployee)
+            .Include(i => i.Order).ThenInclude(o => o.Payments)
+            .Include(i => i.Order).ThenInclude(o => o.Items)
+                .ThenInclude(i => i.Sku).ThenInclude(s => s.Product)
+            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+
     public Task<Invoice?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default) =>
         dbContext.Invoices.AsNoTracking()
             .Include(i => i.Order).ThenInclude(o => o.Items)

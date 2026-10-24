@@ -87,7 +87,18 @@ public record ReceiptDataResponse(
     decimal ChangeAmount,
     string? ReceiptHeader,
     string? ReceiptFooter
-);
+)
+{
+    public Guid? InvoiceId { get; init; }
+    public string? InvoiceNo { get; init; }
+    public DateTimeOffset? IssuedAt { get; init; }
+    public string? BuyerName { get; init; }
+    public string? BuyerTaxCode { get; init; }
+    public string? BuyerAddress { get; init; }
+    public IReadOnlyList<OrderPaymentResponse> Payments { get; init; } = [];
+    public bool IsReprint { get; init; }
+    public int? PaperWidth { get; init; }
+}
 
 public record OrderPaidSideEffectsResponse(
     IReadOnlyList<StockTransactionResponse> StockTransactions,
