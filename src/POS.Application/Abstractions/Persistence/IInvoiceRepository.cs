@@ -5,6 +5,7 @@ namespace POS.Application.Abstractions.Persistence;
 
 public interface IInvoiceRepository
 {
+    Task<Invoice?> GetForReceiptAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Invoice?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<(List<InvoiceSummaryResponse> Items, int TotalCount)> GetPagedAsync(
         Guid employeeId, Guid? storeId, bool isChainOwner,

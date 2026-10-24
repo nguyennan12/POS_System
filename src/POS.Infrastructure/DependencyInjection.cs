@@ -85,6 +85,17 @@ public static class DependencyInjection
         services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
 
         // ---- Reports & Export Job Store ----
+        services.AddOptions<POS.Infrastructure.Reports.ReceiptOptions>()
+            .Bind(configuration.GetSection(POS.Infrastructure.Reports.ReceiptOptions.SectionName))
+            .Validate(o => o.DefaultPaperWidth is 58 or 80, "Receipt paper width must be 58 or 80.")
+            .Validate(o => o.FontFamily == "Noto Sans Mono", "Receipt font must be the embedded Noto Sans Mono family.")
+            .Validate(o => o.RenderMode is "Raster" or "Text", "Receipt mode must be Raster or Text.")
+            .Validate(o => o.CodePage == 1258 && o.PrinterCodePage is >= 0 and <= 255, "Invalid receipt code page.")
+            .ValidateOnStart();
+        services.AddSingleton(sp => new POS.Application.Abstractions.Reports.ReceiptSettings(
+            sp.GetRequiredService<IOptions<POS.Infrastructure.Reports.ReceiptOptions>>().Value.DefaultPaperWidth));
+        services.AddSingleton<POS.Application.Abstractions.Reports.IInvoicePdfRenderer, POS.Infrastructure.Reports.QuestPdfInvoiceRenderer>();
+        services.AddSingleton<POS.Application.Abstractions.Reports.IThermalReceiptRenderer, POS.Infrastructure.Reports.EscPosReceiptRenderer>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddSingleton<POS.Application.Abstractions.Reports.IReportExportJobStore, POS.Infrastructure.Reports.ReportExportJobStore>();
 
