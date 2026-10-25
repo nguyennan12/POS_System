@@ -28,8 +28,8 @@ public partial class frmStockTake : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         Background = System.Windows.Media.Brushes.White;
 
-        // Kích hoạt mở modal tạo / tải đợt kiểm kê mới
-        _ = ViewModel.OpenCreateStockTakeModalAsync();
+        // Kích hoạt mở modal tạo đợt kiểm kê mới (chỉ reset state cục bộ, không tạo Draft ngay)
+        ViewModel.OpenCreateStockTakeModalAsync();
 
         // Nhúng giao diện StockTakeModal làm Content của Window
         Content = new StockTakeModal { DataContext = ViewModel };

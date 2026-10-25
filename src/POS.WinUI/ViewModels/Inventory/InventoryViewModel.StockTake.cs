@@ -113,42 +113,18 @@ public sealed partial class InventoryViewModel
 
     // ── Mở Modal Tạo Đợt Kiểm Kê Mới ──
     [RelayCommand]
-    public async Task OpenCreateStockTakeModalAsync()
+    public void OpenCreateStockTakeModalAsync()
     {
-        IsLoading = true;
-        try
-        {
-            var note = $"Kiểm kê kho ngày {DateTime.Now:dd/MM/yyyy HH:mm}";
-            var createRes = await _inventoryApi.CreateStockTakeAsync(new CreateStockTakeRequest(note));
-
-            if (createRes?.Data != null)
-            {
-                var detail = createRes.Data;
-                CurrentStockTakeId = detail.Id;
-                CurrentStockTakeStatus = detail.Status;
-                StockTakeNote = detail.Note ?? note;
-                StockTakeBarcodeQuery = string.Empty;
-
-                StockTakeLines.Clear();
-                foreach (var item in detail.Items)
-                {
-                    var line = StockTakeLineItemModel.FromDto(item);
-                    line.PropertyChanged += (s, e) => UpdateStockTakeSummary();
-                    StockTakeLines.Add(line);
-                }
-
-                UpdateStockTakeSummary();
-                IsStockTakeModalOpen = true;
-            }
-        }
-        catch (Exception ex)
-        {
-            ShowNotification($"Lỗi khởi tạo đợt kiểm kê: {ex.Message}", true);
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        // Chỉ reset state cục bộ và mở modal.
+        // Draft thực sự chỉ được tạo khi user nhấn Lưu / Gửi duyệt,
+        // tránh để lại Draft thừa khi user đóng modal mà không confirm.
+        CurrentStockTakeId = null;
+        CurrentStockTakeStatus = "Draft";
+        StockTakeNote = $"Kiểm kê kho ngày {DateTime.Now:dd/MM/yyyy HH:mm}";
+        StockTakeBarcodeQuery = string.Empty;
+        StockTakeLines.Clear();
+        UpdateStockTakeSummary();
+        IsStockTakeModalOpen = true;
     }
 
     // ── Mở Chi Tiết Đợt Kiểm Kê ──
@@ -234,11 +210,22 @@ public sealed partial class InventoryViewModel
     [RelayCommand]
     public async Task SaveStockTakeItemsAsync()
     {
-        if (!CurrentStockTakeId.HasValue) return;
-
         IsLoading = true;
         try
         {
+            // Tạo Draft nếu đây là lần lưu đầu tiên (modal vừa mở mới)
+            if (!CurrentStockTakeId.HasValue)
+            {
+                var createRes = await _inventoryApi.CreateStockTakeAsync(new CreateStockTakeRequest(StockTakeNote));
+                if (createRes?.Data == null)
+                {
+                    ShowNotification("Không tạo được đợt kiểm kê.", true);
+                    return;
+                }
+                CurrentStockTakeId = createRes.Data.Id;
+                CurrentStockTakeStatus = createRes.Data.Status;
+            }
+
             var updateItems = StockTakeLines.Select(l => new StockTakeItemUpdateRequest(
                 l.SkuId,
                 l.ActualQty,
@@ -268,11 +255,21 @@ public sealed partial class InventoryViewModel
     [RelayCommand]
     public async Task SubmitStockTakeAsync()
     {
-        if (!CurrentStockTakeId.HasValue) return;
-
         IsLoading = true;
         try
         {
+            // Tạo Draft nếu đây là lần submit đầu tiên
+            if (!CurrentStockTakeId.HasValue)
+            {
+                var createRes = await _inventoryApi.CreateStockTakeAsync(new CreateStockTakeRequest(StockTakeNote));
+                if (createRes?.Data == null)
+                {
+                    ShowNotification("Không tạo được đợt kiểm kê.", true);
+                    return;
+                }
+                CurrentStockTakeId = createRes.Data.Id;
+                CurrentStockTakeStatus = createRes.Data.Status;
+            }
             // Tự động lưu kiểm đếm trước khi submit
             var updateItems = StockTakeLines.Select(l => new StockTakeItemUpdateRequest(
                 l.SkuId,

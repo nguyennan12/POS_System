@@ -133,6 +133,7 @@ public sealed partial class InventoryViewModel
                 string.IsNullOrWhiteSpace(SearchKeyword) ? null : SearchKeyword,
                 CurrentPage,
                 PageSize,
+                onlyAlerts: ShowOnlyAlerts,
                 ct);
 
             StockEntries.Clear();
@@ -149,11 +150,6 @@ public sealed partial class InventoryViewModel
                     var model = StockEntryItemModel.FromDto(item);
                     if (model.IsOutOfStock) outCount++;
                     else if (model.IsLowStock) lowCount++;
-
-                    // Nếu người dùng chọn lọc chỉ xem cảnh báo
-                    if (ShowOnlyAlerts && !model.IsOutOfStock && !model.IsLowStock)
-                        continue;
-
                     StockEntries.Add(model);
                 }
 

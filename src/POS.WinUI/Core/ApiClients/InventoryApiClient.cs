@@ -28,6 +28,7 @@ public sealed class InventoryApiClient : BaseApiClient
         string? search = null,
         int pageNumber = 1,
         int pageSize = 50,
+        bool onlyAlerts = false,
         CancellationToken ct = default)
     {
         var queryParams = new List<string>
@@ -41,6 +42,9 @@ public sealed class InventoryApiClient : BaseApiClient
 
         if (!string.IsNullOrWhiteSpace(search))
             queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
+
+        if (onlyAlerts)
+            queryParams.Add("onlyAlerts=true");
 
         var url = $"{ApiRoutes.Inventory.Stock}?{string.Join("&", queryParams)}";
         return GetAsync<ApiResponse<PagedResponse<StockEntryResponse>>>(url, ct);

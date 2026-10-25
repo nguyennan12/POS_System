@@ -57,6 +57,7 @@ public partial class StockTakeLineItemModel : ObservableObject
             Id = dto.Id,
             SkuId = dto.SkuId,
             SkuCode = dto.SkuCode,
+            Barcode = dto.Barcode,
             ProductName = dto.ProductName,
             SystemQty = dto.SystemQty,
             ActualQty = dto.ActualQty,
