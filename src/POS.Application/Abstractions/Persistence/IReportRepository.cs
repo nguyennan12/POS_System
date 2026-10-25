@@ -34,5 +34,6 @@ public interface IReportRepository
 
     Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
         Guid? storeId,
+        int days = 7,
         CancellationToken cancellationToken = default);
 }

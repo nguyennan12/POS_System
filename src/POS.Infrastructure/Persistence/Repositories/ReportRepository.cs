@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
 using POS.Contracts.V1.Orders;
 using POS.Contracts.V1.Reports;
@@ -287,7 +287,7 @@ public class ReportRepository : IReportRepository
         var shiftSummary = new ShiftSummaryResponse(
             ShiftId: shift.Id,
             RegisterId: shift.RegisterId,
-            RegisterName: shift.Register?.Name ?? "Quầy",
+            RegisterName: shift.Register?.Name ?? "Quáº§y",
             EmployeeId: shift.EmployeeId,
             EmployeeName: shift.Employee?.Name ?? string.Empty,
             OpeningCash: shift.OpeningCash,
@@ -330,9 +330,15 @@ public class ReportRepository : IReportRepository
 
     public async Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
         Guid? storeId,
+        int days = 7,
         CancellationToken cancellationToken = default)
     {
-        var todayStartUtc = DateTime.UtcNow.Date;
+        var chartDays = Math.Clamp(days <= 0 ? 7 : days, 7, 30);
+        var nowUtc = DateTime.UtcNow;
+        var todayStartUtc = nowUtc.Date;
+        var tomorrowStartUtc = todayStartUtc.AddDays(1);
+        var yesterdayStartUtc = todayStartUtc.AddDays(-1);
+        var chartStartUtc = todayStartUtc.AddDays(-(chartDays - 1));
 
         var ordersQuery = _context.Orders.AsNoTracking()
             .Where(o => o.PaidAt != null && o.Status != OrderStatus.Cancelled);
@@ -342,42 +348,59 @@ public class ReportRepository : IReportRepository
             ordersQuery = ordersQuery.Where(o => o.StoreId == storeId.Value);
         }
 
-        var todayOrders = await ordersQuery
-            .Where(o => o.PaidAt >= todayStartUtc)
-            .Select(o => o.GrandTotal)
+        var fetchStartUtc = chartStartUtc < yesterdayStartUtc ? chartStartUtc : yesterdayStartUtc;
+
+        var recentOrders = await ordersQuery
+            .Where(o => o.PaidAt >= fetchStartUtc && o.PaidAt < tomorrowStartUtc)
+            .Select(o => new
+            {
+                PaidAt = o.PaidAt!.Value,
+                Date = DateOnly.FromDateTime(o.PaidAt!.Value),
+                o.GrandTotal
+            })
             .ToListAsync(cancellationToken);
 
-        var todayRevenue = todayOrders.Sum();
+        // 1. Today metrics
+        var todayOrders = recentOrders.Where(o => o.PaidAt >= todayStartUtc && o.PaidAt < tomorrowStartUtc).ToList();
+        var todayRevenue = todayOrders.Sum(o => o.GrandTotal);
         var todayOrderCount = todayOrders.Count;
-        var avgOrderValue = todayOrderCount > 0 ? todayRevenue / todayOrderCount : 0m;
+        var avgOrderValue = todayOrderCount > 0 ? Math.Round(todayRevenue / todayOrderCount, 2) : 0m;
 
-        // 7-day revenue chart
-        var sevenDaysAgoUtc = todayStartUtc.AddDays(-6);
-        var pastWeekOrders = await ordersQuery
-            .Where(o => o.PaidAt >= sevenDaysAgoUtc)
-            .Select(o => new { PaidDate = DateOnly.FromDateTime(o.PaidAt!.Value), o.GrandTotal })
-            .ToListAsync(cancellationToken);
+        // 2. Yesterday revenue & growth percentage
+        var yesterdayOrders = recentOrders.Where(o => o.PaidAt >= yesterdayStartUtc && o.PaidAt < todayStartUtc).ToList();
+        var yesterdayRevenue = yesterdayOrders.Sum(o => o.GrandTotal);
 
-        var chartItems = new List<DailyRevenueChartItem>();
-        for (int i = 6; i >= 0; i--)
+        decimal growthPercentage;
+        if (yesterdayRevenue == 0m)
+        {
+            growthPercentage = todayRevenue > 0m ? 100m : 0m;
+        }
+        else
+        {
+            growthPercentage = Math.Round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100m, 2);
+        }
+
+        // 3. Dynamic revenue chart (7-30 days)
+        var chartItems = new List<DailyRevenueChartItem>(chartDays);
+        for (int i = chartDays - 1; i >= 0; i--)
         {
             var date = DateOnly.FromDateTime(todayStartUtc.AddDays(-i));
-            var dayOrders = pastWeekOrders.Where(x => x.PaidDate == date).ToList();
+            var dayOrders = recentOrders.Where(x => x.Date == date).ToList();
             chartItems.Add(new DailyRevenueChartItem(
                 Date: date,
                 Revenue: dayOrders.Sum(x => x.GrandTotal),
                 OrderCount: dayOrders.Count));
         }
 
-        // Top 5 selling products (last 30 days)
+        // 4. Top 5 selling products (last 30 days)
         var topSelling = await GetTopSellingAsync(
-            from: DateTimeOffset.UtcNow.AddDays(-30),
-            to: DateTimeOffset.UtcNow,
+            from: nowUtc.AddDays(-30),
+            to: nowUtc,
             limit: 5,
             storeId: storeId,
             cancellationToken: cancellationToken);
 
-        // Dashboard alerts
+        // 5. Dashboard alerts
         var stockEntriesQuery = _context.StockEntries.AsNoTracking().AsQueryable();
         var batchesQuery = _context.StockBatches.AsNoTracking().Where(b => b.Qty > 0 && b.ExpiryDate != null);
         var stockTakesQuery = _context.StockTakes.AsNoTracking().AsQueryable();
@@ -391,8 +414,8 @@ public class ReportRepository : IReportRepository
 
         var lowStockCount = await stockEntriesQuery.CountAsync(se => se.QtyOnHand <= se.MinStock, cancellationToken);
 
-        var thirtyDaysFromNow = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(30));
-        var todayDateOnly = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var thirtyDaysFromNow = DateOnly.FromDateTime(todayStartUtc.AddDays(30));
+        var todayDateOnly = DateOnly.FromDateTime(todayStartUtc);
         var expiringSoonCount = await batchesQuery.CountAsync(b => b.ExpiryDate <= thirtyDaysFromNow && b.ExpiryDate >= todayDateOnly, cancellationToken);
 
         var pendingStockTakeCount = await stockTakesQuery.CountAsync(st => st.Status == StockTakeStatus.Pending, cancellationToken);
@@ -406,6 +429,7 @@ public class ReportRepository : IReportRepository
             TodayRevenue: todayRevenue,
             TodayOrders: todayOrderCount,
             AverageOrderValue: avgOrderValue,
+            RevenueGrowthPercentage: growthPercentage,
             RevenueChart: chartItems,
             TopSellingProducts: topSelling,
             Alerts: alerts);
