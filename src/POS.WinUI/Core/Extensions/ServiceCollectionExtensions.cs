@@ -93,6 +93,9 @@ public static class ServiceCollectionExtensions
         services.AddTransient<frmProductList>();
         services.AddTransient<frmProductEdit>();
         services.AddTransient<InventoryView>();
+        services.AddTransient<frmStockIn>();
+        services.AddTransient<frmStockTake>();
+        services.AddTransient<frmStockAlert>();
         services.AddTransient<CustomersView>();
         services.AddTransient<PromotionsView>();
         services.AddTransient<EmployeesView>();

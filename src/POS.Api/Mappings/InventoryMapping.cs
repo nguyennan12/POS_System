@@ -98,6 +98,7 @@ public static class InventoryMapping
         dto.Id,
         dto.SkuId,
         dto.SkuCode,
+        dto.Barcode,
         dto.ProductName,
         dto.SystemQty,
         dto.ActualQty,

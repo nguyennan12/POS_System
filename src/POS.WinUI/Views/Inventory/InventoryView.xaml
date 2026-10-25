@@ -1,30 +1,786 @@
 <UserControl x:Class="POS.WinUI.Views.Inventory.InventoryView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:auth="clr-namespace:POS.WinUI.Resources.Markup">
+             xmlns:local="clr-namespace:POS.WinUI.Views.Inventory"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.Inventory"
+             mc:Ignorable="d" 
+             d:DesignHeight="850" d:DesignWidth="1200"
+             FontFamily="Segoe UI">
 
-    <Grid Margin="28,20,28,24">
-        <Border Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource InputBorderBrush}" 
-                BorderThickness="1" 
-                CornerRadius="16" 
-                Padding="40">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border Width="72" Height="72" CornerRadius="20" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
-                    <ui:SymbolIcon Symbol="Archive24" FontSize="32" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
+    <Grid Background="#F8FAFC">
+        <!-- ════════════════════ MAIN CONTAINER (1200x800 layout) ════════════════════ -->
+        <Grid Margin="24,20,24,24">
+            <Grid.RowDefinitions>
+                <!-- Row 0: Top Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 1: Notification Toast -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 2: 4 Metric Cards Row -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 3: Segmented Tab Bar -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 4: Dynamic Tab Content Area -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <TextBlock Text="Quản lý Kho &amp; Nhập hàng" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,20,0,6"/>
-                <TextBlock Text="{Binding Subtitle}" FontSize="13.5" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="500" TextWrapping="Wrap"/>
+            <!-- ════════════════════ ROW 0: TOP HEADER ════════════════════ -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <!-- Tiêu đề & Subtitle -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Nút thao tác nhanh (Làm mới + Tạo phiếu nhập) -->
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18,10" Margin="0,24,0,0" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Info24" FontSize="16" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Sẵn sàng triển khai nhập kho NCC, kiểm kê &amp; điều chuyển hàng chuỗi" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <!-- Top-Left: Archive icon box (40x40, rounded-12, #FFF7ED) + Title + Subtitle -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="40" Height="40" CornerRadius="12" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" Margin="0,0,14,0">
+                        <ui:SymbolIcon Symbol="Archive24" FontSize="20" Foreground="#EB7F0E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Quản lý Kho &amp; Nhập hàng" FontSize="20" FontWeight="Bold" Foreground="#0F172A"/>
+                        <TextBlock Text="Kiểm soát số lượng tồn kho, tạo phiếu nhập và điều chuyển hàng hóa" FontSize="12.5" Foreground="#64748B" Margin="0,3,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Top-Right: Outline button "Làm mới" + Primary orange button "Tạo phiếu nhập" (#EB7F0E) -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Nút Làm mới outline -->
+                    <Button Command="{Binding RefreshAllCommand}" 
+                            Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
+                            Height="48" Padding="18,0" Cursor="Hand" Margin="0,0,10,0">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Foreground="#334155" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Làm mới" FontSize="13.5" FontWeight="SemiBold" Foreground="#334155"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- Nút Tạo phiếu nhập primary orange -->
+                    <Button Command="{Binding OpenCreateStockInModalCommand}"
+                            Background="#EB7F0E" Foreground="#FFFFFF"
+                            Height="48" Padding="22,0" FontWeight="Bold" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Add24" FontSize="18" Foreground="#FFFFFF" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Tạo phiếu nhập" FontSize="13.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- ════════════════════ ROW 1: NOTIFICATION TOAST ════════════════════ -->
+            <Border Grid.Row="1" Margin="0,0,0,16" CornerRadius="12" Padding="16,12"
+                    Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#ECFDF5"/>
+                        <Setter Property="BorderBrush" Value="#A7F3D0"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsStatusError}" Value="True">
+                                <Setter Property="Background" Value="#FEF2F2"/>
+                                <Setter Property="BorderBrush" Value="#FECACA"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ui:SymbolIcon Grid.Column="0" Symbol="Info24" FontSize="18" Foreground="#EB7F0E" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding StatusMessage}" FontSize="13.5" FontWeight="SemiBold" Foreground="#0F172A" VerticalAlignment="Center"/>
+
+                    <Button Grid.Column="2" Command="{Binding ClearNotificationCommand}"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4">
+                        <ui:SymbolIcon Symbol="Dismiss24" FontSize="14" Foreground="#64748B"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- ════════════════════ ROW 2: 4 METRIC CARDS ROW ════════════════════ -->
+            <Grid Grid.Row="2" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <!-- Card 1: Tổng SP trong kho -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Card 2: Dưới mức tối thiểu -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Card 3: Phiếu nhập chờ duyệt -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Card 4: Phiếu kiểm kê đang mở -->
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Card 1: Archive icon on #FFF7ED circle, "Tổng SP trong kho" label, large number, orange accent -->
+                <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="18,16" Margin="0,0,12,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#FFF7ED" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="Archive24" FontSize="18" Foreground="#EB7F0E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Tổng SP trong kho" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TotalSkusCount}" FontSize="26" FontWeight="Bold" Foreground="#EB7F0E"/>
                     </StackPanel>
                 </Border>
-            </StackPanel>
-        </Border>
+
+                <!-- Card 2: Warning icon on #FEF2F2 circle, "Dưới mức tối thiểu" label, large number, red accent (#DC2626) -->
+                <Border Grid.Column="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="18,16" Margin="0,0,12,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#FEF2F2" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="Warning24" FontSize="18" Foreground="#DC2626" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Dưới mức tối thiểu" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding LowStockCount}" FontSize="26" FontWeight="Bold" Foreground="#DC2626"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 3: ArrowDownload icon on #FFFBEB circle, "Phiếu nhập chờ duyệt" label, large number, amber accent -->
+                <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="18,16" Margin="0,0,12,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#FFFBEB" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="18" Foreground="#F59E0B" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Phiếu nhập chờ duyệt" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding PendingVouchersCount}" FontSize="26" FontWeight="Bold" Foreground="#F59E0B"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Card 4: ClipboardTask icon on #ECFDF5 circle, "Phiếu kiểm kê đang mở" label, large number, green accent (#10B981) -->
+                <Border Grid.Column="3" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="18,16">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="#ECFDF5" Margin="0,0,12,0">
+                                <ui:SymbolIcon Symbol="ClipboardTask24" FontSize="18" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Phiếu kiểm kê đang mở" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding OpenStockTakesCount}" FontSize="26" FontWeight="Bold" Foreground="#10B981"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ════════════════════ ROW 3: SEGMENTED TAB BAR (in a #F1F5F9 rounded container) ════════════════════ -->
+            <Border Grid.Row="3" HorizontalAlignment="Left" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="4" Margin="0,0,0,16">
+                <StackPanel Orientation="Horizontal">
+                    <!-- Tab 0: 📦 Nhập kho (ACTIVE: orange bg, white text) -->
+                    <RadioButton GroupName="InventorySubTabs" IsChecked="{Binding IsStockInTab, Mode=TwoWay}"
+                                 Height="40" Padding="18,0" Cursor="Hand" VerticalContentAlignment="Center">
+                        <RadioButton.Template>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border x:Name="TabBorder" Background="Transparent" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Box24" FontSize="16" Foreground="#64748B" Margin="0,0,8,0" x:Name="TabIcon"/>
+                                        <TextBlock Text="📦 Nhập kho" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" x:Name="TabText" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="TabBorder" Property="Background" Value="#EB7F0E"/>
+                                        <Setter TargetName="TabIcon" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="FontWeight" Value="Bold"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </RadioButton.Template>
+                    </RadioButton>
+
+                    <!-- Tab 1: 📋 Kiểm kê -->
+                    <RadioButton GroupName="InventorySubTabs" IsChecked="{Binding IsStockTakeTab, Mode=TwoWay}"
+                                 Height="40" Padding="18,0" Cursor="Hand" VerticalContentAlignment="Center">
+                        <RadioButton.Template>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border x:Name="TabBorder" Background="Transparent" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="ClipboardTask24" FontSize="16" Foreground="#64748B" Margin="0,0,8,0" x:Name="TabIcon"/>
+                                        <TextBlock Text="📋 Kiểm kê" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" x:Name="TabText" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="TabBorder" Property="Background" Value="#EB7F0E"/>
+                                        <Setter TargetName="TabIcon" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="FontWeight" Value="Bold"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </RadioButton.Template>
+                    </RadioButton>
+
+                    <!-- Tab 2: ⚠️ Cảnh báo tồn kho -->
+                    <RadioButton GroupName="InventorySubTabs" IsChecked="{Binding IsStockTab, Mode=TwoWay}"
+                                 Height="40" Padding="18,0" Cursor="Hand" VerticalContentAlignment="Center">
+                        <RadioButton.Template>
+                            <ControlTemplate TargetType="RadioButton">
+                                <Border x:Name="TabBorder" Background="Transparent" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Warning24" FontSize="16" Foreground="#64748B" Margin="0,0,8,0" x:Name="TabIcon"/>
+                                        <TextBlock Text="⚠️ Cảnh báo tồn kho" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" x:Name="TabText" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="TabBorder" Property="Background" Value="#EB7F0E"/>
+                                        <Setter TargetName="TabIcon" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="Foreground" Value="#FFFFFF"/>
+                                        <Setter TargetName="TabText" Property="FontWeight" Value="Bold"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </RadioButton.Template>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <!-- ════════════════════ ROW 4: DYNAMIC CONTENT TABS ════════════════════ -->
+            <Grid Grid.Row="4">
+                <!-- ──────────────────── TAB 0: NHẬP KHO (ACTIVE) ──────────────────── -->
+                <Grid Visibility="{Binding IsStockInTab, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <!-- Row 0: Filter Bar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Row 1: DataGrid Vouchers Table -->
+                        <RowDefinition Height="*"/>
+                        <!-- Row 2: Pagination Footer -->
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Filter Bar: Search "Tìm phiếu nhập..." + Supplier dropdown + Status dropdown + Date range pickers -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="16,14" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!-- Search input -->
+                                <ColumnDefinition Width="1.8*"/>
+                                <!-- Supplier dropdown -->
+                                <ColumnDefinition Width="1.4*"/>
+                                <!-- Status dropdown -->
+                                <ColumnDefinition Width="1.2*"/>
+                                <!-- Date range From -->
+                                <ColumnDefinition Width="1.1*"/>
+                                <!-- Date range To -->
+                                <ColumnDefinition Width="1.1*"/>
+                                <!-- Filter Button -->
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Search input (Height 50px) -->
+                            <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,10,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="38"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="Search24" FontSize="16" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" 
+                                             Text="{Binding VoucherSearchKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="Transparent" BorderThickness="0"
+                                             FontSize="13.5" VerticalContentAlignment="Center" Padding="0,0,10,0">
+                                        <TextBox.InputBindings>
+                                            <KeyBinding Key="Return" Command="{Binding LoadStockInVouchersCommand}"/>
+                                        </TextBox.InputBindings>
+                                    </TextBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- Supplier dropdown (Height 50px) -->
+                            <Border Grid.Column="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,10,0" Padding="8,0">
+                                <ComboBox ItemsSource="{Binding Suppliers}"
+                                          SelectedItem="{Binding SelectedVoucherSupplierFilter}"
+                                          DisplayMemberPath="DisplayText"
+                                          Background="Transparent" BorderThickness="0"
+                                          FontSize="13" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Status dropdown (Height 50px) -->
+                            <Border Grid.Column="2" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,10,0" Padding="8,0">
+                                <ComboBox ItemsSource="{Binding VoucherStatusFilterOptions}"
+                                          SelectedItem="{Binding SelectedVoucherStatus}"
+                                          Background="Transparent" BorderThickness="0"
+                                          FontSize="13" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- From Date -->
+                            <Border Grid.Column="3" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,10,0" Padding="6,0">
+                                <DatePicker SelectedDate="{Binding VoucherFromDate, Mode=TwoWay}"
+                                            BorderThickness="0" Background="Transparent" VerticalAlignment="Center" FontSize="12.5"/>
+                            </Border>
+
+                            <!-- To Date -->
+                            <Border Grid.Column="4" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,12,0" Padding="6,0">
+                                <DatePicker SelectedDate="{Binding VoucherToDate, Mode=TwoWay}"
+                                            BorderThickness="0" Background="Transparent" VerticalAlignment="Center" FontSize="12.5"/>
+                            </Border>
+
+                            <!-- Nút Lọc dữ liệu (Height 48px, rounded 12px) -->
+                            <Button Grid.Column="5" Command="{Binding LoadStockInVouchersCommand}"
+                                    Background="#FFF7ED" Foreground="#EB7F0E" BorderBrush="#FED7AA" BorderThickness="1"
+                                    Height="48" Padding="16,0" FontWeight="SemiBold" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Filter24" FontSize="15" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Lọc"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- DataGrid Phiếu nhập (Mã phiếu | NCC | Tổng tiền | Trạng thái | Ngày tạo | Actions) -->
+                    <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16">
+                        <DataGrid ItemsSource="{Binding StockInVouchers}" 
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" 
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F1F5F9"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  RowHeight="50">
+                            <DataGrid.Columns>
+                                <!-- Cột 1: Mã phiếu -->
+                                <DataGridTextColumn Header="Mã phiếu" Binding="{Binding ShortId}" Width="140" FontWeight="Bold"/>
+
+                                <!-- Cột 2: Nhà cung cấp -->
+                                <DataGridTextColumn Header="NCC" Binding="{Binding SupplierName}" Width="*" FontWeight="Medium"/>
+
+                                <!-- Cột 3: Tổng tiền -->
+                                <DataGridTextColumn Header="Tổng tiền" Binding="{Binding TotalAmountFormatted}" Width="150" FontWeight="Bold"/>
+
+                                <!-- Cột 4: Trạng thái (Status badge) -->
+                                <DataGridTemplateColumn Header="Trạng thái" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding StatusBadgeBg}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding StatusBadgeFg}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Cột 5: Ngày tạo -->
+                                <DataGridTextColumn Header="Ngày tạo" Binding="{Binding CreatedAtFormatted}" Width="160" Foreground="#64748B"/>
+
+                                <!-- Cột 6: Actions (View, Complete, Cancel icon buttons) -->
+                                <DataGridTemplateColumn Header="Thao tác" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- View icon button -->
+                                                <Button Command="{Binding DataContext.OpenViewStockInModalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Xem chi tiết phiếu nhập"
+                                                        Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1"
+                                                        Height="34" Width="34" Margin="0,0,6,0" Cursor="Hand">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                                                                <ui:SymbolIcon Symbol="DocumentSearch24" FontSize="16" Foreground="#334155" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+
+                                                <!-- Complete icon button (chỉ hiển thị khi Chờ duyệt) -->
+                                                <Button Command="{Binding DataContext.CompleteStockInVoucherCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        Visibility="{Binding CanComplete, Converter={StaticResource BoolToVis}}"
+                                                        ToolTip="Hoàn thành nhập kho"
+                                                        Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1"
+                                                        Height="34" Width="34" Margin="0,0,6,0" Cursor="Hand">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                                                                <ui:SymbolIcon Symbol="Checkmark24" FontSize="16" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+
+                                                <!-- Cancel icon button (chỉ hiển thị khi Chờ duyệt) -->
+                                                <Button Command="{Binding DataContext.CancelStockInVoucherCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        Visibility="{Binding CanCancel, Converter={StaticResource BoolToVis}}"
+                                                        ToolTip="Hủy phiếu nhập"
+                                                        Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1"
+                                                        Height="34" Width="34" Cursor="Hand">
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                                                                <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" Foreground="#DC2626" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Pagination Footer (Page navigation + total count) -->
+                    <Grid Grid.Row="2" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="{Binding VoucherPaginationSummary}" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Command="{Binding PreviousVoucherPageCommand}" IsEnabled="{Binding HasPreviousVoucherPage}"
+                                    Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
+                                    Height="40" Padding="16,0" Margin="0,0,8,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="&lt; Trước" FontSize="13" FontWeight="SemiBold" Foreground="#334155"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Button Command="{Binding NextVoucherPageCommand}" IsEnabled="{Binding HasNextVoucherPage}"
+                                    Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
+                                    Height="40" Padding="16,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="Sau &gt;" FontSize="13" FontWeight="SemiBold" Foreground="#334155"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+
+                <!-- ──────────────────── TAB 1: KIỂM KÊ KHO ──────────────────── -->
+                <Grid Visibility="{Binding IsStockTakeTab, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <!-- Row 0: Toolbar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Row 1: DataGrid Stock Takes -->
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Toolbar -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="16,14" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="220"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="Trạng thái kiểm kê:" FontSize="13.5" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            
+                            <Border Grid.Column="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="48" Padding="8,0">
+                                <ComboBox ItemsSource="{Binding StockTakeStatusOptions}"
+                                          SelectedItem="{Binding SelectedStockTakeStatus}"
+                                          Background="Transparent" BorderThickness="0"
+                                          FontSize="13.5" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <Button Grid.Column="3" Command="{Binding OpenCreateStockTakeModalCommand}"
+                                    Background="#EB7F0E" Foreground="#FFFFFF"
+                                    Height="48" Padding="22,0" FontWeight="Bold" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Add24" FontSize="16" Foreground="#FFFFFF" Margin="0,0,8,0"/>
+                                                <TextBlock Text="Tạo đợt kiểm kê mới (F3)" FontSize="13.5" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- DataGrid Đợt kiểm kê -->
+                    <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16">
+                        <DataGrid ItemsSource="{Binding StockTakes}" 
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" 
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F1F5F9"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  RowHeight="50">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Mã đợt kiểm kê" Binding="{Binding Id}" Width="200" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="Mục đích / Ghi chú" Binding="{Binding Note}" Width="*" FontWeight="Medium"/>
+                                
+                                <!-- Trạng thái Badge -->
+                                <DataGridTemplateColumn Header="Trạng thái" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding StatusBadgeBg}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding StatusBadgeFg}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Thời gian tạo" Binding="{Binding CreatedAtFormatted}" Width="160" Foreground="#64748B"/>
+                                <DataGridTextColumn Header="Thời gian duyệt" Binding="{Binding ApprovedAtFormatted}" Width="160" Foreground="#64748B"/>
+
+                                <!-- Thao tác -->
+                                <DataGridTemplateColumn Width="160">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.OpenStockTakeDetailModalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="#EFF6FF" Foreground="#2563EB"
+                                                    BorderBrush="#BFDBFE" BorderThickness="1"
+                                                    Height="32" Padding="14,0" FontSize="12" FontWeight="Bold" Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                            <TextBlock Text="Xem &amp; Đếm hàng" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+
+                <!-- ──────────────────── TAB 2: CẢNH BÁO TỒN KHO ──────────────────── -->
+                <Grid Visibility="{Binding IsStockTab, Converter={StaticResource BoolToVis}}">
+                    <Grid.RowDefinitions>
+                        <!-- Row 0: Filter & Actions Toolbar -->
+                        <RowDefinition Height="Auto"/>
+                        <!-- Row 1: DataGrid Table -->
+                        <RowDefinition Height="*"/>
+                        <!-- Row 2: Pagination Controls -->
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Filter Toolbar -->
+                    <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16" Padding="16,14" Margin="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!-- Tìm kiếm keyword -->
+                                <ColumnDefinition Width="2*"/>
+                                <!-- Danh mục filter -->
+                                <ColumnDefinition Width="1.5*"/>
+                                <!-- Checkbox chỉ xem cảnh báo -->
+                                <ColumnDefinition Width="Auto"/>
+                                <!-- Action button -->
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Tìm kiếm (Height 50px) -->
+                            <Border Grid.Column="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,12,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="38"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon Grid.Column="0" Symbol="Search24" FontSize="16" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBox Grid.Column="1" 
+                                             Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                                             Background="Transparent" BorderThickness="0"
+                                             FontSize="13.5" VerticalContentAlignment="Center" Padding="0,0,10,0">
+                                        <TextBox.InputBindings>
+                                            <KeyBinding Key="Return" Command="{Binding LoadStockEntriesCommand}"/>
+                                        </TextBox.InputBindings>
+                                    </TextBox>
+                                </Grid>
+                            </Border>
+
+                            <!-- ComboBox Danh mục (Height 50px) -->
+                            <Border Grid.Column="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Height="50" Margin="0,0,16,0" Padding="8,0">
+                                <ComboBox ItemsSource="{Binding CategoriesFilter}" 
+                                          SelectedItem="{Binding SelectedCategoryFilter}" 
+                                          DisplayMemberPath="Name"
+                                          Background="Transparent" BorderThickness="0"
+                                          FontSize="13" VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Checkbox chỉ xem cảnh báo -->
+                            <CheckBox Grid.Column="2" 
+                                      IsChecked="{Binding ShowOnlyAlerts}" 
+                                      Content="Chỉ xem hàng cần xử lý (Hết / Sắp hết)"
+                                      FontSize="13" FontWeight="SemiBold" Foreground="#334155"
+                                      VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                            <!-- Nút Lọc dữ liệu (Height 48px, rounded 12px) -->
+                            <Button Grid.Column="3" Command="{Binding LoadStockEntriesCommand}"
+                                    Background="#FFF7ED" Foreground="#EB7F0E"
+                                    BorderBrush="#FED7AA" BorderThickness="1"
+                                    Height="48" Padding="18,0" FontWeight="SemiBold" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Filter24" FontSize="15" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Lọc dữ liệu"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Main DataGrid Tồn Kho -->
+                    <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="16">
+                        <DataGrid ItemsSource="{Binding StockEntries}" 
+                                  AutoGenerateColumns="False" 
+                                  CanUserAddRows="False" 
+                                  CanUserDeleteRows="False"
+                                  IsReadOnly="True"
+                                  HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalGridLinesBrush="#F1F5F9"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  RowHeight="50">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Mã SKU" Binding="{Binding SkuCode}" Width="120" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="Mã vạch (Barcode)" Binding="{Binding Barcode}" Width="140" Foreground="#64748B"/>
+                                <DataGridTextColumn Header="Tên hàng hóa" Binding="{Binding ProductName}" Width="*" FontWeight="Medium"/>
+                                <DataGridTextColumn Header="Tồn kho" Binding="{Binding QtyOnHand, StringFormat='{}{0:0.##}'}" Width="110" FontWeight="Bold"/>
+                                <DataGridTextColumn Header="Định mức Min" Binding="{Binding MinStock, StringFormat='{}{0:0.##}'}" Width="110" Foreground="#64748B"/>
+                                
+                                <!-- Trạng thái cảnh báo Badge -->
+                                <DataGridTemplateColumn Header="Trạng thái" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{Binding StatusBadgeBg}" CornerRadius="8" Padding="12,5" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="12" FontWeight="Bold" Foreground="{Binding StatusBadgeFg}"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn Header="Cập nhật cuối" Binding="{Binding LastUpdatedFormatted}" Width="150" Foreground="#64748B"/>
+
+                                <!-- Thao tác Xuất hủy -->
+                                <DataGridTemplateColumn Width="100">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.OpenDisposeModalCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="#FEF2F2" Foreground="#DC2626"
+                                                    BorderBrush="#FECACA" BorderThickness="1"
+                                                    Height="30" Padding="12,0" FontSize="11.5" FontWeight="SemiBold" Cursor="Hand">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                            <TextBlock Text="Xuất hủy" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Pagination Controls -->
+                    <Grid Grid.Row="2" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="{Binding PaginationSummary}" FontSize="13" Foreground="#64748B" VerticalAlignment="Center"/>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Command="{Binding PreviousPageCommand}" IsEnabled="{Binding HasPreviousPage}"
+                                    Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
+                                    Height="40" Padding="16,0" Margin="0,0,8,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="&lt; Trước" FontSize="13" FontWeight="SemiBold" Foreground="#334155"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Command="{Binding NextPageCommand}" IsEnabled="{Binding HasNextPage}"
+                                    Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1"
+                                    Height="40" Padding="16,0" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="Sau &gt;" FontSize="13" FontWeight="SemiBold" Foreground="#334155"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Grid>
+
+        <!-- ════════════════════ OVERLAY MODALS ════════════════════ -->
+        <!-- Modal Nhập Kho -->
+        <local:StockInModal Visibility="{Binding IsStockInModalOpen, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- Modal Kiểm Kê Kho -->
+        <local:StockTakeModal Visibility="{Binding IsStockTakeModalOpen, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- Modal Xuất Hủy -->
+        <local:DisposeStockModal Visibility="{Binding IsDisposeModalOpen, Converter={StaticResource BoolToVis}}"/>
+
+        <!-- ════════════════════ LOADING SPINNER OVERLAY ════════════════════ -->
+        <Grid Background="#40000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <Border Background="#FFFFFF" CornerRadius="16" Padding="24,18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" Color="#000000" Opacity="0.12" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal">
+                    <ProgressBar IsIndeterminate="True" Width="24" Height="24" Margin="0,0,14,0"/>
+                    <TextBlock Text="Đang xử lý dữ liệu kho..." FontSize="14" FontWeight="SemiBold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
