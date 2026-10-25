@@ -98,6 +98,12 @@ public sealed partial class InventoryViewModel
         OnPropertyChanged(nameof(HasNextVoucherPage));
     }
 
+    partial void OnVoucherTotalPagesChanged(int value)
+    {
+        OnPropertyChanged(nameof(VoucherPaginationSummary));
+        OnPropertyChanged(nameof(HasNextVoucherPage));
+    }
+
     // ── Modal Phiếu Nhập Kho ──
     [ObservableProperty]
     private bool _isStockInModalOpen = false;
@@ -122,7 +128,9 @@ public sealed partial class InventoryViewModel
     public decimal TotalStockInAmount => StockInLines.Sum(l => l.TotalPrice);
     public string TotalStockInAmountFormatted => TotalStockInAmount.ToString("N0") + " đ";
 
-    public bool CanEditStockIn => EditingVoucherId == null || EditingVoucherStatus == "Draft";
+    // New vouchers (EditingVoucherId == null) are always editable.
+    // Existing saved vouchers are read-only regardless of status to prevent duplicate drafts.
+    public bool CanEditStockIn => EditingVoucherId == null;
     public bool CanCompleteEditingVoucher => EditingVoucherId.HasValue && EditingVoucherStatus == "Draft";
 
     // ── Tải danh sách Nhà cung cấp ──
@@ -312,9 +320,9 @@ public sealed partial class InventoryViewModel
                     Barcode = sku.Barcode,
                     ProductName = sku.ProductName,
                     Qty = 1,
-                    UnitPrice = sku.SellPrice * 0.7m, // Gợi ý giá vốn ~70% giá bán
-                    BatchNo = $"L{DateTime.Now:yyMMdd}",
-                    ExpiryDate = DateTime.Now.AddMonths(12)
+                    UnitPrice = 0m, // Barcode lookup không có CostPrice – operator phải nhập giá vốn
+                    BatchNo = null,
+                    ExpiryDate = null
                 };
 
                 newLine.PropertyChanged += (s, e) => UpdateStockInSummary();
@@ -341,9 +349,9 @@ public sealed partial class InventoryViewModel
                     Barcode = catalogItem.Barcode,
                     ProductName = catalogItem.ProductName,
                     Qty = 1,
-                    UnitPrice = catalogItem.CostPrice > 0 ? catalogItem.CostPrice : catalogItem.SellPrice * 0.7m,
-                    BatchNo = $"L{DateTime.Now:yyMMdd}",
-                    ExpiryDate = DateTime.Now.AddMonths(12)
+                    UnitPrice = catalogItem.CostPrice > 0 ? catalogItem.CostPrice : 0m, // Operator phải nhập giá nếu không có CostPrice
+                    BatchNo = null,
+                    ExpiryDate = null
                 };
 
                 newLine.PropertyChanged += (s, e) => UpdateStockInSummary();
@@ -454,6 +462,9 @@ public sealed partial class InventoryViewModel
                 if (createRes?.Data != null)
                 {
                     targetId = createRes.Data.Id;
+                    // Persist the new voucher state so a retry won't create a duplicate
+                    EditingVoucherId = createRes.Data.Id;
+                    EditingVoucherStatus = createRes.Data.Status ?? "Draft";
                 }
             }
             catch (Exception ex)
@@ -466,6 +477,7 @@ public sealed partial class InventoryViewModel
 
         if (!targetId.HasValue)
         {
+            IsLoading = false;
             ShowNotification("Không xác định được mã phiếu nhập kho.", true);
             return;
         }

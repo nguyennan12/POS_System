@@ -53,9 +53,33 @@ namespace POS.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.Sql(@"
-                DELETE FROM shifts 
-                WHERE register_id = '00000000-0000-0000-0000-000000000000' 
-                   OR register_id NOT IN (SELECT id FROM pos_registers);
+                -- Bước 1: Tạo 1 register mặc định cho mỗi store đang có shifts,
+                -- để giữ lại dữ liệu lịch sử thay vì xóa sạch.
+                INSERT INTO pos_registers (id, store_id, name, code, is_active, created_at, updated_at)
+                SELECT DISTINCT ON (s.store_id)
+                    gen_random_uuid(),
+                    s.store_id,
+                    'Quầy mặc định',
+                    'DEFAULT',
+                    true,
+                    TIMEZONE('utc', now()),
+                    TIMEZONE('utc', now())
+                FROM shifts s
+                WHERE s.register_id = '00000000-0000-0000-0000-000000000000'
+                  AND s.store_id IS NOT NULL
+                ON CONFLICT DO NOTHING;
+
+                -- Bước 2: Cập nhật các shifts dùng zero-UUID sang register mặc định của đúng store.
+                UPDATE shifts s
+                SET register_id = r.id
+                FROM pos_registers r
+                WHERE r.code = 'DEFAULT'
+                  AND r.store_id = s.store_id
+                  AND s.register_id = '00000000-0000-0000-0000-000000000000';
+
+                -- Bước 3: Chỉ xóa các hàng thực sự không thể gắn vào register hợp lệ.
+                DELETE FROM shifts
+                WHERE register_id NOT IN (SELECT id FROM pos_registers);
             ");
 
             migrationBuilder.AddForeignKey(

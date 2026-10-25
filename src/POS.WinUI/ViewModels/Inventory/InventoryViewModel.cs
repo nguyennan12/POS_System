@@ -31,9 +31,23 @@ public sealed partial class InventoryViewModel : ManagementTabViewModelBase
     [ObservableProperty]
     private int _selectedTabIndex = 0;
 
-    public bool IsStockInTab => SelectedTabIndex == 0;
-    public bool IsStockTakeTab => SelectedTabIndex == 1;
-    public bool IsStockTab => SelectedTabIndex == 2;
+    public bool IsStockInTab
+    {
+        get => SelectedTabIndex == 0;
+        set { if (value) SelectedTabIndex = 0; }
+    }
+
+    public bool IsStockTakeTab
+    {
+        get => SelectedTabIndex == 1;
+        set { if (value) SelectedTabIndex = 1; }
+    }
+
+    public bool IsStockTab
+    {
+        get => SelectedTabIndex == 2;
+        set { if (value) SelectedTabIndex = 2; }
+    }
 
     partial void OnSelectedTabIndexChanged(int value)
     {
