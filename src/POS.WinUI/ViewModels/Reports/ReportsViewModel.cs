@@ -236,8 +236,8 @@ public sealed partial class ReportsViewModel : ManagementTabViewModelBase
             if (IsRevenueTab)
             {
                 var request = new RevenueReportFilterRequest(
-                    From: new DateTimeOffset(FromDate.Date, TimeSpan.Zero),
-                    To: new DateTimeOffset(ToDate.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero),
+                    From: new DateTimeOffset(FromDate.Date, TimeSpan.FromHours(7)),
+                    To: new DateTimeOffset(ToDate.Date.AddDays(1).AddTicks(-1), TimeSpan.FromHours(7)),
                     StoreId: storeId);
 
                 var response = await _reportApiClient.GetRevenueReportAsync(request);
@@ -331,8 +331,8 @@ public sealed partial class ReportsViewModel : ManagementTabViewModelBase
 
             if (IsRevenueTab)
             {
-                parameters["from"] = FromDate.ToString("yyyy-MM-dd");
-                parameters["to"] = ToDate.ToString("yyyy-MM-dd");
+                parameters["from"] = new DateTimeOffset(FromDate.Date, TimeSpan.FromHours(7)).ToString("o");
+                parameters["to"] = new DateTimeOffset(ToDate.Date.AddDays(1).AddTicks(-1), TimeSpan.FromHours(7)).ToString("o");
             }
 
             var exportRequest = new ExportReportRequest(

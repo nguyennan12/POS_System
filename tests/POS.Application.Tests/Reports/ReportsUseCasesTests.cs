@@ -497,18 +497,20 @@ public class ReportsUseCasesTests
         await _reportRepository.Received(1).GetDashboardSummaryAsync(assignedStoreId, 14, Arg.Any<CancellationToken>());
     }
 
+
     [Fact]
     public void GetDashboardSummaryQueryValidator_ShouldValidateDaysRange()
     {
         // Arrange
         var validator = new GetDashboardSummaryQueryValidator();
 
-        // Valid
+        // Valid (7 to 30)
         validator.Validate(new GetDashboardSummaryQuery(null, 7)).IsValid.Should().BeTrue();
+        validator.Validate(new GetDashboardSummaryQuery(null, 14)).IsValid.Should().BeTrue();
         validator.Validate(new GetDashboardSummaryQuery(null, 30)).IsValid.Should().BeTrue();
 
-        // Invalid (less than 1 or greater than 90)
-        validator.Validate(new GetDashboardSummaryQuery(null, 0)).IsValid.Should().BeFalse();
-        validator.Validate(new GetDashboardSummaryQuery(null, 91)).IsValid.Should().BeFalse();
+        // Invalid (less than 7 or greater than 30)
+        validator.Validate(new GetDashboardSummaryQuery(null, 6)).IsValid.Should().BeFalse();
+        validator.Validate(new GetDashboardSummaryQuery(null, 31)).IsValid.Should().BeFalse();
     }
 }
