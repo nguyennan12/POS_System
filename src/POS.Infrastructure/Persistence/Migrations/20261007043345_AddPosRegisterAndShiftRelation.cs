@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -51,6 +51,12 @@ namespace POS.Infrastructure.Persistence.Migrations
                 table: "pos_registers",
                 columns: new[] { "store_id", "code" },
                 unique: true);
+
+            migrationBuilder.Sql(@"
+                DELETE FROM shifts 
+                WHERE register_id = '00000000-0000-0000-0000-000000000000' 
+                   OR register_id NOT IN (SELECT id FROM pos_registers);
+            ");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_shifts_pos_registers_register_id",
