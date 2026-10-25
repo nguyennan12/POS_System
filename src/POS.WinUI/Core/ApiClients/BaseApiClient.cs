@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -7,8 +7,8 @@ using POS.WinUI.Core.Services;
 
 namespace POS.WinUI.Core.ApiClients;
 
-/// Base class cho tất cả ApiClient.
-/// Quản lý HttpClient, tự động gắn JWT Bearer token từ SessionService,
+/// Base class cho táº¥t cáº£ ApiClient.
+/// Quáº£n lÃ½ HttpClient, tá»± Ä‘á»™ng gáº¯n JWT Bearer token tá»« SessionService,
 public abstract class BaseApiClient
 {
   protected readonly HttpClient _http;
@@ -25,7 +25,7 @@ public abstract class BaseApiClient
     _session = session;
   }
 
-  /// Gắn Authorization header và X-Store-Id từ phiên đăng nhập hiện tại
+  /// Gáº¯n Authorization header vÃ  X-Store-Id tá»« phiÃªn Ä‘Äƒng nháº­p hiá»‡n táº¡i
   protected void AttachToken()
   {
     var token = _session.AccessToken;
@@ -79,6 +79,14 @@ public abstract class BaseApiClient
     await HandleFailureResponseAsync(response, ct);
   }
 
+  protected async Task<byte[]> GetByteArrayAsync(string url, CancellationToken ct = default)
+  {
+    AttachToken();
+    var response = await _http.GetAsync(url, ct);
+    await HandleFailureResponseAsync(response, ct);
+    return await response.Content.ReadAsByteArrayAsync(ct);
+  }
+
   protected static async Task HandleFailureResponseAsync(HttpResponseMessage response, CancellationToken ct)
   {
     if (response.IsSuccessStatusCode) return;
@@ -93,7 +101,7 @@ public abstract class BaseApiClient
         var root = doc.RootElement;
         var validationMessages = new List<string>();
 
-        // 1. Kiểm tra validationErrors trong error object: "error": { "validationErrors": { "Field": ["Msg"] } }
+        // 1. Kiá»ƒm tra validationErrors trong error object: "error": { "validationErrors": { "Field": ["Msg"] } }
         if (root.TryGetProperty("error", out var errorProp) && errorProp.ValueKind == JsonValueKind.Object)
         {
           if (errorProp.TryGetProperty("validationErrors", out var valErrorsProp) && valErrorsProp.ValueKind == JsonValueKind.Object)
@@ -130,7 +138,7 @@ public abstract class BaseApiClient
           }
         }
 
-        // 2. Kiểm tra format ProblemDetails: "errors": { "Field": ["Msg"] }
+        // 2. Kiá»ƒm tra format ProblemDetails: "errors": { "Field": ["Msg"] }
         if (string.IsNullOrWhiteSpace(customMessage) && root.TryGetProperty("errors", out var errorsProp) && errorsProp.ValueKind == JsonValueKind.Object)
         {
           foreach (var prop in errorsProp.EnumerateObject())
@@ -156,7 +164,7 @@ public abstract class BaseApiClient
           }
         }
 
-        // 3. Fallback sang các trường message / detail / title nếu chưa lấy được
+        // 3. Fallback sang cÃ¡c trÆ°á»ng message / detail / title náº¿u chÆ°a láº¥y Ä‘Æ°á»£c
         if (string.IsNullOrWhiteSpace(customMessage))
         {
           if (root.TryGetProperty("message", out var msgProp) && msgProp.ValueKind == JsonValueKind.String)

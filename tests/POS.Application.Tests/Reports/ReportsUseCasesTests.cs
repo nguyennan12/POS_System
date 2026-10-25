@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using NSubstitute;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Excel;
@@ -129,8 +129,8 @@ public class ReportsUseCasesTests
         // Arrange
         var items = new List<TopSellingProductItem>
         {
-            new(Guid.NewGuid(), "SKU01", "Cà phê đen", 50, 1_500_000m),
-            new(Guid.NewGuid(), "SKU02", "Bạc xỉu", 40, 1_400_000m)
+            new(Guid.NewGuid(), "SKU01", "CÃ  phÃª Ä‘en", 50, 1_500_000m),
+            new(Guid.NewGuid(), "SKU02", "Báº¡c xá»‰u", 40, 1_400_000m)
         };
 
         _reportRepository.GetTopSellingAsync(
@@ -148,7 +148,7 @@ public class ReportsUseCasesTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(2);
-        result.Value[0].ProductName.Should().Be("Cà phê đen");
+        result.Value[0].ProductName.Should().Be("CÃ  phÃª Ä‘en");
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public class ReportsUseCasesTests
         // Arrange
         var items = new List<SlowMovingItemResponse>
         {
-            new(Guid.NewGuid(), "SKU_SLOW", "Trà lài túi lọc", 100, 45, DateTimeOffset.UtcNow.AddDays(-45))
+            new(Guid.NewGuid(), "SKU_SLOW", "TrÃ  lÃ i tÃºi lá»c", 100, 45, DateTimeOffset.UtcNow.AddDays(-45))
         };
 
         _reportRepository.GetSlowMovingItemsAsync(
@@ -211,9 +211,9 @@ public class ReportsUseCasesTests
         var shiftSummary = new ShiftSummaryResponse(
             ShiftId: shiftId,
             RegisterId: Guid.NewGuid(),
-            RegisterName: "Quầy 1",
+            RegisterName: "Quáº§y 1",
             EmployeeId: Guid.NewGuid(),
-            EmployeeName: "Thu ngân A",
+            EmployeeName: "Thu ngÃ¢n A",
             OpeningCash: 1_000_000m,
             TotalCashSales: 500_000m,
             TotalCardSales: 300_000m,
@@ -236,7 +236,7 @@ public class ReportsUseCasesTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Shift.RegisterName.Should().Be("Quầy 1");
+        result.Value.Shift.RegisterName.Should().Be("Quáº§y 1");
     }
 
     [Fact]
@@ -407,5 +407,110 @@ public class ReportsUseCasesTests
         // Invalid format
         var invalidFormatCommand = new ExportReportCommand("revenue", "mp4");
         validator.Validate(invalidFormatCommand).IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetDashboardSummary_WhenUserIsChainOwner_ShouldAllowNullOrSpecifiedStoreId()
+    {
+        // Arrange
+        var ownerId = Guid.NewGuid();
+        _currentUser.EmployeeId.Returns(ownerId);
+
+        var chainOwner = new Employee(
+            name: "Owner",
+            username: "0901234567",
+            passwordHash: "hash",
+            pinHash: "pinhash",
+            roleId: Guid.NewGuid(),
+            isChainOwner: true,
+            id: ownerId);
+        _employeeRepository.GetByIdAsync(ownerId, Arg.Any<CancellationToken>()).Returns(chainOwner);
+
+        var expectedResponse = new DashboardSummaryResponse(
+            TodayRevenue: 10_000_000m,
+            TodayOrders: 30,
+            AverageOrderValue: 333_333.33m,
+            RevenueGrowthPercentage: 15.0m,
+            RevenueChart: new List<DailyRevenueChartItem>
+            {
+                new(DateOnly.FromDateTime(DateTime.UtcNow), 10_000_000m, 30)
+            },
+            TopSellingProducts: new List<TopSellingProductItem>(),
+            Alerts: new DashboardAlerts(1, 0, 0)
+        );
+
+        _reportRepository.GetDashboardSummaryAsync(null, 7, Arg.Any<CancellationToken>())
+            .Returns(expectedResponse);
+
+        var handler = new GetDashboardSummaryQueryHandler(_reportRepository, _currentUser, _employeeRepository);
+
+        // Act
+        var result = await handler.Handle(new GetDashboardSummaryQuery(StoreId: null, Days: 7), CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedResponse);
+        await _reportRepository.Received(1).GetDashboardSummaryAsync(null, 7, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetDashboardSummary_WhenUserIsNotChainOwner_ShouldEnforceAssignedStoreId()
+    {
+        // Arrange
+        var employeeId = Guid.NewGuid();
+        var assignedStoreId = Guid.NewGuid();
+        var requestedStoreId = Guid.NewGuid();
+        _currentUser.EmployeeId.Returns(employeeId);
+
+        var manager = new Employee(
+            name: "Manager",
+            username: "0908888888",
+            passwordHash: "hash",
+            pinHash: "pinhash",
+            roleId: Guid.NewGuid(),
+            isChainOwner: false,
+            storeId: assignedStoreId,
+            id: employeeId);
+        _employeeRepository.GetByIdAsync(employeeId, Arg.Any<CancellationToken>()).Returns(manager);
+
+        var expectedResponse = new DashboardSummaryResponse(
+            TodayRevenue: 5_000_000m,
+            TodayOrders: 15,
+            AverageOrderValue: 333_333.33m,
+            RevenueGrowthPercentage: -5.0m,
+            RevenueChart: new List<DailyRevenueChartItem>(),
+            TopSellingProducts: new List<TopSellingProductItem>(),
+            Alerts: new DashboardAlerts(0, 0, 0)
+        );
+
+        _reportRepository.GetDashboardSummaryAsync(assignedStoreId, 14, Arg.Any<CancellationToken>())
+            .Returns(expectedResponse);
+
+        var handler = new GetDashboardSummaryQueryHandler(_reportRepository, _currentUser, _employeeRepository);
+
+        // Act - Manager requests a different storeId, but handler must enforce assignedStoreId
+        var result = await handler.Handle(new GetDashboardSummaryQuery(StoreId: requestedStoreId, Days: 14), CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(expectedResponse);
+        await _reportRepository.Received(1).GetDashboardSummaryAsync(assignedStoreId, 14, Arg.Any<CancellationToken>());
+    }
+
+
+    [Fact]
+    public void GetDashboardSummaryQueryValidator_ShouldValidateDaysRange()
+    {
+        // Arrange
+        var validator = new GetDashboardSummaryQueryValidator();
+
+        // Valid (7 to 30)
+        validator.Validate(new GetDashboardSummaryQuery(null, 7)).IsValid.Should().BeTrue();
+        validator.Validate(new GetDashboardSummaryQuery(null, 14)).IsValid.Should().BeTrue();
+        validator.Validate(new GetDashboardSummaryQuery(null, 30)).IsValid.Should().BeTrue();
+
+        // Invalid (less than 7 or greater than 30)
+        validator.Validate(new GetDashboardSummaryQuery(null, 6)).IsValid.Should().BeFalse();
+        validator.Validate(new GetDashboardSummaryQuery(null, 31)).IsValid.Should().BeFalse();
     }
 }

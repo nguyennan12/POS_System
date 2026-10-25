@@ -27,6 +27,7 @@ public record DashboardSummaryResponse(
     decimal TodayRevenue,
     int TodayOrders,
     decimal AverageOrderValue,
+    decimal RevenueGrowthPercentage,
     IReadOnlyList<DailyRevenueChartItem> RevenueChart,
     IReadOnlyList<TopSellingProductItem> TopSellingProducts,
     DashboardAlerts Alerts

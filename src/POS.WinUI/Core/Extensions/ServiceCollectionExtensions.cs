@@ -58,6 +58,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<OrderApiClient>();
         services.AddTransient<ProductApiClient>();
         services.AddTransient<ConfigApiClient>();
+        services.AddTransient<ReportApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -86,6 +87,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CfdStandbyView>();
         services.AddSingleton<CfdLiveCartView>();
         services.AddTransient<DashboardView>();
+        services.AddTransient<frmDashboard>();
         services.AddTransient<OrdersView>();
         services.AddTransient<ProductsView>();
         services.AddTransient<frmProductList>();
@@ -95,6 +97,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<PromotionsView>();
         services.AddTransient<EmployeesView>();
         services.AddTransient<ReportsView>();
+        services.AddTransient<frmReport>();
         services.AddTransient<SettingsView>();
 
         return services;

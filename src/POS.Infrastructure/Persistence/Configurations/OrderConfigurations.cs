@@ -20,6 +20,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.CancelReason).HasMaxLength(500);
         builder.Property(o => o.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(o => new { o.StoreId, o.CreatedAt });
+        builder.HasIndex(o => new { o.StoreId, o.PaidAt })
+            .HasFilter("paid_at IS NOT NULL AND status = 'Paid'");
         builder.HasIndex(o => o.ShiftId);
         builder.HasOne(o => o.Store).WithMany().HasForeignKey(o => o.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(o => o.Shift).WithMany().HasForeignKey(o => o.ShiftId).OnDelete(DeleteBehavior.Restrict);
