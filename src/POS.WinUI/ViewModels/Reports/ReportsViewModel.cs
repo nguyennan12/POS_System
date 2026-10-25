@@ -34,8 +34,35 @@ public sealed partial class ReportsViewModel : ManagementTabViewModelBase
     [ObservableProperty]
     private int _selectedReportType = 0;
 
-    public bool IsRevenueTab => SelectedReportType == 0;
-    public bool IsInventoryTab => SelectedReportType == 1;
+    public bool IsRevenueTab
+    {
+        get => SelectedReportType == 0;
+        set
+        {
+            if (value && SelectedReportType != 0)
+            {
+                SelectedReportType = 0;
+                OnPropertyChanged(nameof(IsRevenueTab));
+                OnPropertyChanged(nameof(IsInventoryTab));
+                _ = LoadCurrentReportAsync();
+            }
+        }
+    }
+
+    public bool IsInventoryTab
+    {
+        get => SelectedReportType == 1;
+        set
+        {
+            if (value && SelectedReportType != 1)
+            {
+                SelectedReportType = 1;
+                OnPropertyChanged(nameof(IsRevenueTab));
+                OnPropertyChanged(nameof(IsInventoryTab));
+                _ = LoadCurrentReportAsync();
+            }
+        }
+    }
 
     // ── Date Filters ────────────────────────────────────────────────────────
     [ObservableProperty]
@@ -143,8 +170,18 @@ public sealed partial class ReportsViewModel : ManagementTabViewModelBase
     }
 
     [RelayCommand]
-    public async Task SwitchTabAsync(int tabIndex)
+    public async Task SwitchTabAsync(object? parameter)
     {
+        int tabIndex = 0;
+        if (parameter is int i)
+        {
+            tabIndex = i;
+        }
+        else if (parameter is string s && int.TryParse(s, out var parsed))
+        {
+            tabIndex = parsed;
+        }
+
         SelectedReportType = tabIndex;
         OnPropertyChanged(nameof(IsRevenueTab));
         OnPropertyChanged(nameof(IsInventoryTab));

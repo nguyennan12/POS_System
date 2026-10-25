@@ -202,13 +202,14 @@ public sealed partial class DashboardViewModel : ManagementTabViewModelBase
     }
 
     [RelayCommand]
-    public async Task SetDaysFilterAsync(string days)
+    public async Task SetDaysFilterAsync(object? parameter)
     {
-        if (int.TryParse(days, out var d))
-        {
-            SelectedDays = d;
-            await LoadDashboardAsync();
-        }
+        int d = 7;
+        if (parameter is int i) d = i;
+        else if (parameter is string s && int.TryParse(s, out var parsed)) d = parsed;
+
+        SelectedDays = d;
+        await LoadDashboardAsync();
     }
 
     [RelayCommand]

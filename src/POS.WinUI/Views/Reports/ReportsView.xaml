@@ -45,14 +45,59 @@
                 <!-- Tab Switcher -->
                 <Border Grid.Column="1" Background="#F1F5F9" CornerRadius="10" Padding="4" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Báo cáo Doanh thu" Height="34" Padding="14,0" 
-                                Command="{Binding SwitchTabCommand}" CommandParameter="0"
-                                BorderThickness="0" Background="Transparent" FontWeight="Bold" FontSize="13"
-                                Cursor="Hand"/>
-                        <Button Content="Báo cáo Tồn kho" Height="34" Padding="14,0" 
-                                Command="{Binding SwitchTabCommand}" CommandParameter="1"
-                                BorderThickness="0" Background="Transparent" FontWeight="Bold" FontSize="13"
-                                Cursor="Hand"/>
+                        <RadioButton Content="Báo cáo Doanh thu" 
+                                     GroupName="ReportViewTabs"
+                                     IsChecked="{Binding IsRevenueTab, Mode=TwoWay}"
+                                     Padding="16,8" FontSize="13" FontWeight="SemiBold" Cursor="Hand">
+                            <RadioButton.Template>
+                                <ControlTemplate TargetType="RadioButton">
+                                    <Border x:Name="tabBorder" CornerRadius="8" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="tabBorder" Property="Background" Value="#FFFFFF"/>
+                                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                            <Setter TargetName="tabBorder" Property="Effect">
+                                                <Setter.Value>
+                                                    <DropShadowEffect BlurRadius="6" Color="#000000" Opacity="0.08" ShadowDepth="1"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </RadioButton.Template>
+                        </RadioButton>
+
+                        <RadioButton Content="Báo cáo Tồn kho" 
+                                     GroupName="ReportViewTabs"
+                                     IsChecked="{Binding IsInventoryTab, Mode=TwoWay}"
+                                     Padding="16,8" FontSize="13" FontWeight="SemiBold" Cursor="Hand" Margin="4,0,0,0">
+                            <RadioButton.Template>
+                                <ControlTemplate TargetType="RadioButton">
+                                    <Border x:Name="tabBorder" CornerRadius="8" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="tabBorder" Property="Background" Value="#FFFFFF"/>
+                                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                            <Setter TargetName="tabBorder" Property="Effect">
+                                                <Setter.Value>
+                                                    <DropShadowEffect BlurRadius="6" Color="#000000" Opacity="0.08" ShadowDepth="1"/>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </RadioButton.Template>
+                        </RadioButton>
                     </StackPanel>
                 </Border>
             </Grid>
