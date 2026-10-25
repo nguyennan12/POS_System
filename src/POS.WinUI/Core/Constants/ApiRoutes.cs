@@ -2,7 +2,7 @@ using System;
 
 namespace POS.WinUI.Core.Constants;
 
-///  
+/// <summary>
 /// Tập trung tất cả URL endpoint của POS API.
 /// Khi base path thay đổi chỉ cần sửa tại đây.
 /// </summary>
@@ -87,6 +87,18 @@ public static class ApiRoutes
     public static string Vouchers(Guid id) => $"api/v1/orders/{id}/vouchers";
     public static string Checkout(Guid id) => $"api/v1/orders/{id}/checkout";
     public static string Cancel(Guid id) => $"api/v1/orders/{id}/cancel";
+  }
+
+  public static class Reports
+  {
+    public const string Dashboard = "api/v1/reports/dashboard";
+    public const string Revenue = "api/v1/reports/revenue";
+    public const string TopSelling = "api/v1/reports/top-selling";
+    public const string Inventory = "api/v1/reports/inventory";
+    public const string SlowMoving = "api/v1/reports/slow-moving";
+    public const string Export = "api/v1/reports/export";
+    public static string ExportStatus(Guid jobId) => $"api/v1/reports/export/{jobId}";
+    public static string ExportDownload(Guid jobId) => $"api/v1/reports/export/{jobId}/download";
   }
 
   public static class Config
