@@ -18,7 +18,10 @@ public record InvoiceSummaryResponse(
     decimal TaxAmount,
     decimal GrandTotal,
     DateTimeOffset IssuedAt
-);
+)
+{
+    public string? CustomerPhone { get; init; }
+}
 
 public record InvoiceDetailResponse(
     Guid Id,

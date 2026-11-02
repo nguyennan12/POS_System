@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using POS.Domain.Employees;
+using POS.Domain.Customers;
+using POS.Domain.Customers.Enums;
 using POS.Domain.Orders;
+using POS.Domain.Orders.Enums;
 using POS.Domain.Products;
 using POS.Domain.Rbac;
 using POS.Domain.Rbac.Constants;
@@ -14,6 +17,43 @@ namespace POS.Infrastructure.Tests.Invoices;
 
 public class InvoiceReadPersistenceTests
 {
+    [PostgresFact]
+    public async Task Search_FiltersCodeOrPhoneBeforePaging_PreservesScope_AndRequiresSuccessfulPayment()
+    {
+        await using var fixture = await InvoiceDatabase.CreateAsync();
+        await using var db = fixture.Db();
+        var tier = new MemberTier(MemberTierName.Normal, 0, 1, 0);
+        var customer = new Customer("Search buyer", "0901234567", tier.Id);
+        db.AddRange(tier, customer);
+        foreach (var invoice in new[] { fixture.Invoices[0], fixture.Invoices[1], fixture.Invoices[^1] })
+        {
+            var order = await db.Orders.SingleAsync(x => x.Id == invoice.OrderId);
+            order.SetCustomer(customer.Id);
+            db.Add(new Payment(order.Id, PaymentMethod.Cash, 198));
+            db.Add(new Payment(order.Id, PaymentMethod.VietQR, 198, status: PaymentStatus.Pending));
+        }
+        await db.SaveChangesAsync(); db.ChangeTracker.Clear();
+        var repository = new InvoiceRepository(db);
+        var phone = await repository.GetPagedAsync(fixture.EmployeeId, fixture.PrimaryStoreId, false,
+            null, null, null, 1, 1, search: " 0901234567 ", paymentMethod: "Cash");
+        Assert.Equal(2, phone.TotalCount);
+        Assert.Equal("0901234567", Assert.Single(phone.Items).CustomerPhone);
+        var next = await repository.GetPagedAsync(fixture.EmployeeId, fixture.PrimaryStoreId, false,
+            null, null, null, 2, 1, search: "0901234567", paymentMethod: "Cash");
+        Assert.NotEqual(phone.Items[0].Id, Assert.Single(next.Items).Id);
+        var owner = await repository.GetPagedAsync(fixture.EmployeeId, null, true,
+            null, null, null, 1, 20, search: "0901234567");
+        Assert.Equal(3, owner.TotalCount);
+        var code = await repository.GetPagedAsync(fixture.EmployeeId, fixture.PrimaryStoreId, false,
+            null, null, null, 1, 20, search: fixture.Invoices[0].InvoiceNo.ToLowerInvariant());
+        Assert.Equal(fixture.Invoices[0].Id, Assert.Single(code.Items).Id);
+        var pending = await repository.GetPagedAsync(fixture.EmployeeId, null, true,
+            null, null, null, 1, 20, search: "0901234567", paymentMethod: "VietQR");
+        Assert.Empty(pending.Items);
+        var wildcard = await repository.GetPagedAsync(fixture.EmployeeId, null, true,
+            null, null, null, 1, 20, search: "%_");
+        Assert.Empty(wildcard.Items);
+    }
     [PostgresFact]
     public async Task GetByIdWithDetails_LoadsOrderItemsSkuProduct_WithoutTracking()
     {
@@ -159,12 +199,13 @@ public class InvoiceReadPersistenceTests
                 for (var storeIndex = 0; storeIndex < stores.Length; storeIndex++)
                 {
                     var store = stores[storeIndex];
-                    var shift = Shift.Open(store.Id, employee.Id, 0, null);
+                    var register = new PosRegister(store.Id, "Test register", "REG-TEST");
+                    var shift = Shift.Open(store.Id, register.Id, employee.Id, 0, null);
                     var category = Category.Create(store.Id, "Category");
                     var product = new Product(store.Id, category.Id, $"Product-{storeIndex}", "piece");
                     var sku = new Sku(product.Id, store.Id, $"SKU-{storeIndex}", $"BARCODE-{storeIndex}", 100, 50, 10, true)
                         { Product = product };
-                    db.AddRange(shift, category, product, sku);
+                    db.AddRange(register, shift, category, product, sku);
                     var count = storeIndex == 0 ? 23 : 1;
                     for (var index = 0; index < count; index++)
                     {
