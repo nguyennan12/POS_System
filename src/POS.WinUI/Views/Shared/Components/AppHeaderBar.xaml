@@ -358,6 +358,10 @@
                 </Button>
 
                 <!-- NÚT 2: CTA Về Trang Quản Lý (Hiện ở POS View, CHỈ CHO PHÉP STOREMANAGER/OWNER) -->
+                <Button Content="Hóa đơn" Command="{Binding OpenInvoicesCommand}"
+                        Style="{StaticResource OutlineButtonStyle}" Padding="12,0" Margin="8,0,0,0"
+                        ToolTip="Tra cứu và in lại hóa đơn, giữ nguyên giỏ hàng hiện tại"
+                        Visibility="{Binding ElementName=RootHeader, Path=IsPosMode, Converter={StaticResource BoolToVis}}"/>
                 <Button Height="40"
                         Margin="14,0,14,0"
                         Command="{Binding OpenManagementCommand}"

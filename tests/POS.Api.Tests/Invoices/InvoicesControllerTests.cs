@@ -30,6 +30,17 @@ namespace POS.Api.Tests.Invoices;
 public class InvoicesControllerTests
 {
     [Fact]
+    public async Task List_ForwardsSearchAndPaymentFilter_AndValidatesInput()
+    {
+        await using var fixture = await ApiFixture.CreateAsync();
+        var response = await fixture.Client.GetAsync("/api/v1/invoices?search=0901234567&paymentMethod=Cash");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await fixture.Invoices.Received(1).GetPagedAsync(fixture.Employee.Id, fixture.Employee.StoreId, false,
+            null, null, null, 1, 20, Arg.Any<CancellationToken>(), "0901234567", "Cash");
+        Assert.Equal(HttpStatusCode.BadRequest, (await fixture.Client.GetAsync("/api/v1/invoices?paymentMethod=invalid")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await fixture.Client.GetAsync("/api/v1/invoices?search=" + new string('x', 101))).StatusCode);
+    }
+    [Fact]
     public async Task PdfMetadata_ReturnsAuthenticatedDownloadUrl_AndFileHasPdfContentTypeAndInvoiceFilename()
     {
         await using var fixture = await ApiFixture.CreateAsync();

@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
         services.AddSingleton<IQueryCacheService, QueryCacheService>();
         services.AddSingleton<IConfirmDialogService, ConfirmDialogService>();
+        services.AddSingleton<IInvoiceOutputService, InvoiceOutputService>();
         services.AddSingleton(_ => LocalizationService.Instance);
 
         // ── ApiClients & Handlers ──────────────────────────────────
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CustomerApiClient>();
         services.AddTransient<VoucherApiClient>();
         services.AddTransient<OrderApiClient>();
+        services.AddTransient<InvoiceApiClient>();
         services.AddTransient<ProductApiClient>();
         services.AddTransient<ConfigApiClient>();
         services.AddTransient<ReportApiClient>();
@@ -90,6 +92,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<DashboardView>();
         services.AddTransient<frmDashboard>();
         services.AddTransient<OrdersView>();
+        services.AddTransient<frmInvoiceView>();
         services.AddTransient<ProductsView>();
         services.AddTransient<frmProductList>();
         services.AddTransient<frmProductEdit>();

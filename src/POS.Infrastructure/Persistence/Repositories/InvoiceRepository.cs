@@ -3,6 +3,7 @@ using POS.Application.Abstractions.Persistence;
 using POS.Domain.Orders;
 using POS.Application.UseCases.Invoices.Mappings;
 using POS.Contracts.V1.Invoices;
+using POS.Domain.Orders.Enums;
 
 namespace POS.Infrastructure.Persistence.Repositories;
 
@@ -26,7 +27,8 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
     public async Task<(List<InvoiceSummaryResponse> Items, int TotalCount)> GetPagedAsync(
         Guid employeeId, Guid? storeId, bool isChainOwner,
         Guid? orderId, DateTimeOffset? from, DateTimeOffset? to,
-        int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+        int pageNumber, int pageSize, CancellationToken cancellationToken = default,
+        string? search = null, string? paymentMethod = null)
     {
         var query = dbContext.Invoices.AsNoTracking();
         // Apply the same scope as GetPaymentStatus before counting/paging, so neither
@@ -34,6 +36,17 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
         if (!isChainOwner)
             query = query.Where(i => i.Order.StoreId == storeId);
         if (orderId.HasValue) query = query.Where(i => i.OrderId == orderId.Value);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(i => i.InvoiceNo.ToLower().Contains(term)
+                || (i.Order.Customer != null && i.Order.Customer.Phone.Contains(term)));
+        }
+        if (!string.IsNullOrWhiteSpace(paymentMethod))
+        {
+            var method = Enum.Parse<PaymentMethod>(paymentMethod, true);
+            query = query.Where(i => i.Order.Payments.Any(p => p.Status == PaymentStatus.Success && p.Method == method));
+        }
         if (from.HasValue)
         {
             var fromUtc = from.Value.UtcDateTime;

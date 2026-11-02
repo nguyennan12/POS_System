@@ -9,6 +9,12 @@ public class GetInvoicesQueryValidator : AbstractValidator<GetInvoicesQuery>
         RuleFor(x => x.Filter).NotNull();
         When(x => x.Filter is not null, () =>
         {
+            RuleFor(x => x.Filter.Search).MaximumLength(100)
+                .WithMessage("Từ khóa tìm kiếm tối đa 100 ký tự.");
+            RuleFor(x => x.Filter.PaymentMethod)
+                .Must(value => value is null || new[] { "Cash", "Card", "MoMo", "VietQR", "Points" }
+                    .Contains(value, StringComparer.OrdinalIgnoreCase))
+                .WithMessage("Phương thức thanh toán không hợp lệ.");
             RuleFor(x => x.Filter.PageNumber).GreaterThanOrEqualTo(1)
                 .WithMessage("Số trang phải lớn hơn hoặc bằng 1.");
             RuleFor(x => x.Filter.PageSize).InclusiveBetween(1, 100)

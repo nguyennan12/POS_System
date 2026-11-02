@@ -8,7 +8,10 @@ public static class InvoiceMappings
 {
     public static readonly Expression<Func<Invoice, InvoiceSummaryResponse>> SummaryProjection = i => new(
         i.Id, i.OrderId, i.InvoiceNo, i.BuyerName, i.TotalBeforeTax, i.TaxAmount, i.GrandTotal,
-        new DateTimeOffset(i.IssuedAt, TimeSpan.Zero));
+        new DateTimeOffset(i.IssuedAt, TimeSpan.Zero))
+    {
+        CustomerPhone = i.Order.Customer == null ? null : i.Order.Customer.Phone
+    };
 
     public static InvoiceDetailResponse ToDetailResponse(this Invoice invoice) => new(
         invoice.Id, invoice.OrderId, invoice.InvoiceNo, invoice.BuyerName, invoice.BuyerTaxCode,
