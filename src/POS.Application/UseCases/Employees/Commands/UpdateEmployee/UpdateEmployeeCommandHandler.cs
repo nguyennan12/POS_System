@@ -47,6 +47,7 @@ public sealed class UpdateEmployeeCommandHandler(IEmployeeRepository employees, 
             permissionChanged = target.RoleId != command.RoleId || target.StoreId != command.StoreId ||
                 target.IsChainOwner != command.IsChainOwner;
             target.UpdateProfile(command.Name.Trim(), command.RoleId, command.StoreId, command.IsChainOwner);
+            target.UpdateContactDetails(command.Phone, command.Email, command.CitizenId, command.HireDate, command.EmploymentType, command.HourlyWage);
             return await EmployeeMutationSupport.SaveAsync(target, caller.Id, "Employee.Updated", employees, audits, unitOfWork, ct);
         }, true, cancellationToken);
         if (result.IsSuccess && permissionChanged)

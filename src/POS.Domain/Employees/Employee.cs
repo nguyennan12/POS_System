@@ -45,6 +45,12 @@ public class Employee : BaseEntity
 
   public string Name { get; private set; } = default!;
   public string Username { get; private set; } = default!;
+  public string? Phone { get; private set; }
+  public string? Email { get; private set; }
+  public string? CitizenId { get; private set; }
+  public DateOnly? HireDate { get; private set; }
+  public string? EmploymentType { get; private set; }
+  public decimal? HourlyWage { get; private set; }
   public string PasswordHash { get; private set; } = default!;
   public string PinHash { get; private set; } = default!;
   public string? PinLookupHash { get; private set; }
@@ -92,6 +98,20 @@ public class Employee : BaseEntity
     IsChainOwner = isChainOwner;
     UpdatedAt = DateTime.UtcNow;
   }
+
+  public void UpdateContactDetails(string? phone, string? email, string? citizenId,
+      DateOnly? hireDate, string? employmentType, decimal? hourlyWage)
+  {
+    Phone = Normalize(phone);
+    Email = Normalize(email);
+    CitizenId = Normalize(citizenId);
+    HireDate = hireDate;
+    EmploymentType = Normalize(employmentType);
+    HourlyWage = hourlyWage;
+    UpdatedAt = DateTime.UtcNow;
+  }
+
+  private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
   public void SetActive(bool isActive)
   {

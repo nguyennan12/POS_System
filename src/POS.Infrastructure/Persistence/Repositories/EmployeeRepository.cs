@@ -55,7 +55,8 @@ public class EmployeeRepository : IEmployeeRepository
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim().ToLower();
-            query = query.Where(e => e.Name.ToLower().Contains(term) || e.Username.ToLower().Contains(term));
+            query = query.Where(e => e.Name.ToLower().Contains(term) || e.Username.ToLower().Contains(term) ||
+                (e.Phone != null && e.Phone.Contains(term)));
         }
         var total = await query.CountAsync(cancellationToken);
         var items = await query.Include(e => e.Role).Include(e => e.Store)

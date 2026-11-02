@@ -81,6 +81,7 @@ internal sealed class RequestResponseLoggingMiddleware
     if (path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
         context.Request.Path.StartsWithSegments("/hubs") ||
         path.StartsWith("/api/v1/payments", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/api/v1/employees", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||
