@@ -59,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ProductApiClient>();
         services.AddTransient<ConfigApiClient>();
         services.AddTransient<ReportApiClient>();
+        services.AddTransient<EmployeeApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -99,6 +100,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CustomersView>();
         services.AddTransient<PromotionsView>();
         services.AddTransient<EmployeesView>();
+        services.AddTransient<frmEmployeeList>();
+        services.AddTransient<frmEmployeeEdit>();
         services.AddTransient<ReportsView>();
         services.AddTransient<frmReport>();
         services.AddTransient<SettingsView>();

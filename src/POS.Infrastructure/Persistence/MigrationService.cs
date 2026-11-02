@@ -34,6 +34,7 @@ public class MigrationService : IMigrationService
           new ResourcePermissionSeeder(),
           new RolePermissionSeeder(),
           new StoreAndEmployeeSeeder(_pinLookupHasher),
+          new EmployeeDemoSeeder(_pinLookupHasher),
           new MemberTierSeeder(),
           new CategorySeeder(),
           new ProductAndSkuSeeder(),

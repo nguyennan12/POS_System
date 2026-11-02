@@ -13,6 +13,7 @@ using POS.Application.UseCases.Employees.Queries.GetEmployeeDetail;
 using POS.Application.UseCases.Employees.Queries.GetEmployeeLoginHistory;
 using POS.Contracts.V1.Common;
 using POS.Contracts.V1.Employees;
+using POS.Application.UseCases.Employees.Queries.GetEmployeeOptions;
 
 namespace POS.Api.Controllers;
 
@@ -21,6 +22,18 @@ namespace POS.Api.Controllers;
 [Route("api/v1/employees")]
 public sealed class EmployeesController(ISender sender) : ControllerBase
 {
+    [HttpGet("options")]
+    public async Task<ActionResult<ApiResponse<EmployeeOptionsResponse>>> GetOptions(CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetEmployeeOptionsQuery(), cancellationToken);
+        if (result.IsFailure) return this.ToActionResult(result);
+        var options = result.Value!;
+        return Ok(ApiResponse<EmployeeOptionsResponse>.Ok(new(
+            options.Stores.Select(s => new EmployeeStoreOption(s.Id, s.Name, s.IsActive)).ToList(),
+            options.Roles.Select(r => new EmployeeRoleOption(r.Id, r.Name, r.StoreId, r.Level, r.IsSystemRole, r.Permissions)).ToList(),
+            options.Statuses.Select(s => new EmployeeStatusOption(s.IsActive, s.Name)).ToList())));
+    }
+
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResponse<EmployeeResponse>>>> GetAll(
         [FromQuery] EmployeeFilterRequest request, CancellationToken cancellationToken)
@@ -46,7 +59,8 @@ public sealed class EmployeesController(ISender sender) : ControllerBase
         [FromBody] CreateEmployeeRequest request, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreateEmployeeCommand(request.Name, request.Username, request.Password,
-            request.Pin, request.RoleId, request.StoreId, request.IsChainOwner), cancellationToken);
+            request.Pin, request.RoleId, request.StoreId, request.IsChainOwner,
+            request.Phone, request.Email, request.CitizenId, request.HireDate, request.EmploymentType, request.HourlyWage), cancellationToken);
         if (result.IsFailure) return this.ToActionResult(result);
         return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id },
             ApiResponse<EmployeeDetailResponse>.Ok(result.Value.ToDetailResponse()));
@@ -57,7 +71,8 @@ public sealed class EmployeesController(ISender sender) : ControllerBase
         Guid id, [FromBody] UpdateEmployeeRequest request, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new UpdateEmployeeCommand(id, request.Name, request.RoleId,
-            request.StoreId, request.IsChainOwner), cancellationToken);
+            request.StoreId, request.IsChainOwner, request.Phone, request.Email, request.CitizenId,
+            request.HireDate, request.EmploymentType, request.HourlyWage), cancellationToken);
         if (result.IsFailure) return this.ToActionResult(result);
         return Ok(ApiResponse<EmployeeDetailResponse>.Ok(result.Value!.ToDetailResponse()));
     }

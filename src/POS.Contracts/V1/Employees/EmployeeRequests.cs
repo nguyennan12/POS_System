@@ -18,14 +18,16 @@ public record CreateEmployeeRequest(
     string Pin,
     Guid RoleId,
     Guid? StoreId = null,
-    bool IsChainOwner = false
+    bool IsChainOwner = false,
+    string? Phone = null, string? Email = null, string? CitizenId = null, DateOnly? HireDate = null, string? EmploymentType = null, decimal? HourlyWage = null
 );
 
 public record UpdateEmployeeRequest(
     string Name,
     Guid RoleId,
     Guid? StoreId = null,
-    bool IsChainOwner = false
+    bool IsChainOwner = false,
+    string? Phone = null, string? Email = null, string? CitizenId = null, DateOnly? HireDate = null, string? EmploymentType = null, decimal? HourlyWage = null
 );
 
 public record LockEmployeeRequest(

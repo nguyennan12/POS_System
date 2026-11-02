@@ -1,0 +1,37 @@
+<UserControl x:Class="POS.WinUI.Views.Employees.EmployeeEditForm"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:shared="clr-namespace:POS.WinUI.Views.Shared" MaxWidth="640" HorizontalAlignment="Left">
+ <UserControl.Resources>
+  <Style x:Key="Label" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
+  <Style x:Key="Field" TargetType="StackPanel"><Setter Property="Width" Value="240"/><Setter Property="Margin" Value="0,0,16,16"/></Style>
+ </UserControl.Resources>
+ <StackPanel>
+  <Border Background="{StaticResource DangerBgBrush}" BorderBrush="{StaticResource DangerBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="12" Margin="0,0,0,16" Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVis}}">
+   <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerTextBrush}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive"/>
+  </Border>
+  <TextBlock Text="{Binding Loc[employees.personal_amp_contact_details]}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+  <WrapPanel>
+<StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.full_name]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="Person24" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Full Name *"/></StackPanel>
+<StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.phone]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="Phone24" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Phone"/></StackPanel>
+<StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.email]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="Mail24" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Email"/></StackPanel>
+<StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.id_card_citizen_id]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="ContactCard24" Text="{Binding CitizenId, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="ID Card / Citizen ID"/></StackPanel>
+</WrapPanel>
+<TextBlock Text="{Binding Loc[employees.account_amp_store_access]}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,16"/>
+<WrapPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.username]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="Person24" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsCreate}" AutomationProperties.Name="Username"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.system_role]}" Style="{StaticResource Label}"/><ComboBox Height="50" ItemsSource="{Binding Roles}" DisplayMemberPath="Name" SelectedValuePath="Id" SelectedValue="{Binding RoleId, Mode=TwoWay}" IsEnabled="{Binding CanChooseAssignment}" AutomationProperties.Name="System Role"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.branch_required]}" Style="{StaticResource Label}"/><ComboBox Height="50" ItemsSource="{Binding Stores}" DisplayMemberPath="Name" SelectedValuePath="Value" SelectedValue="{Binding StoreId, Mode=TwoWay}" IsEnabled="{Binding CanChooseAssignment}" AutomationProperties.Name="Branch"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.chain_access]}" Style="{StaticResource Label}"/><CheckBox Height="50" Content="{Binding Loc[employees.chain_owner]}" IsChecked="{Binding IsChainOwner}" IsEnabled="{Binding CanChooseChainOwner}"/></StackPanel>
+</WrapPanel>
+<WrapPanel Visibility="{Binding IsCreate, Converter={StaticResource BoolToVis}}">
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.initial_password]}" Style="{StaticResource Label}"/><PasswordBox Height="50" PasswordChanged="PasswordChanged" AutomationProperties.Name="Initial Password"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.pin_exactly_6_digits]}" Style="{StaticResource Label}"/><PasswordBox Height="50" MaxLength="6" PasswordChanged="PinChanged" AutomationProperties.Name="Initial PIN"/></StackPanel>
+</WrapPanel>
+<TextBlock Text="{Binding Loc[employees.store_access_amp_work_details]}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,16"/>
+<WrapPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.hire_date]}" Style="{StaticResource Label}"/><DatePicker Height="50" SelectedDate="{Binding HireDate}" AutomationProperties.Name="Hire Date"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.employment_type]}" Style="{StaticResource Label}"/><ComboBox Height="50" ItemsSource="{Binding EmploymentTypes}" SelectedItem="{Binding EmploymentType}" AutomationProperties.Name="Employment Type"/></StackPanel>
+ <StackPanel Style="{StaticResource Field}"><TextBlock Text="{Binding Loc[employees.hourly_wage_vnd_hr]}" Style="{StaticResource Label}"/><shared:TextInputField Height="50" Icon="Money24" Text="{Binding HourlyWage, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Hourly Wage"/></StackPanel>
+</WrapPanel>
+ </StackPanel>
+</UserControl>

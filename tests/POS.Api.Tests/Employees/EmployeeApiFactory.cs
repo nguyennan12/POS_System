@@ -82,7 +82,7 @@ internal sealed class EmployeeApiFactory : WebApplicationFactory<AuthController>
         db.Roles.AddRange(Owner, Manager, Cashier, Custom);
         var resource = new Resource(ResourceNames.Employees);
         db.Resources.Add(resource);
-        foreach (var action in new[] { PermissionAction.Create, PermissionAction.Read, PermissionAction.Update })
+        foreach (var action in new[] { PermissionAction.Create, PermissionAction.Read, PermissionAction.Update, PermissionAction.Manage, PermissionAction.LoginHistory })
         {
             var permission = new Permission(resource.Id, resource, action);
             db.Permissions.Add(permission);
