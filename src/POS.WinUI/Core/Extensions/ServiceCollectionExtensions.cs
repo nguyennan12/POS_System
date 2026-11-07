@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICfdSyncService, LocalMessengerCfdSyncService>();
         services.AddSingleton<IQueryCacheService, QueryCacheService>();
         services.AddSingleton<IConfirmDialogService, ConfirmDialogService>();
+        services.AddSingleton<IInvoiceOutputService, InvoiceOutputService>();
         services.AddSingleton(_ => LocalizationService.Instance);
 
         // ── ApiClients & Handlers ──────────────────────────────────
@@ -56,8 +57,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CustomerApiClient>();
         services.AddTransient<VoucherApiClient>();
         services.AddTransient<OrderApiClient>();
+        services.AddTransient<InvoiceApiClient>();
         services.AddTransient<ProductApiClient>();
         services.AddTransient<ConfigApiClient>();
+        services.AddTransient<ReportApiClient>();
+        services.AddTransient<EmployeeApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -86,15 +90,23 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CfdStandbyView>();
         services.AddSingleton<CfdLiveCartView>();
         services.AddTransient<DashboardView>();
+        services.AddTransient<frmDashboard>();
         services.AddTransient<OrdersView>();
+        services.AddTransient<frmInvoiceView>();
         services.AddTransient<ProductsView>();
         services.AddTransient<frmProductList>();
         services.AddTransient<frmProductEdit>();
         services.AddTransient<InventoryView>();
+        services.AddTransient<frmStockIn>();
+        services.AddTransient<frmStockTake>();
+        services.AddTransient<frmStockAlert>();
         services.AddTransient<CustomersView>();
         services.AddTransient<PromotionsView>();
         services.AddTransient<EmployeesView>();
+        services.AddTransient<frmEmployeeList>();
+        services.AddTransient<frmEmployeeEdit>();
         services.AddTransient<ReportsView>();
+        services.AddTransient<frmReport>();
         services.AddTransient<SettingsView>();
 
         return services;

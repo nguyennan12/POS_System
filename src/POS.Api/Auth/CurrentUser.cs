@@ -6,7 +6,10 @@ namespace POS.Api.Auth;
 // Only adapts the authenticated HTTP principal to the existing application interface.
 public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
-    private ClaimsPrincipal? User => accessor.HttpContext?.User;
+    // Set only for the current SignalR invocation scope; do not mutate ambient HTTP AsyncLocal state.
+    internal HttpContext? HubContext { get; set; }
+    private HttpContext? RequestContext => HubContext ?? accessor.HttpContext;
+    private ClaimsPrincipal? User => RequestContext?.User;
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated == true;
     
     public Guid? EmployeeId => ReadGuid("sub") ?? ReadGuid(ClaimTypes.NameIdentifier) ?? ReadGuid("employee_id");
@@ -15,15 +18,15 @@ public sealed class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
     {
         get
         {
-            if (IsChainOwner && accessor.HttpContext != null)
+            if (IsChainOwner && RequestContext != null)
             {
-                if (accessor.HttpContext.Request.Headers.TryGetValue("X-Store-Id", out var headerVal) &&
+                if (RequestContext.Request.Headers.TryGetValue("X-Store-Id", out var headerVal) &&
                     Guid.TryParse(headerVal, out var headerStoreId) && headerStoreId != Guid.Empty)
                 {
                     return headerStoreId;
                 }
 
-                if (accessor.HttpContext.Request.Query.TryGetValue("storeId", out var queryVal) &&
+                if (RequestContext.Request.Query.TryGetValue("storeId", out var queryVal) &&
                     Guid.TryParse(queryVal, out var queryStoreId) && queryStoreId != Guid.Empty)
                 {
                     return queryStoreId;

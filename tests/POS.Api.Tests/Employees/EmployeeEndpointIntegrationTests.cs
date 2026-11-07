@@ -159,7 +159,11 @@ public class EmployeeEndpointIntegrationTests
             {
                 case "inactive": saved.SetActive(false); break;
                 case "locked": for (var i = 0; i < 5; i++) saved.RegisterFailedLogin(DateTime.UtcNow); break;
-                case "shift": db.Shifts.Add(Shift.Open(f.A.Id, target.Id, 0, null)); break;
+                case "shift":
+                    var register = new PosRegister(f.A.Id, "Test register", "T21-REGISTER", true);
+                    db.PosRegisters.Add(register);
+                    db.Shifts.Add(Shift.Open(f.A.Id, register.Id, target.Id, 0));
+                    break;
                 case "missing-own": db.Entry(saved).Property(e => e.PinLookupHash).CurrentValue = null; break;
                 case "missing-destination":
                     var other = await db.Employees.SingleAsync(e => e.Id == f.People["cashierB"].Id);

@@ -1,5 +1,10 @@
 namespace POS.Contracts.V1.Reports;
 
+public record DashboardFilterRequest(
+    Guid? StoreId = null,
+    int Days = 7
+);
+
 public record RevenueReportFilterRequest(
     DateTimeOffset? From = null,
     DateTimeOffset? To = null,

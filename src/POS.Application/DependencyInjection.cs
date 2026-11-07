@@ -13,6 +13,8 @@ public static class DependencyInjection
   {
     // ---- Access Policy ----
     services.AddScoped<IStoreAccessPolicy, StoreAccessPolicy>();
+    services.AddScoped<IPaymentSubscriptionAccessPolicy, POS.Application.UseCases.Payments.PaymentSubscriptionAccessPolicy>();
+    services.AddScoped<POS.Application.UseCases.Payments.QrWebhookProcessor>();
 
     services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
     services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);

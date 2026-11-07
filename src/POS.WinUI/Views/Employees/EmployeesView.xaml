@@ -1,30 +1,161 @@
 <UserControl x:Class="POS.WinUI.Views.Employees.EmployeesView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-             xmlns:auth="clr-namespace:POS.WinUI.Resources.Markup">
-
-    <Grid Margin="28,20,28,24">
-        <Border Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource InputBorderBrush}" 
-                BorderThickness="1" 
-                CornerRadius="16" 
-                Padding="40">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Border Width="72" Height="72" CornerRadius="20" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
-                    <ui:SymbolIcon Symbol="PersonAccounts24" FontSize="32" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-
-                <TextBlock Text="Nhân viên &amp; Phân quyền" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,20,0,6"/>
-                <TextBlock Text="{Binding Subtitle}" FontSize="13.5" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="500" TextWrapping="Wrap"/>
-
-                <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18,10" Margin="0,24,0,0" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Info24" FontSize="16" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Sẵn sàng triển khai hồ sơ nhân viên, mã PIN &amp; cấu hình phân quyền Roles" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-        </Border>
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
+ xmlns:local="clr-namespace:POS.WinUI.Views.Employees" xmlns:auth="clr-namespace:POS.WinUI.Resources.Markup"
+ Loaded="OnLoaded" SizeChanged="OnSizeChanged" PreviewKeyDown="OnPreviewKeyDown">
+ <UserControl.InputBindings><KeyBinding Key="F2" Command="{Binding SaveProfileCommand}"/><KeyBinding Key="F5" Command="{Binding RefreshCommand}"/></UserControl.InputBindings>
+ <UserControl.Resources>
+  <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/><Setter Property="BorderBrush" Value="{StaticResource InputBorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="16"/></Style>
+  <Style x:Key="Error" TargetType="Border"><Setter Property="Background" Value="{StaticResource DangerBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource DangerBorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="12"/></Style>
+  <Style x:Key="EmployeeListButton" TargetType="Button" BasedOn="{StaticResource OutlineButtonStyle}">
+   <Setter Property="Height" Value="Auto"/><Setter Property="MinHeight" Value="88"/><Setter Property="Padding" Value="12"/>
+   <Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/><Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="RowBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" CornerRadius="12">
+     <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="RowBorder" Property="Background" Value="{StaticResource PrimaryLightBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="RowBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/></Trigger>
+     <Trigger Property="IsPressed" Value="True"><Setter TargetName="RowBorder" Property="Background" Value="{StaticResource PrimaryBorderBrush}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+   <Style.Triggers><DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Background" Value="{StaticResource PrimaryLightBrush}"/><Setter Property="BorderBrush" Value="{StaticResource PrimaryBorderBrush}"/></DataTrigger></Style.Triggers>
+  </Style>
+ </UserControl.Resources>
+ <Grid Margin="24,16,24,24">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+   <ScrollViewer.Style><Style TargetType="ScrollViewer"><Style.Triggers>
+    <DataTrigger Binding="{Binding NewEmployee, Converter={StaticResource NullOrEmptyToVis}}" Value="Visible"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+    <DataTrigger Binding="{Binding CredentialTitle, Converter={StaticResource NullOrEmptyToVis}}" Value="Visible"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+    <DataTrigger Binding="{Binding IsSaving}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger>
+   </Style.Triggers></Style></ScrollViewer.Style>
+   <StackPanel>
+    <Grid x:Name="Header" Margin="0,0,0,16">
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <DockPanel x:Name="Heading" Margin="0,0,16,0">
+      <Border DockPanel.Dock="Left" Width="44" Height="44" CornerRadius="12" Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" Margin="0,0,12,0" VerticalAlignment="Top">
+       <ui:SymbolIcon Symbol="PersonAccounts24" FontSize="22" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Border>
+      <StackPanel><TextBlock Text="{Binding Title}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+       <TextBlock Text="{Binding Subtitle}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/></StackPanel>
+     </DockPanel>
+     <WrapPanel x:Name="HeaderActions" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+      <Button Command="{Binding RefreshCommand}" Style="{StaticResource OutlineButtonStyle}" Height="44" Padding="16,0" Margin="0,0,8,0" AutomationProperties.Name="Refresh" ToolTip="{Binding Loc[employees.reload_employees_from_api]}">
+       <StackPanel Orientation="Horizontal">
+        <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+         <ui:SymbolIcon.RenderTransform><RotateTransform/></ui:SymbolIcon.RenderTransform>
+         <ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon"><Style.Triggers><DataTrigger Binding="{Binding IsLoading}" Value="True">
+          <DataTrigger.EnterActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:0.8" RepeatBehavior="Forever"/></Storyboard></BeginStoryboard></DataTrigger.EnterActions>
+          <DataTrigger.ExitActions><BeginStoryboard><Storyboard><DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" To="0" Duration="0:0:0"/></Storyboard></BeginStoryboard></DataTrigger.ExitActions>
+         </DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style>
+        </ui:SymbolIcon><TextBlock Text="{Binding Loc[employees.refresh]}" VerticalAlignment="Center"/>
+       </StackPanel>
+      </Button>
+      <Button Command="{Binding OpenNewEmployeeCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="44" Width="176" Visibility="{auth:HasPermission 'employees:manage'}" AutomationProperties.Name="New Employee">
+       <Button.Effect><DropShadowEffect Color="{StaticResource BrandPrimaryColor}" BlurRadius="8" ShadowDepth="2" Opacity="0.22"/></Button.Effect>
+       <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Add24" FontSize="16" Margin="0,0,8,0"/><TextBlock Text="{Binding Loc[employees.new_employee]}" FontSize="13" VerticalAlignment="Center"/></StackPanel>
+      </Button>
+     </WrapPanel>
     </Grid>
+    <Grid x:Name="Body">
+     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <Grid.ColumnDefinitions><ColumnDefinition x:Name="ListColumn" Width="360"/><ColumnDefinition x:Name="DetailColumn" Width="*"/></Grid.ColumnDefinitions>
+     <Border x:Name="ListCard" Style="{StaticResource Card}" Margin="0,0,16,0">
+      <Grid>
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <StackPanel Margin="16">
+        <DockPanel Margin="0,0,0,12"><TextBlock DockPanel.Dock="Right" Text="{Binding TotalCount, StringFormat={}{0} results}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" HorizontalAlignment="Right"/><TextBlock Text="{Binding Loc[employees.employees]}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/></DockPanel>
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <shared:TextInputField Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{Binding Loc[employees.name_or_phone]}" Icon="Search24" Height="44" ShowClearButton="True" AutomationProperties.Name="Search employees by name or phone"/>
+         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+          <shared:IconFilter Label="{Binding Loc[employees.branch]}" Icon="BuildingShop24" ItemsSource="{Binding Branches}" Value="{Binding BranchId, Mode=TwoWay}" IsApplied="{Binding HasBranchFilter}"/>
+          <shared:IconFilter Label="{Binding Loc[employees.role]}" Icon="ShieldCheckmark24" ItemsSource="{Binding Roles}" Value="{Binding RoleId, Mode=TwoWay}" IsApplied="{Binding HasRoleFilter}" Margin="4,0,0,0"/>
+          <shared:IconFilter Label="{Binding Loc[employees.status]}" Icon="CheckmarkCircle24" ItemsSource="{Binding Statuses}" Value="{Binding ActiveStatus, Mode=TwoWay}" IsApplied="{Binding HasStatusFilter}" Margin="4,0,0,0"/>
+         </StackPanel>
+        </Grid>
+       </StackPanel>
+       <Grid Grid.Row="1">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+         <ItemsControl ItemsSource="{Binding Employees}" Margin="8" Visibility="{Binding IsLoading, Converter={StaticResource InverseBoolToVis}}">
+          <ItemsControl.ItemTemplate><DataTemplate>
+           <Button Command="{Binding DataContext.SelectEmployeeCommand, RelativeSource={RelativeSource AncestorType=local:EmployeesView}}" CommandParameter="{Binding}" Style="{StaticResource EmployeeListButton}" HorizontalContentAlignment="Stretch" Margin="0,0,0,4" AutomationProperties.Name="{Binding Data.Name}">
+
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+             <Border Background="{StaticResource PrimaryLightBrush}" CornerRadius="16" Width="36" Height="36" VerticalAlignment="Top"><TextBlock Text="{Binding Initials}" Foreground="{StaticResource PrimaryBrush}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+             <StackPanel Grid.Column="1"><DockPanel><Border DockPanel.Dock="Right" Background="{StaticResource SegmentedBackgroundBrush}" CornerRadius="8" Padding="8,4" Margin="8,0,0,0"><TextBlock Text="{Binding Data.RoleName}" FontSize="10" Foreground="{StaticResource TextMutedBrush}"/></Border><TextBlock Text="{Binding Data.Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextPrimaryBrush}"/></DockPanel>
+              <TextBlock Text="{Binding Data.Username}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,4"/>
+              <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/><TextBlock Text="{Binding Store}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextTrimming="CharacterEllipsis"/></DockPanel>
+             </StackPanel>
+            </Grid>
+           </Button>
+          </DataTemplate></ItemsControl.ItemTemplate>
+         </ItemsControl>
+        </ScrollViewer>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"><ui:ProgressRing Width="32" Height="32" IsIndeterminate="True"/><TextBlock Text="{Binding Loc[employees.loading_employees]}" Margin="0,12,0,0"/></StackPanel>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"><ui:SymbolIcon Symbol="Search24" FontSize="32"/><TextBlock Text="{Binding Loc[employees.no_matching_employees]}" Margin="0,12,0,12"/><Button Content="{Binding Loc[employees.clear_filters]}" Style="{StaticResource OutlineButtonStyle}" Command="{Binding ClearFiltersCommand}"/></StackPanel>
+        <Border Style="{StaticResource Error}" Margin="16" VerticalAlignment="Top" Visibility="{Binding ListError, Converter={StaticResource NullOrEmptyToVis}}"><StackPanel><TextBlock Text="{Binding ListError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/><Button Content="{Binding Loc[employees.retry]}" Command="{Binding RefreshCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,12,0,0"/></StackPanel></Border>
+       </Grid>
+       <Border Grid.Row="2" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="0,1,0,0" Padding="16">
+        <StackPanel><DockPanel Margin="0,0,0,12"><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><TextBlock Text="{Binding Loc[employees.rows]}" VerticalAlignment="Center" Margin="0,0,8,0"/><ComboBox Width="60" Height="44" ItemsSource="{Binding PageSizes}" SelectedItem="{Binding PageSize}" AutomationProperties.Name="Rows per page"/></StackPanel><TextBlock Text="{Binding Showing}" FontSize="11" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite"/></DockPanel>
+         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Button Content="{Binding Loc[employees.previous]}" Command="{Binding PreviousPageCommand}" Style="{StaticResource OutlineButtonStyle}"/><Border Grid.Column="1" Background="{StaticResource PrimaryLightBrush}" CornerRadius="10" Padding="12,8" Margin="8,0"><TextBlock Text="{Binding PageSummary}" Foreground="{StaticResource PrimaryBrush}" VerticalAlignment="Center"/></Border><Button Grid.Column="2" Content="{Binding Loc[employees.next]}" Command="{Binding NextPageCommand}" Style="{StaticResource OutlineButtonStyle}"/></Grid>
+        </StackPanel>
+       </Border>
+      </Grid>
+     </Border>
+     <Border x:Name="DetailCard" Grid.Column="1" Style="{StaticResource Card}">
+      <Grid>
+       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <StackPanel Margin="24,16" Visibility="{Binding Editor, Converter={StaticResource NullOrEmptyToVis}}">
+        <WrapPanel><TextBlock Text="{Binding SelectedName}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,8"/><Border Background="{StaticResource PrimaryLightBrush}" CornerRadius="10" Padding="12,4" Margin="0,0,0,8"><TextBlock Text="{Binding SelectedRole}" Foreground="{StaticResource PrimaryBrush}"/></Border></WrapPanel>
+        <TextBlock Text="{Binding SelectedUsername, StringFormat=Employee ID: {0}}" Foreground="{StaticResource TextMutedBrush}" FontSize="12"/>
+        <WrapPanel Margin="0,8,0,12"><TextBlock Text="{Binding Loc[employees.store_access]}" FontSize="12" Margin="0,0,12,0"/><TextBlock Text="{Binding SelectedStore}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,12,0"/><TextBlock Text="{Binding SelectedStatus}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/></WrapPanel>
+        <WrapPanel Visibility="{Binding CanManageSelection, Converter={StaticResource BoolToVis}}">
+         <Button Command="{Binding OpenResetPinCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,0" Margin="0,0,8,8"><StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Key24" Margin="0,0,8,0"/><TextBlock Text="{Binding Loc[employees.reset_pin_pad]}"/></StackPanel></Button>
+         <Button Command="{Binding OpenResetPasswordCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,0" Margin="0,0,8,8"><StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="LockClosed24" Margin="0,0,8,0"/><TextBlock Text="{Binding Loc[employees.reset_password]}"/></StackPanel></Button>
+         <Button Content="{Binding LockAction}" Command="{Binding ToggleLockCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,0" Margin="0,0,0,8"/>
+        </WrapPanel>
+       </StackPanel>
+       <Grid Grid.Row="1" Margin="24,0,24,8">
+        <TabControl Visibility="{Binding Editor, Converter={StaticResource NullOrEmptyToVis}}">
+         <TabItem Header="Personal Profile"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><local:EmployeeEditForm DataContext="{Binding Editor}" IsEnabled="{Binding DataContext.CanManageSelection, RelativeSource={RelativeSource AncestorType=local:EmployeesView}}" Margin="0,16,0,0"/></ScrollViewer></TabItem>
+         <TabItem Header="Access Levels"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16"><TextBlock Text="{Binding Loc[employees.permissions_inherited_from_the_assigned_role]}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,12"/><TextBlock Text="{Binding Editor.Permissions}" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}"/></StackPanel></ScrollViewer></TabItem>
+        </TabControl>
+        <TextBlock Text="{Binding Loc[employees.select_an_employee_to_view_their_profile]}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding Editor, Converter={StaticResource InverseNullOrEmptyToVis}}"/>
+        <Border Style="{StaticResource Error}" VerticalAlignment="Top" Visibility="{Binding DetailError, Converter={StaticResource NullOrEmptyToVis}}"><TextBlock Text="{Binding DetailError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/></Border>
+        <ui:ProgressRing Width="32" Height="32" IsIndeterminate="True" Visibility="{Binding IsDetailLoading, Converter={StaticResource BoolToVis}}"/>
+       </Grid>
+       <Border Grid.Row="2" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="0,1,0,0" Padding="24,16" Visibility="{Binding CanManageSelection, Converter={StaticResource BoolToVis}}">
+        <WrapPanel HorizontalAlignment="Right"><TextBlock Text="{Binding Loc[employees.unsaved_changes]}" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,16,8" VerticalAlignment="Center" Visibility="{Binding Editor.IsDirty, Converter={StaticResource BoolToVis}}"/><Button Content="{Binding Loc[employees.cancel]}" Command="{Binding CancelProfileCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,0" Margin="0,0,8,8"/><Button Content="{Binding Loc[employees.save_profile_changes_f2]}" Command="{Binding SaveProfileCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="248" Height="44" Margin="0,0,0,8"/></WrapPanel>
+       </Border>
+      </Grid>
+     </Border>
+    </Grid>
+   </StackPanel>
+  </ScrollViewer>
+  <Grid x:Name="CreateOverlay" Background="{StaticResource InputBackgroundBrush}" Visibility="{Binding NewEmployee, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle">
+   <Border Style="{StaticResource Card}" MaxWidth="760" Margin="16" Padding="24">
+    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <TextBlock Text="{Binding Loc[employees.new_employee]}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16"/>
+     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"><ContentControl Content="{Binding NewEmployee}"><ContentControl.ContentTemplate><DataTemplate><local:EmployeeEditForm/></DataTemplate></ContentControl.ContentTemplate></ContentControl></ScrollViewer>
+     <WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,16,0,0"><Button Content="{Binding Loc[employees.cancel]}" Command="{Binding CloseNewEmployeeCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="24,0" Margin="0,0,12,0"/><Button Content="{Binding Loc[employees.create_employee]}" Command="{Binding CreateEmployeeCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="176"/></WrapPanel>
+    </Grid>
+   </Border>
+  </Grid>
+  <Grid x:Name="CredentialOverlay" Background="{StaticResource InputBackgroundBrush}" Visibility="{Binding CredentialTitle, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle">
+   <Border Style="{StaticResource Card}" MaxWidth="440" VerticalAlignment="Center" Padding="24">
+    <StackPanel><TextBlock Text="{Binding CredentialTitle}" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/><TextBlock Text="{Binding Loc[employees.enter_the_new_credential_pin_must_contain_exactly_6_digits]}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+     <PasswordBox x:Name="CredentialInput" Height="50" PasswordChanged="OnCredentialChanged" AutomationProperties.Name="New credential"/>
+     <Border Style="{StaticResource Error}" Margin="0,12,0,0" Visibility="{Binding CredentialError, Converter={StaticResource NullOrEmptyToVis}}"><TextBlock Text="{Binding CredentialError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/></Border>
+     <WrapPanel HorizontalAlignment="Right" Margin="0,24,0,0"><Button Content="{Binding Loc[employees.cancel]}" Command="{Binding CloseCredentialCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="24,0" Margin="0,0,12,0"/><Button Content="{Binding Loc[employees.reset]}" Command="{Binding SubmitCredentialCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="120"/></WrapPanel>
+    </StackPanel>
+   </Border>
+  </Grid>
+  <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding IsSaving, Converter={StaticResource BoolToVis}}" Panel.ZIndex="90">
+   <StackPanel Orientation="Horizontal"><ui:ProgressRing Width="20" Height="20" IsIndeterminate="True"/><TextBlock Text="{Binding Loc[employees.saving]}" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite"/></StackPanel>
+  </Border>
+  <shared:ToastNotification Message="{Binding ToastMessage}" ToastType="{Binding ToastType}" VerticalAlignment="Top" HorizontalAlignment="Center" Panel.ZIndex="100"/>
+ </Grid>
 </UserControl>

@@ -21,6 +21,14 @@ public static class AuthenticationExtensions
         {
             options.Events = new JwtBearerEvents
             {
+                OnMessageReceived = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments("/hubs") &&
+                        string.IsNullOrEmpty(context.Request.Headers.Authorization) &&
+                        context.Request.Query.TryGetValue("access_token", out var token) && token.Count == 1)
+                        context.Token = token[0];
+                    return Task.CompletedTask;
+                },
                 OnChallenge = async context =>
                 {
                     context.HandleResponse();

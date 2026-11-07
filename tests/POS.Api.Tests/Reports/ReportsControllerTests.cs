@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -90,7 +90,7 @@ public class ReportsControllerTests
         var controller = new ReportsController(_sender);
         var expected = new List<SlowMovingItemResponse>
         {
-            new(Guid.NewGuid(), "SKU_SLOW", "Món chậm bán", 50, 40, null)
+            new(Guid.NewGuid(), "SKU_SLOW", "MÃ³n cháº­m bÃ¡n", 50, 40, null)
         };
         _sender.Send(Arg.Any<GetSlowMovingReportQuery>(), Arg.Any<CancellationToken>())
             .Returns(Result<IReadOnlyList<SlowMovingItemResponse>>.Success(expected));
@@ -112,7 +112,7 @@ public class ReportsControllerTests
         var shiftId = Guid.NewGuid();
         var controller = new ReportsController(_sender);
         var shiftSummary = new ShiftSummaryResponse(
-            shiftId, Guid.NewGuid(), "Quầy 1", Guid.NewGuid(), "NV", 100, 100, 0, 0, 0, 200, 200, 0, 1, DateTimeOffset.UtcNow, null);
+            shiftId, Guid.NewGuid(), "Quáº§y 1", Guid.NewGuid(), "NV", 100, 100, 0, 0, 0, 200, 200, 0, 1, DateTimeOffset.UtcNow, null);
         var expected = new ShiftReportResponse(shiftSummary, Array.Empty<POS.Contracts.V1.Orders.OrderSummaryResponse>());
 
         _sender.Send(Arg.Any<GetShiftReportQuery>(), Arg.Any<CancellationToken>())
@@ -168,5 +168,39 @@ public class ReportsControllerTests
         fileResult.FileDownloadName.Should().Be("report.xlsx");
         fileResult.ContentType.Should().Be("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         fileResult.FileContents.Should().Equal([1, 2, 3]);
+    }
+
+    [Fact]
+    public async Task GetDashboardSummary_ShouldDispatchQuery_AndReturnOk()
+    {
+        // Arrange
+        var controller = new ReportsController(_sender);
+        var expected = new DashboardSummaryResponse(
+            TodayRevenue: 15_000_000m,
+            TodayOrders: 45,
+            AverageOrderValue: 333_333.33m,
+            RevenueGrowthPercentage: 12.5m,
+            RevenueChart: new List<DailyRevenueChartItem>
+            {
+                new(DateOnly.FromDateTime(DateTime.UtcNow), 15_000_000m, 45)
+            },
+            TopSellingProducts: new List<TopSellingProductItem>
+            {
+                new(Guid.NewGuid(), "SKU01", "Cà phê sữa", 100, 3_000_000m)
+            },
+            Alerts: new DashboardAlerts(2, 1, 0)
+        );
+
+        _sender.Send(Arg.Any<GetDashboardSummaryQuery>(), Arg.Any<CancellationToken>())
+            .Returns(Result<DashboardSummaryResponse>.Success(expected));
+
+        // Act
+        var result = await controller.GetDashboardSummary(new DashboardFilterRequest(null, 7), CancellationToken.None);
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var response = okResult.Value.Should().BeOfType<ApiResponse<DashboardSummaryResponse>>().Subject;
+        response.Success.Should().BeTrue();
+        response.Data.Should().Be(expected);
     }
 }

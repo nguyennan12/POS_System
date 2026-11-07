@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.Api.Extensions;
@@ -22,7 +22,7 @@ namespace POS.Api.Controllers;
 public class ReportsController(ISender mediator) : ControllerBase
 {
     /// <summary>
-    /// [T56] Báo cáo doanh thu đa chiều (theo thời gian, cửa hàng, nhân viên)
+    /// [T56] BÃ¡o cÃ¡o doanh thu Ä‘a chiá»u (theo thá»i gian, cá»­a hÃ ng, nhÃ¢n viÃªn)
     /// </summary>
     [HttpGet("revenue")]
     public async Task<ActionResult<ApiResponse<RevenueReportResponse>>> GetRevenueReport(
@@ -37,7 +37,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Báo cáo top sản phẩm bán chạy nhất
+    /// [T56] BÃ¡o cÃ¡o top sáº£n pháº©m bÃ¡n cháº¡y nháº¥t
     /// </summary>
     [HttpGet("top-selling")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<TopSellingProductItem>>>> GetTopSellingReport(
@@ -52,7 +52,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Báo cáo tồn kho theo danh mục hoặc toàn cửa hàng
+    /// [T56] BÃ¡o cÃ¡o tá»“n kho theo danh má»¥c hoáº·c toÃ n cá»­a hÃ ng
     /// </summary>
     [HttpGet("inventory")]
     public async Task<ActionResult<ApiResponse<InventoryReportResponse>>> GetInventoryReport(
@@ -67,7 +67,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Báo cáo danh sách hàng tồn chậm luân chuyển (không phát sinh bán trong N ngày)
+    /// [T56] BÃ¡o cÃ¡o danh sÃ¡ch hÃ ng tá»“n cháº­m luÃ¢n chuyá»ƒn (khÃ´ng phÃ¡t sinh bÃ¡n trong N ngÃ y)
     /// </summary>
     [HttpGet("slow-moving")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<SlowMovingItemResponse>>>> GetSlowMovingReport(
@@ -82,7 +82,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Báo cáo tổng kết ca làm việc
+    /// [T56] BÃ¡o cÃ¡o tá»•ng káº¿t ca lÃ m viá»‡c
     /// </summary>
     [HttpGet("shift/{id:guid}")]
     public async Task<ActionResult<ApiResponse<ShiftReportResponse>>> GetShiftReport(
@@ -97,22 +97,23 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Tổng quan Dashboard kinh doanh thời gian thực
+    /// [T56] Tá»•ng quan Dashboard kinh doanh thá»i gian thá»±c
+    /// <summary>
+    /// [T55] Tổng quan Dashboard kinh doanh thời gian thực
     /// </summary>
     [HttpGet("dashboard")]
     public async Task<ActionResult<ApiResponse<DashboardSummaryResponse>>> GetDashboardSummary(
-        [FromQuery] Guid? storeId,
+        [FromQuery] DashboardFilterRequest? request,
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(
-            new GetDashboardSummaryQuery(storeId),
+            new GetDashboardSummaryQuery(request?.StoreId, request?.Days ?? 7),
             cancellationToken);
 
         return this.ToActionResult(result);
     }
-
     /// <summary>
-    /// [T56] Xuất dữ liệu báo cáo ra file Excel (ClosedXML) hoặc PDF
+    /// [T56] Xuáº¥t dá»¯ liá»‡u bÃ¡o cÃ¡o ra file Excel (ClosedXML) hoáº·c PDF
     /// </summary>
     [HttpPost("export")]
     public async Task<ActionResult<ApiResponse<ExportReportJobResponse>>> ExportReport(
@@ -127,7 +128,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Kiểm tra trạng thái xuất báo cáo (hoặc tải trực tiếp nếu download=true)
+    /// [T56] Kiá»ƒm tra tráº¡ng thÃ¡i xuáº¥t bÃ¡o cÃ¡o (hoáº·c táº£i trá»±c tiáº¿p náº¿u download=true)
     /// </summary>
     [HttpGet("export/{jobId:guid}")]
     public async Task<IActionResult> GetExportJobStatus(
@@ -151,7 +152,7 @@ public class ReportsController(ISender mediator) : ControllerBase
     }
 
     /// <summary>
-    /// [T56] Tải file báo cáo đã xuất xong
+    /// [T56] Táº£i file bÃ¡o cÃ¡o Ä‘Ã£ xuáº¥t xong
     /// </summary>
     [HttpGet("export/{jobId:guid}/download")]
     public async Task<IActionResult> DownloadExportReport(

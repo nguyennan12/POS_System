@@ -4,6 +4,7 @@
 
 # Visual Studio
 .vs/
+.dotnet/
 *.suo
 *.user
 *.userosscache

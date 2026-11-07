@@ -37,6 +37,8 @@ public sealed class CommandPermissionMappingTests
             ["AddOrderItemCommand"] = "orders:create_own",
             ["ApplyVoucherCommand"] = "vouchers:apply_own",
             ["CheckoutOrderCommand"] = "payments:create_own",
+            ["GenerateQrPaymentCommand"] = "payments:create_own",
+            ["ExpirePendingPaymentCommand"] = "payments:read",
             ["CancelOrderCommand"] = "orders:cancel_own",
             ["CreateRoleCommand"] = "roles:manage",
             ["UpdateRoleCommand"] = "roles:manage",
@@ -87,6 +89,8 @@ public sealed class CommandPermissionMappingTests
 
     // Invoked by checkout after its authorization, inside its existing transaction.
     private static readonly HashSet<string> InternalCommands = [nameof(GenerateInvoiceCommand), nameof(ProcessOrderPaidCommand)];
+    // Public callbacks are authorized by provider signature, never an employee permission.
+    private static readonly HashSet<string> WebhookCommands = ["ProcessMomoWebhookCommand", "ProcessVietQrWebhookCommand"];
 
     [Fact]
     public void Commands_ShouldDeclareExpectedBusinessPermissions()
@@ -105,7 +109,7 @@ public sealed class CommandPermissionMappingTests
         commandTypes
             .Select(type => type.Name)
             .Should()
-            .BeEquivalentTo(ExpectedPermissions.Keys.Concat(AuthenticationCommands).Concat(InternalCommands));
+            .BeEquivalentTo(ExpectedPermissions.Keys.Concat(AuthenticationCommands).Concat(InternalCommands).Concat(WebhookCommands));
 
         foreach (Type commandType in commandTypes.Where(type => ExpectedPermissions.ContainsKey(type.Name)))
         {
@@ -126,6 +130,9 @@ public sealed class CommandPermissionMappingTests
             commandType.Should().NotImplement<IRequirePermission>(
                 "internal commands inherit the caller's authorized workflow");
         }
+
+        foreach (Type commandType in commandTypes.Where(type => WebhookCommands.Contains(type.Name)))
+            commandType.Should().NotImplement<IRequirePermission>("webhooks have no authenticated employee");
     }
 
     private static bool IsCommand(Type type) =>

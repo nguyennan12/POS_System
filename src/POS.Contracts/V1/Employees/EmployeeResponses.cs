@@ -10,7 +10,8 @@ public record EmployeeResponse(
     string? StoreName,
     bool IsChainOwner,
     bool IsActive,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    string? Phone = null
 );
 
 public record EmployeeDetailResponse(
@@ -26,7 +27,8 @@ public record EmployeeDetailResponse(
     short FailedLoginCount,
     DateTimeOffset? LockedUntil,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt
+    DateTimeOffset UpdatedAt,
+    string? Phone = null, string? Email = null, string? CitizenId = null, DateOnly? HireDate = null, string? EmploymentType = null, decimal? HourlyWage = null
 );
 
 public record LoginHistoryResponse(

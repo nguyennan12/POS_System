@@ -6,7 +6,7 @@ using POS.Domain.Common;
 
 namespace POS.Application.UseCases.Reports.Queries.GetDashboardSummary;
 
-public record GetDashboardSummaryQuery(Guid? StoreId = null) : IQuery<DashboardSummaryResponse>, IRequirePermission
+public record GetDashboardSummaryQuery(Guid? StoreId = null, int Days = 7) : IQuery<DashboardSummaryResponse>, IRequirePermission
 {
     public string RequiredPermission => "reports:dashboard_view";
 }
@@ -38,11 +38,12 @@ public class GetDashboardSummaryQueryHandler : IQueryHandler<GetDashboardSummary
             var employee = await _employeeRepository.GetByIdAsync(_currentUser.EmployeeId.Value, cancellationToken);
             if (employee != null && !employee.IsChainOwner)
             {
+                // Non-chain owners can only view their assigned store
                 effectiveStoreId = employee.StoreId;
             }
         }
 
-        var summary = await _reportRepository.GetDashboardSummaryAsync(effectiveStoreId, cancellationToken);
+        var summary = await _reportRepository.GetDashboardSummaryAsync(effectiveStoreId, query.Days, cancellationToken);
         return Result<DashboardSummaryResponse>.Success(summary);
     }
 }

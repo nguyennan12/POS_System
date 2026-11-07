@@ -23,7 +23,8 @@ public class GetInvoicesQueryHandler(
         var filter = query.Filter;
         var (items, total) = await invoiceRepository.GetPagedAsync(
             employee.Id, employee.StoreId, employee.IsChainOwner,
-            filter.OrderId, filter.From, filter.To, filter.PageNumber, filter.PageSize, cancellationToken);
+            filter.OrderId, filter.From, filter.To, filter.PageNumber, filter.PageSize, cancellationToken,
+            filter.Search, filter.PaymentMethod);
         return new PagedResponse<InvoiceSummaryResponse>(items, filter.PageNumber, filter.PageSize, total);
     }
 }

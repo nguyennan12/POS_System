@@ -1,0 +1,11 @@
+using System.Windows.Controls;
+
+namespace POS.WinUI.Views.Inventory;
+
+public partial class DisposeStockModal : UserControl
+{
+    public DisposeStockModal()
+    {
+        InitializeComponent();
+    }
+}

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
 using POS.Contracts.V1.Orders;
 using POS.Contracts.V1.Reports;
@@ -10,6 +10,12 @@ namespace POS.Infrastructure.Persistence.Repositories;
 
 public class ReportRepository : IReportRepository
 {
+    private sealed class DashboardDailyAggregate
+    {
+        public DateTime Day { get; set; }
+        public decimal Revenue { get; set; }
+        public int OrderCount { get; set; }
+    }
     private readonly AppDbContext _context;
     private readonly IShiftRepository _shiftRepository;
 
@@ -30,7 +36,7 @@ public class ReportRepository : IReportRepository
         var toUtc = to?.UtcDateTime ?? DateTime.UtcNow;
 
         var query = _context.Orders.AsNoTracking()
-            .Where(o => o.PaidAt != null && o.Status != OrderStatus.Cancelled);
+            .Where(o => o.PaidAt != null && o.Status == OrderStatus.Paid);
 
         query = query.Where(o => o.PaidAt >= fromUtc && o.PaidAt <= toUtc);
 
@@ -95,7 +101,7 @@ public class ReportRepository : IReportRepository
         var takeCount = limit > 0 ? limit : 5;
 
         var query = _context.OrderItems.AsNoTracking()
-            .Where(oi => oi.Order.PaidAt != null && oi.Order.Status != OrderStatus.Cancelled);
+            .Where(oi => oi.Order.PaidAt != null && oi.Order.Status == OrderStatus.Paid);
 
         query = query.Where(oi => oi.Order.PaidAt >= fromUtc && oi.Order.PaidAt <= toUtc);
 
@@ -221,7 +227,7 @@ public class ReportRepository : IReportRepository
         var skuIds = stockEntries.Select(e => e.SkuId).Distinct().ToList();
 
         var lastSales = await _context.OrderItems.AsNoTracking()
-            .Where(oi => skuIds.Contains(oi.SkuId) && oi.Order.PaidAt != null && oi.Order.Status != OrderStatus.Cancelled)
+            .Where(oi => skuIds.Contains(oi.SkuId) && oi.Order.PaidAt != null && oi.Order.Status == OrderStatus.Paid)
             .GroupBy(oi => oi.SkuId)
             .Select(g => new
             {
@@ -287,7 +293,7 @@ public class ReportRepository : IReportRepository
         var shiftSummary = new ShiftSummaryResponse(
             ShiftId: shift.Id,
             RegisterId: shift.RegisterId,
-            RegisterName: shift.Register?.Name ?? "Quầy",
+            RegisterName: shift.Register?.Name ?? "Quáº§y",
             EmployeeId: shift.EmployeeId,
             EmployeeName: shift.Employee?.Name ?? string.Empty,
             OpeningCash: shift.OpeningCash,
@@ -330,54 +336,79 @@ public class ReportRepository : IReportRepository
 
     public async Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
         Guid? storeId,
+        int days = 7,
         CancellationToken cancellationToken = default)
     {
-        var todayStartUtc = DateTime.UtcNow.Date;
+        var chartDays = Math.Clamp(days <= 0 ? 7 : days, 7, 30);
+        var nowUtc = DateTime.UtcNow;
+        // Store-local calendar days are used for the dashboard. A chain-wide view
+        // uses the system's Vietnam timezone as the common reporting calendar.
+        var timezoneId = storeId.HasValue
+            ? await _context.Stores.AsNoTracking().Where(s => s.Id == storeId.Value)
+                .Select(s => s.Timezone).FirstOrDefaultAsync(cancellationToken)
+            : "Asia/Ho_Chi_Minh";
+        TimeZoneInfo timezone;
+        try { timezone = TimeZoneInfo.FindSystemTimeZoneById(string.IsNullOrWhiteSpace(timezoneId) ? "Asia/Ho_Chi_Minh" : timezoneId); }
+        catch (TimeZoneNotFoundException) { timezone = TimeZoneInfo.Utc; }
+        catch (InvalidTimeZoneException) { timezone = TimeZoneInfo.Utc; }
+        var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, timezone).Date;
+        var chartStartLocal = todayLocal.AddDays(-(chartDays - 1));
+        var fetchStartUtc = TimeZoneInfo.ConvertTimeToUtc(chartStartLocal.AddDays(-1), timezone);
+        var tomorrowStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayLocal.AddDays(1), timezone);
+        var sql = """
+            SELECT (paid_at AT TIME ZONE {0})::timestamp AS "Day",
+                   COALESCE(SUM(grand_total), 0)::numeric AS "Revenue",
+                   COUNT(*)::integer AS "OrderCount"
+            FROM orders
+            WHERE paid_at IS NOT NULL AND status = 'Paid'
+              AND paid_at >= {2} AND paid_at < {3}
+              AND ({1} IS NULL OR store_id = {1})
+            GROUP BY (paid_at AT TIME ZONE {0})::date
+            """;
+        var dailyQuery = _context.Database.SqlQueryRaw<DashboardDailyAggregate>(
+            sql, timezone.Id, (object?)storeId, fetchStartUtc, tomorrowStartUtc);
+        var dailyRows = await dailyQuery.ToListAsync(cancellationToken);
+        var dailyByDate = dailyRows.ToDictionary(x => DateOnly.FromDateTime(x.Day), x => x);
+        var todayDate = DateOnly.FromDateTime(todayLocal);
+        var yesterdayDate = todayDate.AddDays(-1);
+        dailyByDate.TryGetValue(todayDate, out var todayAggregate);
+        dailyByDate.TryGetValue(yesterdayDate, out var yesterdayAggregate);
+        var todayRevenue = todayAggregate?.Revenue ?? 0m;
+        var todayOrderCount = todayAggregate?.OrderCount ?? 0;
+        var avgOrderValue = todayOrderCount > 0 ? Math.Round(todayRevenue / todayOrderCount, 2) : 0m;
+        var yesterdayRevenue = yesterdayAggregate?.Revenue ?? 0m;
 
-        var ordersQuery = _context.Orders.AsNoTracking()
-            .Where(o => o.PaidAt != null && o.Status != OrderStatus.Cancelled);
-
-        if (storeId.HasValue)
+        decimal growthPercentage;
+        if (yesterdayRevenue == 0m)
         {
-            ordersQuery = ordersQuery.Where(o => o.StoreId == storeId.Value);
+            growthPercentage = todayRevenue > 0m ? 100m : 0m;
+        }
+        else
+        {
+            growthPercentage = Math.Round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100m, 2);
         }
 
-        var todayOrders = await ordersQuery
-            .Where(o => o.PaidAt >= todayStartUtc)
-            .Select(o => o.GrandTotal)
-            .ToListAsync(cancellationToken);
-
-        var todayRevenue = todayOrders.Sum();
-        var todayOrderCount = todayOrders.Count;
-        var avgOrderValue = todayOrderCount > 0 ? todayRevenue / todayOrderCount : 0m;
-
-        // 7-day revenue chart
-        var sevenDaysAgoUtc = todayStartUtc.AddDays(-6);
-        var pastWeekOrders = await ordersQuery
-            .Where(o => o.PaidAt >= sevenDaysAgoUtc)
-            .Select(o => new { PaidDate = DateOnly.FromDateTime(o.PaidAt!.Value), o.GrandTotal })
-            .ToListAsync(cancellationToken);
-
-        var chartItems = new List<DailyRevenueChartItem>();
-        for (int i = 6; i >= 0; i--)
+        // 3. Dynamic revenue chart (7-30 days)
+        var chartItems = new List<DailyRevenueChartItem>(chartDays);
+        for (int i = chartDays - 1; i >= 0; i--)
         {
-            var date = DateOnly.FromDateTime(todayStartUtc.AddDays(-i));
-            var dayOrders = pastWeekOrders.Where(x => x.PaidDate == date).ToList();
+            var date = DateOnly.FromDateTime(todayLocal.AddDays(-i));
+            dailyByDate.TryGetValue(date, out var dayAggregate);
             chartItems.Add(new DailyRevenueChartItem(
                 Date: date,
-                Revenue: dayOrders.Sum(x => x.GrandTotal),
-                OrderCount: dayOrders.Count));
+                Revenue: dayAggregate?.Revenue ?? 0m,
+                OrderCount: dayAggregate?.OrderCount ?? 0));
         }
 
-        // Top 5 selling products (last 30 days)
+        // 4. Top 5 selling products (last 30 days)
         var topSelling = await GetTopSellingAsync(
-            from: DateTimeOffset.UtcNow.AddDays(-30),
-            to: DateTimeOffset.UtcNow,
+            from: new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(todayLocal.AddDays(-29), timezone), TimeSpan.Zero),
+            to: new DateTimeOffset(nowUtc, TimeSpan.Zero),
             limit: 5,
             storeId: storeId,
             cancellationToken: cancellationToken);
 
-        // Dashboard alerts
+        // 5. Dashboard alerts
         var stockEntriesQuery = _context.StockEntries.AsNoTracking().AsQueryable();
         var batchesQuery = _context.StockBatches.AsNoTracking().Where(b => b.Qty > 0 && b.ExpiryDate != null);
         var stockTakesQuery = _context.StockTakes.AsNoTracking().AsQueryable();
@@ -391,8 +422,8 @@ public class ReportRepository : IReportRepository
 
         var lowStockCount = await stockEntriesQuery.CountAsync(se => se.QtyOnHand <= se.MinStock, cancellationToken);
 
-        var thirtyDaysFromNow = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(30));
-        var todayDateOnly = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var thirtyDaysFromNow = DateOnly.FromDateTime(todayLocal.AddDays(30));
+        var todayDateOnly = DateOnly.FromDateTime(todayLocal);
         var expiringSoonCount = await batchesQuery.CountAsync(b => b.ExpiryDate <= thirtyDaysFromNow && b.ExpiryDate >= todayDateOnly, cancellationToken);
 
         var pendingStockTakeCount = await stockTakesQuery.CountAsync(st => st.Status == StockTakeStatus.Pending, cancellationToken);
@@ -406,6 +437,7 @@ public class ReportRepository : IReportRepository
             TodayRevenue: todayRevenue,
             TodayOrders: todayOrderCount,
             AverageOrderValue: avgOrderValue,
+            RevenueGrowthPercentage: growthPercentage,
             RevenueChart: chartItems,
             TopSellingProducts: topSelling,
             Alerts: alerts);

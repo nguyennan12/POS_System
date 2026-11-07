@@ -1,56 +1,363 @@
 <UserControl x:Class="POS.WinUI.Views.Dashboard.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="850" d:DesignWidth="1200">
 
-    <Grid Margin="28,20,28,24">
-        <!-- Khung Card nội dung Coming Soon phân hệ Dashboard -->
-        <Border Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource InputBorderBrush}" 
-                BorderThickness="1" 
-                CornerRadius="16" 
-                Padding="40">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="20" Color="#0F172A" Opacity="0.03" ShadowDepth="3" Direction="270"/>
-            </Border.Effect>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
 
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- Icon hộp tròn bo góc lớn -->
-                <Border Width="72" Height="72" CornerRadius="20" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" HorizontalAlignment="Center">
-                    <ui:SymbolIcon Symbol="Grid24" FontSize="32" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid Margin="28,16,28,24">
+            <Grid.RowDefinitions>
+                <!-- Row 0: Top Header & Filters -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 1: 4 KPI Cards -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 2: Charts & Top Selling -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <!-- Badge Tag SẮP RA MẮT -->
-                <Border Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12,5" HorizontalAlignment="Center" Margin="0,20,0,10">
-                    <TextBlock Text="COMING SOON" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
-                </Border>
+            <!-- ════════════════════ ROW 0: TOP HEADER & ACTIONS ════════════════════ -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <!-- Tiêu đề Coming Soon -->
-                <TextBlock Text="Tổng quan kinh doanh (Dashboard)" 
-                           FontSize="20" 
-                           FontWeight="Bold" 
-                           Foreground="{StaticResource TextPrimaryBrush}" 
-                           HorizontalAlignment="Center"/>
-                
-                <!-- Mô tả chi tiết -->
-                <TextBlock Text="Phân hệ Tổng quan đang trong quá trình xây dựng biểu đồ doanh thu và các thẻ chỉ số KPI. Tính năng sẽ sẵn sàng trong bản cập nhật sắp tới." 
-                           FontSize="13.5" 
-                           Foreground="{StaticResource TextMutedBrush}" 
-                           HorizontalAlignment="Center" 
-                           TextAlignment="Center"
-                           MaxWidth="480"
-                           TextWrapping="Wrap"
-                           LineHeight="20"
-                           Margin="0,8,0,0"/>
-
-                <!-- Thanh tiến độ / tag thông tin -->
-                <Border Background="#F8FAFC" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="18,10" Margin="0,26,0,0" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Code24" FontSize="15" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Dự kiến hoàn thiện trong bản cập nhật kế tiếp" FontSize="12.5" FontWeight="Medium" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <!-- Title & Icon -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="42" Height="42" CornerRadius="12" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" Margin="0,0,14,0">
+                        <ui:SymbolIcon Symbol="Grid24" FontSize="22" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
+                </StackPanel>
+
+                <!-- Filter Controls: Store & Timeframe & Refresh -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Store Selector for Chain Owner -->
+                    <ComboBox ItemsSource="{Binding Stores}"
+                              SelectedItem="{Binding SelectedStore, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayText"
+                              Visibility="{Binding IsOwner, Converter={StaticResource BoolToVis}}"
+                              Height="38" Width="180" Margin="0,0,10,0"
+                              VerticalContentAlignment="Center"/>
+
+                    <!-- Timeframe Toggle (7 - 14 - 30 days) -->
+                    <Border Background="#F1F5F9" CornerRadius="10" Padding="3" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="7 ngày" Height="32" Padding="12,0" 
+                                    Command="{Binding SetDaysFilterCommand}" CommandParameter="7"
+                                    BorderThickness="0" Background="Transparent" FontWeight="SemiBold" FontSize="12.5"
+                                    Cursor="Hand"/>
+                            <Button Content="14 ngày" Height="32" Padding="12,0" 
+                                    Command="{Binding SetDaysFilterCommand}" CommandParameter="14"
+                                    BorderThickness="0" Background="Transparent" FontWeight="SemiBold" FontSize="12.5"
+                                    Cursor="Hand"/>
+                            <Button Content="30 ngày" Height="32" Padding="12,0" 
+                                    Command="{Binding SetDaysFilterCommand}" CommandParameter="30"
+                                    BorderThickness="0" Background="Transparent" FontWeight="SemiBold" FontSize="12.5"
+                                    Cursor="Hand"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Refresh Button -->
+                    <Button Command="{Binding LoadDashboardCommand}" 
+                            Height="38" Padding="14,0"
+                            Style="{StaticResource OutlineButtonStyle}"
+                            ToolTip="Làm mới chỉ số">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="ArrowSync24" FontSize="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Làm mới" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- ════════════════════ ROW 1: 4 KPI STAT CARDS ════════════════════ -->
+            <Grid Grid.Row="1" Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Card 1: Today Revenue -->
+                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="18,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#FFF7ED" Margin="0,0,10,0">
+                                <ui:SymbolIcon Symbol="Money24" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Doanh thu hôm nay" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="1" Text="{Binding TodayRevenueFormatted}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" 
+                                   Margin="0,12,0,8"/>
+
+                        <!-- Growth Badge -->
+                        <StackPanel Grid.Row="2" Orientation="Horizontal">
+                            <Border CornerRadius="6" Padding="8,3" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:SymbolIcon Symbol="ArrowTrending24" FontSize="13" Foreground="#059669" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding GrowthPercentageFormatted}" FontSize="11.5" FontWeight="Bold" Foreground="#059669" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Text="so với hôm qua" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
                 </Border>
-            </StackPanel>
-        </Border>
-    </Grid>
+
+                <!-- Card 2: Today Orders -->
+                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="18,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#EFF6FF" Margin="0,0,10,0">
+                                <ui:SymbolIcon Symbol="Receipt24" FontSize="18" Foreground="#2563EB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Đơn hàng hoàn tất" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="1" Text="{Binding TodayOrders}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" 
+                                   Margin="0,12,0,8"/>
+
+                        <TextBlock Grid.Row="2" Text="Đơn thanh toán thành công" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Card 3: Average Order Value (AOV) -->
+                <Border Grid.Column="4" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="18,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#F5F3FF" Margin="0,0,10,0">
+                                <ui:SymbolIcon Symbol="Calculator24" FontSize="18" Foreground="#7C3AED" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Giá trị đơn TB (AOV)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="1" Text="{Binding AverageOrderValueFormatted}" 
+                                   FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" 
+                                   Margin="0,12,0,8"/>
+
+                        <TextBlock Grid.Row="2" Text="Trung bình trên mỗi đơn" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Card 4: Dashboard Alerts -->
+                <Border Grid.Column="6" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="18,16">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#FEF2F2" Margin="0,0,10,0">
+                                <ui:SymbolIcon Symbol="Alert24" FontSize="18" Foreground="#DC2626" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Cảnh báo vận hành" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                            <Grid Margin="0,2">
+                                <TextBlock Text="Hàng chạm ngưỡng tối thiểu:" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding LowStockCount}" FontWeight="Bold" Foreground="#DC2626" FontSize="12" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,2">
+                                <TextBlock Text="Lô cận date (30 ngày):" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding ExpiringSoonCount}" FontWeight="Bold" Foreground="#D97706" FontSize="12" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid Margin="0,2">
+                                <TextBlock Text="Kiểm kê chờ duyệt:" FontSize="11.5" Foreground="{StaticResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding PendingStockTakeCount}" FontWeight="Bold" Foreground="#2563EB" FontSize="12" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ════════════════════ ROW 2: CHART & TOP SELLING ════════════════════ -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="65*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="35*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- LEFT: REVENUE VISUALIZER CHART -->
+                <Border Grid.Column="0" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="24">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Chart Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="Biểu đồ biến động doanh thu" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Thống kê doanh số bán lẻ theo từng ngày" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Chart Bars Container -->
+                        <Border Grid.Row="1" MinHeight="220" VerticalAlignment="Bottom" Background="#FAFBFD" CornerRadius="12" Padding="16,20,16,10" BorderBrush="#F1F5F9" BorderThickness="1">
+                            <ItemsControl ItemsSource="{Binding ChartBars}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Rows="1"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid VerticalAlignment="Bottom" Margin="4,0" ToolTip="{Binding TooltipText}">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Bar Column -->
+                                            <Border Grid.Row="0" Width="28" Height="{Binding BarHeight}" 
+                                                    CornerRadius="6,6,2,2" 
+                                                    VerticalAlignment="Bottom" HorizontalAlignment="Center">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                        <GradientStop Color="#ED7A1C" Offset="0"/>
+                                                        <GradientStop Color="#F97316" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                                <Border.Effect>
+                                                    <DropShadowEffect BlurRadius="6" Color="#EA580C" Opacity="0.25" ShadowDepth="2" Direction="270"/>
+                                                </Border.Effect>
+                                            </Border>
+
+                                            <!-- Date Label Below Bar -->
+                                            <TextBlock Grid.Row="1" Text="{Binding DateLabel}" 
+                                                       FontSize="10.5" FontWeight="Medium" Foreground="{StaticResource TextMutedBrush}" 
+                                                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- RIGHT: TOP 5 SELLING PRODUCTS -->
+                <Border Grid.Column="2" Background="{StaticResource CardBackgroundBrush}" 
+                        BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" 
+                        CornerRadius="16" Padding="20">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="16" Color="#0F172A" Opacity="0.04" ShadowDepth="2" Direction="270"/>
+                    </Border.Effect>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Top 5 sản phẩm bán chạy" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Xếp hạng theo số lượng bán (30 ngày)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Product List -->
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding TopSellingProducts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,10" Padding="12,10" Background="#F8FAFC" CornerRadius="10" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Product Icon / Badge -->
+                                            <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8" Background="#FFF7ED" Margin="0,0,10,0">
+                                                <ui:SymbolIcon Symbol="Star24" FontSize="16" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+
+                                            <!-- Product Info -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ProductName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding SkuCode}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,1,0,0"/>
+                                            </StackPanel>
+
+                                            <!-- Quantity & Revenue -->
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                                <TextBlock Text="{Binding QuantitySold, StringFormat='{}{0:N0} lượt'}" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Right"/>
+                                                <TextBlock Text="{Binding TotalRevenue, StringFormat='{}{0:N0} đ'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
 </UserControl>

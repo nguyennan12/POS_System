@@ -16,6 +16,7 @@ public static class SerilogExtensions
     return app.UseSerilogRequestLogging(options =>
     {
       options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+      options.IncludeQueryInRequestPath = false; // SignalR query strings may contain access_token.
       options.GetLevel = ExcludeNoiseAndDetermineLevel;
     });
   }
@@ -78,6 +79,9 @@ internal sealed class RequestResponseLoggingMiddleware
 
     // Bỏ qua các endpoint hệ thống không cần thiết để tránh làm rác log
     if (path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
+        context.Request.Path.StartsWithSegments("/hubs") ||
+        path.StartsWith("/api/v1/payments", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/api/v1/employees", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||

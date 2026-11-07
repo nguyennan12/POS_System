@@ -11,6 +11,14 @@ using POS.Infrastructure.Import;
 using POS.Infrastructure.Persistence;
 using POS.Infrastructure.Persistence.Repositories;
 using StackExchange.Redis;
+using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
+using POS.Application.Abstractions.Payments;
+using POS.Application.Abstractions.Notifications;
+using POS.Application.UseCases.Payments.DTOs;
+using POS.Infrastructure.Payments;
+using POS.Infrastructure.Notifications;
 
 namespace POS.Infrastructure;
 
@@ -77,6 +85,17 @@ public static class DependencyInjection
         services.AddScoped<IExcelImportParser, ClosedXmlExcelImportParser>();
 
         // ---- Reports & Export Job Store ----
+        services.AddOptions<POS.Infrastructure.Reports.ReceiptOptions>()
+            .Bind(configuration.GetSection(POS.Infrastructure.Reports.ReceiptOptions.SectionName))
+            .Validate(o => o.DefaultPaperWidth is 58 or 80, "Receipt paper width must be 58 or 80.")
+            .Validate(o => o.FontFamily == "Noto Sans Mono", "Receipt font must be the embedded Noto Sans Mono family.")
+            .Validate(o => o.RenderMode is "Raster" or "Text", "Receipt mode must be Raster or Text.")
+            .Validate(o => o.CodePage == 1258 && o.PrinterCodePage is >= 0 and <= 255, "Invalid receipt code page.")
+            .ValidateOnStart();
+        services.AddSingleton(sp => new POS.Application.Abstractions.Reports.ReceiptSettings(
+            sp.GetRequiredService<IOptions<POS.Infrastructure.Reports.ReceiptOptions>>().Value.DefaultPaperWidth));
+        services.AddSingleton<POS.Application.Abstractions.Reports.IInvoicePdfRenderer, POS.Infrastructure.Reports.QuestPdfInvoiceRenderer>();
+        services.AddSingleton<POS.Application.Abstractions.Reports.IThermalReceiptRenderer, POS.Infrastructure.Reports.EscPosReceiptRenderer>();
         services.AddScoped<IReportRepository, ReportRepository>();
         services.AddSingleton<POS.Application.Abstractions.Reports.IReportExportJobStore, POS.Infrastructure.Reports.ReportExportJobStore>();
 
@@ -92,6 +111,28 @@ public static class DependencyInjection
 
         // ---- Configuration ----
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+
+        // TODO T58: replace options source with SystemConfigs; keep secrets outside source control.
+        services.Configure<MomoOptions>(configuration.GetSection("Payments:MoMo"));
+        services.Configure<VietQrOptions>(configuration.GetSection("Payments:VietQR"));
+        services.AddOptions<QrPaymentOptions>().Bind(configuration.GetSection("Payments:Qr"))
+            .Validate(o => o.LifetimeMinutes is >= 1 and <= 120).ValidateOnStart();
+        services.AddSingleton(sp => sp.GetRequiredService<IOptions<QrPaymentOptions>>().Value);
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<IWebhookSignatureVerifier, MomoWebhookSignatureVerifier>();
+        services.AddScoped<IWebhookSignatureVerifier, VietQrWebhookSignatureVerifier>();
+        services.AddHttpClient<MoMoPaymentAdapter>((sp, client) =>
+        {
+            var endpoint = new Uri(sp.GetRequiredService<IOptions<MomoOptions>>().Value.ApiBaseUrl);
+            if (endpoint.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("MoMo requires HTTPS.");
+            client.BaseAddress = endpoint;
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+            .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+            .WaitAndRetryAsync(2, attempt => TimeSpan.FromMilliseconds(200 * attempt)));
+        services.AddScoped<IPaymentGateway>(sp => sp.GetRequiredService<MoMoPaymentAdapter>());
+        services.AddScoped<IPaymentGateway, VietQRAdapter>();
+        services.AddScoped<IRealtimeEventPublisher, NoOpRealtimeEventPublisher>();
 
         return services;
     }

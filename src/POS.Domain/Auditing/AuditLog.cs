@@ -22,6 +22,22 @@ public class AuditLog : BaseEntity
     public static AuditLog Authentication(Employee? employee, string action) =>
         new(employee?.Id, employee?.Id ?? Guid.Empty, employee?.StoreId, action);
 
+    public static AuditLog SystemPayment(Guid paymentId, Guid storeId, string action) => new()
+    {
+        EmployeeId = null,
+        StoreId = storeId,
+        EntityType = "Payment",
+        EntityId = paymentId,
+        Action = action,
+        Description = "Actor=System"
+    };
+
+    public static AuditLog QrPaymentRequested(Guid paymentId, Guid storeId, Guid? actorId) => new()
+    {
+        EmployeeId = actorId, StoreId = storeId, EntityType = "Payment",
+        EntityId = paymentId, Action = "QrPaymentRequested"
+    };
+
     public Guid? StoreId { get; private set; }
     public Store? Store { get; private set; }
 

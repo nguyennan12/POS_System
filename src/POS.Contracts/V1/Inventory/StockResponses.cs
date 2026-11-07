@@ -87,6 +87,7 @@ public record StockTakeItemResponse(
     Guid Id,
     Guid SkuId,
     string SkuCode,
+    string Barcode,
     string ProductName,
     decimal SystemQty,
     decimal ActualQty,

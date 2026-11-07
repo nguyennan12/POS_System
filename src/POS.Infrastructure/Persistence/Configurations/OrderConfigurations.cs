@@ -20,6 +20,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.CancelReason).HasMaxLength(500);
         builder.Property(o => o.CreatedAt).HasDefaultValueSql("TIMEZONE('utc', now())");
         builder.HasIndex(o => new { o.StoreId, o.CreatedAt });
+        builder.HasIndex(o => new { o.StoreId, o.PaidAt })
+            .HasFilter("paid_at IS NOT NULL AND status = 'Paid'");
         builder.HasIndex(o => o.ShiftId);
         builder.HasOne(o => o.Store).WithMany().HasForeignKey(o => o.StoreId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(o => o.Shift).WithMany().HasForeignKey(o => o.ShiftId).OnDelete(DeleteBehavior.Restrict);
@@ -74,6 +76,11 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.Amount).HasMoneyPrecision();
         builder.Property(p => p.ChangeAmount).HasMoneyPrecision();
         builder.Property(p => p.TransactionRef).HasMaxLength(100);
+        builder.Property(p => p.MerchantReference).HasMaxLength(25);
+        builder.HasIndex(p => new { p.Method, p.MerchantReference }).IsUnique();
+        builder.HasIndex(p => new { p.OrderId, p.Method }).IsUnique()
+            .HasDatabaseName("IX_payments_pending_qr")
+            .HasFilter("status = 'Pending' AND merchant_reference IS NOT NULL");
         builder.Property(p => p.Status).HasConversion<string>().IsRequired().HasMaxLength(20).HasDefaultValue(PaymentStatus.Pending);
         builder.HasIndex(p => p.OrderId);
         builder.HasIndex(p => new { p.Method, p.TransactionRef }).IsUnique();

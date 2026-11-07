@@ -35,6 +35,7 @@ public sealed class CreateEmployeeCommandHandler(IEmployeeRepository employees, 
         var employee = new Employee(command.Name.Trim(), username, passwordHasher.Hash(command.Password),
             passwordHasher.Hash(command.Pin), role.Id, command.IsChainOwner, command.StoreId);
         employee.setPinLookUpHash(lookup);
+        employee.UpdateContactDetails(command.Phone, command.Email, command.CitizenId, command.HireDate, command.EmploymentType, command.HourlyWage);
         await employees.AddAsync(employee, cancellationToken);
         return await EmployeeMutationSupport.SaveAsync(employee, caller.Id, "Employee.Created",
             employees, audits, unitOfWork, cancellationToken);

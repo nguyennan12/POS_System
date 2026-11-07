@@ -436,15 +436,39 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CitizenId")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("citizen_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("TIMEZONE('utc', now())");
 
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("EmploymentType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("employment_type");
+
                     b.Property<short>("FailedLoginCount")
                         .HasColumnType("smallint")
                         .HasColumnName("failed_login_count");
+
+                    b.Property<DateOnly?>("HireDate")
+                        .HasColumnType("date")
+                        .HasColumnName("hire_date");
+
+                    b.Property<decimal?>("HourlyWage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("hourly_wage");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -478,6 +502,11 @@ namespace POS.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
                         .HasColumnName("password_hash");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
 
                     b.Property<string>("PinHash")
                         .IsRequired()
@@ -1314,6 +1343,9 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("StoreId", "CreatedAt");
 
+                    b.HasIndex("StoreId", "PaidAt")
+                        .HasFilter("paid_at IS NOT NULL AND status = 'Paid'");
+
                     b.ToTable("orders", null, t =>
                         {
                             t.HasCheckConstraint("ck_orders_status", "status IN ('Draft','Confirmed','Paid','Cancelled')");
@@ -1443,6 +1475,11 @@ namespace POS.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("gateway_response_json");
 
+                    b.Property<string>("MerchantReference")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("merchant_reference");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1474,8 +1511,16 @@ namespace POS.Infrastructure.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("Method", "MerchantReference")
+                        .IsUnique();
+
                     b.HasIndex("Method", "TransactionRef")
                         .IsUnique();
+
+                    b.HasIndex("OrderId", "Method")
+                        .IsUnique()
+                        .HasDatabaseName("IX_payments_pending_qr")
+                        .HasFilter("status = 'Pending' AND merchant_reference IS NOT NULL");
 
                     b.ToTable("payments", null, t =>
                         {

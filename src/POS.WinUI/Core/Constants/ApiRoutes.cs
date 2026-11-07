@@ -2,7 +2,7 @@ using System;
 
 namespace POS.WinUI.Core.Constants;
 
-///  
+/// <summary>
 /// Tập trung tất cả URL endpoint của POS API.
 /// Khi base path thay đổi chỉ cần sửa tại đây.
 /// </summary>
@@ -43,6 +43,24 @@ public static class ApiRoutes
   {
     public const string Stock = "api/v1/inventory/stock";
     public const string Alerts = "api/v1/inventory/alerts";
+    public const string Batches = "api/v1/inventory/batches";
+    public const string Transactions = "api/v1/inventory/transactions";
+    public const string Dispose = "api/v1/inventory/dispose";
+    public const string StockIn = "api/v1/inventory/stock-in";
+    public static string StockInById(Guid id) => $"api/v1/inventory/stock-in/{id}";
+    public static string StockInComplete(Guid id) => $"api/v1/inventory/stock-in/{id}/complete";
+    public static string StockInCancel(Guid id) => $"api/v1/inventory/stock-in/{id}/cancel";
+    public const string StockTakes = "api/v1/inventory/stock-takes";
+    public static string StockTakeById(Guid id) => $"api/v1/inventory/stock-takes/{id}";
+    public static string StockTakeItems(Guid id) => $"api/v1/inventory/stock-takes/{id}/items";
+    public static string StockTakeSubmit(Guid id) => $"api/v1/inventory/stock-takes/{id}/submit";
+    public static string StockTakeApprove(Guid id) => $"api/v1/inventory/stock-takes/{id}/approve";
+  }
+
+  public static class Suppliers
+  {
+    public const string Base = "api/v1/suppliers";
+    public static string GetById(Guid id) => $"api/v1/suppliers/{id}";
   }
 
   public static class Customers
@@ -87,6 +105,18 @@ public static class ApiRoutes
     public static string Vouchers(Guid id) => $"api/v1/orders/{id}/vouchers";
     public static string Checkout(Guid id) => $"api/v1/orders/{id}/checkout";
     public static string Cancel(Guid id) => $"api/v1/orders/{id}/cancel";
+  }
+
+  public static class Reports
+  {
+    public const string Dashboard = "api/v1/reports/dashboard";
+    public const string Revenue = "api/v1/reports/revenue";
+    public const string TopSelling = "api/v1/reports/top-selling";
+    public const string Inventory = "api/v1/reports/inventory";
+    public const string SlowMoving = "api/v1/reports/slow-moving";
+    public const string Export = "api/v1/reports/export";
+    public static string ExportStatus(Guid jobId) => $"api/v1/reports/export/{jobId}";
+    public static string ExportDownload(Guid jobId) => $"api/v1/reports/export/{jobId}/download";
   }
 
   public static class Config
