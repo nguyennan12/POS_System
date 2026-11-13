@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -5,86 +6,13 @@ using System.Runtime.CompilerServices;
 namespace POS.WinUI.Core.Services;
 
 /// <summary>
-/// Dịch vụ quản lý ngôn ngữ giao diện. Khi LanguageCode thay đổi,
-/// toàn bộ UI binding lắng nghe sẽ cập nhật tức thì – không cần build lại app.
+/// Dịch vụ quản lý ngôn ngữ giao diện (i18n). Khi LanguageCode thay đổi,
+/// toàn bộ UI binding lắng nghe sẽ cập nhật tức thì – không cần tắt hay build lại app.
 /// </summary>
-public sealed class LocalizationService : INotifyPropertyChanged
+public sealed partial class LocalizationService : INotifyPropertyChanged
 {
     private string _languageCode = "vi";
-    private static readonly Dictionary<string, string> VietnameseDefaults = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["employees.saving"] = "Saving...",
-        ["employees.title"] = "Employee Management",
-        ["employees.subtitle"] = "Manage employee profiles, store access and sign-in credentials",
-        ["employees.reload_employees_from_api"] = "Reload employees from API",
-        ["employees.refresh"] = "Refresh",
-        ["employees.new_employee"] = "New Employee",
-        ["employees.employees"] = "Employees",
-        ["employees.name_or_phone"] = "Name or phone...",
-        ["employees.branch"] = "Branch",
-        ["employees.branch_required"] = "Branch *",
-        ["employees.role"] = "Role",
-        ["employees.status"] = "Status",
-        ["employees.loading_employees"] = "Loading employees...",
-        ["employees.no_matching_employees"] = "No matching employees",
-        ["employees.clear_filters"] = "Clear filters",
-        ["employees.retry"] = "Retry",
-        ["employees.rows"] = "Rows",
-        ["employees.previous"] = "Previous",
-        ["employees.next"] = "Next",
-        ["employees.store_access"] = "Store Access",
-        ["employees.reset_pin_pad"] = "Reset PIN Pad",
-        ["employees.reset_password"] = "Reset Password",
-        ["employees.permissions_inherited_from_the_assigned_role"] = "Permissions inherited from the assigned role",
-        ["employees.select_an_employee_to_view_their_profile"] = "Select an employee to view their profile",
-        ["employees.unsaved_changes"] = "Unsaved changes",
-        ["employees.cancel"] = "Cancel",
-        ["employees.save_profile_changes_f2"] = "SAVE PROFILE CHANGES (F2)",
-        ["employees.create_employee"] = "Create Employee",
-        ["employees.enter_the_new_credential_pin_must_contain_exactly_6_digits"] = "Enter the new credential. PIN must contain exactly 6 digits.",
-        ["employees.reset"] = "Reset",
-        ["employees.personal_amp_contact_details"] = "Personal & Contact Details",
-        ["employees.full_name"] = "Full Name *",
-        ["employees.phone"] = "Phone",
-        ["employees.email"] = "Email",
-        ["employees.id_card_citizen_id"] = "ID Card / Citizen ID",
-        ["employees.account_amp_store_access"] = "Account & Store Access",
-        ["employees.username"] = "Username *",
-        ["employees.system_role"] = "System Role *",
-        ["employees.chain_access"] = "Chain access",
-        ["employees.chain_owner"] = "Chain owner",
-        ["employees.initial_password"] = "Initial Password *",
-        ["employees.pin_exactly_6_digits"] = "PIN * (exactly 6 digits)",
-        ["employees.store_access_amp_work_details"] = "Store Access & Work Details",
-        ["employees.hire_date"] = "Hire Date",
-        ["employees.employment_type"] = "Employment Type",
-        ["employees.hourly_wage_vnd_hr"] = "Hourly Wage (VND/hr)",
-        ["nav.workspace"] = "DANH MỤC QUẢN LÝ",
-        ["nav.dashboard"] = "Tổng quan",
-        ["nav.orders"] = "Đơn hàng & Hóa đơn",
-        ["nav.products"] = "Sản phẩm & Danh mục",
-        ["nav.inventory"] = "Quản lý Kho & Nhập hàng",
-        ["nav.customers"] = "Khách hàng & Hội viên",
-        ["nav.promotions"] = "Khuyến mãi & Voucher",
-        ["nav.employees"] = "Nhân viên & Phân quyền",
-        ["nav.reports"] = "Báo cáo & Thống kê",
-        ["nav.settings"] = "Cài đặt hệ thống",
-        ["header.pos_screen"] = "Bán hàng POS (F1)",
-        ["header.loading_stores"] = "Đang tải chi nhánh...",
-        ["header.notifications"] = "Thông báo hệ thống",
-        ["settings.title"] = "Cài đặt hệ thống",
-        ["settings.subtitle"] = "Thiết lập cấu hình cửa hàng, máy in hóa đơn và tích hợp phần cứng",
-        ["settings.language"] = "Ngôn ngữ giao diện",
-        ["settings.language_desc"] = "Chọn ngôn ngữ và nhấn Áp dụng. Toàn bộ nhãn trên WinUI thay đổi tức thì – không cần build lại app.",
-        ["settings.apply_language"] = "Áp dụng ngôn ngữ",
-        ["settings.store_config"] = "Cấu hình cửa hàng",
-        ["settings.store_config_desc"] = "Tải cấu hình SystemConfig của cửa hàng hiện tại từ server.",
-        ["settings.load_config"] = "Tải cấu hình",
-        ["settings.lang_switched"] = "Đã chuyển ngôn ngữ sang '{0}'.",
-        ["breadcrumb.home"] = "Trang chủ",
-    };
-
-    private IReadOnlyDictionary<string, string> _dictionary = VietnameseDefaults;
+    private IReadOnlyDictionary<string, string>? _customDictionary;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -104,23 +32,30 @@ public sealed class LocalizationService : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Tải từ điển mới và kích hoạt cập nhật tất cả binding.</summary>
+    /// <summary>Tải từ điển mới và kích hoạt cập nhật tất cả binding trên toàn UI.</summary>
     public void Apply(string languageCode, IReadOnlyDictionary<string, string> translations)
     {
-        _dictionary = translations;
+        _customDictionary = translations;
         LanguageCode = languageCode;
         // Notify indexer thay đổi để WPF tự refresh toàn bộ {Binding [Key]}
         OnPropertyChanged("Item[]");
     }
 
-    /// <summary>Lấy giá trị dịch; nếu không có trong từ điển thì tìm trong fallback tiếng Việt, cuối cùng trả về key.</summary>
+    /// <summary>Lấy giá trị dịch tương ứng với key.</summary>
     public string this[string key]
     {
         get
         {
-            if (_dictionary.TryGetValue(key, out var val) && !string.IsNullOrWhiteSpace(val) && !val.Equals(key, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(key)) return string.Empty;
+
+            if (_customDictionary != null && _customDictionary.TryGetValue(key, out var val) && !string.IsNullOrWhiteSpace(val) && !val.Equals(key, StringComparison.OrdinalIgnoreCase))
             {
                 return val;
+            }
+
+            if (LanguageCode.Equals("en", StringComparison.OrdinalIgnoreCase) && EnglishDefaults.TryGetValue(key, out var enVal))
+            {
+                return enVal;
             }
 
             if (VietnameseDefaults.TryGetValue(key, out var defaultVal))
