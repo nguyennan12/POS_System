@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using POS.Application.Abstractions.Persistence;
 using POS.Contracts.V1.Orders;
 using POS.Contracts.V1.Reports;
@@ -356,14 +356,14 @@ public class ReportRepository : IReportRepository
         var fetchStartUtc = TimeZoneInfo.ConvertTimeToUtc(chartStartLocal.AddDays(-1), timezone);
         var tomorrowStartUtc = TimeZoneInfo.ConvertTimeToUtc(todayLocal.AddDays(1), timezone);
         var sql = """
-            SELECT (paid_at AT TIME ZONE {0})::timestamp AS "Day",
+            SELECT ((paid_at AT TIME ZONE {0})::date)::timestamp AS "Day",
                    COALESCE(SUM(grand_total), 0)::numeric AS "Revenue",
                    COUNT(*)::integer AS "OrderCount"
             FROM orders
             WHERE paid_at IS NOT NULL AND status = 'Paid'
               AND paid_at >= {2} AND paid_at < {3}
-              AND ({1} IS NULL OR store_id = {1})
-            GROUP BY (paid_at AT TIME ZONE {0})::date
+              AND ({1}::uuid IS NULL OR store_id = {1}::uuid)
+            GROUP BY ((paid_at AT TIME ZONE {0})::date)::timestamp
             """;
         var dailyQuery = _context.Database.SqlQueryRaw<DashboardDailyAggregate>(
             sql, timezone.Id, (object?)storeId, fetchStartUtc, tomorrowStartUtc);

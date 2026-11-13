@@ -52,10 +52,22 @@ public class GlobalExceptionHandler(
 
     httpContext.Response.StatusCode = statusCode;
     httpContext.Response.ContentType = "application/json";
-    await httpContext.Response.WriteAsJsonAsync(
+    if (cancellationToken.IsCancellationRequested || httpContext.RequestAborted.IsCancellationRequested)
+    {
+      return true;
+    }
+
+    try
+    {
+      await httpContext.Response.WriteAsJsonAsync(
         response,
         jsonOptions.Value.JsonSerializerOptions,
         cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+      // Client disconnected before response could be sent
+    }
 
     return true;
   }

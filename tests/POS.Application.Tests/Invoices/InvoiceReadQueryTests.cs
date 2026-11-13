@@ -39,7 +39,7 @@ public class InvoiceReadQueryTests
     [InlineData(1, 20, 0, 0)]
     public async Task List_MapsPagingAndForwardsFiltersWithinPersistedEmployeeScope(int page, int size, int total, int count)
     {
-        var filter = new InvoiceFilterRequest(Guid.NewGuid(), DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow, page, size);
+        var filter = new InvoiceFilterRequest(OrderId: Guid.NewGuid(), From: DateTimeOffset.UtcNow.AddDays(-1), To: DateTimeOffset.UtcNow, PageNumber: page, PageSize: size);
         var items = Enumerable.Range(0, count).Select(i => new InvoiceSummaryResponse(
             Guid.NewGuid(), filter.OrderId!.Value, $"HD-{i}", "Buyer", 100, 10, 110, DateTimeOffset.UtcNow)).ToList();
         using var cancellation = new CancellationTokenSource();

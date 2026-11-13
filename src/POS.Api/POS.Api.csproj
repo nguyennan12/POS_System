@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
     <RootNamespace>POS.Api</RootNamespace>
     <UserSecretsId>pos-api-secrets</UserSecretsId>
+    <BaseIntermediateOutputPath>obj/</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>obj/$(Configuration)/</IntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.Npgsql" Version="8.0.1" />

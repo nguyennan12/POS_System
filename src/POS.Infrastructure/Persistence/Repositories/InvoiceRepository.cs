@@ -35,6 +35,9 @@ public class InvoiceRepository(AppDbContext dbContext) : IInvoiceRepository
         // rows nor TotalCount disclose invoices from inaccessible stores.
         if (!isChainOwner)
             query = query.Where(i => i.Order.StoreId == storeId);
+        else if (storeId.HasValue && storeId.Value != Guid.Empty)
+            query = query.Where(i => i.Order.StoreId == storeId.Value);
+
         if (orderId.HasValue) query = query.Where(i => i.OrderId == orderId.Value);
         if (!string.IsNullOrWhiteSpace(search))
         {
