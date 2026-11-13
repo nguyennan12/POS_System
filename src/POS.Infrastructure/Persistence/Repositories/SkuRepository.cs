@@ -45,6 +45,7 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
         if (codes.Count == 0) return new Dictionary<string, Sku>(StringComparer.OrdinalIgnoreCase);
 
         var skus = await dbContext.Skus
+            .Include(s => s.Product)
             .Where(s => s.StoreId == storeId && codes.Contains(s.SkuCode))
             .ToListAsync(cancellationToken);
 
@@ -66,6 +67,25 @@ public class SkuRepository(AppDbContext dbContext) : ISkuRepository
             .ToListAsync(cancellationToken);
 
         return new HashSet<string>(existing, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Dictionary<string, Sku>> GetByBarcodesAsync(
+        IEnumerable<string> barcodes,
+        Guid storeId,
+        CancellationToken cancellationToken = default)
+    {
+        var bcList = barcodes.Where(b => !string.IsNullOrWhiteSpace(b)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (bcList.Count == 0) return new Dictionary<string, Sku>(StringComparer.OrdinalIgnoreCase);
+
+        var skus = await dbContext.Skus
+            .Include(s => s.Product)
+            .Where(s => s.StoreId == storeId && bcList.Contains(s.Barcode))
+            .ToListAsync(cancellationToken);
+
+        return skus
+            .GroupBy(s => s.Barcode, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<bool> IsSkuCodeUniqueAsync(string skuCode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default)

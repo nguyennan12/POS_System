@@ -50,5 +50,9 @@ public record BulkImportProductRow(
     decimal SellPrice,
     decimal TaxRate,
     string? Brand = null,
-    JsonElement? Attributes = null
+    JsonElement? Attributes = null,
+    decimal? InitialStock = null,
+    decimal? MinStock = null,
+    string? BatchNo = null,
+    DateOnly? ExpiryDate = null
 );

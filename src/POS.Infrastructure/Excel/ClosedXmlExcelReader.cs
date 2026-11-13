@@ -1,11 +1,11 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Reflection;
 using ClosedXML.Excel;
 using POS.Application.Abstractions.Excel;
 
 namespace POS.Infrastructure.Excel;
 
-internal sealed class ClosedXmlExcelReader : IExcelReader
+public sealed class ClosedXmlExcelReader : IExcelReader
 {
     public ExcelReadResult<T> Read<T>(byte[] fileBytes, int headerRowIndex = 1, int dataStartRowIndex = 2) where T : class, new()
     {
@@ -192,6 +192,32 @@ internal sealed class ClosedXmlExcelReader : IExcelReader
                 return dt;
 
             throw new FormatException($"Không thể chuyển '{str}' thành ngày tháng.");
+        }
+
+        if (underlyingType == typeof(DateOnly))
+        {
+            if (cell.DataType == XLDataType.DateTime)
+                return DateOnly.FromDateTime(cell.GetDateTime());
+
+            var str = cell.Value.ToString()?.Trim();
+            if (string.IsNullOrWhiteSpace(str))
+                return null;
+
+            if (DateOnly.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dOnly))
+                return dOnly;
+            if (DateOnly.TryParse(str, new CultureInfo("vi-VN"), DateTimeStyles.None, out dOnly))
+                return dOnly;
+
+            string[] formats = ["dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd", "yyyy/MM/dd", "dd-MM-yyyy"];
+            if (DateOnly.TryParseExact(str, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out dOnly))
+                return dOnly;
+
+            if (DateTime.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtVal))
+                return DateOnly.FromDateTime(dtVal);
+            if (DateTime.TryParse(str, new CultureInfo("vi-VN"), DateTimeStyles.None, out dtVal))
+                return DateOnly.FromDateTime(dtVal);
+
+            throw new FormatException($"Không thể chuyển '{str}' thành ngày.");
         }
 
         if (underlyingType == typeof(bool))

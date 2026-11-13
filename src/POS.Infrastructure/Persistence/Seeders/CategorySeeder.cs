@@ -3,86 +3,70 @@ using POS.Domain.Products;
 
 namespace POS.Infrastructure.Persistence.Seeders;
 
-///  
-/// Seeds the default category tree (7 root categories + 22 child categories = 29 total)
-/// for the default store. Must run after StoreAndEmployeeSeeder.
-/// Idempotent: skips if any categories already exist for the store.
+/// <summary>
+/// Seeds the standard 13 retail departments matching the retail catalog (docs/san_pham.xlsx)
+/// across all stores in the system.
+/// Idempotent: safe to run multiple times without duplicating or corrupting existing data.
 /// </summary>
 public class CategorySeeder : ISeeder
 {
-  public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
-  {
-    var defaultStoreId = await context.Stores
-        .Select(s => s.Id)
-        .FirstOrDefaultAsync(cancellationToken);
+    public static readonly (string Name, int Order)[] StandardCategories =
+    [
+        ("Bánh Kẹo", 1),
+        ("Chăm Sóc Bé", 2),
+        ("Chăm Sóc Cá Nhân", 3),
+        ("Gia vị", 4),
+        ("Hóa Phẩm - Tẩy rửa", 5),
+        ("Mì - Thực Phẩm Ăn Liền", 6),
+        ("Sữa các loại", 7),
+        ("Thực Phẩm Chế Biến", 8),
+        ("Thực Phẩm Khô", 9),
+        ("Thực Phẩm Đông Lạnh", 10),
+        ("Đồ Dùng Gia Đình", 11),
+        ("Đồ Uống - Giải Khát", 12),
+        ("Đồ uống có cồn", 13)
+    ];
 
-    if (defaultStoreId == Guid.Empty)
-      return;
-
-    // Idempotent guard: skip if categories already exist for this store
-    if (await context.Categories.AnyAsync(c => c.StoreId == defaultStoreId, cancellationToken))
-      return;
-
-    var categories = new List<Category>();
-    int rootOrder = 1;
-
-    Category Root(string name)
+    public async Task SeedAsync(AppDbContext context, CancellationToken cancellationToken)
     {
-      var cat = Category.Create(defaultStoreId, name, parentId: null, displayOrder: rootOrder++);
-      categories.Add(cat);
-      return cat;
+        var stores = await context.Stores.ToListAsync(cancellationToken);
+        if (stores.Count == 0)
+            return;
+
+        foreach (var store in stores)
+        {
+            var existingCategories = await context.Categories
+                .Where(c => c.StoreId == store.Id)
+                .ToListAsync(cancellationToken);
+
+            var existingByName = existingCategories
+                .GroupBy(c => c.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var toAdd = new List<Category>();
+
+            foreach (var (name, order) in StandardCategories)
+            {
+                if (existingByName.TryGetValue(name, out var existing))
+                {
+                    // Normalize casing, display order and root parent
+                    if (existing.Name != name || existing.DisplayOrder != order || existing.ParentId != null)
+                    {
+                        existing.Update(name, parentId: null, order, existing.ImageUrl, existing.IsVisible);
+                    }
+                }
+                else
+                {
+                    toAdd.Add(Category.Create(store.Id, name, parentId: null, displayOrder: order));
+                }
+            }
+
+            if (toAdd.Count > 0)
+            {
+                await context.Categories.AddRangeAsync(toAdd, cancellationToken);
+            }
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
     }
-
-    void Child(Guid parentId, string name, int order)
-    {
-      var cat = Category.Create(defaultStoreId, name, parentId: parentId, displayOrder: order);
-      categories.Add(cat);
-    }
-
-    // 1. Đồ uống (3 children)
-    var doUong = Root("Đồ uống");
-    Child(doUong.Id, "Nước suối", 1);
-    Child(doUong.Id, "Nước ngọt", 2);
-    Child(doUong.Id, "Cà phê và trà", 3);
-
-    // 2. Thực phẩm khô (4 children)
-    var thucPhamKho = Root("Thực phẩm khô");
-    Child(thucPhamKho.Id, "Mì và cháo", 1);
-    Child(thucPhamKho.Id, "Đồ hộp", 2);
-    Child(thucPhamKho.Id, "Gia vị", 3);
-    Child(thucPhamKho.Id, "Ngũ cốc & hạt ăn liền", 4);
-
-    // 3. Bánh kẹo và ăn vặt (3 children)
-    var banhKeo = Root("Bánh kẹo và ăn vặt");
-    Child(banhKeo.Id, "Bánh snack", 1);
-    Child(banhKeo.Id, "Kẹo", 2);
-    Child(banhKeo.Id, "Socola", 3);
-
-    // 4. Sữa và dinh dưỡng (3 children)
-    var sua = Root("Sữa và dinh dưỡng");
-    Child(sua.Id, "Sữa nước", 1);
-    Child(sua.Id, "Sữa chua", 2);
-    Child(sua.Id, "Sữa bột & sữa hạt", 3);
-
-    // 5. Chăm sóc cá nhân (3 children)
-    var chamSoc = Root("Chăm sóc cá nhân");
-    Child(chamSoc.Id, "Dầu gội", 1);
-    Child(chamSoc.Id, "Vệ sinh răng miệng", 2);
-    Child(chamSoc.Id, "Chăm sóc da", 3);
-
-    // 6. Kem & đồ đông lạnh (3 children)
-    var kemDongLanh = Root("Kem & đồ đông lạnh");
-    Child(kemDongLanh.Id, "Kem que & kem hộp", 1);
-    Child(kemDongLanh.Id, "Đá viên", 2);
-    Child(kemDongLanh.Id, "Thực phẩm đông lạnh", 3);
-
-    // 7. Đồ dùng gia đình nhỏ (3 children)
-    var doDung = Root("Đồ dùng gia đình nhỏ");
-    Child(doDung.Id, "Túi rác & màng bọc thực phẩm", 1);
-    Child(doDung.Id, "Khăn giấy & giấy vệ sinh", 2);
-    Child(doDung.Id, "Bao cao su & sản phẩm sức khỏe", 3);
-
-    await context.Categories.AddRangeAsync(categories, cancellationToken);
-    await context.SaveChangesAsync(cancellationToken);
-  }
 }

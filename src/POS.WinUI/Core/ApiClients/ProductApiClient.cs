@@ -148,9 +148,9 @@ public sealed class ProductApiClient : BaseApiClient
         => DeleteAsync<ApiResponse<object>>(ApiRoutes.Skus.GetById(id), ct);
 
     /// <summary>
-    /// [P05] Nhập danh sách sản phẩm và SKU hàng loạt từ file Excel (.xlsx / .xls)
+    /// [P05] Xem trước dữ liệu file Excel nhập danh mục sản phẩm trước khi chính thức import
     /// </summary>
-    public async Task<ApiResponse<BulkImportResultResponse>?> BulkImportProductsAsync(
+    public async Task<ApiResponse<ProductImportPreviewResponse>?> PreviewBulkImportProductsAsync(
         string filePath,
         CancellationToken ct = default)
     {
@@ -166,6 +166,40 @@ public sealed class ProductApiClient : BaseApiClient
 
         streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
         form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+
+        var response = await _http.PostAsync(ApiRoutes.Products.BulkImportPreview, form, ct);
+        await HandleFailureResponseAsync(response, ct);
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<ApiResponse<ProductImportPreviewResponse>>(response.Content, _jsonOptions, ct);
+    }
+
+    /// <summary>
+    /// [P05] Nhập danh sách sản phẩm và SKU hàng loạt từ file Excel (.xlsx / .xls)
+    /// </summary>
+    public async Task<ApiResponse<BulkImportResultResponse>?> BulkImportProductsAsync(
+        string filePath,
+        decimal? defaultInitialStock = null,
+        decimal? defaultMinStock = null,
+        bool autoCreateCategories = true,
+        CancellationToken ct = default)
+    {
+        AttachToken();
+        using var form = new System.Net.Http.MultipartFormDataContent();
+        await using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new System.Net.Http.StreamContent(fileStream);
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var mimeType = ext == ".xls"
+            ? "application/vnd.ms-excel"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+
+        if (defaultInitialStock.HasValue)
+            form.Add(new StringContent(defaultInitialStock.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)), "defaultInitialStock");
+        if (defaultMinStock.HasValue)
+            form.Add(new StringContent(defaultMinStock.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)), "defaultMinStock");
+        form.Add(new StringContent(autoCreateCategories.ToString().ToLowerInvariant()), "autoCreateCategories");
 
         var response = await _http.PostAsync(ApiRoutes.Products.BulkImport, form, ct);
         await HandleFailureResponseAsync(response, ct);

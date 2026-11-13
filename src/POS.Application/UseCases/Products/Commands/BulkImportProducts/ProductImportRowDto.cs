@@ -62,4 +62,20 @@ public class ProductImportRowDto
     /// </summary>
     [ExcelColumn("Attributes", "Thuộc tính", "Variants", Order = 11)]
     public string? Attributes { get; set; }
+
+    /// <summary>Số lượng tồn ban đầu (tùy chọn).</summary>
+    [ExcelColumn("InitialStock", "Số lượng", "Tồn kho", "Tồn ban đầu", Order = 12)]
+    public decimal? InitialStock { get; set; }
+
+    /// <summary>Định mức tồn tối thiểu để kích hoạt cảnh báo (tùy chọn).</summary>
+    [ExcelColumn("MinStock", "Tồn tối thiểu", "Định mức min", Order = 13)]
+    public decimal? MinStock { get; set; }
+
+    /// <summary>Số lô sản xuất (tùy chọn).</summary>
+    [ExcelColumn("BatchNo", "Số lô", "Mã lô", "Lô", Order = 14)]
+    public string? BatchNo { get; set; }
+
+    /// <summary>Hạn sử dụng (tùy chọn, phục vụ FEFO).</summary>
+    [ExcelColumn("ExpiryDate", "Hạn sử dụng", "HSD", Order = 15)]
+    public DateOnly? ExpiryDate { get; set; }
 }

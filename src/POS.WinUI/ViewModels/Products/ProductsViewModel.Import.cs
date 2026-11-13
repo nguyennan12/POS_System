@@ -9,6 +9,31 @@ namespace POS.WinUI.ViewModels.Products;
 
 public partial class ProductsViewModel
 {
+    // ── Trạng thái Modal Xem Trước (Preview) Nhập Excel ──
+    [ObservableProperty]
+    private bool _isImportPreviewModalOpen = false;
+
+    [ObservableProperty]
+    private ProductImportPreviewResponse? _importPreview;
+
+    [ObservableProperty]
+    private string _pendingImportFilePath = string.Empty;
+
+    [ObservableProperty]
+    private bool _isPreviewLoading = false;
+
+    public bool HasPreviewErrors => ImportPreview != null && ImportPreview.Errors != null && ImportPreview.Errors.Count > 0;
+
+    // ── Cấu hình mặc định khi Import ──
+    [ObservableProperty]
+    private decimal? _defaultInitialStock;
+
+    [ObservableProperty]
+    private decimal? _defaultMinStock;
+
+    [ObservableProperty]
+    private bool _autoCreateCategories = true;
+
     // ── Trạng thái Modal Kết quả Nhập Excel ──
     [ObservableProperty]
     private bool _isImportResultModalOpen = false;
@@ -22,9 +47,10 @@ public partial class ProductsViewModel
     public bool HasImportErrors => LastImportResult != null && LastImportResult.Errors != null && LastImportResult.Errors.Count > 0;
 
     partial void OnLastImportResultChanged(BulkImportResultResponse? value) => OnPropertyChanged(nameof(HasImportErrors));
+    partial void OnImportPreviewChanged(ProductImportPreviewResponse? value) => OnPropertyChanged(nameof(HasPreviewErrors));
 
     /// <summary>
-    /// [P05] Chọn file Excel và gọi API Bulk Import để nhập hàng loạt sản phẩm & SKU
+    /// [P05] Chọn file Excel và mở Modal Xem trước (Preview) kiểm tra tính hợp lệ trước khi nhập
     /// </summary>
     [RelayCommand]
     public async Task ImportExcelAsync()
@@ -32,18 +58,76 @@ public partial class ProductsViewModel
         var dialog = new OpenFileDialog
         {
             Filter = "File Excel (*.xlsx;*.xls)|*.xlsx;*.xls|Tất cả tệp (*.*)|*.*",
-            Title = "Chọn file Excel danh sách sản phẩm để nhập hàng loạt"
+            Title = "Chọn file Excel danh sách sản phẩm để kiểm tra và nhập hàng loạt"
         };
 
         if (dialog.ShowDialog() != true) return;
 
-        var filePath = dialog.FileName;
-        IsLoading = true;
-        ShowStatus("Đang xử lý tải lên và nhập dữ liệu từ file Excel...");
+        PendingImportFilePath = dialog.FileName;
+        IsPreviewLoading = true;
+        IsImportPreviewModalOpen = true;
+        ImportPreview = null;
 
         try
         {
-            var res = await _productApi.BulkImportProductsAsync(filePath);
+            var res = await _productApi.PreviewBulkImportProductsAsync(PendingImportFilePath);
+            if (res != null && res.Success && res.Data != null)
+            {
+                ImportPreview = res.Data;
+            }
+            else
+            {
+                var errMsg = res?.Error?.Message ?? "Không thể phân tích dữ liệu xem trước từ file Excel.";
+                ShowStatus(errMsg, isError: true);
+                IsImportPreviewModalOpen = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Lỗi kiểm tra file Excel: {ex.Message}", isError: true);
+            IsImportPreviewModalOpen = false;
+        }
+        finally
+        {
+            IsPreviewLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Đóng Modal Xem trước
+    /// </summary>
+    [RelayCommand]
+    public void CloseImportPreviewModal()
+    {
+        IsImportPreviewModalOpen = false;
+        PendingImportFilePath = string.Empty;
+        ImportPreview = null;
+    }
+
+    /// <summary>
+    /// Xác nhận thực hiện Import sau khi người dùng đã xem trước và đồng ý
+    /// </summary>
+    [RelayCommand]
+    public async Task ConfirmBulkImportAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PendingImportFilePath) || !System.IO.File.Exists(PendingImportFilePath))
+        {
+            ShowStatus("Không tìm thấy đường dẫn file đã chọn.", isError: true);
+            return;
+        }
+
+        IsImportPreviewModalOpen = false;
+        IsLoading = true;
+        ShowStatus("Đang xử lý tải lên và nhập dữ liệu từ file Excel...", isError: false, showToast: false);
+
+        try
+        {
+            var res = await _productApi.BulkImportProductsAsync(
+                PendingImportFilePath,
+                defaultInitialStock: DefaultInitialStock > 0 ? DefaultInitialStock : null,
+                defaultMinStock: DefaultMinStock > 0 ? DefaultMinStock : null,
+                autoCreateCategories: AutoCreateCategories);
+
             if (res != null && res.Success && res.Data != null)
             {
                 LastImportResult = res.Data;
@@ -51,20 +135,22 @@ public partial class ProductsViewModel
 
                 if (res.Data.FailureCount > 0)
                 {
-                    // Có lỗi một số dòng -> Mở modal chi tiết để người dùng xem và khắc phục
                     IsImportResultModalOpen = true;
-                    ShowStatus($"Nhập hoàn tất với {res.Data.FailureCount} lỗi. Vui lòng xem bảng chi tiết.", isError: true);
+                    ShowStatus($"Nhập hoàn tất với {res.Data.FailureCount} dòng lỗi. Vui lòng kiểm tra báo cáo chi tiết.", isError: true);
                 }
                 else
                 {
                     ShowStatus($"Nhập thành công toàn bộ {res.Data.SuccessCount} sản phẩm từ Excel!");
                 }
 
-                // Tự động tải lại danh sách sản phẩm và danh mục mới nhất kèm xóa cache
+                // Tự động tải lại danh sách sản phẩm, danh mục và tồn kho mới nhất
                 _queryCache.InvalidateByPrefix("products");
                 _queryCache.InvalidateByPrefix("categories");
                 _queryCache.InvalidateByPrefix("kpi");
                 _queryCache.InvalidateByPrefix("pos-catalog");
+                _queryCache.InvalidateByPrefix("stock");
+                _queryCache.InvalidateByPrefix("inventory");
+
                 CurrentPage = 1;
                 await LoadCategoriesAsync();
                 await LoadProductsAsync();
@@ -83,6 +169,7 @@ public partial class ProductsViewModel
         finally
         {
             IsLoading = false;
+            PendingImportFilePath = string.Empty;
         }
     }
 

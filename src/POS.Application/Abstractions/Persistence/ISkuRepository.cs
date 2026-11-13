@@ -26,6 +26,11 @@ public interface ISkuRepository
         Guid storeId,
         CancellationToken cancellationToken = default);
 
+    Task<Dictionary<string, Sku>> GetByBarcodesAsync(
+        IEnumerable<string> barcodes,
+        Guid storeId,
+        CancellationToken cancellationToken = default);
+
     Task<bool> IsSkuCodeUniqueAsync(string skuCode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task<bool> IsBarcodeUniqueAsync(string barcode, Guid storeId, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Sku sku, CancellationToken cancellationToken = default);

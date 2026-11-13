@@ -24,8 +24,8 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
     private readonly IQueryCacheService _queryCache;
 
     public override string TabId => "Products";
-    public override string Title => "Sản phẩm & Danh mục";
-    public override string Subtitle => "Quản lý danh mục hàng hóa, tạo biến thể màu/size, mã vạch SKU và in tem nhãn";
+    public override string Title => Loc["products.title"];
+    public override string Subtitle => Loc["products.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.Box24;
 
     // ── Phân tab chính: 0 = Hàng hóa / Sản phẩm, 1 = Cây danh mục ──
@@ -89,12 +89,28 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
         _ = LoadProductsAsync();
     }
 
-    // ── Phân trang ──
+    // ── Hiển thị khối thống kê ──
+    [ObservableProperty]
+    private bool _isStatsVisible = true;
+
+    [RelayCommand]
+    private void ToggleStats() => IsStatsVisible = !IsStatsVisible;
+
+    // ── Phân trang & Tùy chọn số dòng ──
+    public ObservableCollection<int> PageSizeOptions { get; } = new() { 15, 30, 50, 100 };
+
     [ObservableProperty]
     private int _currentPage = 1;
 
     [ObservableProperty]
     private int _pageSize = 15;
+
+    partial void OnPageSizeChanged(int value)
+    {
+        if (_isSuppressFilterCallback) return;
+        CurrentPage = 1;
+        _ = LoadProductsAsync();
+    }
 
     [ObservableProperty]
     private int _totalPages = 1;
@@ -277,7 +293,7 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
     {
         if (IsLoading) return;
         IsLoading = true;
-        ShowStatus("Đang tải dữ liệu sản phẩm...");
+        ShowStatus("Đang tải dữ liệu sản phẩm...", isError: false, showToast: false);
 
         try
         {
@@ -343,7 +359,7 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
                 OnPropertyChanged(nameof(PaginationSummary));
                 OnPropertyChanged(nameof(HasPreviousPage));
                 OnPropertyChanged(nameof(HasNextPage));
-                ShowStatus($"Đã tải {Products.Count} sản phẩm thành công.");
+                ShowStatus($"Đã tải {Products.Count} sản phẩm thành công.", isError: false, showToast: false);
             }
             else
             {
@@ -495,19 +511,23 @@ public sealed partial class ProductsViewModel : ManagementTabViewModelBase
         }
     }
 
-    public void ShowStatus(string message, bool isError = false)
+    public void ShowStatus(string message, bool isError = false, bool showToast = true)
     {
         if (string.IsNullOrWhiteSpace(message)) return;
         StatusMessage = message;
         IsStatusError = isError;
 
-        if (isError)
+        if (showToast)
         {
-            ShowError(message);
-        }
-        else
-        {
-            ShowSuccess(message);
+            if (isError)
+            {
+                ShowError(message);
+            }
+            else
+            {
+                ShowSuccess(message);
+            }
         }
     }
 }
+

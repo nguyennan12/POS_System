@@ -58,3 +58,30 @@ public record ProductKpiSummaryResponse(
     int TotalCategories
 );
 
+public record ProductImportPreviewRowDto(
+    int RowNumber,
+    string? Name,
+    string? CategoryName,
+    string? BaseUnit,
+    string? SkuCode,
+    string? Barcode,
+    decimal? CostPrice,
+    decimal? SellPrice,
+    decimal? TaxRate,
+    decimal? InitialStock,
+    decimal? MinStock,
+    string? BatchNo,
+    DateOnly? ExpiryDate,
+    bool IsValid,
+    string? ErrorMessage
+);
+
+public record ProductImportPreviewResponse(
+    string FileName,
+    long FileSizeBytes,
+    int TotalRows,
+    int ValidRowsCount,
+    int ErrorRowsCount,
+    IReadOnlyList<ProductImportPreviewRowDto> PreviewItems,
+    IReadOnlyList<string> Errors
+);

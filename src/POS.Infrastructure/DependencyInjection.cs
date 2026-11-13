@@ -42,8 +42,11 @@ public static class DependencyInjection
         var redisConnectionString = configuration["Redis:ConnectionString"]
             ?? throw new InvalidOperationException("Redis:ConnectionString is not configured.");
 
+        var redisOptions = ConfigurationOptions.Parse(redisConnectionString);
+        redisOptions.AbortOnConnectFail = false;
+
         services.AddSingleton<IConnectionMultiplexer>(_ =>
-            ConnectionMultiplexer.Connect(redisConnectionString));
+            ConnectionMultiplexer.Connect(redisOptions));
 
         services.AddScoped<ICacheService, RedisCacheService>();
 

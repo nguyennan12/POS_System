@@ -14,7 +14,9 @@ namespace POS.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/products")]
-public class ProductsController(ISender mediator) : ControllerBase
+public class ProductsController(
+    ISender mediator,
+    POS.Application.Abstractions.Excel.IExcelReader excelReader) : ControllerBase
 {
     /// <summary>
     /// [P00] Danh mục sản phẩm tối ưu cho quầy bán hàng POS (kèm SKU, giá bán, tồn kho và mã vạch trong 1 request).
@@ -181,6 +183,106 @@ public class ProductsController(ISender mediator) : ControllerBase
     /// - Đuôi file: .xlsx hoặc .xls
     /// - Kích thước tối đa: 10 MB
     /// </remarks>
+    
+    /// <summary>
+    /// [P05] Xem trước dữ liệu file Excel nhập danh mục sản phẩm & tồn ban đầu trước khi chính thức import.
+    /// </summary>
+    [HttpPost("bulk-import/preview")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    [ProducesResponseType(typeof(ApiResponse<ProductImportPreviewResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ProductImportPreviewResponse>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<ProductImportPreviewResponse>>> PreviewBulkImport(
+        IFormFile file,
+        CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<ProductImportPreviewResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code = "BulkImport.EmptyFile",
+                    Message = "File tải lên không có dữ liệu hoặc rỗng.",
+                    Type = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        var ext = Path.GetExtension(file.FileName);
+        if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase) &&
+            !ext.Equals(".xls", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(ApiResponse<ProductImportPreviewResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code = "BulkImport.InvalidExtension",
+                    Message = "Chỉ chấp nhận file Excel (.xlsx, .xls).",
+                    Type = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+        var fileBytes = memoryStream.ToArray();
+
+        POS.Application.Abstractions.Excel.ExcelReadResult<POS.Application.UseCases.Products.Commands.BulkImportProducts.ProductImportRowDto> readResult;
+        try
+        {
+            readResult = excelReader.Read<POS.Application.UseCases.Products.Commands.BulkImportProducts.ProductImportRowDto>(fileBytes);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse<ProductImportPreviewResponse>.Fail(
+                new POS.Contracts.V1.Common.ApiError
+                {
+                    Code = "BulkImport.ParseError",
+                    Message = $"Không thể đọc cấu trúc file Excel: {ex.Message}",
+                    Type = POS.Domain.Common.ErrorType.Validation
+                }));
+        }
+
+        var totalRows = readResult.Rows.Count;
+        var validRows = readResult.Rows.Where(r => r.Errors.Count == 0).ToList();
+        var errorRows = readResult.Rows.Where(r => r.Errors.Count > 0).ToList();
+
+        var errors = new List<string>(readResult.GlobalErrors);
+        foreach (var errRow in errorRows.Take(20))
+        {
+            foreach (var err in errRow.Errors)
+                errors.Add($"Dòng {errRow.RowNumber}: {err}");
+        }
+
+        var previewItems = readResult.Rows.Take(10).Select(r => new ProductImportPreviewRowDto(
+            RowNumber: r.RowNumber,
+            Name: r.Item.Name,
+            CategoryName: r.Item.CategoryName,
+            BaseUnit: r.Item.BaseUnit,
+            SkuCode: r.Item.SkuCode,
+            Barcode: r.Item.Barcode,
+            CostPrice: r.Item.CostPrice,
+            SellPrice: r.Item.SellPrice,
+            TaxRate: r.Item.TaxRate,
+            InitialStock: r.Item.InitialStock,
+            MinStock: r.Item.MinStock,
+            BatchNo: r.Item.BatchNo,
+            ExpiryDate: r.Item.ExpiryDate,
+            IsValid: r.Errors.Count == 0,
+            ErrorMessage: r.Errors.Count > 0 ? string.Join("; ", r.Errors) : null
+        )).ToList().AsReadOnly();
+
+        var response = new ProductImportPreviewResponse(
+            FileName: file.FileName,
+            FileSizeBytes: file.Length,
+            TotalRows: totalRows,
+            ValidRowsCount: validRows.Count,
+            ErrorRowsCount: errorRows.Count,
+            PreviewItems: previewItems,
+            Errors: errors.AsReadOnly()
+        );
+
+        return Ok(ApiResponse<ProductImportPreviewResponse>.Ok(response));
+    }
+
+
     [HttpPost("bulk-import")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB hard-limit ở tầng HTTP server
@@ -190,7 +292,10 @@ public class ProductsController(ISender mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<BulkImportResultResponse>>> BulkImport(
         IFormFile file,
-        CancellationToken cancellationToken)
+        [FromForm] decimal? defaultInitialStock = null,
+        [FromForm] decimal? defaultMinStock = null,
+        [FromForm] bool autoCreateCategories = true,
+        CancellationToken cancellationToken = default)
     {
         // ── [FIX-2] Validation file upload tại Controller ──────────────────────
 
@@ -260,7 +365,11 @@ public class ProductsController(ISender mediator) : ControllerBase
 
         var command = new Application.UseCases.Products.Commands.BulkImportProducts.BulkImportProductsCommand(
             FileContent: fileBytes,
-            FileName:    file.FileName);
+            FileName:    file.FileName,
+            StoreId:     null,
+            DefaultInitialStock: defaultInitialStock,
+            DefaultMinStock:     defaultMinStock,
+            AutoCreateCategories: autoCreateCategories);
 
         var result = await mediator.Send(command, cancellationToken);
 
