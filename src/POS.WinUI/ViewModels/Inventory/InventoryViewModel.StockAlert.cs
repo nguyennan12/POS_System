@@ -34,6 +34,9 @@ public sealed partial class InventoryViewModel
 
     // ── Danh sách dữ liệu Tồn kho & Cảnh báo ──
     public ObservableCollection<StockEntryItemModel> StockEntries { get; } = new();
+    public bool HasNoStockEntries => StockEntries.Count == 0 && !IsLoading;
+    public bool HasStockEntries => StockEntries.Count > 0;
+
     public ObservableCollection<StockAlertItemModel> StockAlerts { get; } = new();
     public ObservableCollection<CategoryItemModel> CategoriesFilter { get; } = new();
 
@@ -52,7 +55,15 @@ public sealed partial class InventoryViewModel
     private int _currentPage = 1;
 
     [ObservableProperty]
-    private int _pageSize = 20;
+    private int _pageSize = 15;
+
+    public ObservableCollection<int> PageSizeOptions { get; } = new() { 15, 30, 50, 100 };
+
+    partial void OnPageSizeChanged(int value)
+    {
+        CurrentPage = 1;
+        _ = LoadStockEntriesAsync();
+    }
 
     [ObservableProperty]
     private int _totalPages = 1;
@@ -127,6 +138,7 @@ public sealed partial class InventoryViewModel
         IsLoading = true;
         try
         {
+            var storeId = Guid.TryParse(CurrentStoreId, out var sId) && sId != Guid.Empty ? (Guid?)sId : null;
             var catId = SelectedCategoryFilter?.Id == Guid.Empty ? null : SelectedCategoryFilter?.Id;
             var res = await _inventoryApi.GetStockAsync(
                 catId,
@@ -134,7 +146,8 @@ public sealed partial class InventoryViewModel
                 CurrentPage,
                 PageSize,
                 onlyAlerts: ShowOnlyAlerts,
-                ct);
+                storeId: storeId,
+                ct: ct);
 
             StockEntries.Clear();
             if (res?.Data != null)
@@ -169,6 +182,8 @@ public sealed partial class InventoryViewModel
         finally
         {
             IsLoading = false;
+            OnPropertyChanged(nameof(HasNoStockEntries));
+            OnPropertyChanged(nameof(HasStockEntries));
         }
     }
 

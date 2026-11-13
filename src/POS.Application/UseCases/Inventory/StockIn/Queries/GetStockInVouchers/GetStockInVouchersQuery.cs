@@ -10,7 +10,8 @@ public record GetStockInVouchersQuery(
     DateTimeOffset? From,
     DateTimeOffset? To,
     int PageNumber,
-    int PageSize
+    int PageSize,
+    Guid? StoreId = null
 ) : IQuery<PagedStockInVoucherList>, IRequirePermission
 {
     public string RequiredPermission => "stock_in_vouchers:read";

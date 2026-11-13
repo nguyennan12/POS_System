@@ -23,6 +23,7 @@ public partial class StockInVoucherItemModel : ObservableObject
     public string CreatedAtFormatted => CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
 
     public string ShortId => $"PN-{Id.ToString("N")[..8].ToUpperInvariant()}";
+    public string VoucherCode => ShortId;
 
     public bool CanComplete => Status == "Draft";
     public bool CanCancel => Status == "Draft";

@@ -6,6 +6,8 @@ public interface IStockEntryRepository
 {
   Task<StockEntry?> GetBySkuAndStoreAsync(Guid skuId, Guid storeId, CancellationToken cancellationToken = default);
 
+  Task<Dictionary<Guid, StockEntry>> GetBySkuIdsAsync(IEnumerable<Guid> skuIds, Guid storeId, CancellationToken cancellationToken = default);
+
   Task<(List<StockEntry> Items, int TotalCount)> GetPagedAsync(
       Guid? storeId,
       Guid? skuId,

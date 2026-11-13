@@ -17,7 +17,9 @@ public class GetStockInVouchersQueryHandler(
         if (currentUser.StoreId is null && !currentUser.IsChainOwner)
             return StockInErrors.StoreRequired;
 
-        var storeId = currentUser.StoreId;
+        var storeId = currentUser.IsChainOwner
+            ? (query.StoreId.HasValue && query.StoreId.Value != Guid.Empty ? query.StoreId : null)
+            : currentUser.StoreId;
 
         var (items, total) = await stockInVoucherRepository.GetPagedAsync(
             storeId,

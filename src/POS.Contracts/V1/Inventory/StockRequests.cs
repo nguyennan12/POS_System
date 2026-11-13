@@ -7,7 +7,8 @@ public record InventoryFilterRequest(
     Guid? CategoryId = null,
     string? Search = null,
     int PageNumber = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    Guid? StoreId = null
 ) : PagedRequest(PageNumber, PageSize);
 
 public record BatchFilterRequest(
@@ -30,7 +31,8 @@ public record StockInVoucherFilterRequest(
     DateTimeOffset? From = null,
     DateTimeOffset? To = null,
     int PageNumber = 1,
-    int PageSize = 20
+    int PageSize = 20,
+    Guid? StoreId = null
 ) : PagedRequest(PageNumber, PageSize);
 
 public record StockInVoucherItemRequest(

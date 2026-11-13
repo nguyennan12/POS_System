@@ -41,7 +41,8 @@ public class InventoryController(ISender mediator) : ControllerBase
             request.From,
             request.To,
             request.PageNumber,
-            request.PageSize),
+            request.PageSize,
+            request.StoreId),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);
@@ -139,7 +140,8 @@ public class InventoryController(ISender mediator) : ControllerBase
             request.CategoryId,
             request.Search,
             request.PageNumber,
-            request.PageSize),
+            request.PageSize,
+            request.StoreId),
         cancellationToken);
 
     if (result.IsFailure) return this.ToActionResult(result);

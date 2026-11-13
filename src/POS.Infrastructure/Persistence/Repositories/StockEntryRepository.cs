@@ -14,6 +14,16 @@ public class StockEntryRepository(AppDbContext dbContext) : IStockEntryRepositor
             .FirstOrDefaultAsync(s => s.SkuId == skuId && s.StoreId == storeId, cancellationToken);
     }
 
+    public async Task<Dictionary<Guid, StockEntry>> GetBySkuIdsAsync(
+        IEnumerable<Guid> skuIds, Guid storeId, CancellationToken cancellationToken = default)
+    {
+        var skuIdList = skuIds.Distinct().ToList();
+        var list = await dbContext.StockEntries
+            .Where(s => s.StoreId == storeId && skuIdList.Contains(s.SkuId))
+            .ToListAsync(cancellationToken);
+        return list.ToDictionary(e => e.SkuId);
+    }
+
     public async Task<(List<StockEntry> Items, int TotalCount)> GetPagedAsync(
         Guid? storeId,
         Guid? skuId,

@@ -13,6 +13,9 @@ public sealed partial class InventoryViewModel
 {
     // ── Danh sách phiếu nhập kho ──
     public ObservableCollection<StockInVoucherItemModel> StockInVouchers { get; } = new();
+    public bool HasNoStockInVouchers => StockInVouchers.Count == 0 && !IsLoading;
+    public bool HasStockInVouchers => StockInVouchers.Count > 0;
+
     public ObservableCollection<SupplierOptionModel> Suppliers { get; } = new();
 
     public ObservableCollection<string> VoucherStatusFilterOptions { get; } = new()
@@ -43,7 +46,15 @@ public sealed partial class InventoryViewModel
     private int _voucherPage = 1;
 
     [ObservableProperty]
-    private int _voucherPageSize = 20;
+    private int _voucherPageSize = 15;
+
+    public ObservableCollection<int> VoucherPageSizeOptions { get; } = new() { 15, 30, 50, 100 };
+
+    partial void OnVoucherPageSizeChanged(int value)
+    {
+        VoucherPage = 1;
+        _ = LoadStockInVouchersAsync();
+    }
 
     [ObservableProperty]
     private int _voucherTotalPages = 1;
@@ -142,13 +153,19 @@ public sealed partial class InventoryViewModel
             if (res?.Data != null)
             {
                 Suppliers.Clear();
+                var allSup = new SupplierOptionModel { Id = Guid.Empty, Name = "Tất cả nhà cung cấp" };
+                Suppliers.Add(allSup);
                 foreach (var s in res.Data.Items)
                 {
                     Suppliers.Add(SupplierOptionModel.FromDto(s));
                 }
-                if (SelectedSupplier == null && Suppliers.Count > 0)
+                if (SelectedVoucherSupplierFilter == null)
                 {
-                    SelectedSupplier = Suppliers[0];
+                    SelectedVoucherSupplierFilter = allSup;
+                }
+                if (SelectedSupplier == null && Suppliers.Count > 1)
+                {
+                    SelectedSupplier = Suppliers[1];
                 }
             }
         }
@@ -177,8 +194,10 @@ public sealed partial class InventoryViewModel
             var fromParam = VoucherFromDate.HasValue ? new DateTimeOffset(VoucherFromDate.Value) : (DateTimeOffset?)null;
             var toParam = VoucherToDate.HasValue ? new DateTimeOffset(VoucherToDate.Value.Date.AddDays(1).AddTicks(-1)) : (DateTimeOffset?)null;
 
+            var storeIdParam = Guid.TryParse(CurrentStoreId, out var sId) && sId != Guid.Empty ? (Guid?)sId : null;
             var res = await _inventoryApi.GetStockInVouchersAsync(
                 supplierId: supplierIdParam,
+                storeId: storeIdParam,
                 status: statusParam,
                 from: fromParam,
                 to: toParam,
@@ -218,6 +237,8 @@ public sealed partial class InventoryViewModel
         finally
         {
             IsLoading = false;
+            OnPropertyChanged(nameof(HasNoStockInVouchers));
+            OnPropertyChanged(nameof(HasStockInVouchers));
         }
     }
 
@@ -530,6 +551,171 @@ public sealed partial class InventoryViewModel
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    // ── Xem trước & Import phiếu nhập kho từ Excel của NCC ──
+    [ObservableProperty]
+    private bool _isStockInPreviewModalOpen = false;
+
+    [ObservableProperty]
+    private StockInImportPreviewResponse? _stockInPreview;
+
+    [ObservableProperty]
+    private string _pendingStockInFilePath = string.Empty;
+
+    [ObservableProperty]
+    private Guid _pendingStockInSupplierId = Guid.Empty;
+
+    [ObservableProperty]
+    private bool _isStockInPreviewLoading = false;
+
+    public bool HasStockInPreviewErrors => StockInPreview != null && StockInPreview.Errors != null && StockInPreview.Errors.Count > 0;
+
+    partial void OnStockInPreviewChanged(StockInImportPreviewResponse? value) => OnPropertyChanged(nameof(HasStockInPreviewErrors));
+
+    /// <summary>
+    /// Chọn file Excel và mở Modal Xem trước (Preview) kiểm tra tính hợp lệ của phiếu nhập kho
+    /// </summary>
+    [RelayCommand]
+    public async Task ImportStockInExcelAsync()
+    {
+        if (Suppliers.Count == 0)
+        {
+            await LoadSuppliersAsync();
+        }
+
+        if (Suppliers.Count == 0)
+        {
+            ShowNotification("Hệ thống chưa có Nhà cung cấp. Vui lòng tạo Nhà cung cấp trước khi nhập kho.", true);
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "File Excel (*.xlsx;*.xls)|*.xlsx;*.xls|Tất cả tệp (*.*)|*.*",
+            Title = "Chọn file Excel bảng kê nhập hàng từ Nhà Cung Cấp để kiểm tra và nhập"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        var filePath = dialog.FileName;
+
+        var supplier = (SelectedVoucherSupplierFilter != null && SelectedVoucherSupplierFilter.Id != Guid.Empty)
+            ? SelectedVoucherSupplierFilter
+            : (SelectedSupplier != null && SelectedSupplier.Id != Guid.Empty ? SelectedSupplier : Suppliers.FirstOrDefault(s => s.Id != Guid.Empty));
+        if (supplier == null)
+        {
+            ShowNotification("Vui lòng chọn một Nhà cung cấp để gán phiếu nhập.", true);
+            return;
+        }
+
+        PendingStockInFilePath = filePath;
+        PendingStockInSupplierId = supplier.Id;
+        IsStockInPreviewLoading = true;
+        IsStockInPreviewModalOpen = true;
+        StockInPreview = null;
+
+        try
+        {
+            var res = await _inventoryApi.PreviewBulkImportStockInAsync(PendingStockInFilePath, PendingStockInSupplierId);
+            if (res != null && res.Success && res.Data != null)
+            {
+                StockInPreview = res.Data;
+            }
+            else
+            {
+                var errMsg = res?.Error?.Message ?? "Không thể phân tích dữ liệu bảng kê từ file Excel.";
+                ShowNotification(errMsg, true);
+                IsStockInPreviewModalOpen = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Lỗi kiểm tra file Excel: {ex.Message}", true);
+            IsStockInPreviewModalOpen = false;
+        }
+        finally
+        {
+            IsStockInPreviewLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// Đóng Modal Xem trước nhập kho
+    /// </summary>
+    [RelayCommand]
+    public void CloseStockInPreviewModal()
+    {
+        IsStockInPreviewModalOpen = false;
+        PendingStockInFilePath = string.Empty;
+        PendingStockInSupplierId = Guid.Empty;
+        StockInPreview = null;
+    }
+
+    /// <summary>
+    /// Xác nhận tạo phiếu nhập kho chính thức sau khi xem trước
+    /// </summary>
+    [RelayCommand]
+    public async Task ConfirmStockInBulkImportAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PendingStockInFilePath) || !System.IO.File.Exists(PendingStockInFilePath))
+        {
+            ShowNotification("Không tìm thấy đường dẫn file đã chọn.", true);
+            return;
+        }
+
+        if (PendingStockInSupplierId == Guid.Empty)
+        {
+            ShowNotification("Nhà cung cấp không hợp lệ.", true);
+            return;
+        }
+
+        IsStockInPreviewModalOpen = false;
+        IsLoading = true;
+        ShowNotification("Đang xử lý tạo phiếu nhập kho và nạp tồn từ file Excel...");
+
+        try
+        {
+            var res = await _inventoryApi.BulkImportStockInAsync(
+                filePath: PendingStockInFilePath,
+                supplierId: PendingStockInSupplierId,
+                note: $"Nhập hàng Excel ({StockInPreview?.SupplierName ?? "NCC"})",
+                autoComplete: true);
+
+            if (res != null && res.Success && res.Data != null)
+            {
+                var data = res.Data;
+                var summary = $"Nhập kho hoàn tất: {data.SuccessCount}/{data.TotalRows} dòng thành công. Tổng tiền: {data.TotalAmount:N0} đ (Mã phiếu: {data.VoucherCode}).";
+
+                if (data.FailureCount > 0)
+                {
+                    ShowNotification($"{summary} Có {data.FailureCount} dòng lỗi.", true);
+                }
+                else
+                {
+                    ShowNotification(summary);
+                }
+
+                await LoadStockInVouchersAsync();
+                await LoadStockEntriesAsync();
+                await LoadStockAlertsAsync();
+            }
+            else
+            {
+                var errMsg = res?.Error?.Message ?? "Không thể nhập dữ liệu từ file Excel.";
+                ShowNotification(errMsg, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowNotification($"Lỗi import phiếu nhập kho: {ex.Message}", true);
+        }
+        finally
+        {
+            IsLoading = false;
+            PendingStockInFilePath = string.Empty;
+            PendingStockInSupplierId = Guid.Empty;
         }
     }
 }

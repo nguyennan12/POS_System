@@ -28,6 +28,7 @@ public sealed class CommandPermissionMappingTests
             ["CreateStockInVoucherCommand"] = "stock_in_vouchers:manage",
             ["CompleteStockInVoucherCommand"] = "stock_in_vouchers:complete",
             ["CancelStockInVoucherCommand"] = "stock_in_vouchers:manage",
+            ["ImportStockInVoucherCommand"] = "stock_in_vouchers:manage",
             ["CreateStockTakeCommand"] = "stock_takes:manage",
             ["UpdateStockTakeItemsCommand"] = "stock_takes:manage",
             ["SubmitStockTakeCommand"] = "stock_takes:manage",

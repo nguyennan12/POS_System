@@ -29,6 +29,7 @@ public sealed class InventoryApiClient : BaseApiClient
         int pageNumber = 1,
         int pageSize = 50,
         bool onlyAlerts = false,
+        Guid? storeId = null,
         CancellationToken ct = default)
     {
         var queryParams = new List<string>
@@ -39,6 +40,9 @@ public sealed class InventoryApiClient : BaseApiClient
 
         if (categoryId.HasValue && categoryId.Value != Guid.Empty)
             queryParams.Add($"categoryId={categoryId.Value}");
+
+        if (storeId.HasValue && storeId.Value != Guid.Empty)
+            queryParams.Add($"storeId={storeId.Value}");
 
         if (!string.IsNullOrWhiteSpace(search))
             queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
@@ -132,6 +136,7 @@ public sealed class InventoryApiClient : BaseApiClient
     /// </summary>
     public Task<ApiResponse<PagedResponse<StockInVoucherSummaryResponse>>?> GetStockInVouchersAsync(
         Guid? supplierId = null,
+        Guid? storeId = null,
         string? status = null,
         DateTimeOffset? from = null,
         DateTimeOffset? to = null,
@@ -147,6 +152,9 @@ public sealed class InventoryApiClient : BaseApiClient
 
         if (supplierId.HasValue && supplierId.Value != Guid.Empty)
             queryParams.Add($"supplierId={supplierId.Value}");
+
+        if (storeId.HasValue && storeId.Value != Guid.Empty)
+            queryParams.Add($"storeId={storeId.Value}");
 
         if (!string.IsNullOrWhiteSpace(status) && status != "Tất cả")
             queryParams.Add($"status={Uri.EscapeDataString(status.Trim())}");
@@ -199,6 +207,65 @@ public sealed class InventoryApiClient : BaseApiClient
         CancellationToken ct = default)
     {
         return PostAsync<ApiResponse<StockInVoucherDetailResponse>>(ApiRoutes.Inventory.StockInCancel(id), new { }, ct);
+    }
+
+    /// <summary>
+    /// Xem trước bảng kê phiếu nhập kho từ file Excel trước khi chính thức tạo phiếu
+    /// </summary>
+    public async Task<ApiResponse<StockInImportPreviewResponse>?> PreviewBulkImportStockInAsync(
+        string filePath,
+        Guid supplierId,
+        CancellationToken ct = default)
+    {
+        AttachToken();
+        using var form = new System.Net.Http.MultipartFormDataContent();
+        await using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new System.Net.Http.StreamContent(fileStream);
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var mimeType = ext == ".xls"
+            ? "application/vnd.ms-excel"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+        form.Add(new System.Net.Http.StringContent(supplierId.ToString()), "supplierId");
+
+        var response = await _http.PostAsync(ApiRoutes.Inventory.StockInBulkImportPreview, form, ct);
+        await HandleFailureResponseAsync(response, ct);
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<ApiResponse<StockInImportPreviewResponse>>(response.Content, _jsonOptions, ct);
+    }
+
+    /// <summary>
+    /// Nhập kho hàng loạt từ file Excel bảng kê giao hàng của Nhà Cung Cấp
+    /// </summary>
+    public async Task<ApiResponse<ImportStockInVoucherResponse>?> BulkImportStockInAsync(
+        string filePath,
+        Guid supplierId,
+        string? note = null,
+        bool autoComplete = true,
+        CancellationToken ct = default)
+    {
+        AttachToken();
+        using var form = new System.Net.Http.MultipartFormDataContent();
+        await using var fileStream = System.IO.File.OpenRead(filePath);
+        using var streamContent = new System.Net.Http.StreamContent(fileStream);
+
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        var mimeType = ext == ".xls"
+            ? "application/vnd.ms-excel"
+            : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
+        form.Add(streamContent, "file", System.IO.Path.GetFileName(filePath));
+        form.Add(new System.Net.Http.StringContent(supplierId.ToString()), "supplierId");
+        if (!string.IsNullOrWhiteSpace(note))
+            form.Add(new System.Net.Http.StringContent(note), "note");
+        form.Add(new System.Net.Http.StringContent(autoComplete.ToString().ToLowerInvariant()), "autoComplete");
+
+        var response = await _http.PostAsync(ApiRoutes.Inventory.StockInBulkImport, form, ct);
+        await HandleFailureResponseAsync(response, ct);
+        return await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<ApiResponse<ImportStockInVoucherResponse>>(response.Content, _jsonOptions, ct);
     }
 
     // ── 3. Kiểm kê kho (Stock Takes) ─────────────────────────────────

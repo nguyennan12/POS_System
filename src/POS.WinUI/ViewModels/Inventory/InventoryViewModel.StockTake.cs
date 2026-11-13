@@ -13,6 +13,9 @@ public sealed partial class InventoryViewModel
 {
     // ── Danh sách các đợt kiểm kê kho ──
     public ObservableCollection<StockTakeItemModel> StockTakes { get; } = new();
+    public bool HasNoStockTakes => StockTakes.Count == 0 && !IsLoading;
+    public bool HasStockTakes => StockTakes.Count > 0;
+
 
     public ObservableCollection<string> StockTakeStatusOptions { get; } = new()
     {
@@ -30,13 +33,48 @@ public sealed partial class InventoryViewModel
     private int _stockTakePage = 1;
 
     [ObservableProperty]
-    private int _stockTakePageSize = 20;
+    private int _stockTakePageSize = 15;
+
+    public ObservableCollection<int> StockTakePageSizeOptions { get; } = new() { 15, 30, 50, 100 };
+
+    partial void OnStockTakePageSizeChanged(int value)
+    {
+        StockTakePage = 1;
+        _ = LoadStockTakesAsync();
+    }
 
     [ObservableProperty]
     private int _stockTakeTotalPages = 1;
 
     [ObservableProperty]
     private int _stockTakeTotalCount = 0;
+
+    public string StockTakePaginationSummary => StockTakeTotalCount == 0
+        ? "0 / 0 đợt kiểm kê"
+        : $"Trang {StockTakePage} / {Math.Max(1, StockTakeTotalPages)} (Tổng cộng {StockTakeTotalCount} đợt kiểm kê)";
+
+    public bool HasPreviousStockTakePage => StockTakePage > 1;
+    public bool HasNextStockTakePage => StockTakePage < StockTakeTotalPages;
+
+    [RelayCommand]
+    public async Task PreviousStockTakePageAsync()
+    {
+        if (HasPreviousStockTakePage)
+        {
+            StockTakePage--;
+            await LoadStockTakesAsync();
+        }
+    }
+
+    [RelayCommand]
+    public async Task NextStockTakePageAsync()
+    {
+        if (HasNextStockTakePage)
+        {
+            StockTakePage++;
+            await LoadStockTakesAsync();
+        }
+    }
 
     partial void OnSelectedStockTakeStatusChanged(string value)
     {
@@ -78,8 +116,9 @@ public sealed partial class InventoryViewModel
         try
         {
             var statusParam = SelectedStockTakeStatus == "Tất cả trạng thái" ? null : SelectedStockTakeStatus;
+            var storeIdParam = Guid.TryParse(CurrentStoreId, out var sId) && sId != Guid.Empty ? (Guid?)sId : null;
             var res = await _inventoryApi.GetStockTakesAsync(
-                storeId: null,
+                storeId: storeIdParam,
                 status: statusParam,
                 from: null,
                 to: null,
@@ -108,6 +147,11 @@ public sealed partial class InventoryViewModel
         finally
         {
             IsLoading = false;
+            OnPropertyChanged(nameof(HasNoStockTakes));
+            OnPropertyChanged(nameof(HasStockTakes));
+            OnPropertyChanged(nameof(StockTakePaginationSummary));
+            OnPropertyChanged(nameof(HasPreviousStockTakePage));
+            OnPropertyChanged(nameof(HasNextStockTakePage));
         }
     }
 

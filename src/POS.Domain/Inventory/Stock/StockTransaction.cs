@@ -51,6 +51,29 @@ public class StockTransaction : BaseEntity
         return new StockTransaction(storeId, skuId, StockTransactionType.SaleOut, qty, createdBy, orderId: orderId, note: note);
     }
 
+    public static StockTransaction CreateInitialStock(
+        Guid storeId,
+        Guid skuId,
+        decimal qty,
+        Guid createdBy,
+        decimal unitCost,
+        string? note = null)
+    {
+        if (qty <= 0)
+            throw new ArgumentOutOfRangeException(nameof(qty), "Số lượng tồn đầu kỳ phải lớn hơn 0.");
+        if (unitCost < 0)
+            throw new ArgumentOutOfRangeException(nameof(unitCost), "Giá vốn ban đầu không được âm.");
+        return new StockTransaction(
+            storeId,
+            skuId,
+            StockTransactionType.StockIn,
+            qty,
+            createdBy,
+            stockInVoucherId: null,
+            unitCost: unitCost,
+            note: note ?? "Khởi tạo tồn kho đầu kỳ");
+    }
+
     public static StockTransaction CreateStockIn(
         Guid storeId,
         Guid skuId,

@@ -9,6 +9,8 @@ public partial class StockTakeItemModel : ObservableObject
     public Guid Id { get; set; }
     public Guid StoreId { get; set; }
 
+    public string CodeFormatted => $"KK-{Id.ToString("N")[..8].ToUpperInvariant()}";
+
     [ObservableProperty]
     private string _status = "Draft";
 

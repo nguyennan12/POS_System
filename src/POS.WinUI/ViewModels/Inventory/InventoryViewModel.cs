@@ -23,49 +23,69 @@ public sealed partial class InventoryViewModel : ManagementTabViewModelBase
     private readonly CategoryApiClient _categoryApi;
 
     public override string TabId => "Inventory";
-    public override string Title => "Quản lý Kho & Nhập hàng";
-    public override string Subtitle => "Kiểm soát số lượng tồn kho, tạo phiếu nhập hàng NCC và kiểm kê điều chỉnh tồn";
+    public override string Title => Loc["inventory.title"];
+    public override string Subtitle => Loc["inventory.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.Archive24;
 
-    // ── Phân tab: 0 = Nhập kho (mặc định active), 1 = Kiểm kê, 2 = Cảnh báo tồn kho ──
+    // ── Quản lý ẩn/hiện Thẻ Thống Kê ──
+    [ObservableProperty]
+    private bool _isStatsVisible = true;
+
+    [RelayCommand]
+    public void ToggleStats() => IsStatsVisible = !IsStatsVisible;
+
+    // ── Phân tab: 0 = Tra cứu Tồn kho, 1 = Phiếu Nhập kho, 2 = Phiếu Kiểm kê, 3 = Cảnh báo thiếu hàng ──
     [ObservableProperty]
     private int _selectedTabIndex = 0;
 
-    public bool IsStockInTab
+    public bool IsStockTab
     {
         get => SelectedTabIndex == 0;
         set { if (value) SelectedTabIndex = 0; }
     }
 
-    public bool IsStockTakeTab
+    public bool IsStockInTab
     {
         get => SelectedTabIndex == 1;
         set { if (value) SelectedTabIndex = 1; }
     }
 
-    public bool IsStockTab
+    public bool IsStockTakeTab
     {
         get => SelectedTabIndex == 2;
         set { if (value) SelectedTabIndex = 2; }
     }
 
+    public bool IsStockAlertTab
+    {
+        get => SelectedTabIndex == 3;
+        set { if (value) SelectedTabIndex = 3; }
+    }
+
     partial void OnSelectedTabIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(IsStockTab));
         OnPropertyChanged(nameof(IsStockInTab));
         OnPropertyChanged(nameof(IsStockTakeTab));
-        OnPropertyChanged(nameof(IsStockTab));
+        OnPropertyChanged(nameof(IsStockAlertTab));
 
         if (value == 0)
+        {
+            ShowOnlyAlerts = false;
+            _ = LoadStockEntriesAsync();
+        }
+        else if (value == 1)
         {
             _ = LoadStockInVouchersAsync();
             _ = LoadSuppliersAsync();
         }
-        else if (value == 1)
+        else if (value == 2)
         {
             _ = LoadStockTakesAsync();
         }
-        else if (value == 2)
+        else if (value == 3)
         {
+            ShowOnlyAlerts = true;
             _ = LoadStockEntriesAsync();
             _ = LoadStockAlertsAsync();
         }
@@ -140,5 +160,10 @@ public sealed partial class InventoryViewModel : ManagementTabViewModelBase
             await LoadStockEntriesAsync();
             await LoadStockAlertsAsync();
         }
+    }
+
+    protected override void OnStoreChanged(string storeId, string? storeName)
+    {
+        _ = InitializeAsync();
     }
 }
