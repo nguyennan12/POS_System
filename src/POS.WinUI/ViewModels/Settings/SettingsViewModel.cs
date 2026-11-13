@@ -1,10 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using POS.Contracts.V1.Config;
 using POS.WinUI.Core.ApiClients;
 using POS.WinUI.Core.Services;
 using POS.WinUI.ViewModels.Common;
@@ -12,134 +12,106 @@ using Wpf.Ui.Controls;
 
 namespace POS.WinUI.ViewModels.Settings;
 
+/// <summary>
+/// ViewModel quản lý Cài đặt hệ thống: Thông tin cửa hàng, Máy in hóa đơn và Đa ngôn ngữ.
+/// </summary>
 public sealed partial class SettingsViewModel : ManagementTabViewModelBase
 {
+    private readonly StoreApiClient _storeApi;
     private readonly ConfigApiClient _configApi;
     private readonly LocalizationService _localization;
 
     public override string TabId => "Settings";
-    public override string Title => "Cài đặt hệ thống";
-    public override string Subtitle => "Thiết lập cấu hình cửa hàng, máy in hóa đơn và tích hợp phần cứng";
+    public override string Title => Loc["settings.title"];
+    public override string Subtitle => Loc["settings.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.Settings24;
 
-    // ── Ngôn ngữ ─────────────────────────────────────────────────
+    // ── Phân tab chức năng ─────────────────────────────────────────
+    [ObservableProperty]
+    private bool _isStoreTab = true;
+
+    [ObservableProperty]
+    private bool _isPrinterTab;
+
+    [ObservableProperty]
+    private bool _isSaving;
+
+    // ── Ngôn ngữ hệ thống ──────────────────────────────────────────
     [ObservableProperty]
     private string _selectedLanguage = "vi";
 
-    public ObservableCollection<string> SupportedLanguages { get; } =
-        new() { "vi", "en" };
+    public ObservableCollection<string> SupportedLanguages { get; } = ["vi", "en"];
 
-    // ── Nhãn giao diện động ───────────────────────────────────────
-    [ObservableProperty]
-    private string _settingsTitle = "Cài đặt hệ thống";
-
-    [ObservableProperty]
-    private string _settingsSubtitle = "Thiết lập cấu hình cửa hàng, máy in hóa đơn và tích hợp phần cứng";
-
-    [ObservableProperty]
-    private string _languageSectionTitle = "Ngôn ngữ giao diện";
-
-    [ObservableProperty]
-    private string _languageSectionDesc = "Chọn ngôn ngữ và nhấn Áp dụng. Toàn bộ nhãn trên WinUI thay đổi tức thì – không cần build lại app.";
-
-    [ObservableProperty]
-    private string _applyLanguageButtonText = "Áp dụng ngôn ngữ";
-
-    [ObservableProperty]
-    private string _storeConfigTitle = "Cấu hình cửa hàng";
-
-    [ObservableProperty]
-    private string _storeConfigDesc = "Tải cấu hình SystemConfig của cửa hàng hiện tại từ server.";
-
-    [ObservableProperty]
-    private string _loadConfigButtonText = "Tải cấu hình";
-
-    // ── Thông báo trạng thái ──────────────────────────────────────
-    [ObservableProperty]
-    private string _statusMessage = string.Empty;
-
-    [ObservableProperty]
-    private bool _isBusy;
-
-    public SettingsViewModel(ConfigApiClient configApi, LocalizationService localization,
+    public SettingsViewModel(
+        StoreApiClient storeApi,
+        ConfigApiClient configApi,
+        LocalizationService localization,
         SessionService sessionService) : base(sessionService)
     {
+        _storeApi = storeApi;
         _configApi = configApi;
         _localization = localization;
         _selectedLanguage = localization.LanguageCode;
-        _localization.PropertyChanged += (_, _) => UpdateLocalizedTexts();
-        UpdateLocalizedTexts();
+
+        InitializeStoreSettings();
+        InitializePrinterSettings();
+
+        // Tải dữ liệu ban đầu
+        _ = LoadSettingsAsync();
     }
 
-    private void UpdateLocalizedTexts()
-    {
-        SettingsTitle = _localization["settings.title"];
-        SettingsSubtitle = _localization["settings.subtitle"];
-        LanguageSectionTitle = _localization["settings.language"];
-        LanguageSectionDesc = _localization["settings.language_desc"];
-        ApplyLanguageButtonText = _localization["settings.apply_language"];
-        StoreConfigTitle = _localization["settings.store_config"];
-        StoreConfigDesc = _localization["settings.store_config_desc"];
-        LoadConfigButtonText = _localization["settings.load_config"];
-    }
-
-    /// <summary>
-    /// Tải từ điển ngôn ngữ mới từ API và áp dụng ngay lập tức lên toàn UI.
-    /// </summary>
     [RelayCommand]
-    private async Task SwitchLanguageAsync(CancellationToken ct)
+    private void SelectStoreTab()
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        StatusMessage = "Đang tải ngôn ngữ...";
+        IsStoreTab = true;
+        IsPrinterTab = false;
+    }
+
+    [RelayCommand]
+    private void SelectPrinterTab()
+    {
+        IsStoreTab = false;
+        IsPrinterTab = true;
+    }
+
+    [RelayCommand]
+    public async Task SwitchLanguageAsync(string lang)
+    {
+        if (string.IsNullOrWhiteSpace(lang)) return;
+        SelectedLanguage = lang;
+
         try
         {
-            var response = await _configApi.GetI18nDictionaryAsync(SelectedLanguage, ct);
-            if (response?.Data is { } dict)
+            var res = await _configApi.GetI18nDictionaryAsync(lang);
+            if (res?.Success == true && res.Data?.Translations is { } trans)
             {
-                _localization.Apply(dict.LanguageCode, dict.Translations);
-                StatusMessage = string.Format(_localization["settings.lang_switched"], dict.LanguageCode);
+                LocalizationService.Instance.Apply(lang, trans);
             }
             else
             {
-                StatusMessage = "Không thể tải từ điển ngôn ngữ.";
+                LocalizationService.Instance.Apply(lang, new Dictionary<string, string>());
             }
+
+            var langName = lang == "vi" ? "Tiếng Việt" : "English";
+            ShowSuccess(string.Format(Loc["settings.lang_switched"], langName));
         }
-        catch (System.Exception ex)
+        catch
         {
-            StatusMessage = $"Lỗi: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
+            LocalizationService.Instance.Apply(lang, new Dictionary<string, string>());
+            ShowInfo($"Đã chuyển ngôn ngữ sang {lang}.");
         }
     }
 
-    /// <summary>
-    /// Tải cấu hình cửa hàng hiện tại từ API.
-    /// </summary>
     [RelayCommand]
-    private async Task LoadAsync(CancellationToken ct)
+    private async Task RefreshSettingsAsync()
     {
-        if (IsBusy) return;
-        IsBusy = true;
-        StatusMessage = "Đang tải cấu hình...";
-        try
-        {
-            Guid? storeId = Guid.TryParse(CurrentStoreId, out var g) ? g : null;
-            var response = await _configApi.GetStoreConfigAsync(storeId, ct);
-            if (response?.Data is not null)
-                StatusMessage = $"Cấu hình đã tải – {response.Data.Configs.Count} mục.";
-            else
-                StatusMessage = "Không thể tải cấu hình.";
-        }
-        catch (System.Exception ex)
-        {
-            StatusMessage = $"Lỗi: {ex.Message}";
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        await LoadSettingsAsync();
+        ShowInfo("Đã làm mới thông tin cài đặt.");
+    }
+
+    protected override void OnStoreChanged(string newStoreId, string? storeName)
+    {
+        base.OnStoreChanged(newStoreId, storeName);
+        _ = LoadSettingsAsync();
     }
 }
