@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -14,14 +15,20 @@ public partial class ConfirmDialogWindow : Window
     {
         InitializeComponent();
 
-        if (Application.Current?.MainWindow != null)
+        var mainWin = Application.Current?.MainWindow;
+        if (mainWin != null)
         {
-            Owner = Application.Current.MainWindow;
-            Width = Owner.ActualWidth > 0 ? Owner.ActualWidth : 1200;
-            Height = Owner.ActualHeight > 0 ? Owner.ActualHeight : 800;
-            Left = Owner.Left;
-            Top = Owner.Top;
+            Owner = mainWin;
+            PositionWindowOverOwner(mainWin);
         }
+
+        Loaded += (_, _) =>
+        {
+            if (Owner != null)
+            {
+                PositionWindowOverOwner(Owner);
+            }
+        };
 
         TxtTitle.Text = options.Title;
         if (string.IsNullOrWhiteSpace(options.Subtitle))
@@ -57,13 +64,15 @@ public partial class ConfirmDialogWindow : Window
                 IconSymbol.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
                 IconSymbol.Symbol = SymbolRegular.Delete24;
                 ConfirmIcon.Symbol = SymbolRegular.Delete24;
+                BtnConfirm.Background = new SolidColorBrush(Color.FromRgb(220, 38, 38));
                 break;
 
             case ConfirmDialogVariant.Warning:
                 IconBadgeBorder.Background = new SolidColorBrush(Color.FromRgb(254, 243, 199));
                 IconSymbol.Foreground = new SolidColorBrush(Color.FromRgb(217, 119, 6));
                 IconSymbol.Symbol = SymbolRegular.Warning24;
-                ConfirmIcon.Symbol = SymbolRegular.Checkmark24;
+                ConfirmIcon.Symbol = SymbolRegular.LockClosed24;
+                BtnConfirm.Background = new SolidColorBrush(Color.FromRgb(217, 119, 6));
                 break;
 
             case ConfirmDialogVariant.Primary:
@@ -71,7 +80,36 @@ public partial class ConfirmDialogWindow : Window
                 IconSymbol.Foreground = new SolidColorBrush(Color.FromRgb(234, 88, 12));
                 IconSymbol.Symbol = SymbolRegular.Info24;
                 ConfirmIcon.Symbol = SymbolRegular.Checkmark24;
+                BtnConfirm.Background = new SolidColorBrush(Color.FromRgb(234, 88, 12));
                 break;
+        }
+    }
+
+    private void PositionWindowOverOwner(Window mainWin)
+    {
+        if (mainWin.WindowState == WindowState.Maximized)
+        {
+            WindowState = WindowState.Maximized;
+        }
+        else
+        {
+            WindowState = WindowState.Normal;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Left = mainWin.Left;
+            Top = mainWin.Top;
+            Width = mainWin.ActualWidth > 0 ? mainWin.ActualWidth : 1200;
+            Height = mainWin.ActualHeight > 0 ? mainWin.ActualHeight : 800;
+        }
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key == Key.Escape)
+        {
+            Confirmed = false;
+            Close();
+            e.Handled = true;
         }
     }
 

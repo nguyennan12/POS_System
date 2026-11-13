@@ -12,6 +12,14 @@ public partial class EmployeesView : UserControl
         InitializeComponent();
         CredentialOverlay.IsVisibleChanged += (_, _) => { CredentialInput.Clear(); if (CredentialOverlay.IsVisible) CredentialInput.Focus(); };
         CreateOverlay.IsVisibleChanged += (_, _) => { if (CreateOverlay.IsVisible) CreateOverlay.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)); };
+        DataContextChanged += async (_, e) =>
+        {
+            if (e.NewValue is EmployeesViewModel vm)
+            {
+                await vm.InitializeAsync();
+                UpdateLayoutForSize();
+            }
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -43,6 +51,21 @@ public partial class EmployeesView : UserControl
     {
         if (DataContext is EmployeesViewModel vm) vm.NewCredential = ((PasswordBox)sender).Password;
     }
+    private void OnBackdropCloseNewEmployee(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is EmployeesViewModel vm) vm.CloseNewEmployeeCommand.Execute(null);
+    }
+
+    private void OnBackdropCloseCredential(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is EmployeesViewModel vm) vm.CloseCredentialCommand.Execute(null);
+    }
+
+    private void OnCardMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+    }
+
     private void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Escape || DataContext is not EmployeesViewModel vm) return;

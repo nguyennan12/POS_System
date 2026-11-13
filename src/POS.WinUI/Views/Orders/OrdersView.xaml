@@ -67,33 +67,155 @@
                     </StackPanel>
                     <Border Grid.Column="1" Background="{StaticResource PrimaryLightBrush}" CornerRadius="8" Padding="12,7" VerticalAlignment="Top" Margin="12,4,0,0"><TextBlock Text="{Binding ModeLabel}" Foreground="{StaticResource PrimaryBrush}" FontSize="11" FontWeight="Bold"/></Border>
                 </Grid>
-                <UniformGrid Columns="3" Margin="0,0,0,14">
-                    <Border Style="{StaticResource InvoiceCard}" Padding="18,12" Margin="0,0,10,0"><StackPanel><TextBlock Text="HÓA ĐƠN PHÙ HỢP" Style="{StaticResource Caption}"/><TextBlock Text="{Binding TotalCountText}" FontSize="25" FontWeight="Bold"/></StackPanel></Border>
-                    <Border Style="{StaticResource InvoiceCard}" Padding="18,12" Margin="0,0,10,0"><StackPanel><TextBlock Text="TỔNG TIỀN TRANG NÀY" Style="{StaticResource Caption}"/><TextBlock Text="{Binding PageTotalText}" FontSize="25" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/></StackPanel></Border>
-                    <Border Style="{StaticResource InvoiceCard}" Padding="18,12"><StackPanel><TextBlock Text="ĐANG HIỂN THỊ" Style="{StaticResource Caption}"/><TextBlock Text="{Binding VisibleCountText}" FontSize="25" FontWeight="Bold"/></StackPanel></Border>
-                </UniformGrid>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Card 1: Hóa đơn phù hợp -->
+                    <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="HÓA ĐƠN PHÙ HỢP" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding TotalCountText}" FontSize="22" FontWeight="Bold" Foreground="#0F172A" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" Background="#EFF6FF" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Receipt24" FontSize="16" Foreground="#2563EB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Card 2: Tổng tiền trang này -->
+                    <Border Grid.Column="2" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="TỔNG DOANH THU TRANG" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding PageTotalText}" FontSize="22" FontWeight="Bold" Foreground="#EB7F0E" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" Background="#FFF7ED" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Money24" FontSize="16" Foreground="#EB7F0E" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Card 3: Đang hiển thị -->
+                    <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="ĐANG HIỂN THỊ" FontSize="11" FontWeight="SemiBold" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding VisibleCountText}" FontSize="22" FontWeight="Bold" Foreground="#10B981" Margin="0,2,0,0"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Width="36" Height="36" CornerRadius="18" Background="#ECFDF5" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Eye24" FontSize="16" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
                 <Border Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12,9" Margin="0,0,0,14">
                     <TextBlock Text="{Binding BannerText}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </Border>
-                <Border Style="{StaticResource InvoiceCard}" Padding="16" Margin="0,0,0,16">
+                <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,14">
                     <StackPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                            <shared:TextInputField Height="44" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Icon="Search24" PlaceholderText="Nhập mã hóa đơn hoặc số điện thoại khách hàng..." EnterCommand="{Binding ApplyFiltersCommand}" ShowClearButton="True"/>
-                            <Button Grid.Column="1" Content="Tìm kiếm" Command="{Binding ApplyFiltersCommand}" Style="{StaticResource InvoicePrimaryButton}" Margin="10,0,0,0"/>
-                            <Button Grid.Column="2" Content="Đặt lại" Command="{Binding ClearFiltersCommand}" Style="{StaticResource InvoiceSecondaryButton}" Margin="8,0,0,0"/>
+                        <!-- Hàng 1: Ô tìm kiếm + Nút hành động -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <shared:TextInputField Height="38" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Icon="Search24" PlaceholderText="Nhập mã hóa đơn hoặc số điện thoại khách hàng..." EnterCommand="{Binding ApplyFiltersCommand}" ShowClearButton="True"/>
+                            <Button Grid.Column="1" Command="{Binding ApplyFiltersCommand}" Background="#EB7F0E" Foreground="#FFFFFF" FontWeight="Bold" Height="38" Padding="16,0" Cursor="Hand" Margin="8,0,0,0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Search24" FontSize="13" Foreground="#FFFFFF" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Tìm kiếm" FontSize="12" FontWeight="Bold" Foreground="#FFFFFF"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding ClearFiltersCommand}" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" Foreground="#475569" Height="38" Padding="14,0" Cursor="Hand" Margin="8,0,0,0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="Đặt lại" FontSize="12" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </Grid>
-                        <WrapPanel Margin="0,12,0,0">
-                            <StackPanel Width="156" Margin="0,0,12,0"><TextBlock Text="Từ ngày" Style="{StaticResource Caption}"/><DatePicker SelectedDate="{Binding FromDate}" SelectedDateFormat="Short" Height="40" AutomationProperties.Name="Từ ngày"/></StackPanel>
-                            <StackPanel Width="156" Margin="0,0,12,0"><TextBlock Text="Đến ngày" Style="{StaticResource Caption}"/><DatePicker SelectedDate="{Binding ToDate}" SelectedDateFormat="Short" Height="40" AutomationProperties.Name="Đến ngày"/></StackPanel>
-                            <StackPanel Width="190" Margin="0,0,12,0"><TextBlock Text="Phương thức thanh toán" Style="{StaticResource Caption}"/><ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding PaymentFilter}" Height="40" AutomationProperties.Name="Phương thức thanh toán"/></StackPanel>
-                            <Button Content="Hôm nay" Command="{Binding FilterTodayCommand}" Style="{StaticResource InvoiceSecondaryButton}" Height="40" Margin="0,20,8,0"/>
-                            <Button Content="7 ngày qua" Command="{Binding FilterWeekCommand}" Style="{StaticResource InvoiceSecondaryButton}" Height="40" Margin="0,20,0,0"/>
-                        </WrapPanel>
+
+                        <!-- Hàng 2: Bộ lọc ngày + Phương thức thanh toán + Phím tắt -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="6"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Từ ngày" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
+                                <DatePicker SelectedDate="{Binding FromDate}" SelectedDateFormat="Short" Height="34" FontSize="11.5" AutomationProperties.Name="Từ ngày"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Đến ngày" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
+                                <DatePicker SelectedDate="{Binding ToDate}" SelectedDateFormat="Short" Height="34" FontSize="11.5" AutomationProperties.Name="Đến ngày"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="Phương thức thanh toán" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding PaymentFilter}" Height="34" FontSize="11.5" AutomationProperties.Name="Phương thức thanh toán"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="6" Content="Hôm nay" Command="{Binding FilterTodayCommand}" Height="34" Padding="12,0" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#334155" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Bottom" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <Button Grid.Column="8" Content="7 ngày qua" Command="{Binding FilterWeekCommand}" Height="34" Padding="12,0" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#334155" FontSize="11.5" FontWeight="SemiBold" VerticalAlignment="Bottom" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
                         <TextBlock Text="{Binding FilterError}" Foreground="{StaticResource DangerTextBrush}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="{Binding FilterError, Converter={StaticResource NullOrEmptyToVis}}"/>
                     </StackPanel>
                 </Border>
-                <Grid x:Name="Body" Height="644">
+                <Grid x:Name="Body" MinHeight="560">
                     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <Grid.ColumnDefinitions><ColumnDefinition x:Name="ListColumn" Width="1.35*"/><ColumnDefinition x:Name="DetailColumn" Width="*"/></Grid.ColumnDefinitions>
                     <Border x:Name="ListCard" Style="{StaticResource InvoiceCard}" Margin="0,0,16,0" ClipToBounds="True">
@@ -105,16 +227,17 @@
                                 <Border Grid.Column="1" Background="{StaticResource InputBackgroundBrush}" CornerRadius="8" Padding="10,5" VerticalAlignment="Top"><TextBlock Text="{Binding ResultCountText}" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/></Border>
                             </Grid>
                             <DataGrid Grid.Row="1" ItemsSource="{Binding Invoices}" SelectedItem="{Binding SelectedInvoice}" AutoGenerateColumns="False" IsReadOnly="True"
+                                      Visibility="{Binding HasInvoices, Converter={StaticResource BoolToVis}}"
                                       CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False" CanUserResizeRows="False"
                                       SelectionMode="Single" SelectionUnit="FullRow" HeadersVisibility="Column" GridLinesVisibility="None" BorderThickness="0"
                                       Background="{StaticResource CardBackgroundBrush}" RowStyle="{StaticResource InvoiceRow}" CellStyle="{StaticResource InvoiceCell}"
                                       ColumnHeaderStyle="{StaticResource InvoiceColumnHeader}" FontSize="12" AutomationProperties.Name="Danh sách hóa đơn">
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="HÓA ĐƠN / KHÁCH HÀNG" Width="*" MinWidth="230">
+                                    <DataGridTemplateColumn Header="HÓA ĐƠN &amp; KHÁCH HÀNG" Width="*" MinWidth="230">
                                         <DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding InvoiceNo}" FontWeight="SemiBold" FontSize="11.5"/><StackPanel Orientation="Horizontal" Margin="0,5,0,0"><TextBlock Text="{Binding BuyerName}" Foreground="{StaticResource TextMutedBrush}"/><TextBlock Text=" · " Foreground="{StaticResource TextPlaceholderBrush}"/><TextBlock Text="{Binding BuyerPhone}" Foreground="{StaticResource TextMutedBrush}"/></StackPanel></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="NGÀY LẬP" Width="100"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding DateText}"/><TextBlock Text="{Binding TimeText}" Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="TỔNG TIỀN" Width="115"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel HorizontalAlignment="Right"><TextBlock Text="{Binding GrandTotalText}" FontWeight="Bold" HorizontalAlignment="Right"/><TextBlock Text="Đã thanh toán" FontSize="10" Foreground="{StaticResource SuccessBrush}" Margin="0,5,0,0" HorizontalAlignment="Right"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="NGÀY LẬP" Width="110"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding DateText}"/><TextBlock Text="{Binding TimeText}" Foreground="{StaticResource TextMutedBrush}" Margin="0,5,0,0"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="TỔNG TIỀN" Width="120"><DataGridTemplateColumn.CellTemplate><DataTemplate><StackPanel HorizontalAlignment="Right"><TextBlock Text="{Binding GrandTotalText}" FontWeight="Bold" HorizontalAlignment="Right"/><TextBlock Text="Đã thanh toán" FontSize="10" Foreground="{StaticResource SuccessBrush}" Margin="0,5,0,0" HorizontalAlignment="Right"/></StackPanel></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                             <TextBlock Grid.Row="1" Text="Đang tải hóa đơn…" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"/>
@@ -122,9 +245,22 @@
                                 <StackPanel VerticalAlignment="Center"><TextBlock Text="Không tải được danh sách hóa đơn" FontWeight="SemiBold" TextAlignment="Center"/><TextBlock Text="{Binding ListError}" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource DangerTextBrush}" Margin="0,12"/><Button Content="Thử lại" Command="{Binding RefreshCommand}" Style="{StaticResource InvoiceSecondaryButton}" HorizontalAlignment="Center"/></StackPanel>
                             </Border>
                             <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" Margin="24">
-                                <ui:SymbolIcon Symbol="Search24" FontSize="38" Foreground="{StaticResource TextPlaceholderBrush}"/><TextBlock Text="Không tìm thấy hóa đơn" FontSize="17" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,14,0,8"/>
-                                <TextBlock Text="Thử mã khác, SĐT khác hoặc mở rộng khoảng ngày." TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource TextMutedBrush}"/>
-                                <Button Content="Xóa bộ lọc" Command="{Binding ClearFiltersCommand}" Style="{StaticResource InvoiceSecondaryButton}" HorizontalAlignment="Center" Margin="0,16,0,0"/>
+                                <Border Width="52" Height="52" CornerRadius="26" Background="#F1F5F9" Margin="0,0,0,12" HorizontalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Receipt24" FontSize="24" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Không tìm thấy hóa đơn phù hợp" FontSize="15" FontWeight="Bold" Foreground="#334155" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Thử tìm kiếm với mã hóa đơn khác, số điện thoại hoặc mở rộng khoảng ngày lọc." TextWrapping="Wrap" TextAlignment="Center" Foreground="#64748B" FontSize="12" Margin="0,4,0,16" MaxWidth="320"/>
+                                <Button Command="{Binding ClearFiltersCommand}"
+                                        Background="#FFFFFF" BorderBrush="#EB7F0E" BorderThickness="1" Foreground="#EB7F0E"
+                                        FontWeight="SemiBold" Height="36" Padding="16,0" Cursor="Hand" HorizontalAlignment="Center">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                                <TextBlock Text="Xóa bộ lọc tìm kiếm" FontSize="12" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
                             </StackPanel>
                             <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="{StaticResource InputBorderBrush}" Padding="12">
                                 <DockPanel LastChildFill="True">

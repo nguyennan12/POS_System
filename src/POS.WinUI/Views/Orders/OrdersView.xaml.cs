@@ -16,6 +16,14 @@ public partial class OrdersView : UserControl
             if (ReprintDialog.IsVisible) ReprintDialog.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
             else Focus();
         };
+        DataContextChanged += async (_, e) =>
+        {
+            if (e.NewValue is OrdersViewModel vm)
+            {
+                await vm.InitializeAsync();
+                UpdateLayoutForSize();
+            }
+        };
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)

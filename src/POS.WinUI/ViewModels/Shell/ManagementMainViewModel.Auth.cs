@@ -31,7 +31,7 @@ public partial class ManagementMainViewModel
         IsOwnerRole = _sessionService.IsOwner;
         if (!_sessionService.IsManager && _sessionService.IsCashier)
         {
-            _clockTimer.Stop();
+            _clockTimer?.Stop();
             _navigationService.NavigateTo<Views.Cashier.PosCashierMainView>();
             return;
         }

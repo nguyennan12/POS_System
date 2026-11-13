@@ -1,3 +1,4 @@
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.Core.Services;
@@ -46,6 +47,7 @@ public abstract partial class ManagementTabViewModelBase : ObservableObject, IDi
     public int RoleLevel => SessionService?.RoleLevel ?? 0;
     public string? CurrentStoreId => SessionService?.EffectiveStoreId;
     public string? CurrentStoreName => SessionService?.StoreName;
+    public LocalizationService Loc => LocalizationService.Instance;
 
     protected ManagementTabViewModelBase(SessionService? sessionService = null)
     {
@@ -57,6 +59,19 @@ public abstract partial class ManagementTabViewModelBase : ObservableObject, IDi
         {
             SessionService.StoreChanged += OnStoreChangedInternal;
         }
+
+        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
+    }
+
+    private void OnLocalizationChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(Subtitle));
+        OnLanguageChanged();
+    }
+
+    protected virtual void OnLanguageChanged()
+    {
     }
 
     private void OnStoreChangedInternal(string storeId, string? storeName)
@@ -80,6 +95,7 @@ public abstract partial class ManagementTabViewModelBase : ObservableObject, IDi
         {
             SessionService.StoreChanged -= OnStoreChangedInternal;
         }
+        LocalizationService.Instance.PropertyChanged -= OnLocalizationChanged;
         GC.SuppressFinalize(this);
     }
 }

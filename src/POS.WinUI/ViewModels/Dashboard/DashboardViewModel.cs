@@ -32,8 +32,8 @@ public sealed partial class DashboardViewModel : ManagementTabViewModelBase
     private readonly StoreApiClient _storeApiClient;
 
     public override string TabId => "Dashboard";
-    public override string Title => "Tổng quan kinh doanh";
-    public override string Subtitle => "Theo dõi doanh thu, số lượng đơn hàng và hiệu suất bán lẻ thời gian thực";
+    public override string Title => Loc["dashboard.title"];
+    public override string Subtitle => Loc["dashboard.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.Grid24;
 
     [ObservableProperty]

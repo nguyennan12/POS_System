@@ -56,6 +56,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<InventoryApiClient>();
         services.AddTransient<CustomerApiClient>();
         services.AddTransient<VoucherApiClient>();
+        services.AddTransient<PromotionApiClient>();
         services.AddTransient<OrderApiClient>();
         services.AddTransient<InvoiceApiClient>();
         services.AddTransient<ProductApiClient>();

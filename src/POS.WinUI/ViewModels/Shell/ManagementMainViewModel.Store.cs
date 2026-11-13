@@ -17,12 +17,17 @@ public partial class ManagementMainViewModel
             if (res?.Success == true && res.Data != null)
             {
                 Stores.Clear();
+                // 1. Thêm "Tất cả chi nhánh" cho Chủ chuỗi (Owner)
+                var allStoreItem = new StoreItem { Id = Guid.Empty, Name = "Tất cả chi nhánh" };
+                Stores.Add(allStoreItem);
+
                 StoreItem? currentSelected = null;
                 foreach (var s in res.Data)
                 {
                     var item = new StoreItem { Id = s.Id, Name = s.Name };
                     Stores.Add(item);
-                    if (s.Id.ToString().Equals(_sessionService.StoreId, StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(_sessionService.StoreId) &&
+                        s.Id.ToString().Equals(_sessionService.StoreId, StringComparison.OrdinalIgnoreCase))
                     {
                         currentSelected = item;
                     }
@@ -32,9 +37,10 @@ public partial class ManagementMainViewModel
                 {
                     SelectedStore = currentSelected;
                 }
-                else if (Stores.Count > 0)
+                else
                 {
-                    SelectedStore = Stores[0];
+                    // Mặc định Owner chọn "Tất cả chi nhánh" để thấy dữ liệu toàn chuỗi
+                    SelectedStore = allStoreItem;
                 }
             }
         }
@@ -51,13 +57,14 @@ public partial class ManagementMainViewModel
     partial void OnSelectedStoreChanged(StoreItem? value)
     {
         if (value == null) return;
-        if (string.Equals(_sessionService.StoreId, value.Id.ToString(), StringComparison.OrdinalIgnoreCase)
+        var newStoreId = value.Id == Guid.Empty ? string.Empty : value.Id.ToString();
+        if (string.Equals(_sessionService.StoreId, newStoreId, StringComparison.OrdinalIgnoreCase)
             && string.Equals(StoreName, value.Name, StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
 
-        _sessionService.SetStore(value.Id.ToString(), value.Name);
+        _sessionService.SetStore(newStoreId, value.Name);
         StoreName = value.Name;
 
         // Xóa cache các tab để nạp lại dữ liệu cho chi nhánh mới

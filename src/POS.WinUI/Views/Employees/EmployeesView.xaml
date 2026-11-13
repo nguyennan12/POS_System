@@ -120,8 +120,102 @@
        </StackPanel>
        <Grid Grid.Row="1" Margin="24,0,24,8">
         <TabControl Visibility="{Binding Editor, Converter={StaticResource NullOrEmptyToVis}}">
-         <TabItem Header="Personal Profile"><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><local:EmployeeEditForm DataContext="{Binding Editor}" IsEnabled="{Binding DataContext.CanManageSelection, RelativeSource={RelativeSource AncestorType=local:EmployeesView}}" Margin="0,16,0,0"/></ScrollViewer></TabItem>
-         <TabItem Header="Access Levels"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="0,16"><TextBlock Text="{Binding Loc[employees.permissions_inherited_from_the_assigned_role]}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,12"/><TextBlock Text="{Binding Editor.Permissions}" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}"/></StackPanel></ScrollViewer></TabItem>
+          <!-- ── TAB 1: HỒ SƠ CÁ NHÂN ── -->
+          <TabItem Header="Hồ sơ cá nhân">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <local:EmployeeEditForm DataContext="{Binding Editor}" IsEnabled="{Binding DataContext.CanManageSelection, RelativeSource={RelativeSource AncestorType=local:EmployeesView}}" Margin="0,16,0,0" HorizontalAlignment="Stretch"/>
+            </ScrollViewer>
+          </TabItem>
+
+          <!-- ── TAB 2: QUYỀN HẠN & TRUY CẬP HỆ THỐNG ── -->
+          <TabItem Header="Quyền hạn &amp; Truy cập">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <StackPanel Margin="0,16,0,0">
+                <!-- Thanh thông tin vai trò & tổng số quyền trực quan -->
+                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,0,14">
+                  <DockPanel VerticalAlignment="Center">
+                    <Border DockPanel.Dock="Right" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="15" Foreground="#059669" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding Editor.TotalGrantedPermissionsCount, StringFormat='Đã cấp {0} quyền hệ thống'}" FontSize="12.5" FontWeight="Bold" Foreground="#065F46"/>
+                      </StackPanel>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                      <Border Background="{StaticResource PrimaryLightBrush}" CornerRadius="8" Padding="10,5" Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                          <ui:SymbolIcon Symbol="ShieldCheckmark24" FontSize="15" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding SelectedRole}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                      </Border>
+                      <TextBlock Text="Các tính năng và quyền hạn được phân bổ cho vai trò này:" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </DockPanel>
+                </Border>
+
+                <!-- Danh sách nhóm module phân cấp -->
+                <ItemsControl ItemsSource="{Binding Editor.PermissionGroups}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,12">
+                        <StackPanel>
+                          <!-- Tiêu đề nhóm module -->
+                          <DockPanel Margin="0,0,0,12">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                              <!-- Badge Toàn quyền hoặc x/y quyền -->
+                              <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="6" Padding="8,4" 
+                                      Visibility="{Binding IsFullAccess, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Toàn quyền phân hệ" FontSize="11" FontWeight="Bold" Foreground="#047857"/>
+                              </Border>
+                              <Border Background="#F1F5F9" CornerRadius="6" Padding="8,4" Margin="6,0,0,0"
+                                      Visibility="{Binding IsFullAccess, Converter={StaticResource InverseBoolToVis}}">
+                                <TextBlock Text="{Binding SummaryText}" FontSize="11" FontWeight="Bold" Foreground="#475569"/>
+                              </Border>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                              <Border Width="28" Height="28" CornerRadius="6" Background="#FFF7ED" Margin="0,0,10,0">
+                                <ui:SymbolIcon Symbol="AppGeneric24" FontSize="14" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                              </Border>
+                              <TextBlock Text="{Binding GroupName}" FontSize="13.5" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                            </StackPanel>
+                          </DockPanel>
+
+                          <!-- Danh sách các quyền ĐÃ ĐƯỢC CẤP (Chips / Badges) -->
+                          <ItemsControl ItemsSource="{Binding GrantedItems}" Visibility="{Binding HasGrantedPermissions, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl.ItemsPanel>
+                              <ItemsPanelTemplate>
+                                <WrapPanel/>
+                              </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate>
+                                <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Padding="10,6" Margin="0,0,8,8"
+                                        ToolTip="{Binding Description}">
+                                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="14" Foreground="#16A34A" Margin="0,0,6,0"/>
+                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="#15803D"/>
+                                  </StackPanel>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+
+                          <!-- Khi không có quyền nào trong module -->
+                          <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12,8"
+                                  Visibility="{Binding HasGrantedPermissions, Converter={StaticResource InverseBoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                              <ui:SymbolIcon Symbol="Prohibited24" FontSize="14" Foreground="#94A3B8" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                              <TextBlock Text="Vai trò này không được cấp quyền nào trong phân hệ này" FontSize="12" Foreground="#94A3B8" FontStyle="Italic" VerticalAlignment="Center"/>
+                            </StackPanel>
+                          </Border>
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </ScrollViewer>
+          </TabItem>
         </TabControl>
         <TextBlock Text="{Binding Loc[employees.select_an_employee_to_view_their_profile]}" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding Editor, Converter={StaticResource InverseNullOrEmptyToVis}}"/>
         <Border Style="{StaticResource Error}" VerticalAlignment="Top" Visibility="{Binding DetailError, Converter={StaticResource NullOrEmptyToVis}}"><TextBlock Text="{Binding DetailError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/></Border>
@@ -135,23 +229,129 @@
     </Grid>
    </StackPanel>
   </ScrollViewer>
-  <Grid x:Name="CreateOverlay" Background="{StaticResource InputBackgroundBrush}" Visibility="{Binding NewEmployee, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle">
-   <Border Style="{StaticResource Card}" MaxWidth="760" Margin="16" Padding="24">
-    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <TextBlock Text="{Binding Loc[employees.new_employee]}" FontSize="24" FontWeight="Bold" Margin="0,0,0,16"/>
-     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"><ContentControl Content="{Binding NewEmployee}"><ContentControl.ContentTemplate><DataTemplate><local:EmployeeEditForm/></DataTemplate></ContentControl.ContentTemplate></ContentControl></ScrollViewer>
-     <WrapPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,16,0,0"><Button Content="{Binding Loc[employees.cancel]}" Command="{Binding CloseNewEmployeeCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="24,0" Margin="0,0,12,0"/><Button Content="{Binding Loc[employees.create_employee]}" Command="{Binding CreateEmployeeCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="176"/></WrapPanel>
-    </Grid>
-   </Border>
+  <!-- ════════════════════ MODAL POPUP: THÊM NHÂN VIÊN MỚI ════════════════════ -->
+  <Grid x:Name="CreateOverlay" Visibility="{Binding NewEmployee, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle" Panel.ZIndex="1000">
+    <!-- Backdrop mờ tối làm nổi bật Popup -->
+    <Border Background="#66000000" MouseDown="OnBackdropCloseNewEmployee"/>
+
+    <!-- Dialog Card nằm chính giữa -->
+    <Border Width="780" MaxHeight="680" VerticalAlignment="Center" HorizontalAlignment="Center"
+            Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="18" Padding="24,20"
+            MouseDown="OnCardMouseDown">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="32" ShadowDepth="10" Direction="270" Color="#000000" Opacity="0.3"/>
+      </Border.Effect>
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="*"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Modal Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Width="42" Height="42" CornerRadius="12" Background="#FFF7ED" Margin="0,0,12,0">
+              <ui:SymbolIcon Symbol="PersonAdd24" FontSize="20" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Thêm nhân viên mới" FontSize="18" FontWeight="Bold" Foreground="#0F172A"/>
+              <TextBlock Text="Tạo tài khoản và thiết lập quyền truy cập cho nhân viên điểm bán" FontSize="12.5" Foreground="#64748B" Margin="0,2,0,0"/>
+            </StackPanel>
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding CloseNewEmployeeCommand}"
+                  Width="34" Height="34" Background="Transparent" BorderThickness="0" Cursor="Hand">
+            <ui:SymbolIcon Symbol="Dismiss24" FontSize="18" Foreground="#64748B"/>
+          </Button>
+        </Grid>
+
+        <!-- Modal Body Form -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0">
+          <ContentControl Content="{Binding NewEmployee}">
+            <ContentControl.ContentTemplate>
+              <DataTemplate>
+                <local:EmployeeEditForm/>
+              </DataTemplate>
+            </ContentControl.ContentTemplate>
+          </ContentControl>
+        </ScrollViewer>
+
+        <!-- Modal Footer Buttons -->
+        <Border Grid.Row="2" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,12,0,0">
+          <DockPanel>
+            <Button DockPanel.Dock="Left" Content="Hủy bỏ" Command="{Binding CloseNewEmployeeCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="22,0" Height="42"/>
+            <Button DockPanel.Dock="Right" Content="Xác nhận tạo nhân viên" Command="{Binding CreateEmployeeCommand}" Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Right" Padding="26,0" Height="42"/>
+          </DockPanel>
+        </Border>
+      </Grid>
+    </Border>
   </Grid>
-  <Grid x:Name="CredentialOverlay" Background="{StaticResource InputBackgroundBrush}" Visibility="{Binding CredentialTitle, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle">
-   <Border Style="{StaticResource Card}" MaxWidth="440" VerticalAlignment="Center" Padding="24">
-    <StackPanel><TextBlock Text="{Binding CredentialTitle}" FontSize="22" FontWeight="Bold" Margin="0,0,0,16"/><TextBlock Text="{Binding Loc[employees.enter_the_new_credential_pin_must_contain_exactly_6_digits]}" TextWrapping="Wrap" Margin="0,0,0,16"/>
-     <PasswordBox x:Name="CredentialInput" Height="50" PasswordChanged="OnCredentialChanged" AutomationProperties.Name="New credential"/>
-     <Border Style="{StaticResource Error}" Margin="0,12,0,0" Visibility="{Binding CredentialError, Converter={StaticResource NullOrEmptyToVis}}"><TextBlock Text="{Binding CredentialError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/></Border>
-     <WrapPanel HorizontalAlignment="Right" Margin="0,24,0,0"><Button Content="{Binding Loc[employees.cancel]}" Command="{Binding CloseCredentialCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="24,0" Margin="0,0,12,0"/><Button Content="{Binding Loc[employees.reset]}" Command="{Binding SubmitCredentialCommand}" Style="{StaticResource PrimaryButtonStyle}" Width="120"/></WrapPanel>
-    </StackPanel>
-   </Border>
+
+  <!-- ════════════════════ MODAL POPUP: ĐẶT LẠI MÃ PIN / ĐỔI MẬT KHẨU ════════════════════ -->
+  <Grid x:Name="CredentialOverlay" Visibility="{Binding CredentialTitle, Converter={StaticResource NullOrEmptyToVis}}" KeyboardNavigation.TabNavigation="Cycle" Panel.ZIndex="1000">
+    <!-- Backdrop mờ tối -->
+    <Border Background="#66000000" MouseDown="OnBackdropCloseCredential"/>
+
+    <!-- Dialog Card nằm chính giữa -->
+    <Border Width="460" VerticalAlignment="Center" HorizontalAlignment="Center"
+            Background="#FFFFFF" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="18" Padding="28"
+            MouseDown="OnCardMouseDown">
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="30" ShadowDepth="10" Direction="270" Color="#000000" Opacity="0.3"/>
+      </Border.Effect>
+      <StackPanel>
+        <!-- Modal Header -->
+        <Grid Margin="0,0,0,16">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <Border Width="42" Height="42" CornerRadius="12" Background="#FFF7ED" Margin="0,0,12,0">
+              <ui:SymbolIcon Symbol="Key24" FontSize="20" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="{Binding CredentialTitle}" FontSize="17" FontWeight="Bold" Foreground="#0F172A"/>
+              <TextBlock Text="{Binding CredentialSubtitle}" FontSize="12.5" Foreground="#64748B" Margin="0,2,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+          </StackPanel>
+          <Button Grid.Column="1" Command="{Binding CloseCredentialCommand}"
+                  Width="32" Height="32" Background="Transparent" BorderThickness="0" Cursor="Hand">
+            <ui:SymbolIcon Symbol="Dismiss24" FontSize="16" Foreground="#64748B"/>
+          </Button>
+        </Grid>
+
+        <!-- Input label -->
+        <TextBlock Text="Nhập mã PIN mới (đúng 6 chữ số):" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"
+                   Visibility="{Binding IsPinReset, Converter={StaticResource BoolToVis}}"/>
+        <TextBlock Text="Nhập mật khẩu mới (tối thiểu 6 ký tự):" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"
+                   Visibility="{Binding IsPinReset, Converter={StaticResource InverseBoolToVis}}"/>
+
+        <!-- PasswordBox -->
+        <PasswordBox x:Name="CredentialInput" Height="44" PasswordChanged="OnCredentialChanged" 
+                     FontSize="15" Padding="12,0" AutomationProperties.Name="New credential"/>
+
+        <!-- Error notice -->
+        <Border Style="{StaticResource Error}" Margin="0,12,0,0" Visibility="{Binding CredentialError, Converter={StaticResource NullOrEmptyToVis}}">
+          <TextBlock Text="{Binding CredentialError}" TextWrapping="Wrap" Foreground="{StaticResource DangerTextBrush}"/>
+        </Border>
+
+        <!-- Action buttons -->
+        <Grid Margin="0,22,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="12"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Button Grid.Column="0" Content="Hủy bỏ" Command="{Binding CloseCredentialCommand}" Style="{StaticResource OutlineButtonStyle}" Height="42" HorizontalAlignment="Stretch"/>
+          <Button Grid.Column="2" Content="Xác nhận đổi" Command="{Binding SubmitCredentialCommand}" Style="{StaticResource PrimaryButtonStyle}" Height="42" HorizontalAlignment="Stretch"/>
+        </Grid>
+      </StackPanel>
+    </Border>
   </Grid>
   <Border Background="{StaticResource CardBackgroundBrush}" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="16" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="{Binding IsSaving, Converter={StaticResource BoolToVis}}" Panel.ZIndex="90">
    <StackPanel Orientation="Horizontal"><ui:ProgressRing Width="20" Height="20" IsIndeterminate="True"/><TextBlock Text="{Binding Loc[employees.saving]}" Margin="12,0,0,0" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite"/></StackPanel>

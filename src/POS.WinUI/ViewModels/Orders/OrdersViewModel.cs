@@ -14,8 +14,8 @@ namespace POS.WinUI.ViewModels.Orders;
 public sealed partial class OrdersViewModel : ManagementTabViewModelBase
 {
     public override string TabId => "Orders";
-    public override string Title => "Đơn hàng & Hóa đơn";
-    public override string Subtitle => "Tra cứu hóa đơn bán lẻ, xem chi tiết và in lại bản sao";
+    public override string Title => Loc["orders.title"];
+    public override string Subtitle => Loc["orders.subtitle"];
     private const int PageSize = 8;
     public override SymbolRegular Icon => SymbolRegular.Receipt24;
     private readonly InvoiceApiClient? _api;
@@ -57,9 +57,10 @@ public sealed partial class OrdersViewModel : ManagementTabViewModelBase
     public string ResultCountText => $"{_totalCount} hóa đơn";
     public string PageText => $"Trang {PageNumber} / {Math.Max(1, (int)Math.Ceiling(_totalCount / (double)PageSize))}";
     public string RangeText => _totalCount == 0 ? "Không có kết quả" : $"Hiển thị {(PageNumber - 1) * PageSize + 1}–{(PageNumber - 1) * PageSize + Invoices.Count} / {_totalCount} hóa đơn";
-    public string TotalCountText => _totalCount.ToString("D2");
+    public bool HasInvoices => Invoices.Count > 0;
+    public string TotalCountText => _totalCount.ToString("N0");
     public string PageTotalText => InvoiceViewItem.Money(Invoices.Sum(x => x.GrandTotal));
-    public string VisibleCountText => Invoices.Count.ToString("D2");
+    public string VisibleCountText => Invoices.Count.ToString("N0");
     public string ModeLabel => IsPreview ? "FRONTEND PREVIEW" : "HÓA ĐƠN BÁN LẺ";
     public string BannerText => IsPreview
         ? "Dữ liệu minh họa · Chưa kết nối API / database. Thao tác in và xuất PDF chỉ được mô phỏng."
@@ -75,7 +76,7 @@ public sealed partial class OrdersViewModel : ManagementTabViewModelBase
     public double ReceiptWidth => PaperWidth == 58 ? 240 : 300;
 
     public OrdersViewModel(InvoiceApiClient api, SessionService session, IInvoiceOutputService output) : base(session)
-    { _api = api; _output = output; }
+    { _api = api; _output = output; _ = InitializeAsync(); }
     private OrdersViewModel(SessionService session, IReadOnlyList<InvoiceViewItem> preview) : base(session)
     { _preview = preview; }
     public static OrdersViewModel CreatePreview(SessionService session) => new(session, InvoicePreviewData.Create());
@@ -112,7 +113,8 @@ public sealed partial class OrdersViewModel : ManagementTabViewModelBase
         if (Search.Trim().Length > 100)
         { FilterError = "Từ khóa tìm kiếm tối đa 100 ký tự."; return; }
         FilterError = null;
-        _appliedFilter = new(From: FromDate.HasValue ? new DateTimeOffset(FromDate.Value.Date) : null,
+        var storeId = Guid.TryParse(CurrentStoreId, out var sId) && sId != Guid.Empty ? (Guid?)sId : null;
+        _appliedFilter = new(StoreId: storeId, From: FromDate.HasValue ? new DateTimeOffset(FromDate.Value.Date) : null,
             To: ToDate.HasValue ? new DateTimeOffset(ToDate.Value.Date.AddDays(1).AddTicks(-1)) : null,
             PageSize: PageSize, Search: Search.Trim(), PaymentMethod: PaymentCode(PaymentFilter));
         await LoadPageAsync(1);
@@ -229,7 +231,7 @@ public sealed partial class OrdersViewModel : ManagementTabViewModelBase
     [RelayCommand(CanExecute = nameof(CanNext))] private async Task NextPageAsync() => await LoadPageAsync(PageNumber + 1);
     private void NotifyPaging()
     {
-        foreach (var property in new[] { nameof(IsEmpty), nameof(ResultCountText), nameof(PageText), nameof(RangeText), nameof(TotalCountText), nameof(PageTotalText), nameof(VisibleCountText) }) OnPropertyChanged(property);
+        foreach (var property in new[] { nameof(IsEmpty), nameof(HasInvoices), nameof(ResultCountText), nameof(PageText), nameof(RangeText), nameof(TotalCountText), nameof(PageTotalText), nameof(VisibleCountText) }) OnPropertyChanged(property);
         PreviousPageCommand.NotifyCanExecuteChanged(); NextPageCommand.NotifyCanExecuteChanged();
     }
     private void NotifyActions()
@@ -300,7 +302,7 @@ public sealed partial class OrdersViewModel : ManagementTabViewModelBase
     protected override void OnStoreChanged(string storeId, string? storeName)
     {
         ++_contextVersion; _outputCts?.Cancel(); IsReprintOpen = false; OutputInvoice = null;
-        if (_initialized && !_disposed) _ = LoadPageAsync(1);
+        if (!_disposed) _ = ApplyFiltersAsync();
     }
     public void Deactivate()
     {

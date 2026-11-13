@@ -3,6 +3,7 @@ using POS.Contracts.V1.Common;
 namespace POS.Contracts.V1.Invoices;
 
 public record InvoiceFilterRequest(
+    Guid? StoreId = null,
     Guid? OrderId = null,
     DateTimeOffset? From = null,
     DateTimeOffset? To = null,

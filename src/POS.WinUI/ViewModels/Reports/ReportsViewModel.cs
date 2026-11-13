@@ -26,8 +26,8 @@ public sealed partial class ReportsViewModel : ManagementTabViewModelBase
     private readonly StoreApiClient _storeApiClient;
 
     public override string TabId => "Reports";
-    public override string Title => "Báo cáo & Thống kê";
-    public override string Subtitle => "Báo cáo doanh thu đa chiều, lợi nhuận, mặt hàng bán chạy và xuất file Excel";
+    public override string Title => Loc["reports.title"];
+    public override string Subtitle => Loc["reports.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.DataPie24;
 
     // ── Tab Type (0: Revenue, 1: Inventory) ─────────────────────────────────

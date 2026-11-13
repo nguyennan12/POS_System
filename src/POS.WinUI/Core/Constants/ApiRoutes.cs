@@ -23,6 +23,7 @@ public static class ApiRoutes
     public const string Public = "api/v1/stores/public";
     public const string All = "api/v1/stores";
     public static string Registers(Guid storeId) => $"api/v1/stores/{storeId}/registers";
+    public static string GetById(Guid id) => $"api/v1/stores/{id}";
   }
 
   public static class Shifts
@@ -50,6 +51,8 @@ public static class ApiRoutes
     public static string StockInById(Guid id) => $"api/v1/inventory/stock-in/{id}";
     public static string StockInComplete(Guid id) => $"api/v1/inventory/stock-in/{id}/complete";
     public static string StockInCancel(Guid id) => $"api/v1/inventory/stock-in/{id}/cancel";
+    public const string StockInBulkImport = "api/v1/inventory/stock-in/bulk-import";
+    public const string StockInBulkImportPreview = "api/v1/inventory/stock-in/bulk-import/preview";
     public const string StockTakes = "api/v1/inventory/stock-takes";
     public static string StockTakeById(Guid id) => $"api/v1/inventory/stock-takes/{id}";
     public static string StockTakeItems(Guid id) => $"api/v1/inventory/stock-takes/{id}/items";
@@ -73,6 +76,14 @@ public static class ApiRoutes
   public static class MemberTiers
   {
     public const string Base = "api/v1/member-tiers";
+    public static string GetById(Guid id) => $"api/v1/member-tiers/{id}";
+  }
+
+  public static class Promotions
+  {
+    public const string Base = "api/v1/promotions";
+    public static string GetById(Guid id) => $"api/v1/promotions/{id}";
+    public static string Vouchers(Guid id) => $"api/v1/promotions/{id}/vouchers";
   }
 
   public static class Vouchers
@@ -88,6 +99,7 @@ public static class ApiRoutes
     public const string KpiSummary = "api/v1/products/kpi-summary";
     public static string GetById(Guid id) => $"api/v1/products/{id}";
     public const string BulkImport = "api/v1/products/bulk-import";
+    public const string BulkImportPreview = "api/v1/products/bulk-import/preview";
   }
 
   public static class Skus

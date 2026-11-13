@@ -5,23 +5,22 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="#75000000"
-        ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
+        ShowInTaskbar="False">
 
     <!-- Bấm backdrop bên ngoài để hủy -->
     <Grid Background="Transparent" MouseDown="OnBackdropMouseDown">
         <!-- Dialog Card nằm chính giữa toàn màn hình -->
-        <Border Width="450" 
+        <Border Width="480" 
                 VerticalAlignment="Center" 
                 HorizontalAlignment="Center"
                 Background="#FFFFFF"
                 BorderBrush="#E2E8F0"
                 BorderThickness="1" 
-                CornerRadius="16" 
-                Padding="24"
+                CornerRadius="18" 
+                Padding="26"
                 MouseDown="OnCardMouseDown">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="30" ShadowDepth="8" Direction="270" Color="#0F172A" Opacity="0.2"/>
+                <DropShadowEffect BlurRadius="32" ShadowDepth="10" Direction="270" Color="#0F172A" Opacity="0.28"/>
             </Border.Effect>
 
             <StackPanel>
@@ -32,37 +31,37 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border x:Name="IconBadgeBorder" Grid.Column="0" Width="44" Height="44" CornerRadius="12" Background="#FEE2E2" Margin="0,0,14,0">
+                    <Border x:Name="IconBadgeBorder" Grid.Column="0" Width="46" Height="46" CornerRadius="12" Background="#FEE2E2" Margin="0,0,14,0">
                         <ui:SymbolIcon x:Name="IconSymbol" Symbol="Delete24" FontSize="22" Foreground="#DC2626" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtTitle" Text="Xác nhận hành động" FontSize="17" FontWeight="Bold" Foreground="#0F172A"/>
-                        <TextBlock x:Name="TxtSubtitle" Text="Hành động này không thể hoàn tác" FontSize="12.5" Foreground="#64748B" Margin="0,2,0,0"/>
+                        <TextBlock x:Name="TxtTitle" Text="Xác nhận hành động" FontSize="17.5" FontWeight="Bold" Foreground="#0F172A"/>
+                        <TextBlock x:Name="TxtSubtitle" Text="Hành động này không thể hoàn tác" FontSize="12.5" Foreground="#64748B" Margin="0,3,0,0"/>
                     </StackPanel>
                 </Grid>
 
                 <!-- Nội dung thông báo -->
                 <TextBlock x:Name="TxtMessage" Text="Bạn có chắc chắn muốn thực hiện hành động này?" 
-                           FontSize="13.5" Foreground="#334155" 
-                           TextWrapping="Wrap" Margin="0,0,0,14" LineHeight="20"/>
+                           FontSize="14" Foreground="#334155" 
+                           TextWrapping="Wrap" Margin="0,0,0,14" LineHeight="21"/>
 
                 <!-- Cảnh báo bổ sung (nếu có) -->
-                <Border x:Name="WarningBorder" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,20">
+                <Border x:Name="WarningBorder" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,18">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Foreground="#D97706" Margin="0,1,10,0" VerticalAlignment="Top"/>
+                        <ui:SymbolIcon Grid.Column="0" Symbol="Warning24" FontSize="16" Foreground="#D97706" Margin="0,2,10,0" VerticalAlignment="Top"/>
                         <TextBlock x:Name="TxtWarningMessage" Grid.Column="1" 
                                    Text="Lưu ý: Hành động này có thể ảnh hưởng đến các dữ liệu liên quan."
                                    FontSize="12" Foreground="#92400E" TextWrapping="Wrap" LineHeight="17"/>
                     </Grid>
                 </Border>
 
-                <!-- Hàng nút bấm chuẩn mực UI/UX hiện đại -->
-                <Grid>
+                <!-- Hàng nút bấm đối xứng cân bằng -->
+                <Grid Margin="0,4,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="12"/>
@@ -72,13 +71,14 @@
                     <!-- Nút Hủy bỏ -->
                     <Button Grid.Column="0" 
                             Click="OnCancelClick"
-                            Height="40" 
+                            HorizontalAlignment="Stretch"
+                            Height="42" 
                             Cursor="Hand"
-                            Background="#FFFFFF"
+                            Background="#F1F5F9"
                             BorderBrush="#CBD5E1"
                             BorderThickness="1"
                             Foreground="#475569"
-                            FontSize="13"
+                            FontSize="13.5"
                             FontWeight="SemiBold">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
@@ -90,27 +90,28 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#F8FAFC"/>
+                                        <Setter TargetName="btnBorder" Property="Background" Value="#E2E8F0"/>
                                         <Setter TargetName="btnBorder" Property="BorderBrush" Value="#94A3B8"/>
                                     </Trigger>
                                     <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#F1F5F9"/>
+                                        <Setter TargetName="btnBorder" Property="Background" Value="#CBD5E1"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Button.Template>
-                        <TextBlock x:Name="TxtCancelBtn" Text="Hủy bỏ"/>
+                        <TextBlock x:Name="TxtCancelBtn" Text="Hủy bỏ" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
 
                     <!-- Nút Xác nhận (Confirm) -->
-                    <Button Grid.Column="2" 
+                    <Button x:Name="BtnConfirm" Grid.Column="2" 
                             Click="OnConfirmClick"
-                            Height="40" 
+                            HorizontalAlignment="Stretch"
+                            Height="42" 
                             Cursor="Hand"
                             Background="#DC2626"
                             BorderThickness="0"
                             Foreground="#FFFFFF"
-                            FontSize="13"
+                            FontSize="13.5"
                             FontWeight="Bold">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
@@ -119,17 +120,17 @@
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#B91C1C"/>
+                                        <Setter Property="Opacity" Value="0.9"/>
                                     </Trigger>
                                     <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="btnBorder" Property="Background" Value="#991B1B"/>
+                                        <Setter Property="Opacity" Value="0.8"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Button.Template>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <ui:SymbolIcon x:Name="ConfirmIcon" Symbol="Delete24" FontSize="15" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtConfirmBtn" Text="Xóa vĩnh viễn" VerticalAlignment="Center"/>
+                            <ui:SymbolIcon x:Name="ConfirmIcon" Symbol="Delete24" FontSize="16" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtConfirmBtn" Text="Xác nhận" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>

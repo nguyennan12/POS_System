@@ -21,8 +21,9 @@ public class GetInvoicesQueryHandler(
         if (employee is null || !employee.IsActive) return InvoiceReadErrors.Unauthorized;
 
         var filter = query.Filter;
+        var targetStoreId = employee.IsChainOwner ? filter.StoreId : employee.StoreId;
         var (items, total) = await invoiceRepository.GetPagedAsync(
-            employee.Id, employee.StoreId, employee.IsChainOwner,
+            employee.Id, targetStoreId, employee.IsChainOwner,
             filter.OrderId, filter.From, filter.To, filter.PageNumber, filter.PageSize, cancellationToken,
             filter.Search, filter.PaymentMethod);
         return new PagedResponse<InvoiceSummaryResponse>(items, filter.PageNumber, filter.PageSize, total);

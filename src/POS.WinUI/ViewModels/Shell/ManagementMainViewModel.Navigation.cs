@@ -158,14 +158,14 @@ public partial class ManagementMainViewModel
     [RelayCommand]
     private void OpenPosCashier()
     {
-        _clockTimer.Stop();
+        _clockTimer?.Stop();
         _navigationService.NavigateTo<PosCashierMainView>();
     }
 
     [RelayCommand]
     private void OpenShiftModal()
     {
-        _clockTimer.Stop();
+        _clockTimer?.Stop();
         _navigationService.NavigateTo<PosCashierMainView>();
         if (_serviceProvider.GetService<MainWindowViewModel>()?.CurrentView is PosCashierMainView posView &&
             posView.DataContext is PosCashierMainViewModel posVm)

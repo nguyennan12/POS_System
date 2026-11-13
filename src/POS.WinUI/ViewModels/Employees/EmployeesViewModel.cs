@@ -32,7 +32,6 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     public override string Title => Loc["employees.title"];
     public override string Subtitle => Loc["employees.subtitle"];
     public override SymbolRegular Icon => SymbolRegular.PersonAccounts24;
-    public LocalizationService Loc => LocalizationService.Instance;
     public ObservableCollection<EmployeeListItem> Employees { get; } = [];
     public ObservableCollection<EmployeeChoice<Guid?>> Branches { get; } = [];
     public ObservableCollection<EmployeeChoice<Guid?>> Roles { get; } = [];
@@ -52,7 +51,9 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     [ObservableProperty] private EmployeeEditViewModel? _editor;
     [ObservableProperty] private EmployeeEditViewModel? _newEmployee;
     [ObservableProperty] private string? _credentialTitle;
+    [ObservableProperty] private string? _credentialSubtitle;
     [ObservableProperty] private string? _credentialError;
+    public bool IsPinReset => _resetPin;
     public string NewCredential { get; set; } = "";
     public bool IsEmpty => !IsLoading && ListError is null && Employees.Count == 0;
     public bool HasBranchFilter => BranchId.HasValue;
@@ -71,11 +72,34 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     public string SelectedUsername => _detail?.Username ?? "";
     public string SelectedStore => _detail?.IsChainOwner == true ? "All stores" : _detail?.StoreName ?? "—";
     public string SelectedStatus => _detail?.IsActive == true ? "Active" : "Locked";
-    public string LockAction => _detail?.IsActive == true ? "Lock Account" : "Unlock Account";
+    public string LockAction => _detail?.IsActive == true ? "Khóa tài khoản" : "Mở khóa tài khoản";
 
     public EmployeesViewModel(EmployeeApiClient api, SessionService session, IConfirmDialogService dialogs) : base(session)
-    { _api = api; _dialogs = dialogs; }
-    public async Task InitializeAsync() { if (!_initialized) { _initialized = true; await LoadAsync(true); } }
+    {
+        _api = api;
+        _dialogs = dialogs;
+        _ = InitializeAsync();
+    }
+
+    public async Task InitializeAsync()
+    {
+        if (!_initialized)
+        {
+            _initialized = true;
+            _suppressFilters = true;
+            if (Guid.TryParse(CurrentStoreId, out var store) && store != Guid.Empty)
+            {
+                BranchId = store;
+            }
+            else
+            {
+                BranchId = null;
+            }
+            _suppressFilters = false;
+            await LoadAsync(true);
+        }
+    }
+
     partial void OnSearchChanged(string value) => FilterChanged(true);
     partial void OnBranchIdChanged(Guid? value) { OnPropertyChanged(nameof(HasBranchFilter)); FilterChanged(); }
     partial void OnRoleIdChanged(Guid? value) { OnPropertyChanged(nameof(HasRoleFilter)); FilterChanged(); }
@@ -122,7 +146,15 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
                     foreach (var r in _options.Roles) Roles.Add(new(r.Id, r.Name));
                     Statuses.Add(new(null, "All Status"));
                     foreach (var s in _options.Statuses) Statuses.Add(new(s.IsActive, s.Name));
-                    BranchId = Branches.Any(b => b.Value == branch) ? branch : null;
+                    
+                    if (Guid.TryParse(CurrentStoreId, out var currentStoreGuid) && currentStoreGuid != Guid.Empty)
+                    {
+                        BranchId = Branches.Any(b => b.Value == currentStoreGuid) ? currentStoreGuid : null;
+                    }
+                    else
+                    {
+                        BranchId = Branches.Any(b => b.Value == branch) ? branch : null;
+                    }
                     RoleId = Roles.Any(r => r.Value == role) ? role : null;
                     ActiveStatus = Statuses.Any(s => s.Value == status) ? status : null;
                 }
@@ -214,12 +246,29 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     [RelayCommand(CanExecute = nameof(CanSave))] private async Task ToggleLockAsync()
     {
         if (_detail == null || !await ConfirmDiscardAsync()) return;
-        if (!await _dialogs.ShowConfirmAsync(new() { Title = LockAction, Message = $"{LockAction}: {_detail.Name}?", ConfirmText = LockAction, Variant = ConfirmDialogVariant.Warning })) return;
+        var isLocking = _detail.IsActive;
+        var actionText = isLocking ? "Khóa tài khoản" : "Mở khóa tài khoản";
+        var warningText = isLocking
+            ? "Tài khoản bị khóa sẽ không thể đăng nhập vào ứng dụng cho đến khi được mở khóa lại."
+            : "Tài khoản sẽ được mở khóa và có thể đăng nhập bình thường vào hệ thống.";
+
+        if (!await _dialogs.ShowConfirmAsync(new()
+        {
+            Title = actionText,
+            Subtitle = isLocking ? "Tạm ngưng quyền truy cập của nhân viên" : "Khôi phục quyền truy cập cho nhân viên",
+            Message = $"Bạn có chắc chắn muốn {actionText.ToLower()} nhân viên '{_detail.Name}' ({_detail.Username})?",
+            WarningMessage = warningText,
+            ConfirmText = actionText,
+            CancelText = "Hủy bỏ",
+            Variant = isLocking ? ConfirmDialogVariant.Warning : ConfirmDialogVariant.Primary
+        })) return;
+
         IsSaving = true;
         try
         {
             _detail = await _api.LockAsync(_detail.Id, new(!_detail.IsActive));
-            Editor = MakeEditor(_detail); NotifySelection(); await LoadAsync(); ShowSuccess("Account status updated");
+            Editor = MakeEditor(_detail); NotifySelection(); await LoadAsync();
+            ShowSuccess(isLocking ? "Đã khóa tài khoản nhân viên thành công" : "Đã mở khóa tài khoản thành công");
         }
         catch (Exception ex) { DetailError = ex.Message; }
         finally { IsSaving = false; }
@@ -229,20 +278,27 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     private void OpenCredential(bool pin)
     {
         if (!CanSave()) return;
-        _resetPin = pin; NewCredential = ""; CredentialError = null;
-        CredentialTitle = pin ? "Reset PIN Pad" : "Reset Password";
+        _resetPin = pin;
+        NewCredential = "";
+        CredentialError = null;
+        CredentialTitle = pin ? "Đặt lại mã PIN" : "Đổi mật khẩu";
+        CredentialSubtitle = pin
+            ? "Mã PIN gồm đúng 6 chữ số dùng để mở ca và đăng nhập nhanh tại quầy thu ngân"
+            : "Mật khẩu dùng để đăng nhập vào tài khoản trên toàn hệ thống";
+        OnPropertyChanged(nameof(IsPinReset));
     }
-    [RelayCommand] private void CloseCredential() { if (!IsSaving) { NewCredential = ""; CredentialTitle = null; } }
+    [RelayCommand] private void CloseCredential() { if (!IsSaving) { NewCredential = ""; CredentialTitle = null; CredentialSubtitle = null; } }
     [RelayCommand(CanExecute = nameof(NotSaving))] private async Task SubmitCredentialAsync()
     {
         if (_detail == null || !CanManageSelection) return;
-        if (_resetPin && !Regex.IsMatch(NewCredential, "\\A[0-9]{6}\\z")) { CredentialError = "PIN must contain exactly 6 digits (0–9)."; return; }
-        if (string.IsNullOrWhiteSpace(NewCredential)) { CredentialError = "Enter the new credential."; return; }
+        if (_resetPin && !Regex.IsMatch(NewCredential, @"^[0-9]{6}$")) { CredentialError = "Mã PIN phải bao gồm chính xác 6 chữ số (0–9)."; return; }
+        if (!_resetPin && (string.IsNullOrWhiteSpace(NewCredential) || NewCredential.Length < 6)) { CredentialError = "Mật khẩu mới phải có độ dài tối thiểu 6 ký tự."; return; }
         IsSaving = true;
         try
         {
             _detail = _resetPin ? await _api.ResetPinAsync(_detail.Id, new(NewCredential)) : await _api.ResetPasswordAsync(_detail.Id, new(NewCredential));
-            NewCredential = ""; CredentialTitle = null; NotifySelection(); ShowSuccess("Credential reset successfully");
+            NewCredential = ""; CredentialTitle = null; CredentialSubtitle = null; NotifySelection();
+            ShowSuccess(_resetPin ? "Đã đặt lại mã PIN thành công" : "Đã đổi mật khẩu mới thành công");
         }
         catch (Exception ex) { CredentialError = ex.Message; }
         finally { IsSaving = false; }
@@ -265,13 +321,27 @@ public sealed partial class EmployeesViewModel : ManagementTabViewModelBase
     }
     private Task<bool> ConfirmDiscardAsync() => Editor?.IsDirty != true ? Task.FromResult(true) :
         _dialogs.ShowConfirmAsync(new() { Title = "Unsaved changes", Message = "Discard unsaved profile changes?", ConfirmText = "Discard", Variant = ConfirmDialogVariant.Warning });
+    
     protected override void OnStoreChanged(string storeId, string? storeName)
     {
-        if (!_initialized) return;
         _detailCts?.Cancel(); ++_detailVersion; IsDetailLoading = false;
         Editor = null; NewEmployee?.ClearSecrets(); NewEmployee = null; _detail = null; CredentialTitle = null; NewCredential = "";
-        _suppressFilters = true; BranchId = null; RoleId = null; PageNumber = 1; _suppressFilters = false; _ = LoadAsync(true);
+        _suppressFilters = true;
+        if (Guid.TryParse(storeId, out var parsedStoreId) && parsedStoreId != Guid.Empty)
+        {
+            BranchId = parsedStoreId;
+        }
+        else
+        {
+            BranchId = null;
+        }
+        RoleId = null;
+        ActiveStatus = null;
+        PageNumber = 1;
+        _suppressFilters = false;
+        _ = LoadAsync(false);
     }
+
     public override void Dispose()
     {
         _listCts?.Cancel(); _listCts?.Dispose(); _detailCts?.Cancel(); _detailCts?.Dispose();

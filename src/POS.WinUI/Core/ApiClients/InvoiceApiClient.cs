@@ -14,6 +14,7 @@ public sealed class InvoiceApiClient(HttpClient http, SessionService session) : 
     public async Task<PagedResponse<InvoiceSummaryResponse>> GetAllAsync(InvoiceFilterRequest filter, CancellationToken ct = default)
     {
         var query = $"?pageNumber={filter.PageNumber}&pageSize={filter.PageSize}";
+        if (filter.StoreId.HasValue && filter.StoreId.Value != Guid.Empty) query += $"&storeId={filter.StoreId.Value}";
         if (filter.OrderId.HasValue) query += $"&orderId={filter.OrderId}";
         if (filter.From.HasValue) query += "&from=" + EncodeDate(filter.From.Value);
         if (filter.To.HasValue) query += "&to=" + EncodeDate(filter.To.Value);
