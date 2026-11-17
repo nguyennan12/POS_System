@@ -19,6 +19,7 @@ using POS.Application.Abstractions.Notifications;
 using POS.Application.UseCases.Payments.DTOs;
 using POS.Infrastructure.Payments;
 using POS.Infrastructure.Notifications;
+using POS.Infrastructure.AI.Gemini;
 
 namespace POS.Infrastructure;
 
@@ -26,6 +27,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddGeminiAi(configuration);
+
         // ---- PostgreSQL ----
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("ConnectionStrings:Default is not configured.");
