@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.Core.ApiClients;
 using POS.WinUI.Core.Services;
 using POS.WinUI.ViewModels.Auth;
+using POS.WinUI.ViewModels.AiAssistant;
 using POS.WinUI.ViewModels.Cashier;
 using POS.WinUI.ViewModels.CustomerFacing;
 using POS.WinUI.ViewModels.Customers;
@@ -63,6 +64,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ConfigApiClient>();
         services.AddTransient<ReportApiClient>();
         services.AddTransient<EmployeeApiClient>();
+        services.AddTransient<AiAssistantApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -82,6 +84,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<EmployeesViewModel>();
         services.AddTransient<ReportsViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddSingleton<AiAssistantViewModel>();
 
         // ── Views ─────────────────────────────────────────────────
         services.AddSingleton<MainWindow>();

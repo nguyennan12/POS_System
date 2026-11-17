@@ -24,6 +24,7 @@
              xmlns:reportsVm="clr-namespace:POS.WinUI.ViewModels.Reports"
              xmlns:settings="clr-namespace:POS.WinUI.Views.Settings"
              xmlns:settingsVm="clr-namespace:POS.WinUI.ViewModels.Settings"
+             xmlns:ai="clr-namespace:POS.WinUI.Views.AiAssistant"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="1200"
              Focusable="True">
@@ -135,5 +136,8 @@
 
         <!-- ════════════════════ 3. BOTTOM FOOTER ════════════════════ -->
         <sharedComp:AppFooterBar Grid.Row="2" IsPosMode="False"/>
+
+        <!-- Chatbot nổi dùng được từ mọi màn hình quản lý -->
+        <ai:AiAssistantView Grid.Row="0" Grid.RowSpan="3" Panel.ZIndex="500"/>
     </Grid>
 </UserControl>

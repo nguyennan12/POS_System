@@ -131,6 +131,11 @@ public static class ApiRoutes
     public static string ExportDownload(Guid jobId) => $"api/v1/reports/export/{jobId}/download";
   }
 
+  public static class AiAssistant
+  {
+    public const string Ask = "api/v1/ai/ask";
+  }
+
   public static class Config
   {
     public const string Store = "api/v1/config/store";

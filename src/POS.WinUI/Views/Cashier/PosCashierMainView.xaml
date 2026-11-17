@@ -9,6 +9,7 @@
              xmlns:paymentComp="clr-namespace:POS.WinUI.Views.Cashier.Components.Payment"
              xmlns:shiftComp="clr-namespace:POS.WinUI.Views.Cashier.Components.Shift"
              xmlns:orders="clr-namespace:POS.WinUI.Views.Orders"
+             xmlns:ai="clr-namespace:POS.WinUI.Views.AiAssistant"
              mc:Ignorable="d" 
              d:DesignHeight="850" d:DesignWidth="1400"
              Focusable="True">
@@ -107,6 +108,9 @@
 
         <!-- ════════════════════ 3. BOTTOM FOOTER ════════════════════ -->
         <sharedComp:AppFooterBar Grid.Row="2" IsPosMode="True"/>
+
+        <!-- Chatbot nổi, đặt dưới các hộp thoại thanh toán/ca để không che thao tác POS -->
+        <ai:AiAssistantView Grid.Row="0" Grid.RowSpan="3" Panel.ZIndex="500"/>
 
         <!-- ════════════════════ 4. PAYMENT PROCESSING MODAL OVERLAY ════════════════════ -->
         <paymentComp:PaymentProcessingModal Grid.Row="0" Grid.RowSpan="3"

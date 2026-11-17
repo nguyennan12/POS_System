@@ -46,6 +46,7 @@ public sealed class SessionService
 
     public event Action<string, string?>? StoreChanged;
     public event Action<string, string?>? RegisterChanged;
+    public event Action? SessionChanged;
 
     public void SetSession(
         string accessToken,
@@ -82,6 +83,8 @@ public sealed class SessionService
                 }
             }
         }
+
+        SessionChanged?.Invoke();
     }
 
     public void SetStore(string storeId, string? storeName = null)
@@ -151,5 +154,6 @@ public sealed class SessionService
         ShiftName = null;
         IsChainOwner = false;
         _permissions.Clear();
+        SessionChanged?.Invoke();
     }
 }
