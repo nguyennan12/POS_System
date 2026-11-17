@@ -46,6 +46,9 @@ services:
       Auth__PinLookupSecret: ${PIN_LOOKUP_SECRET}
       Jwt__Issuer: pos-api
       Jwt__Audience: pos-clients
+      Gemini__Enabled: "${GEMINI_ENABLED:-false}"
+      Gemini__ApiKey: "${GEMINI_API_KEY:-}"
+      Gemini__Model: "${GEMINI_MODEL:-gemini-flash-lite-latest}"
       Serilog__LokiUrl: "${SERILOG_LOKI_URL}"
     labels:
       project: "pos-system"
