@@ -9,7 +9,7 @@ using POS.Application.UseCases.AI.Queries.AskAi;
 using POS.Contracts.V1.Chatbot;
 using POS.Contracts.V1.Common;
 using POS.Domain.Common;
-using POS.Infrastructure.AI.Gemini;
+using POS.Infrastructure.AI.Groq;
 
 namespace POS.Api.Controllers;
 
@@ -18,7 +18,7 @@ namespace POS.Api.Controllers;
 [Route("api/v1/ai")]
 public sealed class AiAssistantController(
     ISender mediator,
-    IOptions<GeminiOptions> geminiOptions,
+    IOptions<GroqOptions> groqOptions,
     ILogger<AiAssistantController> logger) : ControllerBase
 {
     [HttpPost("ask")]
@@ -29,7 +29,7 @@ public sealed class AiAssistantController(
         [FromBody] AskAiRequest request,
         CancellationToken cancellationToken)
     {
-        if (!geminiOptions.Value.Enabled)
+        if (!groqOptions.Value.Enabled)
         {
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 ApiResponse<object>.Fail(new ApiError
@@ -41,7 +41,7 @@ public sealed class AiAssistantController(
         }
 
         var history = request.History ?? Array.Empty<AiChatTurnRequest?>();
-        if (history.Count > geminiOptions.Value.MaxHistoryMessages || history.Any(turn => turn is null))
+        if (history.Count > groqOptions.Value.MaxHistoryMessages || history.Any(turn => turn is null))
         {
             return BadRequest(ApiResponse<object>.Fail(new ApiError
             {

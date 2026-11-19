@@ -48,9 +48,9 @@ services:
       Auth__PinLookupSecret: ${PIN_LOOKUP_SECRET}
       Jwt__Issuer: pos-api
       Jwt__Audience: pos-clients
-      Gemini__Enabled: "${GEMINI_ENABLED:-false}"
-      Gemini__ApiKey: "${GEMINI_API_KEY:-}"
-      Gemini__Model: "${GEMINI_MODEL:-gemini-flash-lite-latest}"
+      Groq__Enabled: "${GROQ_ENABLED:-false}"
+      Groq__ApiKey: "${GROQ_API_KEY:-}"
+      Groq__Model: "${GROQ_MODEL:-llama-3.3-70b-versatile}"
       Serilog__LokiUrl: "${SERILOG_LOKI_URL}"
     depends_on:
       postgres:

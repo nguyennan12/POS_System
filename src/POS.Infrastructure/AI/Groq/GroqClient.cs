@@ -1,18 +1,19 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using POS.Application.Abstractions.AI;
 
-namespace POS.Infrastructure.AI.Gemini;
+namespace POS.Infrastructure.AI.Groq;
 
-public sealed class GeminiClient(
+public sealed class GroqClient(
     HttpClient httpClient,
-    IOptions<GeminiOptions> options,
-    ILogger<GeminiClient> logger) : IAiModelClient
+    IOptions<GroqOptions> options,
+    ILogger<GroqClient> logger) : IAiModelClient
 {
-    private readonly GeminiOptions _options = options.Value;
+    private readonly GroqOptions _options = options.Value;
 
     public async Task<AiGenerationResponse> GenerateAsync(
         AiGenerationRequest request,
@@ -26,31 +27,41 @@ public sealed class GeminiClient(
                 503);
         }
 
-        var input = request.Messages.Select(turn => new GeminiInputStep(
-            turn.Role == "assistant" ? "model_output" : "user_input",
-            [new GeminiTextContent("text", turn.Content)])).ToArray();
+        var messages = new List<GroqChatMessage>(request.Messages.Count + 1)
+        {
+            new("system", request.SystemInstruction)
+        };
+        messages.AddRange(request.Messages.Select(turn => new GroqChatMessage(
+            string.Equals(turn.Role, "assistant", StringComparison.OrdinalIgnoreCase)
+                ? "assistant"
+                : "user",
+            turn.Content)));
 
-        var body = new GeminiInteractionRequest(
+        var body = new GroqChatCompletionRequest(
             _options.Model,
-            input,
-            request.SystemInstruction,
-            new GeminiGenerationConfig(_options.Temperature, _options.MaxOutputTokens));
+            messages,
+            _options.Temperature,
+            _options.MaxCompletionTokens);
 
-        using var message = new HttpRequestMessage(HttpMethod.Post, "interactions")
+        using var message = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
         {
             Content = JsonContent.Create(body)
         };
-        message.Headers.TryAddWithoutValidation("x-goog-api-key", _options.ApiKey);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var stopwatch = Stopwatch.StartNew();
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response = await httpClient.SendAsync(
+                message,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("Gemini request timed out after {ElapsedMs} ms.", stopwatch.ElapsedMilliseconds);
+            logger.LogWarning("Groq request timed out after {ElapsedMs} ms.", stopwatch.ElapsedMilliseconds);
             throw new AiModelException(
                 "AI_TIMEOUT",
                 "Trợ lý AI phản hồi quá lâu. Vui lòng thử lại.",
@@ -58,7 +69,7 @@ public sealed class GeminiClient(
         }
         catch (HttpRequestException)
         {
-            logger.LogWarning("Gemini could not be reached.");
+            logger.LogWarning("Groq could not be reached.");
             throw new AiModelException(
                 "AI_UNAVAILABLE",
                 "Không thể kết nối tới dịch vụ AI. Vui lòng thử lại sau.",
@@ -67,9 +78,7 @@ public sealed class GeminiClient(
 
         using (response)
         {
-            var providerRequestId = response.Headers.TryGetValues("x-goog-request-id", out var values)
-                ? values.FirstOrDefault()
-                : null;
+            var providerRequestId = GetProviderRequestId(response);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -87,41 +96,38 @@ public sealed class GeminiClient(
                 };
 
                 logger.LogWarning(
-                    "Gemini request failed with status {StatusCode}. ProviderRequestId: {ProviderRequestId}",
+                    "Groq request failed with status {StatusCode}. ProviderRequestId: {ProviderRequestId}",
                     statusCode,
                     providerRequestId);
                 throw new AiModelException(code, safeMessage, 502);
             }
 
-            GeminiInteractionResponse? result;
+            GroqChatCompletionResponse? result;
             try
             {
-                result = await response.Content.ReadFromJsonAsync<GeminiInteractionResponse>(cancellationToken);
+                result = await response.Content.ReadFromJsonAsync<GroqChatCompletionResponse>(cancellationToken);
             }
             catch (System.Text.Json.JsonException)
             {
-                logger.LogWarning("Gemini returned a response with an invalid JSON shape. ProviderRequestId: {ProviderRequestId}", providerRequestId);
+                logger.LogWarning(
+                    "Groq returned a response with an invalid JSON shape. ProviderRequestId: {ProviderRequestId}",
+                    providerRequestId);
                 throw new AiModelException(
                     "AI_INVALID_RESPONSE",
                     "Dịch vụ AI trả về kết quả không hợp lệ. Vui lòng thử lại.",
                     502);
             }
 
-            var replyParts = result?.Steps?
-                .Where(step => string.Equals(step.Type, "model_output", StringComparison.OrdinalIgnoreCase))
-                .SelectMany(step => step.Content ?? [])
-                .Where(content => string.Equals(content.Type, "text", StringComparison.OrdinalIgnoreCase))
-                .Select(content => content.Text)
-                .Where(part => !string.IsNullOrWhiteSpace(part));
-            var replyText = replyParts is null ? null : string.Join("\n", replyParts);
+            var replyText = result?.Choices?
+                .Select(choice => choice.Message?.Content)
+                .FirstOrDefault(content => !string.IsNullOrWhiteSpace(content));
 
-            if (string.IsNullOrWhiteSpace(replyText) ||
-                !string.Equals(result?.Status, "completed", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(replyText))
             {
                 logger.LogWarning(
-                    "Gemini response had no completed text output. Status: {Status}; ProviderRequestId: {ProviderRequestId}",
-                    result?.Status,
-                    providerRequestId);
+                    "Groq response had no text output. FinishReason: {FinishReason}; ProviderRequestId: {ProviderRequestId}",
+                    result?.Choices?.FirstOrDefault()?.FinishReason,
+                    result?.Id ?? providerRequestId);
                 throw new AiModelException(
                     "AI_EMPTY_RESPONSE",
                     "Trợ lý AI chưa tạo được câu trả lời. Vui lòng thử lại.",
@@ -130,7 +136,7 @@ public sealed class GeminiClient(
 
             stopwatch.Stop();
             logger.LogInformation(
-                "Gemini request completed in {ElapsedMs} ms. Model: {Model}; InputTokens: {InputTokens}; OutputTokens: {OutputTokens}; ProviderRequestId: {ProviderRequestId}",
+                "Groq request completed in {ElapsedMs} ms. Model: {Model}; InputTokens: {InputTokens}; OutputTokens: {OutputTokens}; ProviderRequestId: {ProviderRequestId}",
                 stopwatch.ElapsedMilliseconds,
                 _options.Model,
                 result?.Usage?.InputTokens,
@@ -143,5 +149,15 @@ public sealed class GeminiClient(
                 result?.Usage?.InputTokens,
                 result?.Usage?.OutputTokens);
         }
+    }
+
+    private static string? GetProviderRequestId(HttpResponseMessage response)
+    {
+        if (response.Headers.TryGetValues("x-request-id", out var requestIds))
+            return requestIds.FirstOrDefault();
+
+        return response.Headers.TryGetValues("x-groq-request-id", out var groqRequestIds)
+            ? groqRequestIds.FirstOrDefault()
+            : null;
     }
 }

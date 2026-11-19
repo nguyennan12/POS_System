@@ -22,21 +22,23 @@ Hệ thống quản lý bán hàng (POS) xây dựng theo kiến trúc Clean Arc
 
 ## 🚀 Khởi chạy dự án
 
-### Cấu hình Trợ lý AI Gemini
+### Cấu hình Trợ lý AI Groq
 
 Trợ lý AI hiện chỉ hỗ trợ hỏi đáp kiến thức chung và chưa được cấp quyền đọc dữ liệu POS hay gọi thao tác bán hàng. API key chỉ được cấu hình ở backend.
 
 Khi chạy API trực tiếp trên máy phát triển, đặt cấu hình bằng .NET User Secrets:
 
 ```powershell
-dotnet user-secrets set "Gemini:Enabled" "true" --project src/POS.Api
-dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY" --project src/POS.Api
-dotnet user-secrets set "Gemini:Model" "gemini-flash-lite-latest" --project src/POS.Api
+dotnet user-secrets set "Groq:Enabled" "true" --project src/POS.Api
+dotnet user-secrets set "Groq:ApiKey" "YOUR_GROQ_API_KEY" --project src/POS.Api
+dotnet user-secrets set "Groq:Model" "llama-3.3-70b-versatile" --project src/POS.Api
 ```
 
-Khi chạy Docker, điền `GEMINI_ENABLED`, `GEMINI_API_KEY` và `GEMINI_MODEL` trong `docker/dev/.env`. Môi trường production nên cấp `GEMINI_API_KEY` qua secret store của máy chủ hoặc pipeline deploy.
+Khi chạy Docker, điền `GROQ_ENABLED`, `GROQ_API_KEY` và `GROQ_MODEL` trong `docker/dev/.env`. Môi trường production nên cấp `GROQ_API_KEY` qua secret store của máy chủ hoặc pipeline deploy.
 
-Trong ứng dụng, mở mục **Trợ lý AI** ở thanh điều hướng quản lý. Nếu chưa cấu hình Gemini, POS vẫn khởi động bình thường và endpoint AI sẽ báo tính năng chưa bật.
+Các biến `GEMINI_*` cũ không còn được đọc. Khi nâng cấp môi trường đang chạy, phải thêm bộ biến `GROQ_*`; không đổi tên rồi tái sử dụng Gemini key vì Groq yêu cầu API key riêng.
+
+Trong ứng dụng, mở mục **Trợ lý AI** ở thanh điều hướng quản lý. Nếu chưa cấu hình Groq, POS vẫn khởi động bình thường và endpoint AI sẽ báo tính năng chưa bật.
 
 ### 1. Khởi chạy môi trường Backend Development (Docker)
 

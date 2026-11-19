@@ -149,7 +149,7 @@ POS-System
 │
 └── EPIC 06: CRM, AI Chatbot, Reports & Operations
     ├── Feature 6.1: Customer Feedback & AI Chatbot
-    │   └── [BE/API] Implement AI Chatbot Session & Message Provider (OpenAI/Gemini) (T54)
+    │   └── [BE/API] Implement AI Chatbot Session & Message Provider (Groq) (T54)
     ├── Feature 6.2: Analytics, Dashboard & Reporting
     │   ├── [BE/API] Implement Real-time Executive Dashboard Metrics Query (T55)
     │   ├── [BE/API] Implement Multi-dimensional Revenue & Inventory Reports (T56)
@@ -220,7 +220,7 @@ POS-System
 | **T51** | Implement Payment Selection & Dynamic QR Dialog (`frmPaymentDialog`)        | FEATURE  | FE        | MISSING       | P0 - Critical | T45, T47, T50      |
 | **T52** | Implement Invoice Viewer & Reprint Screen (`frmInvoiceView`)                | FEATURE  | FE        | MISSING       | P2 - Medium   | T48, T49           |
 | **T53** | Implement Automatic Inventory Deduction & Loyalty Point Trigger on Paid     | FEATURE  | BE        | MISSING       | P0 - Critical | T31, T37, T45      |
-| **T54** | Implement AI Chatbot Session & Message Provider (OpenAI/Gemini)             | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T24                |
+| **T54** | Implement AI Chatbot Session & Message Provider (Groq)                      | FEATURE  | BE/API    | MISSING       | P2 - Medium   | T24                |
 | **T55** | Implement Real-time Executive Dashboard Metrics Query                       | FEATURE  | BE/API    | MISSING       | P1 - High     | T43, T31           |
 | **T56** | Implement Multi-dimensional Revenue & Inventory Reports                     | FEATURE  | BE/API    | MISSING       | P1 - High     | T43, T31           |
 | **T57** | Implement WinUI Executive Dashboard & Report Visualizer                     | FEATURE  | FE        | MISSING       | P1 - High     | T55, T56           |
@@ -907,7 +907,7 @@ POS-System
 ### T54 — [BE/API][FEATURE] Implement AI Chatbot Session & Message Provider
 
 - **Status:** MISSING | **Priority:** P2 - Medium | **Suggested Role:** BE
-- **Description:** Trợ lý ảo AI Chatbot: Quản lý Session, giới hạn số tin nhắn, kết nối OpenAI/Gemini API tra cứu thông tin sản phẩm và chính sách cửa hàng.
+- **Description:** Trợ lý ảo AI Chatbot: Quản lý Session, giới hạn số tin nhắn, kết nối Groq API tra cứu thông tin sản phẩm và chính sách cửa hàng.
 - **Dependencies:** T24
 - **API Contracts:**
   - Request: `CreateChatSessionRequest`, `SendChatMessageRequest`

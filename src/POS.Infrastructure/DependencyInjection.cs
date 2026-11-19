@@ -19,7 +19,7 @@ using POS.Application.Abstractions.Notifications;
 using POS.Application.UseCases.Payments.DTOs;
 using POS.Infrastructure.Payments;
 using POS.Infrastructure.Notifications;
-using POS.Infrastructure.AI.Gemini;
+using POS.Infrastructure.AI.Groq;
 
 namespace POS.Infrastructure;
 
@@ -27,7 +27,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddGeminiAi(configuration);
+        services.AddGroqAi(configuration);
 
         // ---- PostgreSQL ----
         var connectionString = configuration.GetConnectionString("Default")
