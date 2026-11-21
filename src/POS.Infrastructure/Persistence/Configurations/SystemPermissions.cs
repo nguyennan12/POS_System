@@ -173,6 +173,29 @@ public static class SystemPermissions
         new(ResourceNames.AuditLogs, "Audit Log Management",
         [
             (PermissionAction.Read, "View system security audit trail and logs")
+        ]),
+
+        // 22. Store Layouts
+        new(ResourceNames.StoreLayouts, "Store Layout & Map Management",
+        [
+            (PermissionAction.Read, "View store layout and visual floor map"),
+            (PermissionAction.Manage, "Create, edit draft layouts, zones, cells and shelves"),
+            (PermissionAction.Approve, "Publish draft layout into active layout")
+        ]),
+
+        // 23. Product Placements
+        new(ResourceNames.ProductPlacements, "Product Shelf Placement",
+        [
+            (PermissionAction.Read, "Lookup SKU location on active store shelves"),
+            (PermissionAction.Manage, "Assign, move, and remove product placements on shelf levels")
+        ]),
+
+        // 24. Picking Orders
+        new(ResourceNames.PickingOrders, "Smart Picking Orders",
+        [
+            (PermissionAction.Read, "View picking routes and picking tasks"),
+            (PermissionAction.CreateOwn, "Create own picking order task"),
+            (PermissionAction.ManageOwn, "Update and complete assigned picking order")
         ])
     ];
 }

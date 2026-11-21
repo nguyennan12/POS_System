@@ -35,6 +35,14 @@ public static class DependencyInjection
     services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.PointsPaymentStrategy>();
     services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategyFactory, POS.Application.UseCases.Payments.PaymentStrategyFactory>();
 
+    // ---- Store Layout & Pathfinding ----
+    services.AddScoped<POS.Application.Abstractions.StoreLayouts.IPathFindingService, POS.Application.UseCases.StoreLayouts.Services.BreadthFirstPathFindingService>();
+    services.AddScoped<POS.Application.UseCases.StoreLayouts.Services.IStoreLayoutValidationService, POS.Application.UseCases.StoreLayouts.Services.StoreLayoutValidationService>();
+
+    // ---- AI Tool Handlers ----
+    services.AddScoped<POS.Application.Abstractions.AI.IAiToolHandler, POS.Application.UseCases.AI.Tools.StoreLayouts.GetProductLocationsToolHandler>();
+    services.AddScoped<POS.Application.Abstractions.AI.IAiToolHandler, POS.Application.UseCases.AI.Tools.StoreLayouts.PreviewPickingRouteToolHandler>();
+
     return services;
   }
 }

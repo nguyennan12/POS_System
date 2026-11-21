@@ -84,6 +84,9 @@ public static class DependencyInjection
         services.AddScoped<IPriceListRepository, PriceListRepository>();
         services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
         services.AddScoped<ITranslationRepository, TranslationRepository>();
+        services.AddScoped<IStoreLayoutRepository, StoreLayoutRepository>();
+        services.AddScoped<IProductPlacementRepository, ProductPlacementRepository>();
+        services.AddScoped<IPickingOrderRepository, PickingOrderRepository>();
 
         // ---- Excel Services (Reusable Import / Export) ----
         services.AddScoped<POS.Application.Abstractions.Excel.IExcelReader, POS.Infrastructure.Excel.ClosedXmlExcelReader>();

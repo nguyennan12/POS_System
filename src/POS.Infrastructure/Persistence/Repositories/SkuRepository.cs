@@ -6,6 +6,21 @@ namespace POS.Infrastructure.Persistence.Repositories;
 
 public class SkuRepository(AppDbContext dbContext) : ISkuRepository
 {
+    public async Task<Sku?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Skus
+            .Include(s => s.Product)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Sku>> GetByStoreIdAsync(Guid storeId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Skus
+            .Include(s => s.Product)
+            .Where(s => s.StoreId == storeId && s.IsActive)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Sku?> GetByIdWithProductAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await dbContext.Skus

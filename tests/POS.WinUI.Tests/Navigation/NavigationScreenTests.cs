@@ -6,6 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using POS.WinUI.Core.Services;
 using POS.WinUI.Views.Customers;
 using POS.WinUI.Views.Promotions;
+using POS.WinUI.Views.SmartStore;
+using POS.WinUI.ViewModels.SmartStore;
+using POS.WinUI.ViewModels.Shell;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Markup;
@@ -86,6 +89,21 @@ public sealed class SymbolValidationTests
 
                 var pView = new PromotionsView();
                 Assert.NotNull(pView);
+
+                var smartView = new StoreLayoutView();
+                Assert.NotNull(smartView);
+
+                var mapControl = new StoreMapControl();
+                Assert.NotNull(mapControl);
+
+                var editorControl = new LayoutEditorControl();
+                Assert.NotNull(editorControl);
+
+                var placementModal = new ProductPlacementModal();
+                Assert.NotNull(placementModal);
+
+                var pickingControl = new PickingRouteControl();
+                Assert.NotNull(pickingControl);
             }
             catch (Exception e)
             {
@@ -139,6 +157,15 @@ public sealed class SymbolValidationTests
 
                 var shell = sp.GetRequiredService<POS.WinUI.ViewModels.Shell.MainWindowViewModel>();
                 Assert.NotNull(shell.CurrentView);
+
+                var mgmtVm = sp.GetRequiredService<ManagementMainViewModel>();
+                var smartTab = mgmtVm.NavTabs.FirstOrDefault(t => t.Id == "SmartStore");
+                Assert.NotNull(smartTab);
+                Assert.Equal("Mặt bằng & Kho kệ", smartTab.Title);
+
+                mgmtVm.SelectTabCommand.Execute(smartTab);
+                Assert.NotNull(mgmtVm.CurrentTabViewModel);
+                Assert.IsType<StoreLayoutViewModel>(mgmtVm.CurrentTabViewModel);
             }
             catch (Exception e)
             {

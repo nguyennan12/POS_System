@@ -60,6 +60,35 @@ public static class ApiRoutes
     public static string StockTakeApprove(Guid id) => $"api/v1/inventory/stock-takes/{id}/approve";
   }
 
+  public static class StoreLayouts
+  {
+    public const string Base = "api/v1/store-layouts";
+    public const string Active = "api/v1/store-layouts/active";
+    public static string ById(Guid id) => $"api/v1/store-layouts/{id}";
+    public static string Clone(Guid id) => $"api/v1/store-layouts/{id}/clone";
+    public static string Publish(Guid id) => $"api/v1/store-layouts/{id}/publish";
+    public static string Archive(Guid id) => $"api/v1/store-layouts/{id}/archive";
+    public static string Cells(Guid id) => $"api/v1/store-layouts/{id}/cells";
+    public static string Zones(Guid id) => $"api/v1/store-layouts/{id}/zones";
+    public static string ZoneById(Guid id, Guid zoneId) => $"api/v1/store-layouts/{id}/zones/{zoneId}";
+    public static string Shelves(Guid id) => $"api/v1/store-layouts/{id}/shelves";
+    public static string ShelfById(Guid id, Guid shelfId) => $"api/v1/store-layouts/{id}/shelves/{shelfId}";
+    public static string ShelfLevels(Guid id, Guid shelfId) => $"api/v1/store-layouts/{id}/shelves/{shelfId}/levels";
+    public static string ShelfLevelById(Guid id, Guid shelfId, Guid levelId) => $"api/v1/store-layouts/{id}/shelves/{shelfId}/levels/{levelId}";
+    public const string RoutePreview = "api/v1/store-layouts/active/route-preview";
+  }
+
+  public static class ProductPlacements
+  {
+    public const string Base = "api/v1/product-placements";
+    public static string BySku(Guid skuId) => $"api/v1/product-placements/by-sku/{skuId}";
+    public static string ShelfContents(Guid shelfId) => $"api/v1/product-placements/shelves/{shelfId}/contents";
+    public static string History(Guid skuId) => $"api/v1/product-placements/history/{skuId}";
+    public static string Move(Guid id) => $"api/v1/product-placements/{id}/move";
+    public static string Primary(Guid id) => $"api/v1/product-placements/{id}/primary";
+    public static string Delete(Guid id) => $"api/v1/product-placements/{id}";
+  }
+
   public static class Suppliers
   {
     public const string Base = "api/v1/suppliers";

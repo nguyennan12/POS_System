@@ -1,0 +1,205 @@
+<UserControl x:Class="POS.WinUI.Views.SmartStore.PickingRouteControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.SmartStore"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="360"
+             Background="{StaticResource CardBackgroundBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="16">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14">
+                <Border Width="34" Height="34" CornerRadius="8" Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" Margin="0,0,10,0">
+                    <ui:SymbolIcon Symbol="Navigation24" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Smart Picking" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Định tuyến lộ trình gom hàng ngắn nhất" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Error banner -->
+            <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="6" Background="{StaticResource DangerBgBrush}" BorderBrush="{StaticResource DangerBorderBrush}" BorderThickness="1"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVis}}">
+                <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="{StaticResource DangerTextBrush}" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- 1. Chọn từ kệ hàng có sẵn hoặc Thêm Mặt Hàng -->
+            <TextBlock Text="CHỌN SẢN PHẨM CÓ TRÊN KỆ SƠ ĐỒ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <ComboBox ItemsSource="{Binding AvailablePlacedProducts}"
+                      SelectedItem="{Binding SelectedPlacedProduct, Mode=TwoWay}"
+                      DisplayMemberPath="DisplayText"
+                      Height="38" Margin="0,0,0,8" FontSize="12"
+                      VerticalContentAlignment="Center"
+                      ToolTip="Chọn sản phẩm đã được bố trí trên kệ để thêm vào danh sách lấy hàng"/>
+
+            <Button Command="{Binding AddAllPlacedItemsCommand}"
+                    Height="34" Margin="0,0,0,12" Cursor="Hand"
+                    HorizontalAlignment="Stretch"
+                    ToolTip="Thêm nhanh toàn bộ sản phẩm trên sơ đồ vào danh sách lấy hàng">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="allBorder" Background="#FFF7ED" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Flash24" FontSize="14" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0"/>
+                                <TextBlock Text="⚡ Thêm tất cả sản phẩm trên kệ" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="allBorder" Property="Background" Value="#FFEDD5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+
+            <!-- 2. Hoặc Tìm Kiếm Bằng Từ Khóa / Mã Vạch -->
+            <TextBlock Text="HOẶC TÌM KIẾM MẶT HÀNG BẤT KỲ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ui:TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}" 
+                            PlaceholderText="Nhập tên, mã SKU hoặc mã vạch..."
+                            Height="38" VerticalContentAlignment="Center" Padding="10,0"
+                            FontSize="12" BorderBrush="{StaticResource InputBorderBrush}"
+                            ToolTip="Nhập tên SKU hoặc mã vạch cần lấy hàng"
+                            KeyDown="OnSearchInputKeyDown"/>
+                <Button Grid.Column="1" Command="{Binding SearchAndAddItemCommand}"
+                        Height="38" Padding="14,0" Margin="8,0,0,0" Cursor="Hand"
+                        ToolTip="Thêm mặt hàng này vào danh sách cần gom">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="addBorder" Background="{StaticResource PrimaryBrush}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Add24" FontSize="14" Foreground="{StaticResource TextWhiteBrush}" Margin="0,0,4,0"/>
+                                    <TextBlock Text="Thêm" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextWhiteBrush}"/>
+                                </StackPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="addBorder" Property="Background" Value="{StaticResource PrimaryHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <!-- 2. Danh Sách Hàng Cần Gom -->
+            <TextBlock Text="{Binding SelectedItems.Count, StringFormat='DANH SÁCH CẦN LẤY ({0})'}" 
+                       FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <ItemsControl ItemsSource="{Binding SelectedItems}" Margin="0,0,0,12">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource InputBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="8" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ProductName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding SkuCode}" FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                    <TextBlock Text="SL:" FontSize="11" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" 
+                                             Width="40" Height="28" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="11"
+                                             ToolTip="Số lượng cần lấy"/>
+                                </StackPanel>
+                                <Button Grid.Column="2" Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Background="{StaticResource DangerBgBrush}" BorderThickness="0" Width="28" Height="28" Cursor="Hand"
+                                        ToolTip="Xóa sản phẩm này khỏi danh sách gom">
+                                    <ui:SymbolIcon Symbol="Dismiss24" FontSize="12" Foreground="{StaticResource DangerBrush}"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Action Buttons -->
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Command="{Binding CalculateRouteCommand}"
+                        Height="40" Cursor="Hand" Margin="0,0,8,0"
+                        Background="{StaticResource PrimaryBrush}" BorderThickness="0"
+                        ToolTip="Tính toán đường đi ngắn nhất qua các kệ hàng chứa sản phẩm">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border CornerRadius="8" Background="{TemplateBinding Background}" Padding="12,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Play24" FontSize="14" Foreground="{StaticResource TextWhiteBrush}" Margin="0,0,6,0"/>
+                                    <TextBlock Text="Tính Lộ Trình Tối Ưu" FontWeight="SemiBold" FontSize="12.5" Foreground="{StaticResource TextWhiteBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+                <Button Grid.Column="1" Command="{Binding ClearRouteCommand}"
+                        Style="{StaticResource SmallOutlineButtonStyle}"
+                        Height="40" Width="40" ToolTip="Xóa lộ trình đang vẽ trên bản đồ">
+                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" Foreground="{StaticResource TextMutedBrush}"/>
+                </Button>
+            </Grid>
+
+            <!-- 3. Kết Quả Định Tuyến -->
+            <Border Margin="0,0,0,12" Padding="10" CornerRadius="8" Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1"
+                    Visibility="{Binding RouteNotice, Converter={StaticResource NullOrEmptyToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding RouteNotice}" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Unreachable warnings -->
+            <Border Margin="0,0,0,12" Padding="10" CornerRadius="8" Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1"
+                    Visibility="{Binding HasMissingItems, Converter={StaticResource BoolToVis}}">
+                <StackPanel>
+                    <TextBlock Text="Cảnh báo: Có sản phẩm chưa được gán vị trí trên mặt bằng!" FontSize="11" FontWeight="SemiBold" Foreground="#B45309" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 4. Thứ Tự Các Điểm Dừng (Ordered Stops) -->
+            <TextBlock Text="{Binding OrderedStops.Count, StringFormat='THỨ TỰ CÁC ĐIỂM DỪNG ({0})'}" 
+                       FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <ItemsControl ItemsSource="{Binding OrderedStops}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="6" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="10" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Stop badge -->
+                                <Border Grid.Column="0" Width="24" Height="24" CornerRadius="12" Background="{StaticResource PrimaryBrush}" Margin="0,0,10,0">
+                                    <TextBlock Text="{Binding StopIndex}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextWhiteBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding ProductName}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBlock Text="{Binding ShelfCode, StringFormat='Kệ: {0}'}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}"/>
+                                        <TextBlock Text="{Binding LevelNumber, StringFormat=' - Tầng {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <TextBlock Text="{Binding Quantity, StringFormat=' | SL: {0}'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

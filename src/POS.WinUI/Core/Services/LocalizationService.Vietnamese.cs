@@ -21,6 +21,7 @@ public sealed partial class LocalizationService
         ["nav.employees"] = "Nhân viên & Phân quyền",
         ["nav.reports"] = "Báo cáo & Thống kê",
         ["nav.settings"] = "Cài đặt hệ thống",
+        ["nav.smart_store"] = "Mặt bằng & Kho kệ",
         ["ai.title"] = "Trợ lý AI",
         ["ai.subtitle"] = "Hỏi đáp kiến thức chung và hướng dẫn sử dụng POS",
         ["header.pos_screen"] = "Bán hàng POS (F1)",

@@ -1,0 +1,66 @@
+<UserControl x:Class="POS.WinUI.Views.SmartStore.Components.PublishConfirmModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d" 
+             d:DesignWidth="500" d:DesignHeight="400">
+
+    <Grid Background="#75000000" Visibility="{Binding IsPublishConfirmOpen, Converter={StaticResource BoolToVis}}">
+        <Border Width="420" 
+                Background="{StaticResource CardBackgroundBrush}" 
+                CornerRadius="16" 
+                BorderBrush="{StaticResource InputBorderBrush}" 
+                BorderThickness="1" 
+                Padding="24" 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="40" Color="#1E0A02" Opacity="0.25" ShadowDepth="15" Direction="270"/>
+            </Border.Effect>
+
+            <StackPanel>
+                <!-- Icon Header -->
+                <Border Width="48" Height="48" CornerRadius="24" Background="#DCFCE7" HorizontalAlignment="Center" Margin="0,0,0,16">
+                    <ui:SymbolIcon Symbol="CheckmarkCircle24" FontSize="24" Foreground="{StaticResource SuccessBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+
+                <TextBlock Text="Kích Hoạt Mặt Bằng?" FontSize="16" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                <TextBlock Text="Mặt bằng này sẽ trở thành sơ đồ chính thức đang chạy của cửa hàng. Mặt bằng đang hoạt động trước đó sẽ tự động chuyển sang lưu trữ." 
+                           FontSize="12" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" TextAlignment="Center" Margin="0,0,0,20"/>
+
+                <!-- Buttons -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Command="{Binding ClosePublishConfirmCommand}" 
+                            Style="{StaticResource OutlineButtonStyle}"
+                            Height="44" Content="Hủy bỏ" FontSize="13" FontWeight="SemiBold"/>
+
+                    <Button Grid.Column="2" Command="{Binding PublishLayoutCommand}" 
+                            Height="44" Cursor="Hand"
+                            Background="{StaticResource SuccessBrush}"
+                            BorderThickness="0"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border CornerRadius="12" Background="{TemplateBinding Background}">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" Margin="0,0,8,0"
+                                                         Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"/>
+                                        <TextBlock Text="Kích Hoạt Ngay" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextWhiteBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
