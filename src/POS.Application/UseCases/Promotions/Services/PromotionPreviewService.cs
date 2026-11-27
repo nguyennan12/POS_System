@@ -28,20 +28,51 @@ public sealed class PromotionPreviewService(
     public async Task<Result<PromotionPreviewResult>> PreviewOrderAsync(
         Guid orderId, CancellationToken cancellationToken)
     {
-        if (!currentUser.IsAuthenticated)
-            return OrderErrors.Unauthorized;
-
-        var store = storeAccess.EnforceStoreAccess();
-        if (store.IsFailure)
-            return store.Error;
-
-        var order = await orders.GetByIdWithDetailsAsync(orderId, cancellationToken);
-        if (order is null || order.StoreId != store.Value)
-            return OrderErrors.OrderNotFound;
+        var order = await GetOrderInCurrentStoreAsync(orderId, cancellationToken);
+        if (order.IsFailure)
+            return order.Error;
 
         var evaluation = await evaluator.EvaluateOrderAsync(
-            order, voucher: null, revalidateVoucher: true, enforceStoreScope: true, cancellationToken);
+            order.Value!, voucher: null, revalidateVoucher: true, enforceStoreScope: true, cancellationToken);
         return await BuildResultAsync(evaluation, cancellationToken);
+    }
+
+    public async Task<Result<VoucherPreviewResult>> PreviewVoucherForOrderAsync(
+        Guid orderId, string code, CancellationToken cancellationToken)
+    {
+        var order = await GetOrderInCurrentStoreAsync(orderId, cancellationToken);
+        if (order.IsFailure)
+            return order.Error;
+
+        if (string.IsNullOrWhiteSpace(code))
+            return InvalidVoucher("Cần nhập mã giảm giá.");
+
+        var savedOrder = order.Value!;
+        if (savedOrder.Items.Count == 0)
+            return InvalidVoucher(OrderErrors.CartEmpty.Message!);
+
+        var evaluation = await evaluator.EvaluateOrderAsync(
+            savedOrder, voucher: null, revalidateVoucher: true, enforceStoreScope: true,
+            cancellationToken, voucherCode: code);
+        if (evaluation.IsFailure)
+        {
+            var error = evaluation.Error;
+            if (error == OrderErrors.VoucherNotFound || error == OrderErrors.VoucherInactive ||
+                error == OrderErrors.VoucherExpired || error == OrderErrors.VoucherUsageLimitReached ||
+                error == OrderErrors.VoucherCustomerLimitReached)
+                return InvalidVoucher(error.Message!);
+
+            return error;
+        }
+
+        var result = evaluation.Value!;
+        var applied = result.Promotions.AppliedPromotions
+            .FirstOrDefault(promotion => promotion.VoucherId.HasValue && promotion.VoucherId == result.Voucher?.Id);
+        if (applied is null)
+            return InvalidVoucher("Mã giảm giá không áp dụng được cho đơn hàng này.");
+
+        return new VoucherPreviewResult(true, null, applied.PromotionName, applied.DiscountAmount,
+            CalculateTotals(result).GrandTotal);
     }
 
     public async Task<Result<PromotionPreviewResult>> PreviewCartAsync(
@@ -61,6 +92,25 @@ public sealed class PromotionPreviewService(
         return await BuildResultAsync(evaluation, cancellationToken);
     }
 
+    private static VoucherPreviewResult InvalidVoucher(string reason) =>
+        new(false, reason, null, 0m, null);
+
+    private async Task<Result<Order>> GetOrderInCurrentStoreAsync(Guid orderId, CancellationToken cancellationToken)
+    {
+        if (!currentUser.IsAuthenticated)
+            return OrderErrors.Unauthorized;
+
+        var store = storeAccess.EnforceStoreAccess();
+        if (store.IsFailure)
+            return store.Error;
+
+        var order = await orders.GetByIdWithDetailsAsync(orderId, cancellationToken);
+        if (order is null || order.StoreId != store.Value)
+            return OrderErrors.OrderNotFound;
+
+        return order;
+    }
+
     private async Task<Result<PromotionPreviewResult>> BuildResultAsync(
         Result<CartPromotionEvaluation> evaluation, CancellationToken cancellationToken)
     {
@@ -68,13 +118,19 @@ public sealed class PromotionPreviewService(
             return evaluation.Error;
 
         var result = evaluation.Value!;
-        var discounts = result.Promotions.ItemDiscounts.ToDictionary(item => item.SkuId, item => item.DiscountAmount);
-        var taxes = result.Cart.Items.Sum(item => OrderItem.CalculateDiscountAndTax(
-            item.OriginalLineTotal, discounts.GetValueOrDefault(item.SkuId), result.SkuTaxRates[item.SkuId]).Tax);
-        var totals = Order.CalculateTotals(result.Cart.Subtotal, result.Promotions.TotalDiscount, taxes);
+        var totals = CalculateTotals(result);
         var suggestions = await GetSuggestionsAsync(result, cancellationToken);
         return new PromotionPreviewResult(totals.Subtotal, totals.Discount, totals.Tax, totals.GrandTotal,
             result.Promotions.AppliedPromotions, suggestions);
+    }
+
+    private static (decimal Subtotal, decimal Discount, decimal Tax, decimal GrandTotal) CalculateTotals(
+        CartPromotionEvaluation result)
+    {
+        var discounts = result.Promotions.ItemDiscounts.ToDictionary(item => item.SkuId, item => item.DiscountAmount);
+        var taxes = result.Cart.Items.Sum(item => OrderItem.CalculateDiscountAndTax(
+            item.OriginalLineTotal, discounts.GetValueOrDefault(item.SkuId), result.SkuTaxRates[item.SkuId]).Tax);
+        return Order.CalculateTotals(result.Cart.Subtotal, result.Promotions.TotalDiscount, taxes);
     }
 
     private async Task<IReadOnlyList<PromotionPreviewSuggestion>> GetSuggestionsAsync(

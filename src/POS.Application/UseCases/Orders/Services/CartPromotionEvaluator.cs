@@ -19,11 +19,11 @@ internal sealed class CartPromotionEvaluator(
 {
     internal Task<Result<CartPromotionEvaluation>> EvaluateOrderAsync(
         Order order, Voucher? voucher, bool revalidateVoucher, bool enforceStoreScope,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken, string? voucherCode = null) =>
         EvaluateAsync(
             order.StoreId,
             order.Items.Select(i => new CartLine(i.SkuId, i.Qty, i.UnitPrice)).ToList(),
-            order.CustomerId, voucher, order.AppliedVoucherId, voucherCode: null,
+            order.CustomerId, voucher, order.AppliedVoucherId, voucherCode,
             revalidateVoucher, enforceStoreScope, cancellationToken);
 
     internal Task<Result<CartPromotionEvaluation>> EvaluateCartAsync(
@@ -71,14 +71,15 @@ internal sealed class CartPromotionEvaluator(
             skuTaxRates[sku.Id] = sku.TaxRate;
         }
 
-        if (voucher is null && voucherId is Guid appliedVoucherId)
-            voucher = await voucherRepository.GetByIdWithPromotionAsync(appliedVoucherId, cancellationToken);
-
         if (!string.IsNullOrWhiteSpace(voucherCode))
         {
             voucher = await voucherRepository.GetByCodeWithPromotionAsync(voucherCode.Trim(), cancellationToken);
             if (voucher is null)
                 return OrderErrors.VoucherNotFound;
+        }
+        else if (voucher is null && voucherId is Guid appliedVoucherId)
+        {
+            voucher = await voucherRepository.GetByIdWithPromotionAsync(appliedVoucherId, cancellationToken);
         }
 
         if (enforceStoreScope && voucher?.Promotion is { StoreId: var voucherStore } &&

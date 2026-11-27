@@ -56,3 +56,10 @@ public sealed record PromotionPreviewResult(
     decimal GrandTotal,
     IReadOnlyList<AppliedPromotionResult> AppliedPromotions,
     IReadOnlyList<PromotionPreviewSuggestion> Suggestions);
+
+public sealed record VoucherPreviewResult(
+    bool IsValid,
+    string? Reason,
+    string? PromotionName,
+    decimal DiscountAmount,
+    decimal? GrandTotal);

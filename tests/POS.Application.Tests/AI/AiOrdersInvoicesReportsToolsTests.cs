@@ -281,12 +281,11 @@ public sealed class AiOrdersInvoicesReportsToolsTests
             .Select(d => d.ImplementationType)
             .ToArray();
 
-        registeredHandlerTypes.Should().HaveCount(10);
         registeredHandlerTypes.Should().OnlyHaveUniqueItems();
 
         var sender = Substitute.For<ISender>();
         var storePolicy = Substitute.For<IStoreAccessPolicy>();
-        var instantiatedNames = new IAiToolHandler[]
+        var coreHandlers = new IAiToolHandler[]
         {
             new POS.Application.UseCases.AI.Tools.Products.SearchProductsToolHandler(sender),
             new POS.Application.UseCases.AI.Tools.Products.GetProductDetailToolHandler(sender),
@@ -298,9 +297,10 @@ public sealed class AiOrdersInvoicesReportsToolsTests
             new GetInvoiceDetailToolHandler(sender, storePolicy),
             new GetRevenueReportToolHandler(sender, storePolicy),
             new GetTopSellingProductsToolHandler(sender, storePolicy)
-        }.Select(h => h.Name).ToArray();
+        };
 
-        instantiatedNames.Should().Equal(
+        registeredHandlerTypes.Should().Contain(coreHandlers.Select(handler => handler.GetType()));
+        coreHandlers.Select(handler => handler.Name).Should().Equal(
             new AiToolRegistry().GetAvailableTools().Take(10).Select(t => t.Name));
     }
 }

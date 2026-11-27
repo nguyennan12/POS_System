@@ -43,7 +43,7 @@ internal sealed class AiToolTestHost(params string[] permissions)
     {
         using var scope = provider.CreateScope();
         using var json = JsonDocument.Parse(arguments);
-        var executor = scope.ServiceProvider.GetRequiredService<IAiToolExecutor>();
+        var executor = scope.ServiceProvider.GetRequiredService<AiToolExecutor>();
         var response = await executor.ExecuteAsync(new AiToolCall("call", name, json.RootElement), CancellationToken.None);
         return response.Result;
     }

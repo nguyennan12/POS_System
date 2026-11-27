@@ -6,6 +6,7 @@ using POS.Application.UseCases.AI.Tools.Inventory;
 using POS.Application.UseCases.AI.Tools.Invoices;
 using POS.Application.UseCases.AI.Tools.Orders;
 using POS.Application.UseCases.AI.Tools.Products;
+using POS.Application.UseCases.AI.Tools.Promotions;
 using POS.Application.UseCases.AI.Tools.Reports;
 using POS.Application.UseCases.AI.Tools.Shifts;
 using POS.Application.UseCases.Orders.Access;
@@ -63,10 +64,14 @@ public static class AiToolServiceCollectionExtensions
         services.AddScoped<IAiToolHandler, GetCustomerDetailToolHandler>();
         services.AddScoped<IAiToolHandler, GetCustomerLoyaltyToolHandler>();
         services.AddScoped<IAiToolHandler, GetCurrentShiftToolHandler>();
+        services.AddScoped<IAiToolHandler, ValidateVoucherToolHandler>();
         services.AddScoped<IAiToolHandler, GetDashboardSummaryToolHandler>();
         services.AddScoped<IAiToolHandler, GetSlowMovingProductsToolHandler>();
         services.AddScoped<IAiToolHandler, GetStockHistoryToolHandler>();
         services.AddScoped<IAiToolHandler, GetExpiringBatchesToolHandler>();
+        services.AddScoped<IAiToolHandler, ListActivePromotionsToolHandler>();
+        services.AddScoped<IAiToolHandler, GetProductPromotionsToolHandler>();
+        services.AddScoped<IAiToolHandler, PreviewOrderPromotionsToolHandler>();
         return services;
     }
 }
