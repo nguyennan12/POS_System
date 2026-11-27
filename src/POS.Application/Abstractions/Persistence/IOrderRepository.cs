@@ -18,6 +18,15 @@ public interface IOrderRepository
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<OrderSummaryDto> Items, int TotalCount)> GetPagedByScopeAsync(
+        Guid storeId,
+        Guid? createdByEmployeeId,
+        OrderStatus? status,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
     Task AddAsync(Order order, CancellationToken cancellationToken = default);
     Task AddPaymentsAsync(IEnumerable<Payment> payments, CancellationToken cancellationToken = default);
     void ReplaceDiscounts(IEnumerable<OrderDiscount> previous, IEnumerable<OrderDiscount> current);

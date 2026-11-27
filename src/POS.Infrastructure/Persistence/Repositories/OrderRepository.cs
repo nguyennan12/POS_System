@@ -52,6 +52,51 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
+        return await QueryPagedOrdersAsync(
+            storeId,
+            shiftId,
+            createdByEmployeeId: null,
+            status,
+            from,
+            to,
+            pageNumber,
+            pageSize,
+            cancellationToken);
+    }
+
+    public async Task<(IReadOnlyList<OrderSummaryDto> Items, int TotalCount)> GetPagedByScopeAsync(
+        Guid storeId,
+        Guid? createdByEmployeeId,
+        OrderStatus? status,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        return await QueryPagedOrdersAsync(
+            storeId,
+            shiftId: null,
+            createdByEmployeeId,
+            status,
+            from,
+            to,
+            pageNumber,
+            pageSize,
+            cancellationToken);
+    }
+
+    private async Task<(IReadOnlyList<OrderSummaryDto> Items, int TotalCount)> QueryPagedOrdersAsync(
+        Guid? storeId,
+        Guid? shiftId,
+        Guid? createdByEmployeeId,
+        OrderStatus? status,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken)
+    {
         var query = dbContext.Orders.AsNoTracking();
 
         if (storeId.HasValue)
@@ -59,6 +104,9 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
 
         if (shiftId.HasValue)
             query = query.Where(o => o.ShiftId == shiftId.Value);
+
+        if (createdByEmployeeId.HasValue)
+            query = query.Where(o => o.CreatedBy == createdByEmployeeId.Value);
 
         if (status.HasValue)
             query = query.Where(o => o.Status == status.Value);

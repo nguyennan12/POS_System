@@ -14,10 +14,23 @@ public class GetStockAlertsQueryHandler(
         GetStockAlertsQuery query,
         CancellationToken cancellationToken)
     {
-        if (currentUser.StoreId is null && !currentUser.IsChainOwner)
-            return InventoryErrors.StoreRequired;
+        Guid? storeId;
+        if (currentUser.IsChainOwner)
+        {
+            storeId = query.StoreId.HasValue && query.StoreId.Value != Guid.Empty
+                ? query.StoreId.Value
+                : currentUser.StoreId;
+        }
+        else
+        {
+            if (currentUser.StoreId is null)
+                return InventoryErrors.StoreRequired;
 
-        var storeId = currentUser.IsChainOwner ? null : currentUser.StoreId;
+            if (query.StoreId.HasValue && query.StoreId.Value != Guid.Empty && query.StoreId.Value != currentUser.StoreId.Value)
+                return InventoryErrors.StoreAccessDenied;
+
+            storeId = currentUser.StoreId;
+        }
 
         // nearExpiryDays = 0 hợp lệ: lọc các lô hết hạn ngay hôm nay
         var nearExpiryDays = Math.Max(0, query.NearExpiryDays);

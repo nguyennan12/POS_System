@@ -515,6 +515,16 @@ public class SplitPaymentPersistenceTests
             int pageSize,
             CancellationToken cancellationToken = default) =>
             inner.GetPagedAsync(storeId, shiftId, status, from, to, pageNumber, pageSize, cancellationToken);
+        public Task<(IReadOnlyList<POS.Application.UseCases.Orders.DTOs.OrderSummaryDto> Items, int TotalCount)> GetPagedByScopeAsync(
+            Guid storeId,
+            Guid? createdByEmployeeId,
+            OrderStatus? status,
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            int pageNumber,
+            int pageSize,
+            CancellationToken cancellationToken = default) =>
+            inner.GetPagedByScopeAsync(storeId, createdByEmployeeId, status, from, to, pageNumber, pageSize, cancellationToken);
         public Task AddAsync(Order order, CancellationToken cancellationToken = default) => inner.AddAsync(order, cancellationToken);
         public Task AddPaymentsAsync(IEnumerable<Payment> payments, CancellationToken cancellationToken = default) => inner.AddPaymentsAsync(payments, cancellationToken);
         public void Update(Order order) => inner.Update(order);

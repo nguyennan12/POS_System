@@ -1,3 +1,4 @@
+using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 
 namespace POS.Application.UseCases.Products.Queries.GetPosCatalog;
@@ -8,4 +9,7 @@ public record GetPosCatalogQuery(
     int PageNumber,
     int PageSize,
     Guid? StoreId = null
-) : IQuery<PagedPosCatalogList>;
+) : IQuery<PagedPosCatalogList>, IRequirePermission
+{
+    public string RequiredPermission => "products:read";
+}

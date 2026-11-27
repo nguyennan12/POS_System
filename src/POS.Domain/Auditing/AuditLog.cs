@@ -38,6 +38,47 @@ public class AuditLog : BaseEntity
         EntityId = paymentId, Action = "QrPaymentRequested"
     };
 
+    public static AuditLog AiToolExecution(
+        Guid executionId,
+        Guid? employeeId,
+        Guid? storeId,
+        string toolName,
+        bool success,
+        long durationMs,
+        int resultCount,
+        string? errorCode = null)
+    {
+        var trimmedTool = string.IsNullOrWhiteSpace(toolName) ? "unknown" : toolName.Trim();
+        var safeAction = trimmedTool.Length > 50 ? trimmedTool[..50] : trimmedTool;
+        var clampedDuration = Math.Max(0L, durationMs);
+
+        string description;
+        if (success)
+        {
+            description = $"Status=Success; DurationMs={clampedDuration}; ResultCount={Math.Max(0, resultCount)}";
+        }
+        else
+        {
+            var safeErrorCode = string.IsNullOrWhiteSpace(errorCode) ? "UNKNOWN_ERROR" : errorCode.Trim();
+            description = $"Status=Failure; DurationMs={clampedDuration}; ErrorCode={safeErrorCode}";
+        }
+
+        if (description.Length > 500)
+        {
+            description = description[..500];
+        }
+
+        return new AuditLog
+        {
+            EmployeeId = employeeId,
+            StoreId = storeId,
+            EntityType = "AiTool",
+            EntityId = executionId == Guid.Empty ? Guid.NewGuid() : executionId,
+            Action = safeAction,
+            Description = description
+        };
+    }
+
     public Guid? StoreId { get; private set; }
     public Store? Store { get; private set; }
 

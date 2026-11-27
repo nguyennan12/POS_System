@@ -23,6 +23,8 @@ public class GetInvoiceByIdQueryHandler(
         if (invoice is null) return InvoiceReadErrors.InvoiceNotFound;
         if (!employee.IsChainOwner && employee.StoreId != invoice.Order.StoreId)
             return InvoiceReadErrors.InvalidStore;
+        if (employee.IsChainOwner && currentUser.StoreId.HasValue && currentUser.StoreId.Value != invoice.Order.StoreId)
+            return InvoiceReadErrors.InvalidStore;
 
         return invoice.ToDetailResponse();
     }

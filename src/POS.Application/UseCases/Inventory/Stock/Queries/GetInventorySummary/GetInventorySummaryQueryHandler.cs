@@ -18,7 +18,9 @@ public class GetInventorySummaryQueryHandler(
         Guid? storeId;
         if (currentUser.IsChainOwner)
         {
-            storeId = query.StoreId.HasValue && query.StoreId.Value != Guid.Empty ? query.StoreId.Value : null;
+            storeId = query.StoreId.HasValue && query.StoreId.Value != Guid.Empty
+                ? query.StoreId.Value
+                : currentUser.StoreId;
         }
         else
         {

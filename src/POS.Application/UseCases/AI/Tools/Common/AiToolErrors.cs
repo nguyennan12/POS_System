@@ -41,12 +41,14 @@ public static class AiToolErrors
     public static AiToolExecutionResult FromDomainError(Error error)
     {
         if (string.Equals(error.Code, "Store.Required", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(error.Code, "STORE.REQUIRED", StringComparison.OrdinalIgnoreCase))
+            string.Equals(error.Code, "STORE.REQUIRED", StringComparison.OrdinalIgnoreCase) ||
+            error.Code.EndsWith(".StoreRequired", StringComparison.OrdinalIgnoreCase))
         {
             return MissingStore();
         }
 
         if (string.Equals(error.Code, "Store.AccessDenied", StringComparison.OrdinalIgnoreCase) ||
+            error.Code.EndsWith(".StoreAccessDenied", StringComparison.OrdinalIgnoreCase) ||
             error.Type is ErrorType.Forbidden or ErrorType.Unauthorized)
         {
             return Forbidden();

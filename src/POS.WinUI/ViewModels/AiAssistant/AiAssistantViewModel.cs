@@ -143,7 +143,7 @@ public sealed partial class AiAssistantViewModel : ManagementTabViewModelBase
     private void AddWelcomeMessage()
     {
         Messages.Add(new AiChatMessageItem(
-            "Xin chào! Tôi có thể giải đáp kiến thức chung và hướng dẫn sử dụng POS. Hiện tôi chưa tra cứu được dữ liệu cửa hàng.",
+            "Xin chào! Tôi có thể tra cứu nhanh sản phẩm, tồn kho, đơn hàng, hóa đơn, khách hàng, báo cáo, khuyến mãi của chi nhánh hiện tại và hướng dẫn sử dụng POS.",
             false,
             DateTime.Now.ToString("HH:mm"),
             IncludeInHistory: false));
