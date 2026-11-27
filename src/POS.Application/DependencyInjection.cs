@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Abstractions.Auth;
 using POS.Application.Common.Behaviors;
+using POS.Application.UseCases.AI.Tools;
 using POS.Application.UseCases.Auth;
 
 namespace POS.Application;
@@ -26,6 +27,7 @@ public static class DependencyInjection
     services.AddScoped<POS.Domain.Promotions.Services.IPromotionEngine, POS.Domain.Promotions.Services.PromotionEngine>();
     services.AddScoped<POS.Application.UseCases.Orders.Services.ICartCalculationService, POS.Application.UseCases.Orders.Services.CartCalculationService>();
     services.AddScoped<POS.Application.UseCases.Orders.Services.ICheckoutGuardService, POS.Application.UseCases.Orders.Services.CheckoutGuardService>();
+    services.AddAiTooling();
 
     // ---- Payment Strategies & Factory ----
     services.AddScoped<POS.Application.Abstractions.Payments.IPaymentStrategy, POS.Application.UseCases.Payments.Strategies.CashPaymentStrategy>();
