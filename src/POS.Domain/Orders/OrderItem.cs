@@ -57,11 +57,16 @@ public class OrderItem : BaseEntity
 
     public void ApplyDiscountAndTax(decimal discountAmount, decimal taxRate)
     {
-        decimal lineGross = Math.Round(UnitPrice * Qty, 2);
-        DiscountAmount = Math.Min(lineGross, Math.Max(0, discountAmount));
-        decimal lineNet = Math.Max(0, lineGross - DiscountAmount);
-        
-        TaxAmount = Math.Round(lineNet * (Math.Max(0, taxRate) / 100m), 2);
-        LineTotal = Math.Round(lineNet + TaxAmount, 2);
+        (DiscountAmount, TaxAmount, LineTotal) = CalculateDiscountAndTax(UnitPrice * Qty, discountAmount, taxRate);
+    }
+
+    public static (decimal Discount, decimal Tax, decimal LineTotal) CalculateDiscountAndTax(
+        decimal grossAmount, decimal discountAmount, decimal taxRate)
+    {
+        decimal lineGross = Math.Round(grossAmount, 2);
+        decimal discount = Math.Min(lineGross, Math.Max(0, discountAmount));
+        decimal lineNet = Math.Max(0, lineGross - discount);
+        decimal tax = Math.Round(lineNet * (Math.Max(0, taxRate) / 100m), 2);
+        return (discount, tax, Math.Round(lineNet + tax, 2));
     }
 }

@@ -186,10 +186,17 @@ public class Order : BaseEntity
         }
 
         // 3. Tính lại tổng tiền
-        Subtotal = Math.Round(Items.Sum(i => i.UnitPrice * i.Qty), 2);
-        DiscountTotal = Math.Round(result.TotalDiscount, 2);
-        TaxTotal = Math.Round(Items.Sum(i => i.TaxAmount), 2);
-        GrandTotal = Math.Max(0, Math.Round(Subtotal - DiscountTotal + TaxTotal, 2));
+        (Subtotal, DiscountTotal, TaxTotal, GrandTotal) = CalculateTotals(
+            Items.Sum(i => i.UnitPrice * i.Qty), result.TotalDiscount, Items.Sum(i => i.TaxAmount));
+    }
+
+    public static (decimal Subtotal, decimal Discount, decimal Tax, decimal GrandTotal) CalculateTotals(
+        decimal subtotal, decimal discount, decimal tax)
+    {
+        subtotal = Math.Round(subtotal, 2);
+        discount = Math.Round(discount, 2);
+        tax = Math.Round(tax, 2);
+        return (subtotal, discount, tax, Math.Max(0, Math.Round(subtotal - discount + tax, 2)));
     }
 
     public (decimal TotalApplied, decimal ChangeAmount, OrderStatus Status) ProcessPayments(
