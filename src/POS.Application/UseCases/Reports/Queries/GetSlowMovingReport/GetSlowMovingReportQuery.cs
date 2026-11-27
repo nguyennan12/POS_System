@@ -1,6 +1,7 @@
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Contracts.V1.Reports;
 using POS.Domain.Common;
 
@@ -12,6 +13,7 @@ public record GetSlowMovingReportQuery(
 ) : IQuery<IReadOnlyList<SlowMovingItemResponse>>, IRequirePermission
 {
     public string RequiredPermission => "reports:inventory_view";
+    internal bool CurrentStoreOnly { get; init; }
 }
 
 public class GetSlowMovingReportQueryHandler : IQueryHandler<GetSlowMovingReportQuery, IReadOnlyList<SlowMovingItemResponse>>
@@ -44,6 +46,9 @@ public class GetSlowMovingReportQueryHandler : IQueryHandler<GetSlowMovingReport
                 effectiveStoreId = employee.StoreId;
             }
         }
+
+        if (query.CurrentStoreOnly && effectiveStoreId != query.StoreId)
+            return StoreErrors.StoreAccessDenied;
 
         var result = await _reportRepository.GetSlowMovingItemsAsync(
             query.Days,

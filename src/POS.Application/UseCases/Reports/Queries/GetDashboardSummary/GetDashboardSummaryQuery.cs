@@ -1,6 +1,7 @@
 using POS.Application.Abstractions.Auth;
 using POS.Application.Abstractions.Messaging;
 using POS.Application.Abstractions.Persistence;
+using POS.Application.UseCases.Stores.Errors;
 using POS.Contracts.V1.Reports;
 using POS.Domain.Common;
 
@@ -9,6 +10,7 @@ namespace POS.Application.UseCases.Reports.Queries.GetDashboardSummary;
 public record GetDashboardSummaryQuery(Guid? StoreId = null, int Days = 7) : IQuery<DashboardSummaryResponse>, IRequirePermission
 {
     public string RequiredPermission => "reports:dashboard_view";
+    internal bool CurrentStoreOnly { get; init; }
 }
 
 public class GetDashboardSummaryQueryHandler : IQueryHandler<GetDashboardSummaryQuery, DashboardSummaryResponse>
@@ -42,6 +44,9 @@ public class GetDashboardSummaryQueryHandler : IQueryHandler<GetDashboardSummary
                 effectiveStoreId = employee.StoreId;
             }
         }
+
+        if (query.CurrentStoreOnly && effectiveStoreId != query.StoreId)
+            return StoreErrors.StoreAccessDenied;
 
         var summary = await _reportRepository.GetDashboardSummaryAsync(effectiveStoreId, query.Days, cancellationToken);
         return Result<DashboardSummaryResponse>.Success(summary);

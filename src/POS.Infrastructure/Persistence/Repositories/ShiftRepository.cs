@@ -16,7 +16,8 @@ public class ShiftRepository(AppDbContext context) : IShiftRepository
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
 
-    public async Task<Shift?> GetOpenShiftAsync(Guid storeId, Guid? registerId = null, CancellationToken cancellationToken = default)
+    public async Task<Shift?> GetOpenShiftAsync(Guid storeId, Guid? registerId = null,
+        CancellationToken cancellationToken = default, Guid? employeeId = null)
     {
         var query = context.Shifts
             .Include(s => s.Employee)
@@ -26,6 +27,11 @@ public class ShiftRepository(AppDbContext context) : IShiftRepository
         if (registerId.HasValue)
         {
             query = query.Where(s => s.RegisterId == registerId.Value);
+        }
+
+        if (employeeId.HasValue)
+        {
+            query = query.Where(s => s.EmployeeId == employeeId.Value);
         }
 
         return await query.FirstOrDefaultAsync(cancellationToken);

@@ -227,7 +227,8 @@ public class ReportRepository : IReportRepository
         var skuIds = stockEntries.Select(e => e.SkuId).Distinct().ToList();
 
         var lastSales = await _context.OrderItems.AsNoTracking()
-            .Where(oi => skuIds.Contains(oi.SkuId) && oi.Order.PaidAt != null && oi.Order.Status == OrderStatus.Paid)
+            .Where(oi => skuIds.Contains(oi.SkuId) && oi.Order.PaidAt != null && oi.Order.Status == OrderStatus.Paid
+                && (!storeId.HasValue || oi.Order.StoreId == storeId.Value))
             .GroupBy(oi => oi.SkuId)
             .Select(g => new
             {
@@ -339,7 +340,7 @@ public class ReportRepository : IReportRepository
         int days = 7,
         CancellationToken cancellationToken = default)
     {
-        var chartDays = Math.Clamp(days <= 0 ? 7 : days, 7, 30);
+        var chartDays = Math.Clamp(days <= 0 ? 7 : days, 1, 90);
         var nowUtc = DateTime.UtcNow;
         // Store-local calendar days are used for the dashboard. A chain-wide view
         // uses the system's Vietnam timezone as the common reporting calendar.
@@ -388,7 +389,7 @@ public class ReportRepository : IReportRepository
             growthPercentage = Math.Round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100m, 2);
         }
 
-        // 3. Dynamic revenue chart (7-30 days)
+        // 3. Dynamic revenue chart
         var chartItems = new List<DailyRevenueChartItem>(chartDays);
         for (int i = chartDays - 1; i >= 0; i--)
         {

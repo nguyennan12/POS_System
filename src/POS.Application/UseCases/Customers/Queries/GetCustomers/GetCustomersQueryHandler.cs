@@ -18,7 +18,8 @@ public class GetCustomersQueryHandler(ICustomerRepository customerRepository)
             request.MemberTierId,
             request.PageNumber,
             request.PageSize,
-            cancellationToken);
+            cancellationToken,
+            request.ScopedStoreId);
 
         var dtoList = items.Select(item => new CustomerDto(
             Id: item.Customer.Id,

@@ -16,6 +16,10 @@ public class GetLoyaltyAccountQueryHandler(ICustomerRepository customerRepositor
     /// </summary>
     public async Task<Result<LoyaltyAccountDto>> Handle(GetLoyaltyAccountQuery request, CancellationToken cancellationToken)
     {
+        if (request.ScopedStoreId is Guid storeId &&
+            !await customerRepository.HasOrdersAtStoreAsync(request.CustomerId, storeId, cancellationToken))
+            return CustomerErrors.NotFound;
+
         var customer = await customerRepository.GetEntityByIdAsync(request.CustomerId, cancellationToken);
         if (customer is null)
         {

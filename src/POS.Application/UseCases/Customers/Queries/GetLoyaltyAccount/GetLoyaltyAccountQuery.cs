@@ -9,4 +9,5 @@ namespace POS.Application.UseCases.Customers.Queries.GetLoyaltyAccount;
 public record GetLoyaltyAccountQuery(Guid CustomerId) : IQuery<LoyaltyAccountDto>, IRequirePermission
 {
     public string RequiredPermission => "customers:read";
+    internal Guid? ScopedStoreId { get; init; }
 }

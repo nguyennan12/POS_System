@@ -74,9 +74,17 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
         Guid? memberTierId,
         int pageNumber,
         int pageSize,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Guid? storeId = null)
     {
         var baseQuery = context.Customers.AsNoTracking().Include(c => c.MemberTier).AsQueryable();
+
+        if (storeId is Guid branchId)
+        {
+            // Customer profiles are shared. An order establishes a relationship with the branch.
+            baseQuery = baseQuery.Where(c =>
+                context.Orders.Any(o => o.CustomerId == c.Id && o.StoreId == branchId));
+        }
 
         if (!string.IsNullOrWhiteSpace(phone))
         {
@@ -87,7 +95,15 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
         if (!string.IsNullOrWhiteSpace(name))
         {
             var n = name.Trim();
-            baseQuery = baseQuery.Where(c => EF.Functions.ILike(c.Name, $"%{n}%"));
+            if (storeId.HasValue)
+            {
+                n = n.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+                baseQuery = baseQuery.Where(c => EF.Functions.ILike(c.Name, $"%{n}%", "\\"));
+            }
+            else
+            {
+                baseQuery = baseQuery.Where(c => EF.Functions.ILike(c.Name, $"%{n}%"));
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(barcode))
@@ -183,6 +199,9 @@ public class CustomerRepository(AppDbContext context) : ICustomerRepository
 
     public Task<bool> HasOrdersAsync(Guid customerId, CancellationToken cancellationToken = default) =>
         context.Orders.AnyAsync(o => o.CustomerId == customerId, cancellationToken);
+
+    public Task<bool> HasOrdersAtStoreAsync(Guid customerId, Guid storeId, CancellationToken cancellationToken = default) =>
+        context.Orders.AnyAsync(o => o.CustomerId == customerId && o.StoreId == storeId, cancellationToken);
 
     public void Remove(Customer customer) => context.Customers.Remove(customer);
 }

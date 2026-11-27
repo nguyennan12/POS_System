@@ -25,7 +25,9 @@ public interface ICustomerRepository
       Guid? memberTierId,
       int pageNumber,
       int pageSize,
-      CancellationToken cancellationToken = default);
+      CancellationToken cancellationToken = default,
+      Guid? storeId = null);
+  Task<bool> HasOrdersAtStoreAsync(Guid customerId, Guid storeId, CancellationToken cancellationToken = default);
   Task AddAsync(Customer customer, LoyaltyAccount loyaltyAccount, CancellationToken cancellationToken = default);
   Task AddLoyaltyAccountAsync(LoyaltyAccount loyaltyAccount, CancellationToken cancellationToken = default);
 

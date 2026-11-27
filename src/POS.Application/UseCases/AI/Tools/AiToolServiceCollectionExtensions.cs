@@ -1,11 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Abstractions.AI;
 using POS.Application.UseCases.AI.Tools.Common;
+using POS.Application.UseCases.AI.Tools.Customers;
 using POS.Application.UseCases.AI.Tools.Inventory;
 using POS.Application.UseCases.AI.Tools.Invoices;
 using POS.Application.UseCases.AI.Tools.Orders;
 using POS.Application.UseCases.AI.Tools.Products;
 using POS.Application.UseCases.AI.Tools.Reports;
+using POS.Application.UseCases.AI.Tools.Shifts;
 using POS.Application.UseCases.Orders.Access;
 
 namespace POS.Application.UseCases.AI.Tools;
@@ -57,8 +59,14 @@ public static class AiToolServiceCollectionExtensions
 
     private static IServiceCollection AddPerson2ExtendedAiToolHandlers(this IServiceCollection services)
     {
-        // Người 2 đăng ký Tool 11–22 tại đây (AI-P2-05 → AI-P2-09):
-        // services.AddScoped<IAiToolHandler, SearchCustomersToolHandler>();
+        services.AddScoped<IAiToolHandler, SearchCustomersToolHandler>();
+        services.AddScoped<IAiToolHandler, GetCustomerDetailToolHandler>();
+        services.AddScoped<IAiToolHandler, GetCustomerLoyaltyToolHandler>();
+        services.AddScoped<IAiToolHandler, GetCurrentShiftToolHandler>();
+        services.AddScoped<IAiToolHandler, GetDashboardSummaryToolHandler>();
+        services.AddScoped<IAiToolHandler, GetSlowMovingProductsToolHandler>();
+        services.AddScoped<IAiToolHandler, GetStockHistoryToolHandler>();
+        services.AddScoped<IAiToolHandler, GetExpiringBatchesToolHandler>();
         return services;
     }
 }

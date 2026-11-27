@@ -7,4 +7,5 @@ namespace POS.Application.UseCases.Shifts.Queries.GetCurrentShift;
 public record GetCurrentShiftQuery(Guid StoreId, Guid? RegisterId = null) : IQuery<ShiftSummaryDto>, IRequirePermission
 {
     public string RequiredPermission => "shifts:manage_own";
+    internal bool OwnShiftOnly { get; init; }
 }

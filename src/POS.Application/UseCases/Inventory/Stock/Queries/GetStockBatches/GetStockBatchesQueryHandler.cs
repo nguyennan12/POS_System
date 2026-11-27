@@ -18,7 +18,7 @@ public class GetStockBatchesQueryHandler(
             return InventoryErrors.StoreRequired;
 
         // Chain owner: storeId = null → repository returns all stores
-        var storeId = currentUser.IsChainOwner ? null : currentUser.StoreId;
+        var storeId = query.ScopedStoreId ?? (currentUser.IsChainOwner ? null : currentUser.StoreId);
 
         var (items, total) = await stockEntryRepository.GetBatchesAsync(
             storeId, query.SkuId, query.ExpiryBefore, query.PageNumber, query.PageSize, cancellationToken);

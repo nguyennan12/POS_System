@@ -12,6 +12,10 @@ public class GetCustomerByIdQueryHandler(ICustomerRepository customerRepository)
         GetCustomerByIdQuery request,
         CancellationToken cancellationToken)
     {
+        if (request.ScopedStoreId is Guid storeId &&
+            !await customerRepository.HasOrdersAtStoreAsync(request.Id, storeId, cancellationToken))
+            return CustomerErrors.NotFound;
+
         var customerWithPoints = await customerRepository.GetByIdAsync(request.Id, cancellationToken);
         if (customerWithPoints is null)
         {

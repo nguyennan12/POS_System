@@ -12,6 +12,7 @@ public record GetStockBatchesQuery(
 ) : IQuery<PagedStockBatchList>, IRequirePermission
 {
     public string RequiredPermission => "inventory:read";
+    internal Guid? ScopedStoreId { get; init; }
 }
 
 public record PagedStockBatchList(

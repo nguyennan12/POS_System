@@ -13,4 +13,5 @@ public record GetCustomersQuery(
 ) : IQuery<PagedCustomerList>, IRequirePermission
 {
     public string RequiredPermission => "customers:read";
+    internal Guid? ScopedStoreId { get; init; }
 }
