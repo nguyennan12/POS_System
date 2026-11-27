@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using POS.Contracts.V1.Categories;
 using POS.Contracts.V1.Promotions;
 
 namespace POS.WinUI.ViewModels.Promotions;
@@ -122,28 +123,49 @@ public sealed partial class PromotionsViewModel
     }
 
     [RelayCommand]
-    private void OpenCreatePromotion()
+    private async Task OpenCreatePromotionAsync(CancellationToken ct)
     {
-        PromotionFormDialog = new PromotionFormDialogViewModel();
+        if (PromotionStoreId is not Guid storeId)
+        {
+            ShowError("Chọn chi nhánh trước khi tạo chương trình khuyến mãi.");
+            return;
+        }
+
+        var dialog = new PromotionFormDialogViewModel(catalogStoreId: storeId);
+        PromotionFormDialog = dialog;
+        await LoadPromotionCatalogAsync(dialog, ct);
     }
 
     [RelayCommand]
-    private async Task OpenEditPromotionAsync(PromotionSummaryResponse promo)
+    private async Task OpenEditPromotionAsync(PromotionSummaryResponse promo, CancellationToken ct)
     {
         if (promo == null) return;
+        var storeId = PromotionStoreId;
+        PromotionFormDialogViewModel? dialog = null;
         IsLoading = true;
         try
         {
-            var detailRes = await _api.GetPromotionByIdAsync(promo.Id);
-            if (detailRes?.Success == true && detailRes.Data != null)
+            var detailRes = await _api.GetPromotionByIdAsync(promo.Id, ct);
+            if (ct.IsCancellationRequested || storeId != PromotionStoreId)
+                return;
+
+            if (detailRes?.Success == true && detailRes.Data is { } detail)
             {
-                PromotionFormDialog = new PromotionFormDialogViewModel(detailRes.Data);
+                if (detail.StoreId != Guid.Empty && detail.StoreId != storeId)
+                {
+                    ShowError("Chương trình khuyến mãi thuộc chi nhánh khác.");
+                    return;
+                }
+
+                dialog = new PromotionFormDialogViewModel(detail, storeId);
+                PromotionFormDialog = dialog;
             }
             else
             {
                 ShowError(detailRes?.Message ?? "Không thể lấy thông tin chi tiết chương trình khuyến mãi.");
             }
         }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex)
         {
             ShowError(ex.Message);
@@ -152,55 +174,156 @@ public sealed partial class PromotionsViewModel
         {
             IsLoading = false;
         }
+
+        if (dialog is not null)
+            await LoadPromotionCatalogAsync(dialog, ct);
+    }
+
+    private Guid? PromotionStoreId =>
+        Guid.TryParse(CurrentStoreId, out var storeId) && storeId != Guid.Empty ? storeId : null;
+
+    private async Task LoadPromotionCatalogAsync(PromotionFormDialogViewModel dialog, CancellationToken ct)
+    {
+        if (dialog.CatalogStoreId is not Guid storeId)
+        {
+            dialog.CatalogMessage = "Chọn chi nhánh để tải danh mục và SKU.";
+            return;
+        }
+
+        dialog.IsLoadingCatalog = true;
+        try
+        {
+            var errors = await Task.WhenAll(
+                LoadPromotionCategoriesAsync(dialog, storeId, ct), LoadPromotionSkusAsync(dialog, storeId, ct));
+            dialog.CatalogMessage = string.Join(" ", errors.OfType<string>());
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        finally
+        {
+            dialog.IsLoadingCatalog = false;
+        }
+    }
+
+    private async Task<string?> LoadPromotionCategoriesAsync(
+        PromotionFormDialogViewModel dialog, Guid storeId, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _categoryApi.GetCategoriesTreeAsync(storeId, ct);
+            if (response?.Success == true && response.Data is { } categories)
+            {
+                dialog.SetCategoryCatalog(FlattenPromotionCategories(categories));
+                return null;
+            }
+        }
+        catch (Exception) when (!ct.IsCancellationRequested) { }
+
+        return "Không thể tải danh mục của chi nhánh.";
+    }
+
+    private static IEnumerable<PromotionTargetOption> FlattenPromotionCategories(
+        IEnumerable<CategoryResponse> categories, string? parent = null)
+    {
+        foreach (var category in categories)
+        {
+            var displayName = parent is null ? category.Name : $"{parent} / {category.Name}";
+            yield return new PromotionTargetOption(category.Id, displayName);
+
+            if (category.SubCategories is { } children)
+            {
+                foreach (var child in FlattenPromotionCategories(children, displayName))
+                    yield return child;
+            }
+        }
+    }
+
+    private async Task<string?> LoadPromotionSkusAsync(
+        PromotionFormDialogViewModel dialog, Guid storeId, CancellationToken ct)
+    {
+        const string loadError = "Không thể tải SKU của chi nhánh.";
+        var options = new List<PromotionTargetOption>();
+        try
+        {
+            for (var page = 1; ; page++)
+            {
+                var response = await _productApi.GetPosCatalogAsync(pageNumber: page, pageSize: 200, storeId: storeId, ct: ct);
+                if (response?.Success != true || response.Data is not { } data)
+                    return loadError;
+
+                options.AddRange(data.Items.Select(sku => new PromotionTargetOption(
+                    sku.SkuId, $"{sku.ProductName} ({sku.SkuCode})")));
+                if (!data.HasNextPage)
+                    break;
+            }
+
+            dialog.SetSkuCatalog(options);
+            return null;
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return loadError;
+        }
     }
 
     [RelayCommand]
     private async Task SavePromotionAsync()
     {
-        if (PromotionFormDialog == null || !PromotionFormDialog.Validate(out var value, out var minOrder, out var maxDiscount)) return;
+        var dialog = PromotionFormDialog;
+        if (dialog is null)
+            return;
+        if (dialog.CatalogStoreId != PromotionStoreId)
+        {
+            dialog.ErrorMessage = "Chi nhánh đã thay đổi. Mở lại biểu mẫu trước khi lưu.";
+            return;
+        }
 
-        PromotionFormDialog.IsSaving = true;
+        dialog.IsSaving = true;
         try
         {
-            if (PromotionFormDialog.IsEdit && PromotionFormDialog.Id.HasValue)
+            if (dialog.Id is Guid id)
             {
-                var updateReq = PromotionFormDialog.ToUpdateRequest(value, minOrder, maxDiscount);
-                var res = await _api.UpdatePromotionAsync(PromotionFormDialog.Id.Value, updateReq);
+                if (!dialog.TryUpdateRequest(out var updateReq))
+                    return;
+
+                var res = await _api.UpdatePromotionAsync(id, updateReq);
                 if (res?.Success == true)
                 {
                     ShowSuccess("Cập nhật chương trình khuyến mãi thành công!");
-                    PromotionFormDialog = null;
+                    if (ReferenceEquals(PromotionFormDialog, dialog))
+                        CloseModal();
                     await LoadPromotionsAsync();
                 }
                 else
                 {
-                    PromotionFormDialog.ErrorMessage = res?.Message ?? "Không thể cập nhật chương trình khuyến mãi.";
+                    dialog.ErrorMessage = res?.Message ?? "Không thể cập nhật chương trình khuyến mãi.";
                 }
             }
             else
             {
-                var createReq = PromotionFormDialog.ToCreateRequest(value, minOrder, maxDiscount);
+                if (!dialog.TryCreateRequest(out var createReq))
+                    return;
+
                 var res = await _api.CreatePromotionAsync(createReq);
                 if (res?.Success == true)
                 {
                     ShowSuccess("Tạo mới chương trình khuyến mãi thành công!");
-                    PromotionFormDialog = null;
+                    if (ReferenceEquals(PromotionFormDialog, dialog))
+                        CloseModal();
                     await LoadPromotionsAsync();
                 }
                 else
                 {
-                    PromotionFormDialog.ErrorMessage = res?.Message ?? "Không thể tạo mới chương trình khuyến mãi.";
+                    dialog.ErrorMessage = res?.Message ?? "Không thể tạo mới chương trình khuyến mãi.";
                 }
             }
         }
         catch (Exception ex)
         {
-            PromotionFormDialog.ErrorMessage = ex.Message;
+            dialog.ErrorMessage = ex.Message;
         }
         finally
         {
-            if (PromotionFormDialog != null)
-                PromotionFormDialog.IsSaving = false;
+            dialog.IsSaving = false;
         }
     }
 

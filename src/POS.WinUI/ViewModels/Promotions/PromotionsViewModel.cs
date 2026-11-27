@@ -12,6 +12,8 @@ namespace POS.WinUI.ViewModels.Promotions;
 public sealed partial class PromotionsViewModel : ManagementTabViewModelBase
 {
     private readonly PromotionApiClient _api;
+    private readonly CategoryApiClient _categoryApi;
+    private readonly ProductApiClient _productApi;
     private readonly IConfirmDialogService _dialogs;
     private bool _initialized;
 
@@ -64,10 +66,14 @@ public sealed partial class PromotionsViewModel : ManagementTabViewModelBase
         }
     }
 
-    public PromotionsViewModel(PromotionApiClient api, SessionService session, IConfirmDialogService dialogs)
+    public PromotionsViewModel(
+        PromotionApiClient api, CategoryApiClient categoryApi, ProductApiClient productApi,
+        SessionService session, IConfirmDialogService dialogs)
         : base(session)
     {
         _api = api;
+        _categoryApi = categoryApi;
+        _productApi = productApi;
         _dialogs = dialogs;
         _ = InitializeAsync();
     }
@@ -90,6 +96,8 @@ public sealed partial class PromotionsViewModel : ManagementTabViewModelBase
     [RelayCommand]
     private void CloseModal()
     {
+        OpenCreatePromotionCommand.Cancel();
+        OpenEditPromotionCommand.Cancel();
         PromotionFormDialog = null;
         VoucherCreateDialog = null;
     }

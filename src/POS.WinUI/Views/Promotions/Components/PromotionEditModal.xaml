@@ -4,6 +4,19 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:shared="clr-namespace:POS.WinUI.Views.Shared">
 
+    <UserControl.Resources>
+        <Style x:Key="PromotionFieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#334155"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+        <DataTemplate x:Key="PromotionSelectionTemplate">
+            <CheckBox Content="{Binding DisplayName}"
+                      IsChecked="{Binding IsSelected, Mode=TwoWay}" Padding="4,2,0,2"/>
+        </DataTemplate>
+    </UserControl.Resources>
+
     <Grid Background="#66000000" MouseDown="OnBackdropMouseDown">
         <Border Width="680" MaxHeight="720" 
                 VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -51,10 +64,10 @@
                         <Border Background="{StaticResource DangerBgBrush}" BorderBrush="{StaticResource DangerBorderBrush}"
                                 BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,16"
                                 Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVis}}">
-                            <StackPanel Orientation="Horizontal">
+                            <DockPanel>
                                 <ui:SymbolIcon Symbol="ErrorCircle24" FontSize="16" Foreground="{StaticResource DangerTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerTextBrush}" FontSize="12.5" TextWrapping="Wrap" VerticalAlignment="Center"/>
-                            </StackPanel>
+                            </DockPanel>
                         </Border>
 
                         <!-- Tên chương trình khuyến mãi -->
@@ -77,11 +90,110 @@
                                           SelectedItem="{Binding SelectedType, Mode=TwoWay}" FontSize="13" VerticalContentAlignment="Center"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Mức giảm giá *" FontSize="12.5" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,6"/>
-                                <shared:TextInputField Height="44" Icon="ReceiptMoney24" Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Ví dụ: 10 (% hoặc VNĐ)"/>
+                            <StackPanel Grid.Column="2" Visibility="{Binding HasDiscountValue, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding DiscountValueLabel}" Style="{StaticResource PromotionFieldLabel}"/>
+                                <shared:TextInputField Height="44" Icon="ReceiptMoney24" Text="{Binding ValueText, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
+
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="14"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Phạm vi áp dụng" Style="{StaticResource PromotionFieldLabel}"/>
+                                <ComboBox Height="44" ItemsSource="{Binding ScopeOptions}" DisplayMemberPath="DisplayName"
+                                          SelectedItem="{Binding SelectedScope, Mode=TwoWay}" AutomationProperties.Name="Phạm vi áp dụng"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Độ ưu tiên" Style="{StaticResource PromotionFieldLabel}"/>
+                                <shared:TextInputField Height="44" Text="{Binding PriorityText, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Đang tải danh mục và SKU của chi nhánh…" Foreground="#64748B" Margin="0,0,0,10"
+                                   Visibility="{Binding IsLoadingCatalog, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding CatalogMessage}" Foreground="#92400E" Margin="0,0,0,10" TextWrapping="Wrap"
+                                   Visibility="{Binding CatalogMessage, Converter={StaticResource NullOrEmptyToVis}}"/>
+
+                        <StackPanel Margin="0,0,0,14" Visibility="{Binding UsesCategoryTargets, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Danh mục áp dụng *" Style="{StaticResource PromotionFieldLabel}"/>
+                            <ListBox MaxHeight="126" ItemsSource="{Binding CategoryTargets}" ItemTemplate="{StaticResource PromotionSelectionTemplate}"
+                                     AutomationProperties.Name="Danh mục áp dụng"/>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,14" Visibility="{Binding UsesSkuTargets, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="SKU áp dụng *" Style="{StaticResource PromotionFieldLabel}"/>
+                            <shared:TextInputField Height="36" Margin="0,0,0,6" PlaceholderText="Tìm tên sản phẩm hoặc mã SKU"
+                                                   Text="{Binding SkuSearch, UpdateSourceTrigger=PropertyChanged}"/>
+                            <ListBox MaxHeight="126" ItemsSource="{Binding FilteredSkuTargets}" ItemTemplate="{StaticResource PromotionSelectionTemplate}"
+                                     AutomationProperties.Name="SKU áp dụng"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding ConditionLoadWarning}" Foreground="#92400E" Margin="0,0,0,10" TextWrapping="Wrap"
+                                   Visibility="{Binding ConditionLoadWarning, Converter={StaticResource NullOrEmptyToVis}}"/>
+
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14"
+                                Visibility="{Binding IsBuyXGetY, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Số lượng mua *" Style="{StaticResource PromotionFieldLabel}"/>
+                                        <shared:TextInputField Height="38" Text="{Binding BuyQuantityText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Số lượng tặng *" Style="{StaticResource PromotionFieldLabel}"/>
+                                        <shared:TextInputField Height="38" Text="{Binding GetQuantityText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="4">
+                                        <TextBlock Text="Giảm giá quà tặng (%) *" Style="{StaticResource PromotionFieldLabel}"/>
+                                        <shared:TextInputField Height="38" Text="{Binding DiscountPercentText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="SKU quà tặng" Style="{StaticResource PromotionFieldLabel}"/>
+                                <ComboBox Height="42" ItemsSource="{Binding FreeSkuOptions}" DisplayMemberPath="DisplayName"
+                                          SelectedValuePath="Id" SelectedValue="{Binding FreeSkuId, Mode=TwoWay}"
+                                          AutomationProperties.Name="SKU quà tặng" MaxDropDownHeight="240"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,14"
+                                Visibility="{Binding IsHappyHour, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="14"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Giờ bắt đầu (UTC)" Style="{StaticResource PromotionFieldLabel}"/>
+                                        <shared:TextInputField Height="38" Text="{Binding StartTimeText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="HH:mm"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Giờ kết thúc (UTC)" Style="{StaticResource PromotionFieldLabel}"/>
+                                        <shared:TextInputField Height="38" Text="{Binding EndTimeText, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="HH:mm"/>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="Ngày áp dụng (bỏ trống để áp dụng mỗi ngày)" Style="{StaticResource PromotionFieldLabel}"/>
+                                <ItemsControl ItemsSource="{Binding WeekdayOptions}" ItemTemplate="{StaticResource PromotionSelectionTemplate}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
 
                         <!-- Đơn hàng tối thiểu & Mức giảm tối đa -->
                         <Grid Margin="0,0,0,14">

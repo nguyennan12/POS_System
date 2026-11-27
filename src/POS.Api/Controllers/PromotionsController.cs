@@ -69,7 +69,7 @@ public class PromotionsController(ISender mediator, POS.Application.Abstractions
         CancellationToken cancellationToken)
     {
         var command = new CreatePromotionCommand(
-            StoreId: null,
+            StoreId: currentUser.StoreId,
             Name: request.Name,
             Type: request.Type,
             Value: request.Value,

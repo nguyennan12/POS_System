@@ -29,7 +29,7 @@ namespace POS.Api.Tests.Promotions;
 
 public class PromotionsControllerTests
 {
-    private static Task<IHost> CreateBindingHostAsync(ISender mediator) => new HostBuilder()
+    private static Task<IHost> CreateBindingHostAsync(ISender mediator, bool isChainOwner = false) => new HostBuilder()
         .ConfigureWebHost(builder => builder.UseTestServer()
             .ConfigureServices(services =>
             {
@@ -46,7 +46,8 @@ public class PromotionsControllerTests
                 app.Use((context, next) =>
                 {
                     context.User = new ClaimsPrincipal(new ClaimsIdentity(
-                        [new Claim("employee_id", Guid.NewGuid().ToString())], "BindingTest"));
+                        [new Claim("employee_id", Guid.NewGuid().ToString()),
+                         new Claim("is_chain_owner", isChainOwner.ToString())], "BindingTest"));
                     return next(context);
                 });
                 app.UseAuthorization();
@@ -132,6 +133,30 @@ public class PromotionsControllerTests
         var content = await response.Content.ReadFromJsonAsync<ApiResponse<PromotionDetailResponse>>();
         content.Should().NotBeNull();
         content!.Data!.Id.Should().Be(newId);
+    }
+
+    [Fact]
+    public async Task CreatePromotion_UsesChainOwnersCurrentStoreForSelectedTargets()
+    {
+        var storeId = Guid.NewGuid();
+        var categoryId = Guid.NewGuid();
+        var mediator = Substitute.For<ISender>();
+        var detail = new PromotionDetailDto(Guid.NewGuid(), storeId, "New Promo", "CartPercent", 10,
+            0, null, null, 0, false, false, "Category", DateTimeOffset.UtcNow, null, "Active",
+            [categoryId], [], DateTimeOffset.UtcNow);
+        mediator.Send(Arg.Any<CreatePromotionCommand>(), Arg.Any<CancellationToken>()).Returns(detail);
+        using var host = await CreateBindingHostAsync(mediator, isChainOwner: true);
+        using var client = host.GetTestClient();
+        client.DefaultRequestHeaders.Add("X-Store-Id", storeId.ToString());
+
+        var response = await client.PostAsJsonAsync("/api/v1/promotions",
+            new CreatePromotionRequest("New Promo", "CartPercent", 10, AppliesTo: "Category",
+                TargetCategoryIds: [categoryId]));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        await mediator.Received(1).Send(Arg.Is<CreatePromotionCommand>(command =>
+            command.StoreId == storeId && command.TargetCategoryIds!.Single() == categoryId),
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]
