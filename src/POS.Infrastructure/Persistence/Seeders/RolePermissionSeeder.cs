@@ -28,7 +28,10 @@ public class RolePermissionSeeder : ISeeder
         "promotions:read",
         "vouchers:read",
         "vouchers:apply_own",
-        "config:read"
+        "config:read",
+        "store_layouts:read",
+        "product_placements:read",
+        "picking_orders:read"
     ];
 
     public static readonly HashSet<string> OwnerOnlyPermissionCodes =

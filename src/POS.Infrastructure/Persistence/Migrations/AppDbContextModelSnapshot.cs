@@ -2223,6 +2223,507 @@ namespace POS.Infrastructure.Migrations
                     b.ToTable("role_permissions", (string)null);
                 });
 
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Picking.PickingOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssignedTo")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_to");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("LayoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("layout_id");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "Status", "CreatedAt");
+
+                    b.ToTable("picking_orders", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Picking.PickingOrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_at");
+
+                    b.Property<int>("LevelNumberSnapshot")
+                        .HasColumnType("integer")
+                        .HasColumnName("level_number_snapshot");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<decimal>("PickedQty")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("picked_qty");
+
+                    b.Property<Guid>("PickingOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("picking_order_id");
+
+                    b.Property<Guid?>("PlacementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("placement_id");
+
+                    b.Property<decimal>("RequestedQty")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("numeric(18,3)")
+                        .HasColumnName("requested_qty");
+
+                    b.Property<string>("ShelfCodeSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("shelf_code_snapshot");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sku_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("ZoneNameSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("zone_name_snapshot");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PickingOrderId");
+
+                    b.ToTable("picking_order_items", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ProductPlacement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid>("ShelfLevelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shelf_level_id");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sku_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<Guid>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkuId");
+
+                    b.HasIndex("ShelfLevelId", "SkuId")
+                        .IsUnique();
+
+                    b.ToTable("product_placements", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ProductPlacementHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<Guid?>("FromShelfLevelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("from_shelf_level_id");
+
+                    b.Property<Guid>("LayoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("layout_id");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("note");
+
+                    b.Property<Guid>("PerformedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("performed_by");
+
+                    b.Property<Guid>("SkuId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sku_id");
+
+                    b.Property<Guid?>("ToShelfLevelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_shelf_level_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LayoutId", "SkuId");
+
+                    b.ToTable("product_placement_histories", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Shelf", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<Guid>("LayoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("layout_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Orientation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("orientation");
+
+                    b.Property<int>("PositionX")
+                        .HasColumnType("integer")
+                        .HasColumnName("position_x");
+
+                    b.Property<int>("PositionY")
+                        .HasColumnType("integer")
+                        .HasColumnName("position_y");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.Property<Guid?>("ZoneId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("zone_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ZoneId");
+
+                    b.HasIndex("LayoutId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("shelves", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ShelfLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("label");
+
+                    b.Property<int>("LevelNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("level_number");
+
+                    b.Property<Guid>("ShelfId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shelf_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShelfId", "LevelNumber")
+                        .IsUnique();
+
+                    b.ToTable("shelf_levels", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreLayout", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<int>("GridHeight")
+                        .HasColumnType("integer")
+                        .HasColumnName("grid_height");
+
+                    b.Property<int>("GridWidth")
+                        .HasColumnType("integer")
+                        .HasColumnName("grid_width");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<Guid?>("PublishedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("published_by");
+
+                    b.Property<int>("Revision")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("revision");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<int>("VersionNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("version_number");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("store_layouts", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreLayoutCell", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CellType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("cell_type");
+
+                    b.Property<Guid>("LayoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("layout_id");
+
+                    b.Property<int>("TraversalCost")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("traversal_cost");
+
+                    b.Property<int>("X")
+                        .HasColumnType("integer")
+                        .HasColumnName("x");
+
+                    b.Property<int>("Y")
+                        .HasColumnType("integer")
+                        .HasColumnName("y");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LayoutId", "X", "Y")
+                        .IsUnique();
+
+                    b.ToTable("store_layout_cells", (string)null);
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreZone", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("#3B82F6")
+                        .HasColumnName("color");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<Guid>("LayoutId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("layout_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("PositionX")
+                        .HasColumnType("integer")
+                        .HasColumnName("position_x");
+
+                    b.Property<int>("PositionY")
+                        .HasColumnType("integer")
+                        .HasColumnName("position_y");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("TIMEZONE('utc', now())");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LayoutId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("store_zones", (string)null);
+                });
+
             modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3025,6 +3526,79 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Picking.PickingOrderItem", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.Picking.PickingOrder", "PickingOrder")
+                        .WithMany("Items")
+                        .HasForeignKey("PickingOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PickingOrder");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ProductPlacement", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.ShelfLevel", "ShelfLevel")
+                        .WithMany("Placements")
+                        .HasForeignKey("ShelfLevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ShelfLevel");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Shelf", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.StoreLayout", "Layout")
+                        .WithMany("Shelves")
+                        .HasForeignKey("LayoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("POS.Domain.StoreLayouts.StoreZone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Layout");
+
+                    b.Navigation("Zone");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ShelfLevel", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.Shelf", "Shelf")
+                        .WithMany("Levels")
+                        .HasForeignKey("ShelfId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shelf");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreLayoutCell", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.StoreLayout", "Layout")
+                        .WithMany("Cells")
+                        .HasForeignKey("LayoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Layout");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreZone", b =>
+                {
+                    b.HasOne("POS.Domain.StoreLayouts.StoreLayout", "Layout")
+                        .WithMany("Zones")
+                        .HasForeignKey("LayoutId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Layout");
+                });
+
             modelBuilder.Entity("POS.Domain.Stores.PosRegister", b =>
                 {
                     b.HasOne("POS.Domain.Stores.Store", "Store")
@@ -3080,6 +3654,30 @@ namespace POS.Infrastructure.Migrations
                     b.Navigation("Employees");
 
                     b.Navigation("RolePermissions");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Picking.PickingOrder", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.Shelf", b =>
+                {
+                    b.Navigation("Levels");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.ShelfLevel", b =>
+                {
+                    b.Navigation("Placements");
+                });
+
+            modelBuilder.Entity("POS.Domain.StoreLayouts.StoreLayout", b =>
+                {
+                    b.Navigation("Cells");
+
+                    b.Navigation("Shelves");
+
+                    b.Navigation("Zones");
                 });
 
             modelBuilder.Entity("POS.Domain.Stores.Store", b =>

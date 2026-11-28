@@ -1,0 +1,225 @@
+<UserControl x:Class="POS.WinUI.Views.SmartStore.ProductPlacementModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:POS.WinUI.ViewModels.SmartStore"
+             xmlns:models="clr-namespace:POS.WinUI.ViewModels.SmartStore.Models"
+             mc:Ignorable="d" 
+             d:DesignHeight="750" d:DesignWidth="400"
+             Background="{StaticResource CardBackgroundBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="16">
+            <!-- Header -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,14">
+                <Border Width="34" Height="34" CornerRadius="8" Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1" Margin="0,0,10,0">
+                    <ui:SymbolIcon Symbol="BarcodeScanner24" FontSize="18" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Gán Vị Trí Sản Phẩm" FontSize="15" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Quét mã vạch và phân bổ vị trí trên kệ" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Read-Only Banner when on Active layout -->
+            <Border Margin="0,0,0,12" Padding="12" CornerRadius="8" 
+                    Background="{StaticResource PrimaryLightBrush}" 
+                    BorderBrush="{StaticResource PrimaryBorderBrush}" 
+                    BorderThickness="1"
+                    Visibility="{Binding CanEdit, Converter={StaticResource InverseBoolToVis}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <ui:SymbolIcon Symbol="ShieldLock24" FontSize="15" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,6,0"/>
+                        <TextBlock Text="Mặt Bằng Đang Hoạt Động (Chỉ đọc)" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                    </StackPanel>
+                    <TextBlock Text="Mặt bằng này đang hoạt động chính thức nên được bảo vệ chống sửa. Vui lòng chuyển sang bản thảo (Draft) hoặc nhân bản mặt bằng để gán vị trí SKU." 
+                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Alerts -->
+            <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="6" Background="{StaticResource DangerBgBrush}" BorderBrush="{StaticResource DangerBorderBrush}" BorderThickness="1"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVis}}">
+                <TextBlock Text="{Binding ErrorMessage}" FontSize="11" Foreground="{StaticResource DangerTextBrush}" TextWrapping="Wrap"/>
+            </Border>
+            <Border Margin="0,0,0,10" Padding="10,8" CornerRadius="6" Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1"
+                    Visibility="{Binding SuccessMessage, Converter={StaticResource NullOrEmptyToVis}}">
+                <TextBlock Text="{Binding SuccessMessage}" FontSize="11" Foreground="{StaticResource SuccessBrush}" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- 1. Quét Mã Vạch -->
+            <TextBlock Text="MÃ VẠCH (BARCODE) HOẶC SKU" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}" 
+                         Height="38" VerticalContentAlignment="Center" Padding="10,0"
+                         FontSize="12" BorderBrush="{StaticResource InputBorderBrush}"
+                         ToolTip="Nhập mã vạch hoặc mã SKU rồi nhấn Enter để tra cứu"
+                         KeyDown="OnBarcodeInputKeyDown"/>
+                <Button Grid.Column="1" Command="{Binding LookupBarcodeCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Height="38" Padding="14,0" Margin="8,0,0,0"
+                        ToolTip="Tìm kiếm thông tin sản phẩm">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:SymbolIcon Symbol="Search24" FontSize="14" Foreground="{StaticResource TextWhiteBrush}" Margin="0,0,4,0"/>
+                        <TextBlock Text="Tìm" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextWhiteBrush}"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- 2. Thông Tin Sản Phẩm Đã Quét -->
+            <Border Background="{StaticResource InputBackgroundBrush}" CornerRadius="8" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="12" Margin="0,0,0,14"
+                    Visibility="{Binding ScannedProductName, Converter={StaticResource NullOrEmptyToVis}}">
+                <StackPanel>
+                    <TextBlock Text="{Binding ScannedProductName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding ScannedSkuCode, StringFormat='Mã: {0}'}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding ScannedBarcode, StringFormat='Mã vạch: {0}'}" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="{Binding ScannedSellPrice, StringFormat='Giá: {0:N0} đ'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
+                            <TextBlock Text="{Binding ScannedStockQty, StringFormat='Tồn kho: {0:N0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Existing locations list -->
+                    <TextBlock Text="Vị trí hiện tại trên sơ đồ:" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,4"/>
+                    <ItemsControl ItemsSource="{Binding ExistingLocations}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="4" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="6,3" Margin="0,2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding ShelfCode, StringFormat='Kệ {0}'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding LevelNumber, StringFormat=' - Tầng {0}'}" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <Border Visibility="{Binding IsPrimary, Converter={StaticResource BoolToVis}}"
+                                                Background="{StaticResource PrimaryLightBrush}" CornerRadius="3" Padding="4,1" Margin="8,0,0,0">
+                                            <TextBlock Text="Vị trí chính" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Chọn Kệ & Tầng Để Gán -->
+            <TextBlock Text="VỊ TRÍ CHỈ ĐỊNH TRÊN KỆ" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <Border Background="{StaticResource InputBackgroundBrush}" CornerRadius="8" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="12" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="Chọn kệ hàng:" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableShelves}" 
+                              SelectedItem="{Binding SelectedShelf}"
+                              DisplayMemberPath="Name"
+                              Height="36" Margin="0,0,0,10"
+                              ToolTip="Chọn kệ hàng muốn đặt sản phẩm"/>
+
+                    <TextBlock Text="Chọn tầng kệ:" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableLevels}" 
+                              SelectedItem="{Binding SelectedShelfLevel}"
+                              Height="36" Margin="0,0,0,10"
+                              ToolTip="Chọn tầng của kệ hàng">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DisplayTitle}" FontSize="12"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <CheckBox IsChecked="{Binding IsPrimary}" Content="Đặt làm vị trí lấy hàng chính (Primary)" Margin="0,0,0,8" FontSize="11.5"
+                              ToolTip="Khi tối ưu đường nhặt hàng, hệ thống sẽ ưu tiên dẫn đến vị trí này"/>
+
+                    <TextBlock Text="Ghi chú vị trí (tùy chọn):" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding PlacementNote, UpdateSourceTrigger=PropertyChanged}" Height="34" FontSize="11.5" Margin="0,0,0,14"/>
+
+                    <Button Command="{Binding AssignPlacementCommand}"
+                            IsEnabled="{Binding HasScannedSku}"
+                            Height="38" Cursor="Hand"
+                            Background="{StaticResource SuccessBrush}" BorderThickness="0"
+                            ToolTip="Xác nhận gán sản phẩm đã quét vào tầng kệ đã chọn">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border CornerRadius="8" Background="{TemplateBinding Background}" Padding="12,0">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="AddCircle24" FontSize="15" Foreground="{StaticResource TextWhiteBrush}" Margin="0,0,8,0"/>
+                                        <TextBlock Text="Gán Sản Phẩm Vào Vị Trí" FontWeight="SemiBold" FontSize="12.5" Foreground="{StaticResource TextWhiteBrush}"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- 4. Danh Sách Sản Phẩm Trên Kệ Này -->
+            <TextBlock Text="SẢN PHẨM TRÊN KỆ HIỆN TẠI" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+            <ItemsControl ItemsSource="{Binding ShelfPlacements}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="8" BorderBrush="{StaticResource InputBorderBrush}" BorderThickness="1" Padding="10,8" Margin="0,0,0,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ProductName}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,4,0,0">
+                                        <!-- Level Tag -->
+                                        <Border Background="#F1F5F9" CornerRadius="4" Padding="5,1" Margin="0,0,6,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayLevel}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        </Border>
+
+                                        <!-- SKU Code -->
+                                        <TextBlock Text="{Binding SkuCode, StringFormat='SKU: {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+
+                                        <!-- Primary Badge -->
+                                        <Border Visibility="{Binding IsPrimary, Converter={StaticResource BoolToVis}}"
+                                                Background="{StaticResource PrimaryLightBrush}" BorderBrush="{StaticResource PrimaryBorderBrush}" BorderThickness="1"
+                                                CornerRadius="4" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Chính" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}"/>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Nút Xóa có Template chuẩn, không bị cắt icon thùng rác -->
+                                <Button Grid.Column="1" 
+                                        Command="{Binding DataContext.DeletePlacementCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Width="28" Height="28" Margin="6,0,0,0"
+                                        Cursor="Hand" ToolTip="Gỡ sản phẩm khỏi kệ">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="delBorder" Background="#FEF2F2" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="6">
+                                                <ui:SymbolIcon Symbol="Delete24" FontSize="13" Foreground="{StaticResource DangerBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="delBorder" Property="Background" Value="#FEE2E2"/>
+                                                    <Setter TargetName="delBorder" Property="BorderBrush" Value="#FCA5A5"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="delBorder" Property="Background" Value="#FECACA"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -24,4 +24,7 @@ public static class ResourceNames
     public const string Reports = "reports";
     public const string Config = "config";
     public const string AuditLogs = "audit_logs";
+    public const string StoreLayouts = "store_layouts";
+    public const string ProductPlacements = "product_placements";
+    public const string PickingOrders = "picking_orders";
 }

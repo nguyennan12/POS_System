@@ -13,6 +13,8 @@ using POS.Domain.Products;
 using POS.Domain.Promotions;
 using POS.Domain.Rbac;
 using POS.Domain.Stores;
+using POS.Domain.StoreLayouts;
+using POS.Domain.StoreLayouts.Picking;
 
 namespace POS.Infrastructure.Persistence;
 
@@ -68,4 +70,14 @@ public partial class AppDbContext
   public DbSet<SystemConfig> SystemConfigs => Set<SystemConfig>();
   public DbSet<Translation> Translations => Set<Translation>();
   public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+  public DbSet<StoreLayout> StoreLayouts => Set<StoreLayout>();
+  public DbSet<StoreZone> StoreZones => Set<StoreZone>();
+  public DbSet<StoreLayoutCell> StoreLayoutCells => Set<StoreLayoutCell>();
+  public DbSet<Shelf> Shelves => Set<Shelf>();
+  public DbSet<ShelfLevel> ShelfLevels => Set<ShelfLevel>();
+  public DbSet<ProductPlacement> ProductPlacements => Set<ProductPlacement>();
+  public DbSet<ProductPlacementHistory> ProductPlacementHistories => Set<ProductPlacementHistory>();
+  public DbSet<PickingOrder> PickingOrders => Set<PickingOrder>();
+  public DbSet<PickingOrderItem> PickingOrderItems => Set<PickingOrderItem>();
 }

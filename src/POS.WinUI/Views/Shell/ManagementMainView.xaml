@@ -24,6 +24,8 @@
              xmlns:reportsVm="clr-namespace:POS.WinUI.ViewModels.Reports"
              xmlns:settings="clr-namespace:POS.WinUI.Views.Settings"
              xmlns:settingsVm="clr-namespace:POS.WinUI.ViewModels.Settings"
+             xmlns:smartStore="clr-namespace:POS.WinUI.Views.SmartStore"
+             xmlns:smartStoreVm="clr-namespace:POS.WinUI.ViewModels.SmartStore"
              xmlns:ai="clr-namespace:POS.WinUI.Views.AiAssistant"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="1200"
@@ -42,6 +44,9 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type inventoryVm:InventoryViewModel}">
             <inventory:InventoryView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type smartStoreVm:StoreLayoutViewModel}">
+            <smartStore:StoreLayoutView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type customersVm:CustomersViewModel}">
             <customers:CustomersView/>

@@ -21,6 +21,7 @@ public sealed partial class LocalizationService
         ["nav.employees"] = "Employees & Roles",
         ["nav.reports"] = "Reports & Analytics",
         ["nav.settings"] = "System Settings",
+        ["nav.smart_store"] = "Store Layout & Shelves",
         ["ai.title"] = "AI Assistant",
         ["ai.subtitle"] = "Ask general questions and get help using the POS",
         ["header.pos_screen"] = "POS Register (F1)",

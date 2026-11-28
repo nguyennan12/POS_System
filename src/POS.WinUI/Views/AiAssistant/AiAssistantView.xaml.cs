@@ -15,7 +15,14 @@ public partial class AiAssistantView : UserControl
     public AiAssistantView()
     {
         InitializeComponent();
-        DataContext = App.Services.GetRequiredService<AiAssistantViewModel>();
+        try
+        {
+            DataContext = App.Services?.GetService<AiAssistantViewModel>();
+        }
+        catch
+        {
+            // Unit test or designer environment without initialized host
+        }
         DataContextChanged += OnDataContextChanged;
         Loaded += (_, _) => SubscribeToMessages();
         Unloaded += (_, _) => UnsubscribeFromMessages();

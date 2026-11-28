@@ -15,6 +15,7 @@ using POS.WinUI.ViewModels.Promotions;
 using POS.WinUI.ViewModels.Reports;
 using POS.WinUI.ViewModels.Settings;
 using POS.WinUI.ViewModels.Shell;
+using POS.WinUI.ViewModels.SmartStore;
 using POS.WinUI.Views.Auth;
 using POS.WinUI.Views.Cashier;
 using POS.WinUI.Views.CustomerFacing;
@@ -28,6 +29,7 @@ using POS.WinUI.Views.Promotions;
 using POS.WinUI.Views.Reports;
 using POS.WinUI.Views.Settings;
 using POS.WinUI.Views.Shell;
+using POS.WinUI.Views.SmartStore;
 
 namespace POS.WinUI.Core.Extensions;
 
@@ -65,6 +67,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ReportApiClient>();
         services.AddTransient<EmployeeApiClient>();
         services.AddTransient<AiAssistantApiClient>();
+        services.AddTransient<StoreLayoutApiClient>();
+        services.AddTransient<ProductPlacementApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();
@@ -85,6 +89,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ReportsViewModel>();
         services.AddTransient<SettingsViewModel>();
         services.AddSingleton<AiAssistantViewModel>();
+        services.AddTransient<StoreLayoutViewModel>();
+        services.AddTransient<StoreMapViewModel>();
+        services.AddTransient<LayoutEditorViewModel>();
+        services.AddTransient<ProductPlacementViewModel>();
+        services.AddTransient<PickingRouteViewModel>();
 
         // ── Views ─────────────────────────────────────────────────
         services.AddSingleton<MainWindow>();
@@ -112,6 +121,11 @@ public static class ServiceCollectionExtensions
         services.AddTransient<ReportsView>();
         services.AddTransient<frmReport>();
         services.AddTransient<SettingsView>();
+        services.AddTransient<StoreLayoutView>();
+        services.AddTransient<StoreMapControl>();
+        services.AddTransient<LayoutEditorControl>();
+        services.AddTransient<ProductPlacementModal>();
+        services.AddTransient<PickingRouteControl>();
 
         return services;
     }

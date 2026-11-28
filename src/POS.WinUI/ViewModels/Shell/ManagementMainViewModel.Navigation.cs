@@ -12,6 +12,7 @@ using POS.WinUI.ViewModels.Products;
 using POS.WinUI.ViewModels.Promotions;
 using POS.WinUI.ViewModels.Reports;
 using POS.WinUI.ViewModels.Settings;
+using POS.WinUI.ViewModels.SmartStore;
 using POS.WinUI.Views.Cashier;
 using Wpf.Ui.Controls;
 
@@ -29,6 +30,7 @@ public partial class ManagementMainViewModel
             new() { Id = "Orders", Title = "Đơn hàng & Hóa đơn", Icon = SymbolRegular.Receipt24, MinRoleLevel = 2 },
             new() { Id = "Products", Title = "Sản phẩm & Danh mục", Icon = SymbolRegular.Box24, MinRoleLevel = 2 },
             new() { Id = "Inventory", Title = "Quản lý Kho & Nhập hàng", Icon = SymbolRegular.Archive24, MinRoleLevel = 2 },
+            new() { Id = "SmartStore", Title = "Mặt bằng & Kho kệ", Icon = SymbolRegular.Map24, MinRoleLevel = 2 },
             new() { Id = "Customers", Title = "Khách hàng & Hội viên", Icon = SymbolRegular.People24, MinRoleLevel = 2 },
             new() { Id = "Promotions", Title = "Khuyến mãi & Voucher", Icon = SymbolRegular.TicketDiagonal24, MinRoleLevel = 2 },
             new() { Id = "Employees", Title = "Nhân viên & Phân quyền", Icon = SymbolRegular.PersonAccounts24, MinRoleLevel = 2 },
@@ -67,6 +69,7 @@ public partial class ManagementMainViewModel
                 "Orders" => loc["nav.orders"],
                 "Products" => loc["nav.products"],
                 "Inventory" => loc["nav.inventory"],
+                "SmartStore" => loc["nav.smart_store"],
                 "Customers" => loc["nav.customers"],
                 "Promotions" => loc["nav.promotions"],
                 "Employees" => loc["nav.employees"],
@@ -132,6 +135,7 @@ public partial class ManagementMainViewModel
                 "Orders" => _serviceProvider.GetRequiredService<OrdersViewModel>(),
                 "Products" => _serviceProvider.GetRequiredService<ProductsViewModel>(),
                 "Inventory" => _serviceProvider.GetRequiredService<InventoryViewModel>(),
+                "SmartStore" => _serviceProvider.GetRequiredService<StoreLayoutViewModel>(),
                 "Customers" => _serviceProvider.GetRequiredService<CustomersViewModel>(),
                 "Promotions" => _serviceProvider.GetRequiredService<PromotionsViewModel>(),
                 "Employees" => _serviceProvider.GetRequiredService<EmployeesViewModel>(),

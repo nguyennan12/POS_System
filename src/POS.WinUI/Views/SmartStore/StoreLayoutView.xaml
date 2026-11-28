@@ -1,0 +1,129 @@
+<UserControl x:Class="POS.WinUI.Views.SmartStore.StoreLayoutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:POS.WinUI.Views.SmartStore"
+             xmlns:components="clr-namespace:POS.WinUI.Views.SmartStore.Components"
+             xmlns:shared="clr-namespace:POS.WinUI.Views.Shared"
+             mc:Ignorable="d" 
+             d:DesignHeight="850" d:DesignWidth="1200"
+             FontFamily="Segoe UI">
+
+    <Grid Background="{StaticResource InputBackgroundBrush}">
+        <!-- Floating Toast Notification on Top -->
+        <shared:ToastNotification Panel.ZIndex="999" 
+                                  VerticalAlignment="Top" 
+                                  HorizontalAlignment="Center" 
+                                  Margin="0,12,0,0"
+                                  Message="{Binding ToastMessage}" 
+                                  ToastType="{Binding ToastType}"/>
+
+        <!-- Main Layout Container -->
+        <Grid Margin="20,12,20,16">
+            <Grid.RowDefinitions>
+                <!-- Row 0: Top Header -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 1: Layout Selector & Mode Bar -->
+                <RowDefinition Height="Auto"/>
+                <!-- Row 2: Main Working Area (Map + Side Panel) -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ════════════════════ ROW 0: TOP HEADER ════════════════════ -->
+            <components:StoreLayoutHeaderBar Grid.Row="0"/>
+
+            <!-- ════════════════════ ROW 1: LAYOUT SELECTOR & MODE BAR ════════════════════ -->
+            <components:StoreLayoutToolbar Grid.Row="1"/>
+
+            <!-- ════════════════════ ROW 2: MAIN WORKING AREA ════════════════════ -->
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <!-- Main Map Canvas -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Dynamic Right Sidebar -->
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 1. Map Viewport Canvas -->
+                <Border Grid.Column="0" 
+                        Background="{StaticResource CardBackgroundBrush}" 
+                        CornerRadius="12" 
+                        BorderBrush="{StaticResource InputBorderBrush}" 
+                        BorderThickness="1" 
+                        Margin="0,0,12,0">
+                    <local:StoreMapControl DataContext="{Binding MapVm}"/>
+                </Border>
+
+                <!-- 2. Dynamic Right Sidebar according to ActiveMode -->
+                <!-- A. Map Overview Mode -->
+                <Border Grid.Column="1" Width="310" 
+                        Background="{StaticResource CardBackgroundBrush}" 
+                        CornerRadius="12" 
+                        BorderBrush="{StaticResource InputBorderBrush}" 
+                        BorderThickness="1" 
+                        Padding="16"
+                        Visibility="{Binding IsMapMode, Converter={StaticResource BoolToVis}}">
+                    <components:StoreLayoutInfoSidebar/>
+                </Border>
+
+                <!-- B. Design Mode -->
+                <Border Grid.Column="1" Width="320" 
+                        Background="{StaticResource CardBackgroundBrush}" 
+                        CornerRadius="12" 
+                        BorderBrush="{StaticResource InputBorderBrush}" 
+                        BorderThickness="1"
+                        Visibility="{Binding IsDesignMode, Converter={StaticResource BoolToVis}}">
+                    <local:LayoutEditorControl DataContext="{Binding EditorVm}"/>
+                </Border>
+
+                <!-- C. Placement Mode -->
+                <Border Grid.Column="1" Width="380" 
+                        Background="{StaticResource CardBackgroundBrush}" 
+                        CornerRadius="12" 
+                        BorderBrush="{StaticResource InputBorderBrush}" 
+                        BorderThickness="1"
+                        Visibility="{Binding IsPlacementMode, Converter={StaticResource BoolToVis}}">
+                    <local:ProductPlacementModal DataContext="{Binding PlacementVm}"/>
+                </Border>
+
+                <!-- D. Picking Mode -->
+                <Border Grid.Column="1" Width="360" 
+                        Background="{StaticResource CardBackgroundBrush}" 
+                        CornerRadius="12" 
+                        BorderBrush="{StaticResource InputBorderBrush}" 
+                        BorderThickness="1"
+                        Visibility="{Binding IsPickingMode, Converter={StaticResource BoolToVis}}">
+                    <local:PickingRouteControl DataContext="{Binding PickingVm}"/>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ════════════════════ MODAL DIALOGS OVERLAYS ════════════════════ -->
+        <!-- 1. Create Layout Modal -->
+        <components:CreateLayoutModal/>
+
+        <!-- 2. Clone Layout Modal -->
+        <components:CloneLayoutModal/>
+
+        <!-- 3. Publish Confirmation Modal -->
+        <components:PublishConfirmModal/>
+
+        <!-- 4. Archive Confirmation Modal -->
+        <components:ArchiveConfirmModal/>
+
+        <!-- 5. Global Loading Overlay -->
+        <Grid Background="#40000000" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" IsHitTestVisible="True">
+            <Border Background="{StaticResource CardBackgroundBrush}" CornerRadius="12" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" Opacity="0.15" ShadowDepth="4"/>
+                </Border.Effect>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ui:ProgressRing IsIndeterminate="True" Width="36" Height="36" Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
+                    <TextBlock Text="Đang xử lý..." FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
