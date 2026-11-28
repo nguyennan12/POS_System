@@ -6,6 +6,10 @@
 
     <!-- ── THANH TÌM KIẾM & QUÉT MÃ VẠCH (BARCODE) ── -->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <!-- Ô Tìm kiếm dùng chung shared:TextInputField -->
             <ColumnDefinition Width="*"/>
@@ -60,5 +64,13 @@
                 </ControlTemplate>
             </Button.Template>
         </Button>
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,8,0,0">
+            <TextBlock Text="● Điện thoại đã sẵn sàng nhận mã tại quầy này"
+                       Foreground="#059669" FontSize="11"
+                       Visibility="{Binding IsPhoneScannerConnected, Converter={StaticResource BoolToVis}}"/>
+            <TextBlock Text="Điện thoại sẽ tự kết nối khi mở ca bán"
+                       Foreground="#64748B" FontSize="11"
+                       Visibility="{Binding IsPhoneScannerConnected, Converter={StaticResource InverseBoolToVis}}"/>
+        </StackPanel>
     </Grid>
 </UserControl>

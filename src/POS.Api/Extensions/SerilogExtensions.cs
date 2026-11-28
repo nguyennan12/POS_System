@@ -36,6 +36,10 @@ public static class SerilogExtensions
     // Bỏ qua log từ internal/infra endpoints
     if (path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/health", StringComparison.OrdinalIgnoreCase) ||
+        (httpContext.Request.Method == "GET" &&
+         path.StartsWith("/api/v1/cashier/scanner/receivers/", StringComparison.OrdinalIgnoreCase) &&
+         path.EndsWith("/scans", StringComparison.OrdinalIgnoreCase) &&
+         httpContext.Response.StatusCode < 400) ||
         path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
@@ -82,6 +86,7 @@ internal sealed class RequestResponseLoggingMiddleware
         context.Request.Path.StartsWithSegments("/hubs") ||
         path.StartsWith("/api/v1/payments", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/api/v1/ai", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith("/api/v1/cashier/scanner", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/api/v1/employees", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/metrics", StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase) ||

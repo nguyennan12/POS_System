@@ -20,6 +20,9 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     private readonly StoreApiClient _storeApi;
     private readonly ConfigApiClient _configApi;
     private readonly LocalizationService _localization;
+    private readonly CashierScannerApiClient _scannerApi;
+    private readonly RegisterApiClient _registerApi;
+    private readonly IConfirmDialogService _dialogs;
 
     public override string TabId => "Settings";
     public override string Title => Loc["settings.title"];
@@ -34,6 +37,9 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     private bool _isPrinterTab;
 
     [ObservableProperty]
+    private bool _isScannerTab;
+
+    [ObservableProperty]
     private bool _isSaving;
 
     // ── Ngôn ngữ hệ thống ──────────────────────────────────────────
@@ -45,11 +51,17 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     public SettingsViewModel(
         StoreApiClient storeApi,
         ConfigApiClient configApi,
+        CashierScannerApiClient scannerApi,
+        RegisterApiClient registerApi,
+        IConfirmDialogService dialogs,
         LocalizationService localization,
         SessionService sessionService) : base(sessionService)
     {
         _storeApi = storeApi;
         _configApi = configApi;
+        _scannerApi = scannerApi;
+        _registerApi = registerApi;
+        _dialogs = dialogs;
         _localization = localization;
         _selectedLanguage = localization.LanguageCode;
 
@@ -65,6 +77,7 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     {
         IsStoreTab = true;
         IsPrinterTab = false;
+        IsScannerTab = false;
     }
 
     [RelayCommand]
@@ -72,6 +85,16 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     {
         IsStoreTab = false;
         IsPrinterTab = true;
+        IsScannerTab = false;
+    }
+
+    [RelayCommand]
+    private async Task SelectScannerTabAsync()
+    {
+        IsStoreTab = false;
+        IsPrinterTab = false;
+        IsScannerTab = true;
+        await LoadScannerDevicesAsync();
     }
 
     [RelayCommand]
@@ -112,6 +135,9 @@ public sealed partial class SettingsViewModel : ManagementTabViewModelBase
     protected override void OnStoreChanged(string newStoreId, string? storeName)
     {
         base.OnStoreChanged(newStoreId, storeName);
+        ScannerPairingUrl = string.Empty;
+        ScannerPairingQr = null;
         _ = LoadSettingsAsync();
+        if (IsScannerTab) _ = LoadScannerDevicesAsync();
     }
 }

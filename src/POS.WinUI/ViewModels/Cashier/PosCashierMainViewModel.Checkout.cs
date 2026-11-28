@@ -408,6 +408,9 @@ public partial class PosCashierMainViewModel
         {
           SearchQuery = string.Empty;
           ShowSuccess($"Đã thêm {sku.ProductName} vào giỏ hàng");
+          System.Media.SystemSounds.Beep.Play();
+          await Task.Delay(130);
+          System.Media.SystemSounds.Beep.Play();
         }
       }
       else

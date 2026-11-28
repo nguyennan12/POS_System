@@ -48,6 +48,7 @@ services:
       Auth__PinLookupSecret: ${PIN_LOOKUP_SECRET}
       Jwt__Issuer: pos-api
       Jwt__Audience: pos-clients
+      Scanner__PublicBaseUrl: "${SCANNER_PUBLIC_BASE_URL:-}"
       Groq__Enabled: "${GROQ_ENABLED:-false}"
       Groq__ApiKey: "${GROQ_API_KEY:-}"
       Groq__Model: "${GROQ_MODEL:-llama-3.3-70b-versatile}"

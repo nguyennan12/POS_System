@@ -69,6 +69,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<AiAssistantApiClient>();
         services.AddTransient<StoreLayoutApiClient>();
         services.AddTransient<ProductPlacementApiClient>();
+        services.AddTransient<CashierScannerApiClient>();
 
         // ── ViewModels ────────────────────────────────────────────
         services.AddSingleton<MainWindowViewModel>();

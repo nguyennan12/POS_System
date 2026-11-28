@@ -110,6 +110,10 @@
                                 </ControlTemplate>
                             </RadioButton.Template>
                         </RadioButton>
+                        <RadioButton GroupName="SettingTabs" IsChecked="{Binding IsScannerTab, Mode=TwoWay}"
+                                     Command="{Binding SelectScannerTabCommand}"
+                                     Content="Điện thoại quét mã" Height="36" Padding="18,0"
+                                     Margin="6,0,0,0" Cursor="Hand" VerticalContentAlignment="Center"/>
                     </StackPanel>
                 </Border>
 
@@ -131,6 +135,58 @@
                     <!-- Cột phải: Xem trước mẫu hóa đơn nhiệt trực tiếp -->
                     <components:ReceiptPreviewComponent Grid.Column="2"/>
                 </Grid>
+
+                <!-- Cấu hình cố định điện thoại với quầy; ca bán tự nhận mã khi mở. -->
+                <Border Visibility="{Binding IsScannerTab, Converter={StaticResource BoolToVis}}"
+                        Background="White" BorderBrush="#E2E8F0" BorderThickness="1"
+                        CornerRadius="12" Padding="22">
+                    <StackPanel>
+                        <TextBlock Text="Thiết bị quét mã cho quầy POS" FontSize="18" FontWeight="Bold"
+                                   Foreground="#0F172A"/>
+                        <TextBlock Text="Đăng ký một lần. Khi mở ca tại quầy, mã từ điện thoại sẽ tự vào giỏ POS của quầy đó."
+                                   TextWrapping="Wrap" Foreground="#64748B" Margin="0,6,0,18"/>
+
+                        <TextBlock Text="Quầy nhận mã" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding ScannerRegisters}" SelectedItem="{Binding SelectedScannerRegister}"
+                                  DisplayMemberPath="Name" Height="38" Margin="0,6,0,14"/>
+                        <TextBlock Text="Tên điện thoại" FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,18">
+                            <TextBox Text="{Binding ScannerDeviceName, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="280" Height="38" VerticalContentAlignment="Center"/>
+                            <Button Content="Đăng ký điện thoại" Command="{Binding CreateScannerDeviceCommand}"
+                                    Margin="10,0,0,0" Padding="14,5"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Thiết bị đang đăng ký" FontWeight="SemiBold" Margin="0,0,0,7"/>
+                        <ListBox ItemsSource="{Binding ScannerDevices}" SelectedItem="{Binding SelectedScannerDevice}"
+                                 Height="150" BorderBrush="#CBD5E1">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Margin="3">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="  •  " Foreground="#94A3B8"/>
+                                        <TextBlock Text="{Binding RegisterName}" Foreground="#64748B"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,18">
+                            <Button Content="Cấp URL mới" Command="{Binding RotateScannerDeviceCommand}" Padding="12,5"/>
+                            <Button Content="Thu hồi thiết bị" Command="{Binding RevokeScannerDeviceCommand}"
+                                    Margin="8,0,0,0" Padding="12,5"/>
+                        </StackPanel>
+
+                        <TextBlock Text="URL webhook để nhập vào kisledScan (POST)" FontWeight="SemiBold"/>
+                        <TextBlock Text="URL chỉ hiện khi đăng ký hoặc cấp lại. Giữ bí mật và lưu trong kisledScan."
+                                   TextWrapping="Wrap" Foreground="#64748B" Margin="0,4,0,8"/>
+                        <TextBox Text="{Binding ScannerPairingUrl}" IsReadOnly="True"
+                                 Height="38" VerticalContentAlignment="Center" FontSize="11"/>
+                        <Button Content="Sao chép URL" Command="{Binding CopyScannerUrlCommand}"
+                                HorizontalAlignment="Left" Margin="0,8,0,0" Padding="12,5"/>
+                        <Image Source="{Binding ScannerPairingQr}" Width="220" Height="220"
+                               HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
 

@@ -31,6 +31,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     private readonly VoucherApiClient _voucherApiClient;
     private readonly OrderApiClient _orderApiClient;
     private readonly ProductApiClient _productApiClient;
+    private readonly CashierScannerApiClient _cashierScannerApiClient;
 
     [RelayCommand]
     private void ToggleCfd()
@@ -132,7 +133,8 @@ public partial class PosCashierMainViewModel : ObservableObject
         CustomerApiClient customerApiClient,
         VoucherApiClient voucherApiClient,
         OrderApiClient orderApiClient,
-        ProductApiClient productApiClient)
+        ProductApiClient productApiClient,
+        CashierScannerApiClient cashierScannerApiClient)
     {
         _sessionService = sessionService;
         _localDeviceSettingsService = localDeviceSettingsService;
@@ -150,6 +152,7 @@ public partial class PosCashierMainViewModel : ObservableObject
         _voucherApiClient = voucherApiClient;
         _orderApiClient = orderApiClient;
         _productApiClient = productApiClient;
+        _cashierScannerApiClient = cashierScannerApiClient;
 
         LoadUserInfo();
         _ = LoadRegistersAndShiftAsync();
@@ -265,6 +268,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     {
         if (_sessionService.IsManager)
         {
+            _ = StopPhoneScannerAsync();
             _clockTimer.Stop();
             _navigationService.NavigateTo<ManagementMainView>();
         }
@@ -287,6 +291,7 @@ public partial class PosCashierMainViewModel : ObservableObject
     [RelayCommand]
     private async Task LogoutAsync()
     {
+        await StopPhoneScannerAsync();
         _clockTimer.Stop();
         try
         {
